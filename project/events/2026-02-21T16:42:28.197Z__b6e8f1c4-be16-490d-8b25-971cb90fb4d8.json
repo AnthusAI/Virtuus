@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "b6e8f1c4-be16-490d-8b25-971cb90fb4d8",
-  "issue_id": "tctv-3b7c6f9f-9568-407b-a830-94229dbe38ef",
+  "issue_id": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:42:28.197Z",
   "actor_id": "ryan.porter",

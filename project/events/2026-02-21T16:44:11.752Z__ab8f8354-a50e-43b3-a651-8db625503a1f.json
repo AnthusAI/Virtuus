@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "ab8f8354-a50e-43b3-a651-8db625503a1f",
-  "issue_id": "tctv-4762d92e-f567-4b6f-867c-39d00a14d830",
+  "issue_id": "virt-4762d92e-f567-4b6f-867c-39d00a14d830",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:44:11.752Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with GSIs attached, when records are put or deleted, GSIs should be automatically maintained. Query via GSI returns full records from the table. Spec: features/core/table_gsi_integration.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
     "priority": 2,
     "status": "open",
     "title": "Table GSI integration"

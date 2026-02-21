@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "9b7c0fc4-68cf-4900-b7c0-9c06873d779c",
-  "issue_id": "tctv-1bc8e5f0-689c-4b62-b55c-11c06d36513a",
+  "issue_id": "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:44:11.577Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with registered on_put and on_delete hooks, when records are put or deleted, the hooks should fire after the operation. Hook errors are logged but do not block the operation. Spec: features/core/table_event_hooks.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
     "priority": 2,
     "status": "open",
     "title": "Table event hooks"

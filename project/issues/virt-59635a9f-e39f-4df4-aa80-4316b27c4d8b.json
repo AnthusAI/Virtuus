@@ -1,0 +1,18 @@
+{
+  "id": "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b",
+  "title": "Warm reindex",
+  "description": "Given a database with tables, when I call warm(), all tables should proactively refresh without waiting for a query. When already fresh, warm is a no-op. Spec: features/cache/warm_reindex.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:45:45.764538Z",
+  "updated_at": "2026-02-21T16:45:45.764538Z",
+  "closed_at": null,
+  "custom": {}
+}

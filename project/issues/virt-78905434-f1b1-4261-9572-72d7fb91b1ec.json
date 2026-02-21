@@ -1,0 +1,18 @@
+{
+  "id": "virt-78905434-f1b1-4261-9572-72d7fb91b1ec",
+  "title": "Has-many associations",
+  "description": "Given a table with a has_many association defined, when I resolve the association for a record, it should query the foreign table's GSI to find all related records. Spec: features/associations/has_many.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:22.742284Z",
+  "updated_at": "2026-02-21T16:46:22.742284Z",
+  "closed_at": null,
+  "custom": {}
+}

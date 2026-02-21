@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "0c029061-4360-46a5-a0c8-e60b4f2f6593",
-  "issue_id": "tctv-8fa6e805-052e-4107-87f5-d2682c27e429",
+  "issue_id": "virt-8fa6e805-052e-4107-87f5-d2682c27e429",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:48:01.936Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given readers and writers operating simultaneously, readers should never see partially-written records and writers should never corrupt the index for concurrent readers. Spec: features/concurrency/concurrent_read_write.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
     "priority": 2,
     "status": "open",
     "title": "Concurrent read-write"

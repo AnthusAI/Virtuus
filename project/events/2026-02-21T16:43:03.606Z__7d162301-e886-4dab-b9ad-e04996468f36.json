@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "7d162301-e886-4dab-b9ad-e04996468f36",
-  "issue_id": "tctv-337caeee-98b9-42ed-afa2-13f8627edff2",
+  "issue_id": "virt-337caeee-98b9-42ed-afa2-13f8627edff2",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:43:03.606Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a sort condition with any DynamoDB-style operator (eq, ne, lt, lte, gt, gte, between, begins_with, contains), when evaluated against a value, it should return the correct boolean result. Handles edge cases: null values, numeric vs string comparison, empty strings. Spec: features/sort/sort_conditions.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-3b7c6f9f-9568-407b-a830-94229dbe38ef",
+    "parent": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
     "priority": 2,
     "status": "open",
     "title": "Sort condition operators"

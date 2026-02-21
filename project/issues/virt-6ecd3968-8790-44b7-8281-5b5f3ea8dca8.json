@@ -1,0 +1,18 @@
+{
+  "id": "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8",
+  "title": "Execute nested queries with includes",
+  "description": "Given a database with associations between tables, when I execute() with include directives, it should recursively resolve associations and return nested results for all association types and multi-level depth. Spec: features/query/execute_nested.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:43.308720Z",
+  "updated_at": "2026-02-21T16:46:43.308720Z",
+  "closed_at": null,
+  "custom": {}
+}

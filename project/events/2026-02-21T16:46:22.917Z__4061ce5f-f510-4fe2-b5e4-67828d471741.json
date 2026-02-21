@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "4061ce5f-f510-4fe2-b5e4-67828d471741",
-  "issue_id": "tctv-9efadebe-b50d-4b48-bb44-a84f361b5c2c",
+  "issue_id": "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:22.917Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with a belongs_to association defined, when I resolve the association for a record, it should look up the parent record by PK in the foreign table. Spec: features/associations/belongs_to.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+    "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
     "priority": 2,
     "status": "open",
     "title": "Belongs-to associations"

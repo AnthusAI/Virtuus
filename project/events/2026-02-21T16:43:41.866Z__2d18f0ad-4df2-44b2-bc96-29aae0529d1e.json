@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "2d18f0ad-4df2-44b2-bc96-29aae0529d1e",
-  "issue_id": "tctv-783663cd-5140-4a71-8386-4bdd0019d850",
+  "issue_id": "virt-783663cd-5140-4a71-8386-4bdd0019d850",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:43:41.866Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a GSI, when records are put/removed/updated, the index should maintain correct bucket membership. Updates remove the old entry and insert the new one atomically. Spec: features/gsi/gsi_operations.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+    "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
     "priority": 2,
     "status": "open",
     "title": "GSI operations"

@@ -1,0 +1,18 @@
+{
+  "id": "virt-ba127472-5220-4712-b009-6c52df50bf7f",
+  "title": "PyO3 bridge with transparent fallback",
+  "description": "Given the Rust library compiled as a Python extension via PyO3+maturin, all existing Gherkin specs should pass with both pure-Python and Rust backends. The import fallback is transparent to consumer code. No new feature files; uses existing specs.",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:48:02.605882Z",
+  "updated_at": "2026-02-21T16:48:02.605882Z",
+  "closed_at": null,
+  "custom": {}
+}

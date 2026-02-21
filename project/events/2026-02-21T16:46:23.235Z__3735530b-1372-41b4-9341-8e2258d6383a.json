@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "3735530b-1372-41b4-9341-8e2258d6383a",
-  "issue_id": "tctv-6957b6b1-df84-4936-8dc0-e900de49c404",
+  "issue_id": "virt-6957b6b1-df84-4936-8dc0-e900de49c404",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:23.235Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with associations pointing to itself (parent/child trees), when resolved, it should correctly traverse the hierarchy without infinite loops. Spec: features/associations/self_referential.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+    "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
     "priority": 2,
     "status": "open",
     "title": "Self-referential associations"

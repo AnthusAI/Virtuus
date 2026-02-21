@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "252e5dbd-32dd-4428-8fc0-e4316572bc7d",
-  "issue_id": "tctv-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af",
+  "issue_id": "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:43.152Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a database with GSI-indexed tables, when I execute() with index and sort directives, it should use the GSI for efficient lookup with optional sort conditions and direction. Spec: features/query/execute_indexed.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+    "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
     "priority": 2,
     "status": "open",
     "title": "Execute indexed queries"

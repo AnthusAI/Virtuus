@@ -1,7 +1,7 @@
 project_directory: project
 ignore_paths: []
 console_port: 4451
-project_key: tctv
+project_key: virt
 
 hierarchy:
   - initiative

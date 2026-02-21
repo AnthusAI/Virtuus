@@ -1,0 +1,18 @@
+{
+  "id": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
+  "title": "Phase 1: Sort Conditions",
+  "description": "Implement standalone predicate evaluators matching DynamoDB KeyConditionExpression operators: eq, ne, lt, lte, gt, gte, between, begins_with, contains. No dependencies on other modules. See Vision.md for full details.",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:42:28.197802Z",
+  "updated_at": "2026-02-21T16:42:28.197802Z",
+  "closed_at": null,
+  "custom": {}
+}

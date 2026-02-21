@@ -2,62 +2,62 @@
   "version": 1,
   "built_at": "2026-02-21T17:22:50.041430Z",
   "file_mtimes": {
-    "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771692148.816127,
-    "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771692148.963774,
-    "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771694323.215193,
-    "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771692148.521366,
-    "tctv-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771692403.308832,
-    "tctv-36594452-858f-4e15-a388-b3510125ff23.json": 1771692482.442331,
-    "tctv-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771692481.283346,
-    "tctv-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771692482.936232,
-    "tctv-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771692383.235,
-    "tctv-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771692222.046243,
-    "tctv-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771692382.742386,
-    "tctv-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771692482.605993,
-    "tctv-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771693680.287566,
-    "tctv-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771692403.152456,
-    "tctv-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771693676.993871,
-    "tctv-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771692481.936527,
-    "tctv-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771692403.934653,
-    "tctv-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771692250.928432,
-    "tctv-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771692183.606606,
-    "tctv-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771692482.107695,
-    "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771692149.113296,
-    "tctv-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771692482.771073,
-    "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771692148.668163,
-    "tctv-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771692148.197916,
-    "tctv-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771692403.611682,
-    "tctv-8454083d-a138-4372-a188-cba03e2050d8.json": 1771693657.330357,
-    "tctv-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771692251.577095,
-    "tctv-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771692403.769643,
-    "tctv-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771693657.020922,
-    "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771692149.266178,
-    "tctv-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771692251.083784,
-    "tctv-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771692383.076937,
-    "tctv-17b867e4-5655-483b-9b75-b371b203a333.json": 1771692481.615186,
-    "tctv-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771692149.400392,
-    "tctv-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771692221.680174,
-    "tctv-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771692345.591924,
-    "tctv-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771694323.137194,
-    "tctv-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771692482.267926,
-    "tctv-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771692250.58523,
-    "tctv-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771692221.866544,
-    "tctv-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771692149.540134,
-    "tctv-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771693657.185564,
-    "tctv-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771692382.917846,
-    "tctv-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771692251.420183,
-    "tctv-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771693680.446052,
-    "tctv-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771692251.247956,
-    "tctv-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771692345.764644,
-    "tctv-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771692345.955422,
-    "tctv-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771694332.042876,
-    "tctv-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771692251.752499,
-    "tctv-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771693679.948117,
-    "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771692148.360438
+    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771692148.816127,
+    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771692148.963774,
+    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771694323.215193,
+    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771692148.521366,
+    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771692403.308832,
+    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771692482.442331,
+    "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771692481.283346,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771692482.936232,
+    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771692383.235,
+    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771692222.046243,
+    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771692382.742386,
+    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771692482.605993,
+    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771693680.287566,
+    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771692403.152456,
+    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771693676.993871,
+    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771692481.936527,
+    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771692403.934653,
+    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771692250.928432,
+    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771692183.606606,
+    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771692482.107695,
+    "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771692149.113296,
+    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771692482.771073,
+    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771692148.668163,
+    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771692148.197916,
+    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771692403.611682,
+    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771693657.330357,
+    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771692251.577095,
+    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771692403.769643,
+    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771693657.020922,
+    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771692149.266178,
+    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771692251.083784,
+    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771692383.076937,
+    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771692481.615186,
+    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771692149.400392,
+    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771692221.680174,
+    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771692345.591924,
+    "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771694323.137194,
+    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771692482.267926,
+    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771692250.58523,
+    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771692221.866544,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771692149.540134,
+    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771693657.185564,
+    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771692382.917846,
+    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771692251.420183,
+    "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771693680.446052,
+    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771692251.247956,
+    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771692345.764644,
+    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771692345.955422,
+    "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771694332.042876,
+    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771692251.752499,
+    "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771693679.948117,
+    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771692148.360438
   },
   "issues": [
     {
-      "id": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+      "id": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
       "title": "Phase 7: CLI (Query + Server)",
       "description": "Implement CLI with query mode (load, query, print, exit) and server mode (load once, serve HTTP queries). Python via Click+uvicorn, Rust via clap+axum. POST JSON dict-in/dict-out protocol. See Vision.md for full details.",
       "type": "epic",
@@ -75,7 +75,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-127dff59-40dc-4618-81d6-a7b5f5318a07",
+      "id": "virt-127dff59-40dc-4618-81d6-a7b5f5318a07",
       "title": "Schema from YAML",
       "description": "Given a YAML file defining tables, GSIs, and associations, when I call Database.from_schema(path, data_dir), it should create a fully configured database. Declarative, versionable, shared between Rust and Python. Spec: features/schema/schema_from_yaml.feature",
       "type": "story",
@@ -83,7 +83,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -93,7 +93,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-169b776e-b040-4cd6-8531-f36e3a883f20",
+      "id": "virt-169b776e-b040-4cd6-8531-f36e3a883f20",
       "title": "Benchmark scenarios and visualization",
       "description": "Given generated fixture data, when I run benchmarks (load-time, query-time, cache, concurrency, memory), each scenario should produce valid timing output. Visualization generates SVG charts and a markdown report. Spec: features/benchmarks/benchmark_scenarios.feature",
       "type": "story",
@@ -101,7 +101,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
+      "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -111,7 +111,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-17b867e4-5655-483b-9b75-b371b203a333",
+      "id": "virt-17b867e4-5655-483b-9b75-b371b203a333",
       "title": "Concurrent reads",
       "description": "Given a database under concurrent read load, when N threads query simultaneously, all should return consistent results with no partial reads or crashes. Spec: features/concurrency/concurrent_reads.feature",
       "type": "story",
@@ -119,7 +119,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -129,7 +129,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-1bc8e5f0-689c-4b62-b55c-11c06d36513a",
+      "id": "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a",
       "title": "Table event hooks",
       "description": "Given a table with registered on_put and on_delete hooks, when records are put or deleted, the hooks should fire after the operation. Hook errors are logged but do not block the operation. Spec: features/core/table_event_hooks.feature",
       "type": "story",
@@ -137,7 +137,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -147,7 +147,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8",
+      "id": "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8",
       "title": "File race conditions",
       "description": "Given filesystem edge cases (file appears/disappears during scan, truncated JSON), Virtuus should handle all gracefully without crashing. Corrupted files are reported as errors, valid records remain accessible. Spec: features/concurrency/file_race_conditions.feature",
       "type": "story",
@@ -155,7 +155,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -165,7 +165,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
+      "id": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "title": "Phase 10: Benchmarks & Visualization",
       "description": "Primary deliverable. Pluggable fixture generation (social_media, ecommerce, complex_hierarchy profiles), load-time/query-time/cache/concurrency/memory benchmarks, SVG chart visualization, regression detection. See Vision.md for full details.",
       "type": "epic",
@@ -183,7 +183,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-28bb9df3-eb66-4d15-987e-3000ceb89096",
+      "id": "virt-28bb9df3-eb66-4d15-987e-3000ceb89096",
       "title": "Database describe",
       "description": "Given a database with multiple tables, when I call db.describe(), it should return a complete schema overview: all tables with their GSIs, associations, record counts, and staleness status. Spec: features/query/database_describe.feature",
       "type": "story",
@@ -191,7 +191,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -201,7 +201,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+      "id": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "title": "Phase 2: GSI (Global Secondary Index)",
       "description": "Implement hash-partitioned index with optional sorted range key. GSIs support partition-only and partition+sort configurations, with put/remove/update operations and query with sort conditions and direction. See Vision.md for full details.",
       "type": "epic",
@@ -219,7 +219,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af",
+      "id": "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af",
       "title": "Execute indexed queries",
       "description": "Given a database with GSI-indexed tables, when I execute() with index and sort directives, it should use the GSI for efficient lookup with optional sort conditions and direction. Spec: features/query/execute_indexed.feature",
       "type": "story",
@@ -227,7 +227,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -237,7 +237,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-32a700a3-728c-471e-a10d-24c9cb6f2f2d",
+      "id": "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d",
       "title": "Has-many-through associations",
       "description": "Given a has_many_through association with a junction table, when resolved, it should query the junction table's GSI then PK-lookup each target record. Spec: features/associations/has_many_through.feature",
       "type": "story",
@@ -245,7 +245,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+      "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -255,7 +255,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-337caeee-98b9-42ed-afa2-13f8627edff2",
+      "id": "virt-337caeee-98b9-42ed-afa2-13f8627edff2",
       "title": "Sort condition operators",
       "description": "Given a sort condition with any DynamoDB-style operator (eq, ne, lt, lte, gt, gte, between, begins_with, contains), when evaluated against a value, it should return the correct boolean result. Handles edge cases: null values, numeric vs string comparison, empty strings. Spec: features/sort/sort_conditions.feature",
       "type": "story",
@@ -263,7 +263,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-3b7c6f9f-9568-407b-a830-94229dbe38ef",
+      "parent": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -273,7 +273,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-36594452-858f-4e15-a388-b3510125ff23",
+      "id": "virt-36594452-858f-4e15-a388-b3510125ff23",
       "title": "Referential integrity under load",
       "description": "Given concurrent deletes and association resolution, the system should return either a valid result or clean null/empty, never a dangling reference or crash. Spec: features/concurrency/referential_integrity_under_load.feature",
       "type": "story",
@@ -281,7 +281,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -291,7 +291,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-3b7c6f9f-9568-407b-a830-94229dbe38ef",
+      "id": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
       "title": "Phase 1: Sort Conditions",
       "description": "Implement standalone predicate evaluators matching DynamoDB KeyConditionExpression operators: eq, ne, lt, lte, gt, gte, between, begins_with, contains. No dependencies on other modules. See Vision.md for full details.",
       "type": "epic",
@@ -309,7 +309,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+      "id": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "title": "Phase 4: Cache & Incremental Invalidation",
       "description": "Implement mtime-based cache layer with two-tier staleness detection (O(1) dir check, O(N) file scan), JIT invalidation on query, warm reindex for proactive refresh, and incremental reload of only changed files. See Vision.md for full details.",
       "type": "epic",
@@ -327,7 +327,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-4762d92e-f567-4b6f-867c-39d00a14d830",
+      "id": "virt-4762d92e-f567-4b6f-867c-39d00a14d830",
       "title": "Table GSI integration",
       "description": "Given a table with GSIs attached, when records are put or deleted, GSIs should be automatically maintained. Query via GSI returns full records from the table. Spec: features/core/table_gsi_integration.feature",
       "type": "story",
@@ -335,7 +335,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -345,7 +345,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-4be56aba-fa68-4fb3-8023-0cd68aca361a",
+      "id": "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a",
       "title": "Database validate (referential integrity)",
       "description": "Given a database with belongs_to associations, when I call db.validate(), it should walk all FKs and verify each resolves to a record in the target table. Returns a list of violations. Spec: features/query/database_validate.feature",
       "type": "story",
@@ -353,7 +353,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -363,7 +363,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-59635a9f-e39f-4df4-aa80-4316b27c4d8b",
+      "id": "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b",
       "title": "Warm reindex",
       "description": "Given a database with tables, when I call warm(), all tables should proactively refresh without waiting for a query. When already fresh, warm is a no-op. Spec: features/cache/warm_reindex.feature",
       "type": "story",
@@ -371,7 +371,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+      "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -381,7 +381,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-59862e11-3b04-4dca-832a-1062309db8b4",
+      "id": "virt-59862e11-3b04-4dca-832a-1062309db8b4",
       "title": "GSI creation",
       "description": "Given a table, when I create a GSI with a partition key (and optionally a sort key), it should be registered and ready to index records. Supports hash-only and hash+range configurations. Spec: features/gsi/gsi_creation.feature",
       "type": "story",
@@ -389,7 +389,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+      "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -399,7 +399,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-5b0257cc-8332-49b6-beb6-1ff1be5d1f02",
+      "id": "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02",
       "title": "Phase 0 scaffolding implementation",
       "description": "Implement the Phase 0 project skeleton: VERSION file, Python package (pyproject.toml, behave, coverage), Rust crate (Cargo.toml, lib.rs, CLI bin, cucumber integration tests), shared step definitions in features/steps/, tools/check_spec_parity.py, Makefile, and CI workflow. All make coverage-python, make coverage-rust, and make check-parity must pass at 100%.",
       "type": "task",
@@ -407,7 +407,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+      "parent": "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -417,7 +417,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d",
+      "id": "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d",
       "title": "CLI server mode",
       "description": "Given a data directory and schema, when I run virtuus serve, it should load data once and serve queries over HTTP. POST /query for dict-in/dict-out queries. Additional endpoints: GET /health (server status), POST /describe (schema metadata), POST /validate (referential integrity check), POST /warm (proactive refresh). Spec: features/cli/server_mode.feature",
       "type": "story",
@@ -425,7 +425,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+      "parent": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -435,7 +435,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-605c81b5-ac99-4e69-b14a-3f4e36dca3d7",
+      "id": "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7",
       "title": "GSI query",
       "description": "Given a populated GSI, when I query by partition key (with optional sort conditions and direction), it should return matching record PKs in the correct order. Empty partitions return empty results. Spec: features/gsi/gsi_query.feature",
       "type": "story",
@@ -443,7 +443,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+      "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -453,7 +453,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-631d58e3-99a3-4aae-9d70-2156f8c9f08a",
+      "id": "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a",
       "title": "Execute basic queries",
       "description": "Given a database with tables, when I call execute() with where, pk, fields, or limit directives, it should return matching records with correct field projection and limits. Non-existent table raises an error (fail fast). Non-existent GSI name raises an error. Spec: features/query/execute_basic.feature",
       "type": "story",
@@ -461,7 +461,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -471,7 +471,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-6957b6b1-df84-4936-8dc0-e900de49c404",
+      "id": "virt-6957b6b1-df84-4936-8dc0-e900de49c404",
       "title": "Self-referential associations",
       "description": "Given a table with associations pointing to itself (parent/child trees), when resolved, it should correctly traverse the hierarchy without infinite loops. Spec: features/associations/self_referential.feature",
       "type": "story",
@@ -479,7 +479,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+      "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -489,7 +489,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-6d061c71-1063-4863-9bcb-e27dd42f1f16",
+      "id": "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16",
       "title": "Library availability smoke test",
       "description": "Given the virtuus library is available in both Python and Rust, it should load and report a valid version string. Both implementations read from a shared VERSION file at the repo root, ensuring version parity. This validates the project skeleton, shared Gherkin runner, coverage tooling, and CI pipeline all work end-to-end. Spec: features/smoke/smoke_test.feature",
       "type": "story",
@@ -497,7 +497,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+      "parent": "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -507,7 +507,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-6e91f815-7799-4997-b950-fbaa63dccea8",
+      "id": "virt-6e91f815-7799-4997-b950-fbaa63dccea8",
       "title": "Table creation",
       "description": "Given a table name and primary key field, when I create a table, it should be ready to store and retrieve records by PK. Supports simple PK and composite PK (partition + sort key). Spec: features/core/table_creation.feature",
       "type": "story",
@@ -515,7 +515,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -525,7 +525,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-6ecd3968-8790-44b7-8281-5b5f3ea8dca8",
+      "id": "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8",
       "title": "Execute nested queries with includes",
       "description": "Given a database with associations between tables, when I execute() with include directives, it should recursively resolve associations and return nested results for all association types and multi-level depth. Spec: features/query/execute_nested.feature",
       "type": "story",
@@ -533,7 +533,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -543,7 +543,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-73f05685-9e7e-48c8-b626-25606983ba9d",
+      "id": "virt-73f05685-9e7e-48c8-b626-25606983ba9d",
       "title": "Table export",
       "description": "Given a table with in-memory records, when I call export(directory), it should write all records to JSON files using atomic writes. The inverse of load. Spec: features/core/table_export.feature",
       "type": "story",
@@ -551,7 +551,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -561,7 +561,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-783663cd-5140-4a71-8386-4bdd0019d850",
+      "id": "virt-783663cd-5140-4a71-8386-4bdd0019d850",
       "title": "GSI operations",
       "description": "Given a GSI, when records are put/removed/updated, the index should maintain correct bucket membership. Updates remove the old entry and insert the new one atomically. Spec: features/gsi/gsi_operations.feature",
       "type": "story",
@@ -569,7 +569,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+      "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -579,7 +579,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-78905434-f1b1-4261-9572-72d7fb91b1ec",
+      "id": "virt-78905434-f1b1-4261-9572-72d7fb91b1ec",
       "title": "Has-many associations",
       "description": "Given a table with a has_many association defined, when I resolve the association for a record, it should query the foreign table's GSI to find all related records. Spec: features/associations/has_many.feature",
       "type": "story",
@@ -587,7 +587,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+      "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -597,7 +597,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
+      "id": "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
       "title": "Phase 9: PyO3 Bridge",
       "description": "Compile Rust library as Python extension module via PyO3+maturin. All existing Gherkin specs must pass with both pure-Python and Rust backends. Transparent fallback import pattern. See Vision.md for full details.",
       "type": "epic",
@@ -615,7 +615,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-801fb71e-f4dc-43b9-b92e-65b51451d911",
+      "id": "virt-801fb71e-f4dc-43b9-b92e-65b51451d911",
       "title": "Benchmark fixture generation",
       "description": "Given a fixture profile (social_media, ecommerce, complex_hierarchy) and scale factor, when I generate fixtures, it should produce the correct number of records with valid associations and realistic data distribution. Spec: features/benchmarks/fixture_generation.feature",
       "type": "story",
@@ -623,7 +623,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
+      "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -633,7 +633,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "id": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "title": "Phase 3: Table (Core CRUD + File Persistence + QoL)",
       "description": "Implement Table with PK-based storage, GSI maintenance, file-backed persistence via atomic writes, and quality-of-life features: count, describe, validation, export, event hooks. See Vision.md for full details.",
       "type": "epic",
@@ -651,7 +651,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-8454083d-a138-4372-a188-cba03e2050d8",
+      "id": "virt-8454083d-a138-4372-a188-cba03e2050d8",
       "title": "Cache invalidation",
       "description": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Configurable: check_interval prevents re-checking within the interval; auto_refresh=False disables JIT refresh, requiring explicit warm() calls. Spec: features/cache/cache_invalidation.feature",
       "type": "story",
@@ -659,7 +659,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+      "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -669,7 +669,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-8fa6e805-052e-4107-87f5-d2682c27e429",
+      "id": "virt-8fa6e805-052e-4107-87f5-d2682c27e429",
       "title": "Concurrent read-write",
       "description": "Given readers and writers operating simultaneously, readers should never see partially-written records and writers should never corrupt the index for concurrent readers. Spec: features/concurrency/concurrent_read_write.feature",
       "type": "story",
@@ -677,7 +677,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -687,7 +687,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8",
+      "id": "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8",
       "title": "Concurrent refresh",
       "description": "Given files changing on disk while queries are in flight, readers should get either the old state or the new state, never a mix. JIT refresh + concurrent reads must be safe. Spec: features/concurrency/concurrent_refresh.feature",
       "type": "story",
@@ -695,7 +695,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -705,7 +705,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-9efadebe-b50d-4b48-bb44-a84f361b5c2c",
+      "id": "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c",
       "title": "Belongs-to associations",
       "description": "Given a table with a belongs_to association defined, when I resolve the association for a record, it should look up the parent record by PK in the foreign table. Spec: features/associations/belongs_to.feature",
       "type": "story",
@@ -713,7 +713,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+      "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -723,7 +723,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-9f432a03-5946-4157-ae7f-fdb66d560bb5",
+      "id": "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5",
       "title": "Table CRUD",
       "description": "Given a table, when I put/get/delete/upsert records, the table should maintain correct state. Supports scan, all, and bulk load operations. Also supports composite primary keys (partition + sort key): put/get/delete with composite PK, and two records with same partition but different sort keys coexist. Spec: features/core/table_crud.feature",
       "type": "story",
@@ -731,7 +731,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -741,7 +741,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-a97d7952-ea86-423f-8231-dbd0a04a860d",
+      "id": "virt-a97d7952-ea86-423f-8231-dbd0a04a860d",
       "title": "CLI query mode",
       "description": "Given a data directory and query parameters, when I run virtuus query, it should load data, execute the query, print JSON results, and exit. Spec: features/cli/query_mode.feature",
       "type": "story",
@@ -749,7 +749,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+      "parent": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -759,7 +759,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "id": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "title": "Phase 6: Database + execute() + Schema-from-YAML",
       "description": "Implement Database container with nested dict query interface (execute), cursor-based pagination, field projection, database-level describe/validate diagnostics, and declarative YAML schema loading. See Vision.md for full details.",
       "type": "epic",
@@ -777,7 +777,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733",
+      "id": "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733",
       "title": "Concurrent writes",
       "description": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Concurrent puts to the same PK use last-write-wins: no error, final state is one of the written values. Spec: features/concurrency/concurrent_writes.feature",
       "type": "story",
@@ -785,7 +785,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -795,7 +795,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ad605957-9d5e-463d-a0ae-cb99c6f9788c",
+      "id": "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c",
       "title": "Table file persistence",
       "description": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. Filename convention: {pk}.json for simple PKs, {partition}__{sort}.json for composite PKs. PKs containing path separators (/ or \\) are rejected. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Non-JSON files are ignored. Spec: features/core/table_file_persistence.feature",
       "type": "story",
@@ -803,7 +803,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -813,7 +813,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+      "id": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "title": "Phase 5: Associations",
       "description": "Implement has_many (GSI query on foreign table), belongs_to (PK lookup), has_many_through (junction table), and self-referential associations (parent/child trees). See Vision.md for full details.",
       "type": "epic",
@@ -831,7 +831,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ba127472-5220-4712-b009-6c52df50bf7f",
+      "id": "virt-ba127472-5220-4712-b009-6c52df50bf7f",
       "title": "PyO3 bridge with transparent fallback",
       "description": "Given the Rust library compiled as a Python extension via PyO3+maturin, all existing Gherkin specs should pass with both pure-Python and Rust backends. The import fallback is transparent to consumer code. No new feature files; uses existing specs.",
       "type": "story",
@@ -839,7 +839,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
+      "parent": "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -849,7 +849,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+      "id": "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
       "title": "Phase 0: Project Scaffolding + Coverage Infrastructure",
       "description": "Set up the full project skeleton with dual Rust+Python structure, shared Gherkin specs, and coverage tooling. One smoke-test feature passes in both languages at 100% coverage from the first commit. See Vision.md for full details.",
       "type": "epic",
@@ -867,7 +867,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-c2baed68-5a58-47eb-b766-b48c78234a85",
+      "id": "virt-c2baed68-5a58-47eb-b766-b48c78234a85",
       "title": "Table count",
       "description": "Given a table with records, when I call count() or count(index, value), it should return the count without materializing full result lists. Spec: features/core/table_count.feature",
       "type": "story",
@@ -875,7 +875,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -885,7 +885,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-c34e6bd7-4c6d-4891-b55c-32ec7b496c06",
+      "id": "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06",
       "title": "Incremental refresh",
       "description": "Given a stale table, when refreshed, only added/modified/deleted files should be reloaded - not the entire table. GSIs must be updated for all changed records. Spec: features/cache/incremental_refresh.feature",
       "type": "story",
@@ -893,7 +893,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+      "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -903,7 +903,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-df850d1d-74c4-4b21-aae2-1141c082cf61",
+      "id": "virt-df850d1d-74c4-4b21-aae2-1141c082cf61",
       "title": "Table validation",
       "description": "Given a table with opt-in validation enabled, when I put a record missing the PK field or GSI-indexed fields, it should warn or error based on configuration. Default is silent. Spec: features/core/table_validation.feature",
       "type": "story",
@@ -911,7 +911,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -921,7 +921,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-e75dc68d-d9c2-47c6-80fa-b037404da000",
+      "id": "virt-e75dc68d-d9c2-47c6-80fa-b037404da000",
       "title": "Cache check (dry-run refresh)",
       "description": "Given a table, when I call check(), it should return what WOULD change (added/modified/deleted files) without actually refreshing. The on_refresh hook fires after actual refreshes with a change summary. Spec: features/cache/cache_check.feature",
       "type": "story",
@@ -929,7 +929,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+      "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -939,7 +939,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ec83d65c-61d0-4c34-83fb-e3e55a2979cb",
+      "id": "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb",
       "title": "Table describe",
       "description": "Given a table, when I call describe(), it should return a metadata dict with name, PK, GSI definitions, association names, record count, and staleness status. REPL-friendly output. Spec: features/core/table_describe.feature",
       "type": "story",
@@ -947,7 +947,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+      "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "labels": [],
       "dependencies": [],
       "comments": [],
@@ -957,7 +957,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+      "id": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "title": "Phase 8: Concurrency & Integration Testing",
       "description": "Stress-test under concurrent operations: parallel reads, parallel writes, mixed read-write, refresh during queries, filesystem race conditions, and referential integrity under load. Forces architectural decisions about locking. See Vision.md for full details.",
       "type": "epic",
@@ -975,7 +975,7 @@
       "custom": {}
     },
     {
-      "id": "tctv-fbbdd27b-777a-4833-9f65-54a6d5bea2e9",
+      "id": "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9",
       "title": "Execute paginated queries",
       "description": "Given a large result set, when I execute() with limit and next_token directives, it should return paginated results with cursor-based pagination matching the DynamoDB pattern. Supports descending sort direction: pagination with sort_direction desc traverses in correct reverse order. Full traversal yields all records with no duplicates. Spec: features/query/execute_pagination.feature",
       "type": "story",
@@ -983,7 +983,7 @@
       "priority": 2,
       "assignee": null,
       "creator": null,
-      "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+      "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "labels": [],
       "dependencies": [],
       "comments": [],

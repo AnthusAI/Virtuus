@@ -1,0 +1,18 @@
+{
+  "id": "virt-127dff59-40dc-4618-81d6-a7b5f5318a07",
+  "title": "Schema from YAML",
+  "description": "Given a YAML file defining tables, GSIs, and associations, when I call Database.from_schema(path, data_dir), it should create a fully configured database. Declarative, versionable, shared between Rust and Python. Spec: features/schema/schema_from_yaml.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:43.934530Z",
+  "updated_at": "2026-02-21T16:46:43.934530Z",
+  "closed_at": null,
+  "custom": {}
+}

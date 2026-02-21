@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "ecb97050-33b7-41f5-9ccc-02ae7494cfc2",
-  "issue_id": "tctv-801fb71e-f4dc-43b9-b92e-65b51451d911",
+  "issue_id": "virt-801fb71e-f4dc-43b9-b92e-65b51451d911",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:48:02.771Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a fixture profile (social_media, ecommerce, complex_hierarchy) and scale factor, when I generate fixtures, it should produce the correct number of records with valid associations and realistic data distribution. Spec: features/benchmarks/fixture_generation.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
+    "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
     "priority": 2,
     "status": "open",
     "title": "Benchmark fixture generation"

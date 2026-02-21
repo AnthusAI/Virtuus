@@ -1,0 +1,18 @@
+{
+  "id": "virt-28bb9df3-eb66-4d15-987e-3000ceb89096",
+  "title": "Database describe",
+  "description": "Given a database with multiple tables, when I call db.describe(), it should return a complete schema overview: all tables with their GSIs, associations, record counts, and staleness status. Spec: features/query/database_describe.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:43.611559Z",
+  "updated_at": "2026-02-21T16:46:43.611559Z",
+  "closed_at": null,
+  "custom": {}
+}

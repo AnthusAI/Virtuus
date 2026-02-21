@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "d2d58695-6490-419c-822c-9db7786afe96",
-  "issue_id": "tctv-78905434-f1b1-4261-9572-72d7fb91b1ec",
+  "issue_id": "virt-78905434-f1b1-4261-9572-72d7fb91b1ec",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:22.742Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with a has_many association defined, when I resolve the association for a record, it should query the foreign table's GSI to find all related records. Spec: features/associations/has_many.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-b820cca9-ba3e-45fe-b756-1bdcc629a604",
+    "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
     "priority": 2,
     "status": "open",
     "title": "Has-many associations"

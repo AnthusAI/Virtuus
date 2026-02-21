@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "e05d26c6-807c-4cb5-9335-a2f152815247",
-  "issue_id": "tctv-28bb9df3-eb66-4d15-987e-3000ceb89096",
+  "issue_id": "virt-28bb9df3-eb66-4d15-987e-3000ceb89096",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:43.611Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a database with multiple tables, when I call db.describe(), it should return a complete schema overview: all tables with their GSIs, associations, record counts, and staleness status. Spec: features/query/database_describe.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+    "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
     "priority": 2,
     "status": "open",
     "title": "Database describe"

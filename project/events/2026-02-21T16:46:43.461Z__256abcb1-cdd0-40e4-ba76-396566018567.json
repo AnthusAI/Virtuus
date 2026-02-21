@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "256abcb1-cdd0-40e4-ba76-396566018567",
-  "issue_id": "tctv-fbbdd27b-777a-4833-9f65-54a6d5bea2e9",
+  "issue_id": "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:46:43.461Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a large result set, when I execute() with limit and next_token directives, it should return paginated results with cursor-based pagination matching the DynamoDB pattern. Spec: features/query/execute_pagination.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+    "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
     "priority": 2,
     "status": "open",
     "title": "Execute paginated queries"

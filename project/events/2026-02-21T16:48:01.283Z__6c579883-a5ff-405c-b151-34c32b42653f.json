@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "6c579883-a5ff-405c-b151-34c32b42653f",
-  "issue_id": "tctv-a97d7952-ea86-423f-8231-dbd0a04a860d",
+  "issue_id": "virt-a97d7952-ea86-423f-8231-dbd0a04a860d",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:48:01.283Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a data directory and query parameters, when I run virtuus query, it should load data, execute the query, print JSON results, and exit. Spec: features/cli/query_mode.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+    "parent": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
     "priority": 2,
     "status": "open",
     "title": "CLI query mode"

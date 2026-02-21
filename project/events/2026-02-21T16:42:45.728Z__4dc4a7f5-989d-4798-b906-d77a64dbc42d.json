@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "4dc4a7f5-989d-4798-b906-d77a64dbc42d",
-  "issue_id": "tctv-6d061c71-1063-4863-9bcb-e27dd42f1f16",
+  "issue_id": "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:42:45.728Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given the virtuus library is available in both Python and Rust, it should load and report a valid version string. This validates the project skeleton, shared Gherkin runner, coverage tooling, and CI pipeline all work end-to-end. Spec: features/smoke/smoke_test.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+    "parent": "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
     "priority": 2,
     "status": "open",
     "title": "Library availability smoke test"

@@ -1,0 +1,18 @@
+{
+  "id": "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a",
+  "title": "Table event hooks",
+  "description": "Given a table with registered on_put and on_delete hooks, when records are put or deleted, the hooks should fire after the operation. Hook errors are logged but do not block the operation. Spec: features/core/table_event_hooks.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:44:11.576975Z",
+  "updated_at": "2026-02-21T16:44:11.576975Z",
+  "closed_at": null,
+  "custom": {}
+}

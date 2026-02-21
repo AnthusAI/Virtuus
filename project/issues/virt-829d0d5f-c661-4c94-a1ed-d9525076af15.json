@@ -1,0 +1,18 @@
+{
+  "id": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
+  "title": "Phase 3: Table (Core CRUD + File Persistence + QoL)",
+  "description": "Implement Table with PK-based storage, GSI maintenance, file-backed persistence via atomic writes, and quality-of-life features: count, describe, validation, export, event hooks. See Vision.md for full details.",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:42:28.521250Z",
+  "updated_at": "2026-02-21T16:42:28.521250Z",
+  "closed_at": null,
+  "custom": {}
+}

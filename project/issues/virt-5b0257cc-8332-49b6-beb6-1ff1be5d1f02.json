@@ -1,0 +1,25 @@
+{
+  "id": "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02",
+  "title": "Phase 0 scaffolding implementation",
+  "description": "Implement the Phase 0 project skeleton: VERSION file, Python package (pyproject.toml, behave, coverage), Rust crate (Cargo.toml, lib.rs, CLI bin, cucumber integration tests), shared step definitions in features/steps/, tools/check_spec_parity.py, Makefile, and CI workflow. All make coverage-python, make coverage-rust, and make check-parity must pass at 100%.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "1eed0dbe-9092-4ea4-a256-f7dcd50ddff7",
+      "author": "ryan.porter",
+      "text": "Phase 0 scaffold complete. All deliverables implemented:\n- VERSION file (0.1.0)\n- Python package: pyproject.toml, behave.ini, .coveragerc, src/virtuus/__init__.py, src/virtuus/_python/__init__.py\n- Shared BDD: features/environment.py, features/steps/smoke_steps.py (7 steps covering all 3 smoke scenarios)\n- Rust crate: Cargo.toml, src/lib.rs (version() + #[cfg(test)] unit tests), src/bin/virtuus.rs, tests/cucumber.rs\n- tools/check_spec_parity.py (checks asymmetry, not completeness)\n- Makefile with check, coverage-python, coverage-rust, check-parity, build targets\n- .github/workflows/ci.yml\n- AGENTS.md updated with code quality standards (Black+Ruff+D rules, Sphinx docstrings, 100% coverage)\n- Ruff D rules enabled; module docstring added to virtuus/__init__.py\n\nmake check result: Python 100% coverage, Rust 100% coverage, parity 7/7 steps, all lint clean.",
+      "created_at": "2026-02-21T17:42:23.642222Z"
+    }
+  ],
+  "created_at": "2026-02-21T17:18:49.096119Z",
+  "updated_at": "2026-02-21T17:42:27.551903Z",
+  "closed_at": "2026-02-21T17:42:27.551903Z",
+  "custom": {}
+}

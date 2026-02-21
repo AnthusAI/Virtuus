@@ -1,0 +1,18 @@
+{
+  "id": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+  "title": "Phase 8: Concurrency & Integration Testing",
+  "description": "Stress-test under concurrent operations: parallel reads, parallel writes, mixed read-write, refresh during queries, filesystem race conditions, and referential integrity under load. Forces architectural decisions about locking. See Vision.md for full details.",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:42:29.266069Z",
+  "updated_at": "2026-02-21T16:42:29.266069Z",
+  "closed_at": null,
+  "custom": {}
+}

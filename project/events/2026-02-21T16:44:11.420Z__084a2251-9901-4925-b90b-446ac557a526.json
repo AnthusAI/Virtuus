@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_id": "084a2251-9901-4925-b90b-446ac557a526",
-  "issue_id": "tctv-73f05685-9e7e-48c8-b626-25606983ba9d",
+  "issue_id": "virt-73f05685-9e7e-48c8-b626-25606983ba9d",
   "event_type": "issue_created",
   "occurred_at": "2026-02-21T16:44:11.420Z",
   "actor_id": "ryan.porter",
@@ -10,7 +10,7 @@
     "description": "Given a table with in-memory records, when I call export(directory), it should write all records to JSON files using atomic writes. The inverse of load. Spec: features/core/table_export.feature",
     "issue_type": "story",
     "labels": [],
-    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
     "priority": 2,
     "status": "open",
     "title": "Table export"
