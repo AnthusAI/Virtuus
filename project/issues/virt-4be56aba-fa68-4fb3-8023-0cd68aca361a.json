@@ -3,16 +3,23 @@
   "title": "Database validate (referential integrity)",
   "description": "Given a database with belongs_to associations, when I call db.validate(), it should walk all FKs and verify each resolves to a record in the target table. Returns a list of violations. Spec: features/query/database_validate.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "9b754762-783d-48ed-a4c2-0df286e82228",
+      "author": "unknown",
+      "text": "Standup: starting database validate (referential integrity) story; will plan validation hooks post schema load. Next: craft specs then implement validations. Blockers: none.",
+      "created_at": "2026-02-21T21:51:50.894137Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:43.769532Z",
-  "updated_at": "2026-02-21T16:46:43.769532Z",
+  "updated_at": "2026-02-21T21:51:52.576551Z",
   "closed_at": null,
   "custom": {}
 }

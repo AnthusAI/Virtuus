@@ -3,16 +3,23 @@
   "title": "Database describe",
   "description": "Given a database with multiple tables, when I call db.describe(), it should return a complete schema overview: all tables with their GSIs, associations, record counts, and staleness status. Spec: features/query/database_describe.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "2991e7c5-3a6f-4ab0-bbf2-6e0be26c62da",
+      "author": "unknown",
+      "text": "Standup: kicking off database describe story; will design specs to expose schema/state info. Next: write feature scenarios + impl after schema loader. Blockers: none.",
+      "created_at": "2026-02-21T21:51:27.781765Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:43.611559Z",
-  "updated_at": "2026-02-21T16:46:43.611559Z",
+  "updated_at": "2026-02-21T21:51:29.644017Z",
   "closed_at": null,
   "custom": {}
 }

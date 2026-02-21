@@ -3,16 +3,23 @@
   "title": "Execute indexed queries",
   "description": "Given a database with GSI-indexed tables, when I execute() with index and sort directives, it should use the GSI for efficient lookup with optional sort conditions and direction. Spec: features/query/execute_indexed.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "1f079ed3-8946-4bd9-8a65-4a70fb65752e",
+      "author": "unknown",
+      "text": "Standup: starting execute indexed queries; will add specs for GSI-based execute pipeline once schema loader lands. Next: author scenarios + hook into DB execute. Blockers: none.",
+      "created_at": "2026-02-21T21:51:33.134606Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:43.152329Z",
-  "updated_at": "2026-02-21T16:46:43.152329Z",
+  "updated_at": "2026-02-21T21:51:34.779569Z",
   "closed_at": null,
   "custom": {}
 }

@@ -3,16 +3,23 @@
   "title": "Phase 6: Database + execute() + Schema-from-YAML",
   "description": "Implement Database container with nested dict query interface (execute), cursor-based pagination, field projection, database-level describe/validate diagnostics, and declarative YAML schema loading. See Vision.md for full details.",
   "type": "epic",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "517ad0cc-336f-44a3-826d-03595bcdd4e8",
+      "author": "unknown",
+      "text": "Standup: starting Phase 6 (DB execute + schema-from-YAML). Next: set child stories in progress and plan execution/features. Blockers: none.",
+      "created_at": "2026-02-21T21:51:13.559390Z"
+    }
+  ],
   "created_at": "2026-02-21T16:42:28.963677Z",
-  "updated_at": "2026-02-21T16:42:28.963677Z",
+  "updated_at": "2026-02-21T21:51:15.310587Z",
   "closed_at": null,
   "custom": {}
 }
