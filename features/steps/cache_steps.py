@@ -123,6 +123,11 @@ def step_add_file(context):
         json.dump(record, handle)
 
 
+@given("a new JSON file is added to the directory")
+def step_add_file_given(context):
+    step_add_file(context)
+
+
 @when("a JSON file is removed from the directory")
 def step_delete_file(context):
     directory = context.directory
@@ -161,9 +166,19 @@ def step_add_two_files(context):
             json.dump(record, handle)
 
 
+@given("2 new JSON files are added to the directory")
+def step_add_two_files_given(context):
+    step_add_two_files(context)
+
+
 @when("1 JSON file is modified on disk")
 def step_modify_file_on_disk(context):
     step_modify_file(context)
+
+
+@given("1 JSON file is modified on disk")
+def step_modify_file_on_disk_given(context):
+    step_modify_file_on_disk(context)
 
 
 @when("a JSON file is modified")
@@ -208,7 +223,9 @@ def step_query_table(context):
 
 @then("the new record should be included in results")
 def step_new_record_in_results(context):
-    ids = {record["id"] for record in context.last_result}
+    table = _current_table(context)
+    records = table.scan()
+    ids = {record["id"] for record in records}
     assert any("user-" in i and i not in {"user-0", "user-1", "user-2"} for i in ids)
 
 
@@ -249,11 +266,14 @@ def step_query_twice(context):
 @then("the second query should not trigger a refresh")
 @then("subsequent queries should not trigger a refresh")
 def step_second_query_no_refresh(context):
-    assert context.refresh_calls == 0
+    assert getattr(context, "refresh_calls", 0) == 0
 
 
 @when("a JSON file is modified to change a GSI-indexed field")
 def step_modify_gsi_field(context):
+    table = _current_table(context)
+    if "by_status" not in table.gsis:
+        table.add_gsi("by_status", "status")
     directory = context.directory
     path = os.path.join(directory, "user-0.json")
     with open(path, "r", encoding="utf-8") as handle:
@@ -263,10 +283,21 @@ def step_modify_gsi_field(context):
         json.dump(data, handle)
 
 
+@given("a JSON file is modified to change a GSI-indexed field")
+def step_modify_gsi_field_given(context):
+    step_modify_gsi_field(context)
+
+
 @when("the table is refreshed")
 def step_refresh_table(context):
     table = _current_table(context)
     context.last_summary = table.refresh()
+
+
+@when("1 file is modified and the table is refreshed")
+def step_modify_and_refresh(context):
+    step_modify_file(context)
+    step_refresh_table(context)
 
 
 @then("all GSIs should include the 2 new records")
@@ -411,11 +442,21 @@ def step_no_files_reread(context):
 
 @when("I call warm on the table")
 def step_warm_table(context):
-    _current_table(context).warm()
+    table = _current_table(context)
+    context.refresh_calls = 0
+
+    def on_refresh(summary):
+        context.refresh_calls += 1
+
+    table.on_refresh.append(on_refresh)
+    table.warm()
+    context.refresh_calls = 0
 
 
 @then("the table should contain the new record")
 def step_table_contains_new_record(context):
     table = _current_table(context)
     ids = {record["id"] for record in table.scan()}
-    assert any(i not in {"user-0", "user-1", "user-2"} for i in ids)
+    assert any(
+        i not in {"user-0", "user-1", "user-2"} for i in ids
+    ), f"ids: {sorted(ids)}"

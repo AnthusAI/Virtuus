@@ -3,7 +3,7 @@
   "title": "Warm reindex",
   "description": "Given a database with tables, when I call warm(), all tables should proactively refresh without waiting for a query. When already fresh, warm is a no-op. Spec: features/cache/warm_reindex.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,22 @@
       "author": "unknown",
       "text": "Progress: Rust warm/refresh logic implemented with cache steps; warm reindex scenarios passing. Next: wrap up documentation/tests and close once remaining suite validated. Blockers: none.",
       "created_at": "2026-02-21T21:17:15.828634Z"
+    },
+    {
+      "id": "1e1c79b4-a4a8-4d62-8e4c-ce5fa2fdb426",
+      "author": "unknown",
+      "text": "Standup: remaining work is Python cache warm/refresh steps in Behave. Next: implement missing step defs so warm-reindex scenarios pass. Blocker: undefined steps in features/cache; implementing now.",
+      "created_at": "2026-02-21T21:20:05.343437Z"
+    },
+    {
+      "id": "bc0e1b05-3fd7-4b8a-9a8b-46c3173ac417",
+      "author": "unknown",
+      "text": "Update: Completed Python cache warm/refresh steps; cache Behave suite passing. Ran parity check, cargo test, black/ruff.",
+      "created_at": "2026-02-21T21:27:48.613703Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.764538Z",
-  "updated_at": "2026-02-21T21:17:15.828634Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:27:53.533189Z",
+  "closed_at": "2026-02-21T21:27:53.533189Z",
   "custom": {}
 }

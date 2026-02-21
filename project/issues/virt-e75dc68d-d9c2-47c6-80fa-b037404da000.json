@@ -3,7 +3,7 @@
   "title": "Cache check (dry-run refresh)",
   "description": "Given a table, when I call check(), it should return what WOULD change (added/modified/deleted files) without actually refreshing. The on_refresh hook fires after actual refreshes with a change summary. Spec: features/cache/cache_check.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,22 @@
       "author": "unknown",
       "text": "Progress: Added cache check/dry-run support + parity steps in Rust; lint/tests green. Next: final verification before closure. Blockers: none.",
       "created_at": "2026-02-21T21:17:30.148467Z"
+    },
+    {
+      "id": "deff7dac-bf25-425b-ad0e-13e1e4005c23",
+      "author": "unknown",
+      "text": "Standup: cache check/dry-run behavior covered in Rust; Python Behave missing cache file change steps. Next: implement missing steps and rerun cache feature. Blocker: undefined steps for add/modify/refresh.",
+      "created_at": "2026-02-21T21:20:11.415844Z"
+    },
+    {
+      "id": "083c6795-b5d6-48af-aa8e-a39efb859db3",
+      "author": "unknown",
+      "text": "Update: Cache check dry-run steps completed in Python; Behave cache features now all pass. Parity check and lint/tests executed.",
+      "created_at": "2026-02-21T21:28:08.220737Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.955311Z",
-  "updated_at": "2026-02-21T21:17:30.148467Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:28:10.662168Z",
+  "closed_at": "2026-02-21T21:28:10.662168Z",
   "custom": {}
 }

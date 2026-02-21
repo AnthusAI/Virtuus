@@ -2180,6 +2180,12 @@ async fn when_table_refreshed(world: &mut VirtuusWorld) {
     world.last_summary = Some(table.refresh());
 }
 
+#[when("1 file is modified and the table is refreshed")]
+async fn when_modify_and_refresh(world: &mut VirtuusWorld) {
+    when_modify_file(world).await;
+    when_table_refreshed(world).await;
+}
+
 #[then("all GSIs should include the 2 new records")]
 async fn then_gsi_has_new(world: &mut VirtuusWorld) {
     let table = current_table(world);

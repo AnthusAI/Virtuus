@@ -3,7 +3,7 @@
   "title": "Phase 4: Cache & Incremental Invalidation",
   "description": "Implement mtime-based cache layer with two-tier staleness detection (O(1) dir check, O(N) file scan), JIT invalidation on query, warm reindex for proactive refresh, and incremental reload of only changed files. See Vision.md for full details.",
   "type": "epic",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,22 @@
       "author": "unknown",
       "text": "Update: Rust cache implementation + unit/Cucumber steps added; parity fixed and clippy/cargo test/black/ruff clean. Behave run still blocked by unrelated pending steps. Next: finalize docs/tests as needed and close stories after verification.",
       "created_at": "2026-02-21T21:17:10.454464Z"
+    },
+    {
+      "id": "385482e7-e19b-49be-b33b-bf1b77d0cde1",
+      "author": "unknown",
+      "text": "Standup: finishing cache parity. Next: add missing Python cache step defs and rerun behave cache scenarios. Blocker: undefined cache steps in Behave; addressing now.",
+      "created_at": "2026-02-21T21:20:03.312012Z"
+    },
+    {
+      "id": "0a35927a-c020-4266-9b49-919f862417e7",
+      "author": "unknown",
+      "text": "Standup: cache parity fixed. Did: added missing Python cache steps, parity check green, cache Behave suite passing, cargo test/black/ruff run. Next: close Phase 4 stories.",
+      "created_at": "2026-02-21T21:27:22.173140Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.668053Z",
-  "updated_at": "2026-02-21T21:17:10.454464Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:27:45.184649Z",
+  "closed_at": "2026-02-21T21:27:45.184649Z",
   "custom": {}
 }

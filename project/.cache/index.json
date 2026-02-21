@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-21T20:53:13Z",
+  "built_at": "2026-02-21T21:28:16Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
@@ -15,10 +15,10 @@
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
-    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771705839.428909,
+    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771696060.630499,
-    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771705839.57754,
+    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
     "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771696060.633999,
@@ -34,7 +34,7 @@
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771696060.631862,
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
-    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771705839.72624,
+    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771696060.627846,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771696060.628951,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771696060.633592,
@@ -47,9 +47,9 @@
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
-    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771705839.903068,
+    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771709284.516897,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771705654.123434,
-    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771705840.058563,
+    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771709290.662331,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771696060.630974,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771696060.635161
@@ -421,13 +421,37 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T21:27:45.184649Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T20:30:39.428784Z",
           "id": "102b3fc2-fa7a-45e4-b467-1c125d14dfab",
           "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:53:46.373019Z",
+          "id": "6e9c3747-230c-407b-b51c-5c28fcab6b67",
+          "text": "Plan: Python cache implemented; Rust cache features and tests pending. Next: finish Rust implementation, add Cucumber steps, run make check, close stories. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:17:10.454464Z",
+          "id": "70753bce-0279-49ab-867f-e80ad56a96f2",
+          "text": "Update: Rust cache implementation + unit/Cucumber steps added; parity fixed and clippy/cargo test/black/ruff clean. Behave run still blocked by unrelated pending steps. Next: finalize docs/tests as needed and close stories after verification."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:20:03.312012Z",
+          "id": "385482e7-e19b-49be-b33b-bf1b77d0cde1",
+          "text": "Standup: finishing cache parity. Next: add missing Python cache step defs and rerun behave cache scenarios. Blocker: undefined cache steps in Behave; addressing now."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:27:22.173140Z",
+          "id": "0a35927a-c020-4266-9b49-919f862417e7",
+          "text": "Standup: cache parity fixed. Did: added missing Python cache steps, parity check green, cache Behave suite passing, cargo test/black/ruff run. Next: close Phase 4 stories."
         }
       ],
       "created_at": "2026-02-21T16:42:28.668053Z",
@@ -439,10 +463,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Phase 4: Cache & Incremental Invalidation",
       "type": "epic",
-      "updated_at": "2026-02-21T20:30:39.428784Z"
+      "updated_at": "2026-02-21T21:27:45.184649Z"
     },
     {
       "assignee": null,
@@ -519,13 +543,37 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T21:27:53.533189Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T20:30:39.577414Z",
           "id": "3f18e6a5-ff63-4f22-8697-6f161d502dbe",
           "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:53:50.035817Z",
+          "id": "e98d0e5c-b0c4-4d8b-b57d-a61569ea0fdb",
+          "text": "Plan: Python warm reindex coverage done; Rust cache warm/refresh logic still in progress. Next: finalize Rust implementation + tests and run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:17:15.828634Z",
+          "id": "731619d9-ca52-4455-b5d9-a4e63ca461e3",
+          "text": "Progress: Rust warm/refresh logic implemented with cache steps; warm reindex scenarios passing. Next: wrap up documentation/tests and close once remaining suite validated. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:20:05.343437Z",
+          "id": "1e1c79b4-a4a8-4d62-8e4c-ce5fa2fdb426",
+          "text": "Standup: remaining work is Python cache warm/refresh steps in Behave. Next: implement missing step defs so warm-reindex scenarios pass. Blocker: undefined steps in features/cache; implementing now."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:27:48.613703Z",
+          "id": "bc0e1b05-3fd7-4b8a-9a8b-46c3173ac417",
+          "text": "Update: Completed Python cache warm/refresh steps; cache Behave suite passing. Ran parity check, cargo test, black/ruff."
         }
       ],
       "created_at": "2026-02-21T16:45:45.764538Z",
@@ -537,10 +585,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Warm reindex",
       "type": "story",
-      "updated_at": "2026-02-21T20:30:39.577414Z"
+      "updated_at": "2026-02-21T21:27:53.533189Z"
     },
     {
       "assignee": null,
@@ -1013,13 +1061,37 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T21:27:59.565500Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T20:30:39.726123Z",
           "id": "7d56a79e-4c7e-4d6e-8aec-019f2b21df1d",
           "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:53:51.846244Z",
+          "id": "9325af45-1121-4264-8b0a-66624b3505e4",
+          "text": "Plan: Python cache invalidation behavior implemented; Rust auto-refresh/staleness detection in progress. Next: finish Rust logic, add tests + steps, verify specs. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:17:21.102757Z",
+          "id": "9c757ec6-03b1-4739-96a9-a98a46e86c74",
+          "text": "Progress: Cache invalidation implemented in Rust with staleness checks and warm query flow; cache features passing after parity fixes. Next: keep monitoring behave parity; close after final check."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:20:07.078603Z",
+          "id": "a8f415cf-dccd-458a-a065-7c9a157d545a",
+          "text": "Standup: cache invalidation specs mostly green in Rust; Python Behave missing cache file change steps. Next: add step defs for added/modified files and rerun cache feature. Blocker: undefined steps."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:27:57.472158Z",
+          "id": "f9069877-6dac-4987-bc19-3cb727892c8b",
+          "text": "Update: Filled missing Python cache invalidation steps; cache Behave scenarios now green. Ran parity check + cargo test + black/ruff."
         }
       ],
       "created_at": "2026-02-21T16:45:45.418713Z",
@@ -1031,10 +1103,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Cache invalidation",
       "type": "story",
-      "updated_at": "2026-02-21T20:30:39.726123Z"
+      "updated_at": "2026-02-21T21:27:59.565500Z"
     },
     {
       "assignee": null,
@@ -1378,13 +1450,37 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T21:28:04.516752Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T20:30:39.902959Z",
           "id": "62bd8afe-9f02-4edf-b22a-aae2654b43e3",
           "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:53:53.808234Z",
+          "id": "99f1ca62-58c3-4979-b016-2dfd9f083325",
+          "text": "Plan: Incremental refresh partially wired in Rust (manifest/dir mtime); Python complete. Next: finalize change detection + tests and exercise via cache features. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:17:26.694729Z",
+          "id": "9ca1cb4f-4fc7-4788-b00d-b7da475f2c68",
+          "text": "Progress: Incremental refresh logic + manifest handling wired in Rust; added cache Cucumber steps and unit tests. Next: finish remaining validation/behave runs and close story."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:20:09.195545Z",
+          "id": "011f85a1-5cc1-4295-817c-d44b483ee718",
+          "text": "Standup: incremental refresh logic implemented; Behave missing Python steps for on-disk changes still failing. Next: add missing cache step defs so incremental refresh scenarios pass. Blocker: undefined Behave steps for file add/modify."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:28:02.187749Z",
+          "id": "39a8cf45-e450-4379-a977-d0ce0d52bc1e",
+          "text": "Update: Added missing Python incremental refresh steps; cache Behave suite passing. Parity and cargo test run; lint clean."
         }
       ],
       "created_at": "2026-02-21T16:45:45.591795Z",
@@ -1396,10 +1492,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Incremental refresh",
       "type": "story",
-      "updated_at": "2026-02-21T20:30:39.902959Z"
+      "updated_at": "2026-02-21T21:28:04.516752Z"
     },
     {
       "assignee": null,
@@ -1458,13 +1554,37 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T21:28:10.662168Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T20:30:40.058449Z",
           "id": "b8220405-0d7c-4d88-b967-0143c4b5fcb7",
           "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:53:56.726035Z",
+          "id": "28b83958-5202-40aa-9f08-66f564f5c517",
+          "text": "Plan: Cache check/dry-run implemented in Python; Rust check/auto-refresh behavior still needs tests + fixes. Next: complete Rust logic and Cucumber steps, run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:17:30.148467Z",
+          "id": "9c0b9d60-94b3-4ee8-9f8f-f08d9e00284c",
+          "text": "Progress: Added cache check/dry-run support + parity steps in Rust; lint/tests green. Next: final verification before closure. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:20:11.415844Z",
+          "id": "deff7dac-bf25-425b-ad0e-13e1e4005c23",
+          "text": "Standup: cache check/dry-run behavior covered in Rust; Python Behave missing cache file change steps. Next: implement missing steps and rerun cache feature. Blocker: undefined steps for add/modify/refresh."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:28:08.220737Z",
+          "id": "083c6795-b5d6-48af-aa8e-a39efb859db3",
+          "text": "Update: Cache check dry-run steps completed in Python; Behave cache features now all pass. Parity check and lint/tests executed."
         }
       ],
       "created_at": "2026-02-21T16:45:45.955311Z",
@@ -1476,10 +1596,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Cache check (dry-run refresh)",
       "type": "story",
-      "updated_at": "2026-02-21T20:30:40.058449Z"
+      "updated_at": "2026-02-21T21:28:10.662168Z"
     },
     {
       "assignee": null,

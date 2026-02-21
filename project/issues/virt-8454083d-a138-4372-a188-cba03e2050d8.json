@@ -3,7 +3,7 @@
   "title": "Cache invalidation",
   "description": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Configurable: check_interval prevents re-checking within the interval; auto_refresh=False disables JIT refresh, requiring explicit warm() calls. Spec: features/cache/cache_invalidation.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,22 @@
       "author": "unknown",
       "text": "Progress: Cache invalidation implemented in Rust with staleness checks and warm query flow; cache features passing after parity fixes. Next: keep monitoring behave parity; close after final check.",
       "created_at": "2026-02-21T21:17:21.102757Z"
+    },
+    {
+      "id": "a8f415cf-dccd-458a-a065-7c9a157d545a",
+      "author": "unknown",
+      "text": "Standup: cache invalidation specs mostly green in Rust; Python Behave missing cache file change steps. Next: add step defs for added/modified files and rerun cache feature. Blocker: undefined steps.",
+      "created_at": "2026-02-21T21:20:07.078603Z"
+    },
+    {
+      "id": "f9069877-6dac-4987-bc19-3cb727892c8b",
+      "author": "unknown",
+      "text": "Update: Filled missing Python cache invalidation steps; cache Behave scenarios now green. Ran parity check + cargo test + black/ruff.",
+      "created_at": "2026-02-21T21:27:57.472158Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.418713Z",
-  "updated_at": "2026-02-21T21:17:21.102757Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:27:59.565500Z",
+  "closed_at": "2026-02-21T21:27:59.565500Z",
   "custom": {}
 }
