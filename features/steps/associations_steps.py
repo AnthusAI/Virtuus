@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Dict
 
 from behave import given, then, when
@@ -125,13 +126,13 @@ def step_given_has_many_through(context, table, target, through):
     )
 
 
-@given(r"user (\{.*\})")
+@given(re.compile(r"^user (\{.*\})$"))
 def step_user_record(context, record_text):
     users = _ensure_table(context, "users")
     users.put(json.loads(record_text))
 
 
-@given(r"post (\{.*\})")
+@given(re.compile(r"^post (\{.*\})$"))
 def step_post_record(context, record_text):
     remove_user = False
     if record_text.endswith(" with no user_id field"):
@@ -183,10 +184,36 @@ def step_job_assignments(context):
         assignments.put(record)
 
 
-@given(r"job (\{.*\})")
+@given(re.compile(r"^job (\{.*\})$"))
 def step_job_record(context, record_text):
     jobs = _ensure_table(context, "jobs")
     jobs.put(json.loads(record_text))
+
+@given('user {"id": "user-1", "name": "Alice"}')
+def step_user_alice(context):
+    step_user_record(context, '{"id": "user-1", "name": "Alice"}')
+
+
+@given('post {"id": "post-1", "user_id": "user-1", "title": "Hello"}')
+def step_post_hello(context):
+    step_post_record(context, '{"id": "post-1", "user_id": "user-1", "title": "Hello"}')
+
+
+@given('post {"id": "post-1", "user_id": "user-999", "title": "Orphan"}')
+def step_post_orphan(context):
+    step_post_record(context, '{"id": "post-1", "user_id": "user-999", "title": "Orphan"}')
+
+
+@given('post {"id": "post-1", "title": "No Author"} with no user_id field')
+def step_post_no_author(context):
+    step_post_record(context, '{"id": "post-1", "title": "No Author"} with no user_id field')
+
+
+@given('job {"id": "job-1"}')
+def step_job_one(context):
+    step_job_record(context, '{"id": "job-1"}')
+
+
 
 
 @given('no job_assignments for "{job_id}"')

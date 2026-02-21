@@ -22,10 +22,22 @@
       "author": "unknown",
       "text": "Standup: Python schema-from-yaml + describe/validate/execute steps done & green; Rust parity next. Blockers: none.",
       "created_at": "2026-02-21T22:15:10.526345Z"
+    },
+    {
+      "id": "4e3aa252-80a5-49f8-9419-e00745d887fa",
+      "author": "unknown",
+      "text": "Rust parity tasks in-flight; added coverage tests and schema loading helpers, finishing Cucumber steps now.",
+      "created_at": "2026-02-21T23:16:15.611190Z"
+    },
+    {
+      "id": "2c7d0f7a-eb3c-4526-99b8-6feb85cc6baf",
+      "author": "unknown",
+      "text": "Continuing Rust Cucumber parity: fixing duplicate step compile errors, will rerun make check; blockers none.",
+      "created_at": "2026-02-21T23:23:45.924023Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.934530Z",
-  "updated_at": "2026-02-21T22:15:10.526345Z",
+  "updated_at": "2026-02-21T23:23:45.924023Z",
   "closed_at": null,
   "custom": {}
 }

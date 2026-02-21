@@ -1264,6 +1264,131 @@ mod tests {
     }
 
     #[test]
+    fn refresh_without_directory_returns_default() {
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let summary = table.refresh();
+        assert_eq!(summary.added + summary.deleted + summary.modified, 0);
+    }
+
+    #[test]
+    fn refresh_detects_deleted_files() {
+        let dir = temp_dir("table_refresh_deleted");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("u1.json"), r#"{"id":"u1"}"#).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+        assert!(table.get("u1", None).is_some());
+        fs::remove_file(dir.join("u1.json")).unwrap();
+        let summary = table.refresh();
+        assert_eq!(summary.deleted, 1);
+        assert!(table.get("u1", None).is_none());
+    }
+
+    #[test]
+    fn refresh_deletes_composite_records() {
+        let dir = temp_dir("table_refresh_composite_deleted");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("p__s.json"), r#"{"partition":"p","sort":"s"}"#).unwrap();
+        let mut table = Table::new(
+            "items",
+            None,
+            Some("partition"),
+            Some("sort"),
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+        assert_eq!(table.scan().len(), 1);
+        fs::remove_file(dir.join("p__s.json")).unwrap();
+        let summary = table.refresh();
+        assert_eq!(summary.deleted, 1);
+        assert!(table.scan().is_empty());
+    }
+
+    #[test]
+    fn warm_without_directory_is_noop() {
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.warm();
+        assert_eq!(table.scan().len(), 0);
+    }
+
+    #[test]
+    fn maybe_refresh_before_query_refreshes_when_stale() {
+        let dir = temp_dir("table_maybe_refresh");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("u1.json"), r#"{"id":"u1"}"#).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let records = table.scan();
+        assert_eq!(records.len(), 1);
+    }
+
+    #[test]
+    fn key_from_filename_parses_composite_and_simple() {
+        let dir = temp_dir("table_key_from_filename");
+        let table = Table::new(
+            "items",
+            None,
+            Some("pk"),
+            Some("sk"),
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let composite = table
+            .key_from_filename(PathBuf::from("pk__sk.json"))
+            .unwrap();
+        match composite {
+            TableKey::Composite(pk, sk) => {
+                assert_eq!(pk, "pk");
+                assert_eq!(sk, "sk");
+            }
+            _ => panic!("expected composite key"),
+        }
+        let simple_table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let simple = simple_table
+            .key_from_filename(PathBuf::from("u1.json"))
+            .unwrap();
+        match simple {
+            TableKey::Simple(pk) => assert_eq!(pk, "u1"),
+            _ => panic!("expected simple key"),
+        }
+    }
+
+    #[test]
     fn export_sets_atomic_flag() {
         let export_dir = temp_dir("export_atomic");
         let mut table = Table::new(
@@ -1763,5 +1888,38 @@ mod tests {
         for key in ["added", "modified", "deleted"] {
             assert!(last.get(key).is_some());
         }
+    }
+
+    #[test]
+    fn accessors_return_association_metadata() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.add_has_many("posts", "posts", "by_status");
+        table.directory = Some(PathBuf::from("/tmp"));
+        assert!(table.associations().contains(&"posts".to_string()));
+        assert!(table.association_defs().contains_key("posts"));
+        assert!(table.directory().is_some());
+    }
+
+    #[test]
+    fn helper_methods_handle_missing_directory() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        assert!(table.iter_json_files().is_empty());
+        assert_eq!(table.dir_mtime(), None);
+        table.maybe_refresh_before_query();
     }
 }

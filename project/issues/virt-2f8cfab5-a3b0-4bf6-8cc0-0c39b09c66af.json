@@ -3,7 +3,7 @@
   "title": "Execute indexed queries",
   "description": "Given a database with GSI-indexed tables, when I execute() with index and sort directives, it should use the GSI for efficient lookup with optional sort conditions and direction. Spec: features/query/execute_indexed.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,22 @@
       "author": "unknown",
       "text": "Standup: Python execute indexed queries passing; will implement Rust execute + GSI queries next. Blockers: none.",
       "created_at": "2026-02-21T22:15:19.327826Z"
+    },
+    {
+      "id": "671301f2-3e99-4f67-9f7c-c53a59bcb4b2",
+      "author": "unknown",
+      "text": "Standup: GSI query support updated in Python; Rust tests broken after signature change. Working on aligning rust Table.query_gsi usages and cucumber steps; expect to rerun cargo tests after cleanup. Blockers: none.",
+      "created_at": "2026-02-21T22:38:34.821028Z"
+    },
+    {
+      "id": "a1ab601a-804f-4c26-94a5-cbe27b0b0619",
+      "author": "unknown",
+      "text": "Completed: execute indexed queries now passing in Rust; query_gsi signature updated, cucumber green.",
+      "created_at": "2026-02-21T22:47:34.091580Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.152329Z",
-  "updated_at": "2026-02-21T22:15:19.327826Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T22:47:34.091580Z",
+  "closed_at": "2026-02-21T22:47:13.810641Z",
   "custom": {}
 }

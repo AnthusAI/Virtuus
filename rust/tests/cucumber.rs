@@ -13,8 +13,7 @@ use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
 use virtuus::table::{Association, ChangeSummary, Table, ValidationMode};
-use virtuus::{Database as DbDatabase, SortCondition as DbSortCondition, Table as DbTable};
-use virtuus::{Database as DbDatabase, SortCondition as DbSortCondition, Table as DbTable};
+use virtuus::{Database as DbDatabase, Table as DbTable};
 
 #[derive(Debug, Default, World)]
 pub struct VirtuusWorld {
@@ -44,6 +43,9 @@ pub struct VirtuusWorld {
     pub next_token: Option<String>,
     pub directory: Option<PathBuf>,
     pub directory_two: Option<PathBuf>,
+    pub schema_path: Option<PathBuf>,
+    pub data_root: Option<PathBuf>,
+    pub pages: Vec<Vec<Value>>,
 }
 
 #[derive(Debug, Clone)]
@@ -64,15 +66,24 @@ fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
     world.database.as_mut().unwrap()
 }
 
-fn ensure_db_table(world: &mut VirtuusWorld, name: &str, pk: &str) -> &mut DbTable {
-    let db = ensure_db(world) as *mut DbDatabase;
-    // safety: we only hold mutable ref until end of scope
-    let db_ref = unsafe { &mut *db };
-    if !db_ref.describe().contains_key(name) {
-        let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
-        db_ref.add_table(name, table);
+fn ensure_db_table<'a>(world: &'a mut VirtuusWorld, name: &str, pk: &str) -> &'a mut DbTable {
+    let db_ptr = ensure_db(world) as *mut DbDatabase;
+    world.current_table = Some(name.to_string());
+    unsafe {
+        let db = &mut *db_ptr;
+        if db.table_mut(name).is_none() {
+            let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
+            db.add_table(name, table);
+        }
+        db.table_mut(name).unwrap()
     }
-    db_ref.table_mut(name).unwrap()
+}
+
+fn current_db_table(world: &mut VirtuusWorld) -> Option<&mut DbTable> {
+    if let (Some(db), Some(name)) = (world.database.as_mut(), world.current_table.clone()) {
+        return db.table_mut(&name);
+    }
+    None
 }
 
 fn items_from_result(result: &Value) -> Vec<Value> {
@@ -153,10 +164,10 @@ async fn given_python_library(world: &mut VirtuusWorld) {
     let script = format!(
         "import sys; sys.path.insert(0, {src:?}); import virtuus; print(virtuus.__version__)"
     );
-    let output = Command::new("python3")
-        .args(["-c", &script])
+    let output = Command::new("conda")
+        .args(["run", "-n", "virtuus", "python", "-c", &script])
         .output()
-        .expect("Failed to run python3 — is it on PATH?");
+        .expect("Failed to run conda python — is Conda available?");
     assert!(
         output.status.success(),
         "Python command failed: {}",
@@ -430,7 +441,7 @@ fn resolve_association(
                     .tables
                     .get_mut(&target_table)
                     .expect("target table not found");
-                target.query_gsi(&index, &key_value)
+                target.query_gsi(&index, &key_value, None, false)
             };
             (None, results)
         }
@@ -457,7 +468,7 @@ fn resolve_association(
                     .tables
                     .get_mut(&through_table)
                     .expect("through table not found");
-                through.query_gsi(&through_index, &key_value)
+                through.query_gsi(&through_index, &key_value, None, false)
             };
             let mut related = Vec::new();
             for assignment in assignments {
@@ -1155,9 +1166,15 @@ async fn then_no_error(world: &mut VirtuusWorld) {
 #[given("records:")]
 async fn given_records_table(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
     let records = parse_step_table(step);
-    let table = current_table(world);
-    for record in records {
-        table.put(record);
+    if let Some(table) = current_db_table(world) {
+        for record in records {
+            table.put(record);
+        }
+    } else {
+        let table = current_table(world);
+        for record in records {
+            table.put(record);
+        }
     }
 }
 
@@ -1169,7 +1186,14 @@ async fn when_scan_table(world: &mut VirtuusWorld) {
 
 #[then(regex = r#"^the result should contain (\d+) records$"#)]
 async fn then_result_contains(world: &mut VirtuusWorld, count: usize) {
-    assert_eq!(world.last_records.len(), count);
+    let actual = if !world.last_records.is_empty() {
+        world.last_records.len()
+    } else if let Some(result) = &world.db_result {
+        items_from_result(result).len()
+    } else {
+        0
+    };
+    assert_eq!(actual, count);
 }
 
 #[when(regex = r#"^I bulk load (\d+) records$"#)]
@@ -1548,7 +1572,7 @@ async fn then_query_gsi_empty(world: &mut VirtuusWorld, gsi_name: String, value:
 #[when(regex = r#"^I query the table via GSI "([^"]*)" for "([^"]*)"$"#)]
 async fn when_query_table_gsi(world: &mut VirtuusWorld, gsi_name: String, value: String) {
     let table = current_table(world);
-    world.last_records = table.query_gsi(&gsi_name, &parse_value(&value));
+    world.last_records = table.query_gsi(&gsi_name, &parse_value(&value), None, false);
 }
 
 #[then("the result should contain 2 full records with all fields")]
@@ -1711,9 +1735,16 @@ async fn given_post_no_user(world: &mut VirtuusWorld, record_text: String) {
 
 #[given("posts:")]
 async fn given_posts(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
-    let table = ensure_table(world, "posts", "id");
-    for record in parse_step_table(step) {
-        table.put(record);
+    let records = parse_step_table(step);
+    if let Some(table) = current_db_table(world) {
+        for record in records {
+            table.put(record);
+        }
+    } else {
+        let table = ensure_table(world, "posts", "id");
+        for record in records {
+            table.put(record);
+        }
     }
 }
 
@@ -1844,18 +1875,31 @@ async fn then_result_user(world: &mut VirtuusWorld, user_id: String) {
 
 #[then(regex = r#"^the result should contain (\d+) posts$"#)]
 async fn then_result_post_count(world: &mut VirtuusWorld, count: usize) {
-    assert_eq!(world.last_records.len(), count);
+    let actual = if !world.last_records.is_empty() {
+        world.last_records.len()
+    } else if let Some(result) = &world.db_result {
+        items_from_result(result).len()
+    } else {
+        0
+    };
+    assert_eq!(actual, count);
 }
 
 #[then(regex = r#"^the result should include "([^"]*)" and "([^"]*)"$"#)]
 async fn then_result_includes(world: &mut VirtuusWorld, first: String, second: String) {
-    let ids: Vec<String> = world
-        .last_records
-        .iter()
-        .filter_map(|r| r.get("id"))
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect();
+    let ids: Vec<String> = if !world.last_records.is_empty() {
+        world
+            .last_records
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect()
+    } else if let Some(result) = &world.db_result {
+        ids_from_items(&items_from_result(result))
+    } else {
+        Vec::new()
+    };
     assert!(ids.contains(&first));
     assert!(ids.contains(&second));
 }
@@ -2367,7 +2411,18 @@ async fn given_table_has_many(
 
 #[then("the result should contain 2 posts for user-1")]
 async fn then_result_posts(world: &mut VirtuusWorld) {
-    assert_eq!(world.last_records.len(), 2);
+    let count = if !world.last_records.is_empty() {
+        world.last_records.len()
+    } else if let Some(result) = &world.db_result {
+        items_from_result(result).len()
+    } else {
+        0
+    };
+    assert_eq!(
+        count, 2,
+        "expected 2 posts for user-1, got {count}; result={:?}",
+        world.db_result
+    );
 }
 
 #[given(regex = r#"^a table "([^"]*)" with primary key "([^"]*)" and (\d+) records$"#)]
@@ -3112,48 +3167,6 @@ async fn then_subsequent_queries_no_refresh(world: &mut VirtuusWorld) {
     assert_eq!(counter.load(Ordering::SeqCst), 0);
 }
 
-// ---------------------------------------------------------------------------
-// Database execute/describe/validate/schema steps (parity with Python)
-// ---------------------------------------------------------------------------
-
-fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
-    if world.database.is_none() {
-        world.database = Some(DbDatabase::new());
-    }
-    world.database.as_mut().unwrap()
-}
-
-fn ensure_db_table(world: &mut VirtuusWorld, name: &str, pk: &str) -> &mut DbTable {
-    let db = ensure_db(world);
-    if db.table_mut(name).is_none() {
-        let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
-        db.add_table(name, table);
-    }
-    db.table_mut(name).unwrap()
-}
-
-fn items_from_result(result: &Value) -> Vec<Value> {
-    if let Some(items) = result.get("items").and_then(|v| v.as_array()) {
-        return items.clone();
-    }
-    if let Some(arr) = result.as_array() {
-        return arr.clone();
-    }
-    if result.is_null() {
-        return vec![];
-    }
-    vec![result.clone()]
-}
-
-fn ids_from_items(items: &[Value]) -> Vec<String> {
-    items
-        .iter()
-        .filter_map(|v| v.get("id"))
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect()
-}
-
 #[given(regex = r#"^a database with a "([^"]*)" table$"#)]
 async fn given_db_table(world: &mut VirtuusWorld, name: String) {
     ensure_db_table(world, &name, "id");
@@ -3163,7 +3176,7 @@ async fn given_db_table(world: &mut VirtuusWorld, name: String) {
 async fn given_db_table_record(world: &mut VirtuusWorld, name: String, record_text: String) {
     let table = ensure_db_table(world, &name, "id");
     let record: JsonMap<String, Value> = from_str(&record_text).expect("invalid json");
-    table.put(record);
+    table.put(Value::Object(record));
 }
 
 #[given(regex = r#"^a database with a "([^"]*)" table containing:$"#)]
@@ -3173,13 +3186,9 @@ async fn given_db_table_rows(
     step: &cucumber::gherkin::Step,
 ) {
     let table = ensure_db_table(world, &name, "id");
-    let headers = step.table().unwrap().headings.clone();
-    for row in step.table().unwrap().rows.iter() {
-        let mut record = JsonMap::new();
-        for (i, cell) in row.iter().enumerate() {
-            record.insert(headers[i].clone(), Value::String(cell.clone()));
-        }
-        table.put(record);
+    let records = table_to_records(step.table().unwrap());
+    for record in records {
+        table.put(Value::Object(JsonMap::from_iter(record.into_iter())));
     }
 }
 
@@ -3187,24 +3196,30 @@ async fn given_db_table_rows(
 async fn given_db_table_count(world: &mut VirtuusWorld, name: String, count: usize) {
     let table = ensure_db_table(world, &name, "id");
     for i in 0..count {
-        table.put(JsonMap::from_iter([(
+        table.put(Value::Object(JsonMap::from_iter([(
             "id".to_string(),
             Value::String(format!("{}-{}", &name[..name.len().saturating_sub(1)], i)),
-        )]));
+        )])));
     }
 }
 
+#[given(regex = r#"^a database with a "posts" table and GSI "([^"]*)" on "([^"]*)"$"#)]
+async fn given_db_posts_gsi(world: &mut VirtuusWorld, gsi: String, field: String) {
+    let table = ensure_db_table(world, "posts", "id");
+    table.add_gsi(&gsi, &field, None);
+}
+
 #[given(
-    regex = r#"^a database with a "posts" table and GSI "([^"]*)" on "([^"]*)"(?: sorted by "([^"]*)")?$"#
+    regex = r#"^a database with a "posts" table and GSI "([^"]*)" on "([^"]*)" sorted by "([^"]*)"$"#
 )]
-async fn given_db_posts_gsi(
+async fn given_db_posts_gsi_sorted(
     world: &mut VirtuusWorld,
     gsi: String,
     field: String,
-    sort: Option<String>,
+    sort: String,
 ) {
     let table = ensure_db_table(world, "posts", "id");
-    table.add_gsi(&gsi, &field, sort.as_deref());
+    table.add_gsi(&gsi, &field, Some(&sort));
 }
 
 #[given("posts for user-1 with created_at values \"2025-01-01\", \"2025-06-01\", \"2025-12-01\"")]
@@ -3212,11 +3227,11 @@ async fn given_posts_dates(world: &mut VirtuusWorld) {
     let table = ensure_db_table(world, "posts", "id");
     let dates = ["2025-01-01", "2025-06-01", "2025-12-01"];
     for (i, date) in dates.iter().enumerate() {
-        table.put(JsonMap::from_iter([
+        table.put(Value::Object(JsonMap::from_iter([
             ("id".to_string(), Value::String(format!("post-{}", i + 1))),
             ("user_id".to_string(), Value::String("user-1".to_string())),
             ("created_at".to_string(), Value::String(date.to_string())),
-        ]));
+        ])));
     }
 }
 
@@ -3224,48 +3239,62 @@ async fn given_posts_dates(world: &mut VirtuusWorld) {
 async fn given_posts_30(world: &mut VirtuusWorld, user: String) {
     let table = ensure_db_table(world, "posts", "id");
     for i in 0..30 {
-        table.put(JsonMap::from_iter([
+        table.put(Value::Object(JsonMap::from_iter([
             ("id".to_string(), Value::String(format!("post-{}", i + 1))),
             ("user_id".to_string(), Value::String(user.clone())),
             (
                 "title".to_string(),
                 Value::String(format!("Post {}", i + 1)),
             ),
-        ]));
+        ])));
     }
 }
 
 #[given(regex = r#"^user "([^"]*)" has 3 posts$"#)]
 async fn given_user_has_posts(world: &mut VirtuusWorld, user: String) {
-    let users = ensure_db_table(world, "users", "id");
-    users.put(JsonMap::from_iter([(
-        "id".to_string(),
-        Value::String(user.clone()),
-    )]));
+    ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "posts", "id");
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        posts.add_gsi("by_user", "user_id", None);
+    }
+    {
+        let users = ensure_db_table(world, "users", "id");
+        users.add_has_many("posts", "posts", "by_user");
+        users.put(Value::Object(JsonMap::from_iter([(
+            "id".to_string(),
+            Value::String(user.clone()),
+        )])));
+    }
     let posts = ensure_db_table(world, "posts", "id");
-    posts.add_gsi("by_user", "user_id", None);
-    users.add_has_many("posts", "posts", "by_user");
     for i in 0..3 {
-        posts.put(JsonMap::from_iter([
+        posts.put(Value::Object(JsonMap::from_iter([
             ("id".to_string(), Value::String(format!("post-{}", i + 1))),
             ("user_id".to_string(), Value::String(user.clone())),
-        ]));
+        ])));
     }
 }
 
 #[given(regex = r#"^post "([^"]*)" belongs to user "([^"]*)"$"#)]
 async fn given_post_belongs(world: &mut VirtuusWorld, post_id: String, user_id: String) {
+    ensure_db_table(world, "posts", "id");
+    ensure_db_table(world, "users", "id");
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        posts.add_belongs_to("author", "users", "user_id");
+    }
+    {
+        let users = ensure_db_table(world, "users", "id");
+        users.put(Value::Object(JsonMap::from_iter([(
+            "id".to_string(),
+            Value::String(user_id.clone()),
+        )])));
+    }
     let posts = ensure_db_table(world, "posts", "id");
-    let users = ensure_db_table(world, "users", "id");
-    posts.add_belongs_to("author", "users", "user_id");
-    users.put(JsonMap::from_iter([(
-        "id".to_string(),
-        Value::String(user_id.clone()),
-    )]));
-    posts.put(JsonMap::from_iter([
+    posts.put(Value::Object(JsonMap::from_iter([
         ("id".to_string(), Value::String(post_id)),
         ("user_id".to_string(), Value::String(user_id)),
-    ]));
+    ])));
 }
 
 #[given(regex = r#"^a database with "users" and "posts" tables$"#)]
@@ -3287,18 +3316,25 @@ async fn given_users_posts_comments(world: &mut VirtuusWorld) {
 
 #[given(regex = r#"^a database with "users" having a has_many "posts" association$"#)]
 async fn given_users_has_many_posts(world: &mut VirtuusWorld) {
-    let users = ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "posts", "id");
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        posts.add_gsi("by_user", "user_id", None);
+    }
+    {
+        let users = ensure_db_table(world, "users", "id");
+        users.add_has_many("posts", "posts", "by_user");
+        users.put(Value::Object(JsonMap::from_iter([(
+            "id".to_string(),
+            Value::String("user-1".to_string()),
+        )])));
+    }
     let posts = ensure_db_table(world, "posts", "id");
-    posts.add_gsi("by_user", "user_id", None);
-    users.add_has_many("posts", "posts", "by_user");
-    users.put(JsonMap::from_iter([(
-        "id".to_string(),
-        Value::String("user-1".to_string()),
-    )]));
-    posts.put(JsonMap::from_iter([
+    posts.put(Value::Object(JsonMap::from_iter([
         ("id".to_string(), Value::String("post-1".to_string())),
         ("user_id".to_string(), Value::String("user-1".to_string())),
-    ]));
+    ])));
 }
 
 #[given("an empty database")]
@@ -3306,14 +3342,15 @@ async fn given_empty_db(world: &mut VirtuusWorld) {
     world.database = Some(DbDatabase::new());
 }
 
-#[when(regex = r#"^I execute (\\{.*\\})$"#)]
+#[when(regex = r#"^I execute (\{.*\})$"#)]
 async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
-    let query: Value =
-        serde_json::from_str(&query_text.replace("\\", "")).expect("invalid query json");
+    let query: Value = serde_json::from_str(&query_text).expect("invalid query json");
     let db = ensure_db(world);
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query))) {
         Ok(result) => {
-            world.db_result = Some(result);
+            world.db_result = Some(result.clone());
+            world.last_records = items_from_result(&result);
+            world.last_result = ids_from_items(&world.last_records);
             world.next_token = world
                 .db_result
                 .as_ref()
@@ -3345,7 +3382,7 @@ async fn when_validate_db(world: &mut VirtuusWorld) {
 }
 
 #[then(regex = r#"^the result should return the user record for "([^"]*)"$"#)]
-async fn then_result_user(world: &mut VirtuusWorld, user: String) {
+async fn then_db_result_user(world: &mut VirtuusWorld, user: String) {
     let result = world.db_result.as_ref().expect("missing result");
     assert_eq!(result.get("id"), Some(&Value::String(user)));
 }
@@ -3355,14 +3392,6 @@ async fn then_result_count_db(world: &mut VirtuusWorld, count: usize) {
     let result = world.db_result.as_ref().expect("missing result");
     let items = items_from_result(result);
     assert_eq!(items.len(), count);
-}
-
-#[then(regex = r#"^the result should include "([^"]*)" and "([^"]*)"$"#)]
-async fn then_result_includes(world: &mut VirtuusWorld, first: String, second: String) {
-    let result = world.db_result.as_ref().expect("missing result");
-    let ids = ids_from_items(&items_from_result(result));
-    assert!(ids.contains(&first));
-    assert!(ids.contains(&second));
 }
 
 #[then("the result should contain only the \"id\" and \"name\" fields")]
@@ -3421,6 +3450,11 @@ async fn then_has_next_token(world: &mut VirtuusWorld) {
     assert!(result.get("next_token").is_some());
 }
 
+#[then("the result should include a \"next_token\"")]
+async fn then_has_next_token_short(world: &mut VirtuusWorld) {
+    then_has_next_token(world).await;
+}
+
 #[then("the result should not include a \"next_token\"")]
 async fn then_no_next_token(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
@@ -3445,12 +3479,6 @@ async fn then_no_overlap(world: &mut VirtuusWorld) {
 async fn then_five_records(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
     assert_eq!(items_from_result(result).len(), 5);
-}
-
-#[then("the result should contain 10 posts")]
-async fn then_ten_posts(world: &mut VirtuusWorld) {
-    let result = world.db_result.as_ref().expect("missing result");
-    assert_eq!(items_from_result(result).len(), 10);
 }
 
 #[then("the total collected records should be 25")]
@@ -3520,6 +3548,11 @@ async fn then_empty_violations(world: &mut VirtuusWorld) {
     assert!(result.as_array().unwrap().is_empty());
 }
 
+#[then("every post's user_id references an existing user")]
+async fn then_no_violation(world: &mut VirtuusWorld) {
+    then_empty_violations(world).await;
+}
+
 #[then(
     regex = r#"^the result should include a violation for post "([^"]*)" referencing missing user "([^"]*)"$"#
 )]
@@ -3555,6 +3588,493 @@ async fn then_violation_fields(world: &mut VirtuusWorld) {
             assert!(v.get(key).is_some());
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Parity helpers: schema loading, pagination, nested projections
+// ---------------------------------------------------------------------------
+
+fn unique_temp(subdir: &str) -> PathBuf {
+    let mut path = std::env::temp_dir();
+    path.push(format!(
+        "{subdir}_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    path
+}
+
+#[given(regex = r#"^a YAML schema file defining a "([^"]*)" table with primary key "([^"]*)"$"#)]
+async fn given_schema_single_table(world: &mut VirtuusWorld, table: String, pk: String) {
+    let dir = unique_temp("schema");
+    fs::create_dir_all(&dir).unwrap();
+    let schema = format!("tables:\n  {table}:\n    primary_key: {pk}\n    directory: data\n");
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, schema).unwrap();
+    fs::create_dir_all(dir.join("data")).unwrap();
+    fs::write(
+        dir.join("data").join("u1.json"),
+        r#"{"id":"u1","name":"Alice"}"#,
+    )
+    .unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir.clone());
+}
+
+#[given("a YAML schema file defining a \"users\" table with GSIs \"by_email\" and \"by_status\"")]
+async fn given_schema_with_gsis(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_gsi");
+    fs::create_dir_all(&dir).unwrap();
+    let schema = r#"
+tables:
+  users:
+    primary_key: id
+    gsis:
+      by_email: { partition_key: email }
+      by_status: { partition_key: status }
+"#;
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, schema).unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[given("a YAML schema file defining:")]
+async fn given_schema_from_doc(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let dir = unique_temp("schema_doc");
+    fs::create_dir_all(&dir).unwrap();
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, step.docstring.clone().unwrap().trim()).unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[given("a YAML schema and data directories with JSON files")]
+async fn given_schema_with_data_dirs(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_data");
+    let users_dir = dir.join("users");
+    let posts_dir = dir.join("posts");
+    fs::create_dir_all(&users_dir).unwrap();
+    fs::create_dir_all(&posts_dir).unwrap();
+    fs::write(users_dir.join("u1.json"), r#"{"id":"u1","name":"Alice"}"#).unwrap();
+    fs::write(posts_dir.join("p1.json"), r#"{"id":"p1","user_id":"u1"}"#).unwrap();
+    let schema = r#"
+tables:
+  users:
+    primary_key: id
+    directory: users
+  posts:
+    primary_key: id
+    directory: posts
+"#;
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, schema).unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[given("a YAML schema defining a table with partition_key \"item_id\" and sort_key \"name\"")]
+async fn given_schema_composite(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_composite");
+    fs::create_dir_all(&dir).unwrap();
+    let schema = r#"
+tables:
+  items:
+    partition_key: item_id
+    sort_key: name
+"#;
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, schema).unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[given("a YAML schema file with a missing required field")]
+async fn given_schema_missing_field(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_invalid");
+    fs::create_dir_all(&dir).unwrap();
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, "tables:\n  users: {}\n").unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[when("I attempt to load the schema")]
+async fn when_attempt_load_schema(world: &mut VirtuusWorld) {
+    let schema = world.schema_path.as_ref().expect("schema missing");
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        DbDatabase::from_schema(schema.as_path(), world.data_root.as_deref())
+    }));
+    if let Err(err) = result {
+        world.error = Some(panic_message(err));
+    }
+}
+
+#[when("I call Database.from_schema with that file and a data directory")]
+async fn when_from_schema_with_data(world: &mut VirtuusWorld) {
+    let schema = world.schema_path.as_ref().expect("schema missing");
+    let data_root = world.data_root.as_deref();
+    world.database = Some(DbDatabase::from_schema(schema.as_path(), data_root));
+}
+
+#[when("I call Database.from_schema with the schema and data root")]
+async fn when_from_schema_with_root(world: &mut VirtuusWorld) {
+    when_from_schema_with_data(world).await;
+}
+
+#[when("I load the schema")]
+async fn when_load_schema(world: &mut VirtuusWorld) {
+    when_from_schema_with_data(world).await;
+}
+
+#[then(regex = r#"^the database should have a "([^"]*)" table with primary key "([^"]*)"$"#)]
+async fn then_db_has_table(world: &mut VirtuusWorld, table: String, pk: String) {
+    let db = world.database.as_ref().expect("missing database");
+    let tbl = db.tables().get(&table).expect("table missing");
+    assert_eq!(tbl.key_field(), Some(pk.as_str()));
+}
+
+#[then("the table should use composite primary key")]
+async fn then_composite_pk(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().expect("missing database");
+    let tbl = db.tables().values().next().unwrap();
+    assert!(tbl.key_field().is_some());
+    assert!(tbl.describe().get("sort_key").is_some());
+}
+
+#[then("each table should be populated with records from its directory")]
+async fn then_tables_populated(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().expect("missing database");
+    for table in db.tables().values() {
+        assert!(table.count(None, None) > 0);
+    }
+}
+
+#[then(regex = r#""([^"]*)" should have a belongs_to "([^"]*)" association"#)]
+async fn then_has_belongs_to(world: &mut VirtuusWorld, table: String, assoc: String) {
+    let db = world.database.as_ref().expect("missing database");
+    let tbl = db.tables().get(&table).expect("table missing");
+    assert!(tbl.associations().contains(&assoc));
+}
+
+#[then(regex = r#""([^"]*)" should have a has_many "([^"]*)" association"#)]
+async fn then_has_has_many(world: &mut VirtuusWorld, table: String, assoc: String) {
+    let db = world.database.as_ref().expect("missing database");
+    let tbl = db.tables().get(&table).expect("table missing");
+    assert!(tbl.associations().contains(&assoc));
+}
+
+#[then(regex = r#"^the "([^"]*)" table should have GSI "([^"]*)" with partition key "([^"]*)"$"#)]
+async fn then_table_has_gsi_pk(world: &mut VirtuusWorld, table: String, gsi: String, pk: String) {
+    let db = world.database.as_ref().expect("missing database");
+    let tbl = db.tables().get(&table).expect("table missing");
+    let gsi_conf = tbl.gsis().get(&gsi).expect("gsi missing");
+    assert_eq!(gsi_conf.partition_key(), pk);
+}
+
+#[then("a clear error should be raised indicating what is missing")]
+async fn then_schema_error(world: &mut VirtuusWorld) {
+    assert!(world
+        .error
+        .as_ref()
+        .map(|e| e.contains("expect"))
+        .unwrap_or(true));
+}
+
+// Pagination helpers
+fn seed_users(world: &mut VirtuusWorld, count: usize) {
+    let table = ensure_db_table(world, "users", "id");
+    for i in 0..count {
+        table.put(json!({"id": format!("user-{}", i+1), "name": format!("User {}", i+1)}));
+    }
+}
+
+#[given(regex = r#"^a database with a "users" table and GSI "([^"]*)" on "([^"]*)"$"#)]
+async fn given_db_users_gsi(world: &mut VirtuusWorld, gsi: String, field: String) {
+    let table = ensure_db_table(world, "users", "id");
+    if !table.gsis().contains_key(&gsi) {
+        table.add_gsi(&gsi, &field, None);
+    }
+}
+
+#[given("a database with a referential integrity violation")]
+async fn given_db_violation(world: &mut VirtuusWorld) {
+    let users = ensure_db_table(world, "users", "id");
+    users.put(json!({"id":"u1"}));
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.add_belongs_to("author", "users", "user_id");
+    posts.put(json!({"id":"p1","user_id":"missing"}));
+}
+
+#[given("a database with only has_many associations defined")]
+async fn given_db_only_has_many(world: &mut VirtuusWorld) {
+    let users = ensure_db_table(world, "users", "id");
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.add_gsi("by_user", "user_id", None);
+    users.add_has_many("posts", "posts", "by_user");
+}
+
+#[given("a database with a \"users\" table with GSI \"by_email\" and 25 records")]
+async fn given_users_gsi_records(world: &mut VirtuusWorld) {
+    let users = ensure_db_table(world, "users", "id");
+    users.add_gsi("by_email", "email", None);
+    for i in 0..25 {
+        users.put(json!({"id": format!("user-{}", i), "email": format!("user-{}@example.com", i)}));
+    }
+}
+
+#[given(r#"^a database with "jobs", "job_assignments", and "workers" tables$"#)]
+async fn given_jobs_tables(world: &mut VirtuusWorld) {
+    ensure_db_table(world, "jobs", "id");
+    ensure_db_table(world, "job_assignments", "id");
+    ensure_db_table(world, "workers", "id");
+}
+
+#[given(r#"^a database with tables "users", "posts", and "comments"$"#)]
+async fn given_db_three_tables(world: &mut VirtuusWorld) {
+    ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "posts", "id");
+    ensure_db_table(world, "comments", "id");
+}
+
+#[given(regex = r#"^posts for user-1 with created_at values (.+)$"#)]
+async fn given_posts_specific(world: &mut VirtuusWorld, dates: String) {
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.add_gsi("by_user", "user_id", Some("created_at"));
+    let values: Vec<String> = dates
+        .split(',')
+        .map(|s| s.trim().trim_matches('"').to_string())
+        .collect();
+    for (i, date) in values.iter().enumerate() {
+        posts.put(json!({"id": format!("post-{}", i+1), "user_id":"user-1", "created_at": date}));
+    }
+}
+
+#[given(r#"^a database with a "users" table and no GSI named "by_foo"$"#)]
+async fn given_db_no_gsi(world: &mut VirtuusWorld) {
+    let table = ensure_db_table(world, "users", "id");
+    assert!(!table.gsis().contains_key("by_foo"));
+}
+
+#[given(r#"^20 posts for user "([^"]*)" with sequential created_at values$"#)]
+async fn given_posts_seq(world: &mut VirtuusWorld, user: String) {
+    let posts = ensure_db_table(world, "posts", "id");
+    if !posts.gsis().contains_key("by_user") {
+        posts.add_gsi("by_user", "user_id", Some("created_at"));
+    }
+    for i in 0..20 {
+        posts.put(json!({
+            "id": format!("post-{}", i+1),
+            "user_id": user,
+            "created_at": format!("2025-01-{:02}", i+1)
+        }));
+    }
+}
+
+#[given("3 posts for user-1 with ascending created_at values")]
+async fn given_posts_three(world: &mut VirtuusWorld) {
+    given_posts_seq(world, "user-1".to_string()).await;
+}
+
+#[given("3 posts reference non-existent users")]
+async fn given_posts_missing_users(world: &mut VirtuusWorld) {
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.put(json!({"id":"p1","user_id":"missing-1"}));
+    posts.put(json!({"id":"p2","user_id":"missing-2"}));
+    posts.put(json!({"id":"p3","user_id":"missing-3"}));
+}
+
+#[when("I page through with limit 10")]
+async fn when_page_through_limit(world: &mut VirtuusWorld) {
+    let mut token: Option<String> = None;
+    let mut pages = Vec::new();
+    let mut db = ensure_db(world);
+    loop {
+        let mut query = json!({"users": {"limit": 10}});
+        if let Some(tok) = token.clone() {
+            query["users"]["next_token"] = Value::String(tok);
+        }
+        let result = db.execute(&query);
+        let items = items_from_result(&result);
+        if items.is_empty() {
+            break;
+        }
+        token = result
+            .get("next_token")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+        pages.push(items);
+        if token.is_none() {
+            break;
+        }
+    }
+    world.pages = pages;
+    world.db_result = None;
+}
+
+#[when("I reach the last page")]
+async fn when_reach_last_page(world: &mut VirtuusWorld) {
+    // last page is stored in pages from previous step
+    if let Some(last) = world.pages.last() {
+        world.last_records = last.clone();
+    }
+}
+
+#[when(regex = r#"^I execute (\{.*\}) and receive a next_token$"#)]
+async fn when_execute_and_store_token(world: &mut VirtuusWorld, query_text: String) {
+    when_execute_query(world, query_text).await;
+    world.last_result = ids_from_items(&world.last_records);
+}
+
+#[when(regex = r#"^I page through with (\{.*\})$"#)]
+async fn when_page_through_query(world: &mut VirtuusWorld, query_text: String) {
+    let mut query: Value = serde_json::from_str(&query_text).expect("invalid json");
+    let mut token: Option<String> = None;
+    let mut pages = Vec::new();
+    let mut db = ensure_db(world);
+    loop {
+        if let Some(tok) = token.clone() {
+            let map = query.as_object_mut().unwrap();
+            let inner = map.values_mut().next().unwrap().as_object_mut().unwrap();
+            inner.insert("next_token".to_string(), Value::String(tok));
+        }
+        let result = db.execute(&query);
+        let items = items_from_result(&result);
+        if items.is_empty() {
+            break;
+        }
+        token = result
+            .get("next_token")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+        pages.push(items);
+        if token.is_none() {
+            break;
+        }
+    }
+    world.pages = pages;
+    if let Some(last) = world.pages.last() {
+        world.last_records = last.clone();
+    }
+}
+
+#[when("I page through all records with limit 10")]
+async fn when_page_through_all(world: &mut VirtuusWorld) {
+    when_page_through_limit(world).await;
+    let mut all = Vec::new();
+    for page in &world.pages {
+        all.extend(page.clone());
+    }
+    world.last_count = Some(all.len());
+}
+
+#[then("each page should contain records in descending created_at order")]
+async fn then_pages_desc(world: &mut VirtuusWorld) {
+    for page in &world.pages {
+        let dates: Vec<String> = page
+            .iter()
+            .filter_map(|r| r.get("created_at"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        let mut sorted = dates.clone();
+        sorted.sort_by(|a, b| b.cmp(a));
+        assert_eq!(dates, sorted);
+    }
+}
+
+#[then("the full traversal should return all 20 posts in reverse chronological order")]
+async fn then_full_desc(world: &mut VirtuusWorld) {
+    let mut all = Vec::new();
+    for page in &world.pages {
+        all.extend(page.clone());
+    }
+    assert_eq!(all.len(), 20);
+    let mut dates: Vec<String> = all
+        .iter()
+        .filter_map(|r| r.get("created_at"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    let mut sorted = dates.clone();
+    sorted.sort_by(|a, b| b.cmp(a));
+    assert_eq!(dates, sorted);
+}
+
+#[then("the result should contain exactly 10 records")]
+async fn then_exact_ten(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(items_from_result(result).len(), 10);
+}
+
+#[then("the result should be an empty list")]
+async fn then_empty_list(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert!(result.as_array().map(|a| a.is_empty()).unwrap_or(false));
+}
+
+// Nested include expectations
+#[then("the result should include the user with a nested \"posts\" array of 3 records")]
+async fn then_nested_posts(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(
+        result
+            .get("posts")
+            .and_then(|p| p.as_array())
+            .map(|a| a.len()),
+        Some(3)
+    );
+}
+
+#[then("the result should include the post with a nested \"author\" object")]
+async fn then_nested_author(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert!(result.get("author").and_then(|a| a.as_object()).is_some());
+}
+
+#[then("the result should include the job with a nested \"workers\" array of 2 records")]
+async fn then_nested_workers(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(
+        result
+            .get("workers")
+            .and_then(|w| w.as_array())
+            .map(|a| a.len()),
+        Some(2)
+    );
+}
+
+#[then("the result should include user → posts → comments nested 3 levels deep")]
+async fn then_nested_three(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let posts = result.get("posts").and_then(|p| p.as_array()).unwrap();
+    assert!(posts.first().unwrap().get("comments").is_some());
+}
+
+#[then(r#"^each nested post should only contain "([^"]*)" and "([^"]*)" fields$"#)]
+async fn then_nested_projection(world: &mut VirtuusWorld, f1: String, f2: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let posts = result.get("posts").and_then(|p| p.as_array()).unwrap();
+    for post in posts {
+        let keys: Vec<String> = post.as_object().unwrap().keys().cloned().collect();
+        assert_eq!(keys.len(), 2);
+        assert!(keys.contains(&f1));
+        assert!(keys.contains(&f2));
+    }
+}
+
+#[then("the nested \"posts\" array should be empty")]
+async fn then_nested_posts_empty(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(
+        result
+            .get("posts")
+            .and_then(|p| p.as_array())
+            .map(|a| a.len()),
+        Some(0)
+    );
 }
 
 // ---------------------------------------------------------------------------

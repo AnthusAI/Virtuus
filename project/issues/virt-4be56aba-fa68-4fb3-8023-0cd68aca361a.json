@@ -3,7 +3,7 @@
   "title": "Database validate (referential integrity)",
   "description": "Given a database with belongs_to associations, when I call db.validate(), it should walk all FKs and verify each resolves to a record in the target table. Returns a list of violations. Spec: features/query/database_validate.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Standup: Python validate (referential integrity) implemented/passing. Rust validate still pending. Blockers: none.",
       "created_at": "2026-02-21T22:15:33.187189Z"
+    },
+    {
+      "id": "97be7ade-50e4-4ace-8af1-4d27263be15a",
+      "author": "unknown",
+      "text": "Completed: database validate now implemented in Rust; cucumber green.",
+      "created_at": "2026-02-21T22:47:50.754298Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.769532Z",
-  "updated_at": "2026-02-21T22:15:33.187189Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T22:47:50.754298Z",
+  "closed_at": "2026-02-21T22:47:19.923149Z",
   "custom": {}
 }

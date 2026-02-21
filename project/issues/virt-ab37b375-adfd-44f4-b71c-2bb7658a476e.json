@@ -16,10 +16,34 @@
       "author": "unknown",
       "text": "Standup: starting Phase 6 (DB execute + schema-from-YAML). Next: set child stories in progress and plan execution/features. Blockers: none.",
       "created_at": "2026-02-21T21:51:13.559390Z"
+    },
+    {
+      "id": "9f59a569-c32b-4852-ad9b-db77c4a6bd41",
+      "author": "unknown",
+      "text": "Standup: Python table/db steps merged; Rust Cucumber suite currently failing due to duplicate helpers/step names after query_gsi changes. Next: clean rust cucumber.rs helpers/imports and update query_gsi call sites; then rerun cargo tests. Blockers: none.",
+      "created_at": "2026-02-21T22:38:32.615190Z"
+    },
+    {
+      "id": "afe162d7-9cb9-4b75-bdeb-7a0fabd01cb5",
+      "author": "unknown",
+      "text": "Standup: Rust parity done for execute/describe/validate/includes; cucumber suite green. Closed execute basic/indexed/nested include/describe/validate stories. Next: run full make check + parity verification and finalize commit.",
+      "created_at": "2026-02-21T22:47:31.016129Z"
+    },
+    {
+      "id": "bac20016-4ffb-4c0d-a785-7286e1323c4e",
+      "author": "unknown",
+      "text": "Coverage 100% in Rust & Python; parity check failing due to missing Rust steps for pagination/schema associations—implementing now.",
+      "created_at": "2026-02-21T23:16:26.470260Z"
+    },
+    {
+      "id": "8a8386b5-04e3-4939-a44f-af45f28a8b6b",
+      "author": "unknown",
+      "text": "Working through parity gaps: fixing Rust cucumber compile errors so make check can pass. Coverage OK; no new blockers.",
+      "created_at": "2026-02-21T23:23:52.948581Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.963677Z",
-  "updated_at": "2026-02-21T21:51:15.310587Z",
+  "updated_at": "2026-02-21T23:23:52.948581Z",
   "closed_at": null,
   "custom": {}
 }

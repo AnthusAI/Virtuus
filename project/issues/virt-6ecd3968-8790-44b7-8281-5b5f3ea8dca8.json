@@ -3,7 +3,7 @@
   "title": "Execute nested queries with includes",
   "description": "Given a database with associations between tables, when I execute() with include directives, it should recursively resolve associations and return nested results for all association types and multi-level depth. Spec: features/query/execute_nested.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,22 @@
       "author": "unknown",
       "text": "Standup: Python nested includes implemented/passing; will mirror in Rust execute/association includes. Blockers: none.",
       "created_at": "2026-02-21T22:15:30.105810Z"
+    },
+    {
+      "id": "fe301792-6612-441a-be5b-c5cd62904820",
+      "author": "unknown",
+      "text": "Standup: Python nested include steps pass; Rust cucumber currently fails due to duplicate helper/step defs added during DB work. Cleaning rust/tests/cucumber.rs and updating execute query paths next. Blockers: none.",
+      "created_at": "2026-02-21T22:38:36.920624Z"
+    },
+    {
+      "id": "0637e54e-7f6a-48c2-b6aa-8c8b2e8d86e3",
+      "author": "unknown",
+      "text": "Completed: nested includes + pagination behavior validated in Rust; cucumber suite green.",
+      "created_at": "2026-02-21T22:47:44.710356Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.308720Z",
-  "updated_at": "2026-02-21T22:15:30.105810Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T22:47:44.710356Z",
+  "closed_at": "2026-02-21T22:47:27.301416Z",
   "custom": {}
 }
