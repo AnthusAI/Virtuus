@@ -3,7 +3,7 @@
   "title": "Library availability smoke test",
   "description": "Given the virtuus library is available in both Python and Rust, it should load and report a valid version string. Both implementations read from a shared VERSION file at the repo root, ensuring version parity. This validates the project skeleton, shared Gherkin runner, coverage tooling, and CI pipeline all work end-to-end. Spec: features/smoke/smoke_test.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -12,7 +12,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-02-21T16:42:45.728118Z",
-  "updated_at": "2026-02-21T17:07:36.862614Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T17:42:27.640133Z",
+  "closed_at": "2026-02-21T17:42:27.640133Z",
   "custom": {}
 }

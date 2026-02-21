@@ -1,0 +1,24 @@
+[package]
+name = "virtuus"
+version = "0.1.0"
+edition = "2021"
+description = "File-backed in-memory indexed table engine"
+
+[lib]
+name = "virtuus"
+path = "src/lib.rs"
+
+[[bin]]
+name = "virtuus"
+path = "src/bin/virtuus.rs"
+
+[[test]]
+name = "cucumber"
+harness = false
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+cucumber = "0.21"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "562d7f61-3129-4ec2-9c72-995903c9721b",
+  "issue_id": "tctv-5b0257cc-8332-49b6-beb6-1ff1be5d1f02",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T17:18:49.096Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Implement the Phase 0 project skeleton: VERSION file, Python package (pyproject.toml, behave, coverage), Rust crate (Cargo.toml, lib.rs, CLI bin, cucumber integration tests), shared step definitions in features/steps/, tools/check_spec_parity.py, Makefile, and CI workflow. All make coverage-python, make coverage-rust, and make check-parity must pass at 100%.",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+    "priority": 2,
+    "status": "open",
+    "title": "Phase 0 scaffolding implementation"
+  }
+}

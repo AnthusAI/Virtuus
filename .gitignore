@@ -1,0 +1,20 @@
+console.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+python/.coverage
+python/htmlcov/
+python/.ruff_cache/
+*.pyc
+
+# Rust
+rust/target/
+
+# Benchmarks
+tools/benchmark_results/
+/tmp/bench_data*/
