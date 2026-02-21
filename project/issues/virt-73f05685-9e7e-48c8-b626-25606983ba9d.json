@@ -3,16 +3,53 @@
   "title": "Table export",
   "description": "Given a table with in-memory records, when I call export(directory), it should write all records to JSON files using atomic writes. The inverse of load. Spec: features/core/table_export.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "475a4e41-b4b6-4a97-a9de-855d8cceb26e",
+      "author": "unknown",
+      "text": "Status: in progress. Did: starting export feature. Next: implement export and round-trip load. Blockers: none.",
+      "created_at": "2026-02-21T19:25:23.170203Z"
+    },
+    {
+      "id": "fca61440-f70b-46ba-8664-8cfe0b7604e8",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none.",
+      "created_at": "2026-02-21T19:44:47.526855Z"
+    },
+    {
+      "id": "a54e55bc-0090-41c7-a51d-8c8936033bc2",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere.",
+      "created_at": "2026-02-21T19:55:12.776465Z"
+    },
+    {
+      "id": "2c0dc2ca-fcce-4872-b1d9-1765cf14a601",
+      "author": "unknown",
+      "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none.",
+      "created_at": "2026-02-21T20:16:00.572580Z"
+    },
+    {
+      "id": "5c58f362-ff8d-4cd3-89b7-25338dc39c9b",
+      "author": "unknown",
+      "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:19:03.471239Z"
+    },
+    {
+      "id": "473b51ce-4688-47e8-a9ef-9bc42e09b9a9",
+      "author": "unknown",
+      "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:27:08.999569Z"
+    }
+  ],
   "created_at": "2026-02-21T16:44:11.420073Z",
-  "updated_at": "2026-02-21T16:44:11.420073Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T20:27:34.200715Z",
+  "closed_at": "2026-02-21T20:27:34.200715Z",
   "custom": {}
 }

@@ -17,7 +17,7 @@ STEP_KEYWORDS = ("Given ", "When ", "Then ", "And ", "But ")
 # Python: @given("..."), @when("..."), @then("..."), @step("...")
 # Also handles u"..." and u'...' string prefixes.
 PYTHON_PATTERN = re.compile(
-    r'@(?:given|when|then|step)\s*\(\s*u?["\'](.+?)["\']\s*\)',
+    r'@(?:given|when|then|step)\s*\(\s*(?:u|r|ur|ru)?["\'](.+?)["\']\s*\)',
     re.IGNORECASE,
 )
 
@@ -80,9 +80,16 @@ def _to_regex(pattern: str) -> re.Pattern:
     :return: Compiled regular expression.
     :rtype: re.Pattern
     """
-    if pattern.startswith("^"):
+    if (
+        pattern.startswith("^")
+        or re.search(r"\(\[\^", pattern)
+        or re.search(r"\(\\\{", pattern)
+        or re.search(r"\(\.\*", pattern)
+    ):
         return re.compile(pattern, re.IGNORECASE)
     escaped = re.escape(pattern)
+    # {param:d} → \d+ (numeric constraints)
+    escaped = re.sub(r"\\\{[^}:]+:d\\\}", r"\\d+", escaped)
     # {param} → .*  (behave/cucumber style)
     escaped = re.sub(r"\\\{[^}]+\\\}", ".*", escaped)
     # "quoted value" inside a pattern → match any quoted value

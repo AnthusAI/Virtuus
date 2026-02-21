@@ -4,6 +4,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod gsi;
 pub mod sort;
+pub mod table;
 
 /// Returns the library version string.
 pub fn version() -> &'static str {

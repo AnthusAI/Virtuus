@@ -3,16 +3,53 @@
   "title": "Table count",
   "description": "Given a table with records, when I call count() or count(index, value), it should return the count without materializing full result lists. Spec: features/core/table_count.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "05695cd0-0c5c-4dcb-9727-c813d6a570a4",
+      "author": "unknown",
+      "text": "Status: in progress. Did: starting count feature. Next: implement count for table and GSI. Blockers: none.",
+      "created_at": "2026-02-21T19:25:25.192463Z"
+    },
+    {
+      "id": "6d6fb208-5066-4f2c-9ccc-c55b26044333",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none.",
+      "created_at": "2026-02-21T19:44:47.321494Z"
+    },
+    {
+      "id": "245f2536-4441-45d0-a0d8-d5c42dc3769b",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere.",
+      "created_at": "2026-02-21T19:55:12.557158Z"
+    },
+    {
+      "id": "de4ee79c-50c0-4d2a-b046-6b0ae3bd5e20",
+      "author": "unknown",
+      "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none.",
+      "created_at": "2026-02-21T20:16:00.342502Z"
+    },
+    {
+      "id": "c3d06c90-a4bd-4143-ab97-1944ca342f22",
+      "author": "unknown",
+      "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:19:02.996711Z"
+    },
+    {
+      "id": "249aee7f-8cdc-4527-adb7-1007fca94317",
+      "author": "unknown",
+      "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:27:08.573420Z"
+    }
+  ],
   "created_at": "2026-02-21T16:44:10.928294Z",
-  "updated_at": "2026-02-21T16:44:10.928294Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T20:27:33.967036Z",
+  "closed_at": "2026-02-21T20:27:33.967036Z",
   "custom": {}
 }

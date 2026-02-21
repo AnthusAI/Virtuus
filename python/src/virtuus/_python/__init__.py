@@ -4,8 +4,9 @@ import os as _os
 
 from virtuus._python.gsi import GSI
 from virtuus._python.sort import Sort
+from virtuus._python.table import Table
 
-__all__ = ["__version__", "GSI", "Sort"]
+__all__ = ["__version__", "GSI", "Sort", "Table"]
 
 
 def _read_version() -> str:

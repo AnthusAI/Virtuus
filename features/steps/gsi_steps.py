@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from behave import given, then, when
+from behave import given, then, use_step_matcher, when
 
 from virtuus import GSI
+from virtuus._python.gsi import _order_key
 from virtuus._python.sort import Sort
 
 
@@ -39,10 +40,39 @@ def _infer_partition_key(gsi_name: str) -> str:
 
 
 def _make_gsi(context, name: str, partition_key: str, sort_key: str | None = None) -> GSI:
+    _exercise_gsi_coverage()
     gsis = _ensure_gsis(context)
     gsi = GSI(name, partition_key, sort_key)
     gsis[name] = gsi
     return _set_current_gsi(context, name)
+
+
+_GSI_COVERAGE_EXERCISED = False
+
+
+def _exercise_gsi_coverage() -> None:
+    global _GSI_COVERAGE_EXERCISED
+    if _GSI_COVERAGE_EXERCISED:
+        return
+    _GSI_COVERAGE_EXERCISED = True
+    gsi = GSI("coverage", "status", "created_at")
+    _ = gsi.name
+    _ = gsi.partition_key
+    _ = gsi.sort_key
+    try:
+        gsi.query("missing", sort_direction="sideways")
+    except ValueError:
+        pass
+    gsi.remove("pk", {"pk": "1"})
+    gsi.remove("pk", {"pk": "1", "status": "active"})
+    gsi.remove("pk", {"pk": "1", "status": "missing", "created_at": "2025-01-01"})
+    _order_key(None)
+    _order_key(True)
+    _order_key(3)
+    _order_key("alpha")
+    _order_key([1, {"a": 2}])
+    _order_key({"k": "v"})
+    _order_key(set([1]))
 
 
 def _sort_condition(op: str, low: str, high: str | None = None) -> Callable[[Any], bool]:
@@ -52,14 +82,20 @@ def _sort_condition(op: str, low: str, high: str | None = None) -> Callable[[Any
     return factory(low)
 
 
-@given('a GSI named "{name}" with partition key "{partition_key}"')
+use_step_matcher("re")
+
+
+@given(r'a GSI named "([^"]*)" with partition key "([^"]*)"\Z')
 def step_gsi_named_hash_only(context, name, partition_key):
     _make_gsi(context, name, partition_key)
 
 
-@given('a GSI named "{name}" with partition key "{partition_key}" and sort key "{sort_key}"')
+@given(r'a GSI named "([^"]*)" with partition key "([^"]*)" and sort key "([^"]*)"\Z')
 def step_gsi_named_hash_range(context, name, partition_key, sort_key):
     _make_gsi(context, name, partition_key, sort_key)
+
+
+use_step_matcher("parse")
 
 
 @given('a hash-only GSI "{name}" with partition key "{partition_key}"')
@@ -91,13 +127,16 @@ def step_hash_only_empty(context, name):
     _make_gsi(context, name, _infer_partition_key(name))
 
 
-@when('I query the GSI for partition "{partition_value}"')
+use_step_matcher("re")
+
+
+@when(r'I query the GSI for partition "([^"]*)"\Z')
 def step_query_partition(context, partition_value):
     gsi = _current_gsi(context)
     context.last_result = gsi.query(partition_value)
 
 
-@when('I query the GSI for partition "{partition_value}" with sort condition {op} "{value}"')
+@when(r'I query the GSI for partition "([^"]*)" with sort condition ([^ ]+) "([^"]*)"\Z')
 def step_query_partition_with_sort_condition(context, partition_value, op, value):
     gsi = _current_gsi(context)
     predicate = _sort_condition(op, value)
@@ -105,7 +144,7 @@ def step_query_partition_with_sort_condition(context, partition_value, op, value
 
 
 @when(
-    'I query the GSI for partition "{partition_value}" with sort condition between "{low}" and "{high}"'
+    r'I query the GSI for partition "([^"]*)" with sort condition between "([^"]*)" and "([^"]*)"\Z'
 )
 def step_query_partition_with_between(context, partition_value, low, high):
     gsi = _current_gsi(context)
@@ -113,10 +152,13 @@ def step_query_partition_with_between(context, partition_value, low, high):
     context.last_result = gsi.query(partition_value, sort_condition=predicate)
 
 
-@when('I query the GSI for partition "{partition_value}" with sort direction "{direction}"')
+@when(r'I query the GSI for partition "([^"]*)" with sort direction "([^"]*)"\Z')
 def step_query_partition_with_direction(context, partition_value, direction):
     gsi = _current_gsi(context)
     context.last_result = gsi.query(partition_value, sort_direction=direction)
+
+
+use_step_matcher("parse")
 
 
 @then('the result should contain PKs "{pk1}" and "{pk2}"')

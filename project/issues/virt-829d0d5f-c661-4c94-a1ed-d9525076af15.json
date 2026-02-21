@@ -3,16 +3,59 @@
   "title": "Phase 3: Table (Core CRUD + File Persistence + QoL)",
   "description": "Implement Table with PK-based storage, GSI maintenance, file-backed persistence via atomic writes, and quality-of-life features: count, describe, validation, export, event hooks. See Vision.md for full details.",
   "type": "epic",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "1be5bd8a-9c81-4da2-895c-a2db8d8d2004",
+      "author": "unknown",
+      "text": "Status: in progress. Did: kicked off Phase 3 implementation. Next: set child stories in_progress and implement Table core + steps (Python/Rust). Blockers: none.",
+      "created_at": "2026-02-21T19:24:57.087683Z"
+    },
+    {
+      "id": "58db129a-c6bd-4dc8-a4f1-69b5b6ccbe41",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none.",
+      "created_at": "2026-02-21T19:44:46.937827Z"
+    },
+    {
+      "id": "aba27c5e-904f-4682-bb8d-cd550b734e3a",
+      "author": "unknown",
+      "text": "Status: in progress. Did: fixed Rust Table core, hooks/GSI parsing; added Rust cucumber steps and unit tests; cargo test + clippy pass. Updated Python Table + steps and file-load behavior. Next: run Python black/ruff/coverage once deps available; resolve parity check failures (pre-existing missing Rust steps). Blockers: Python tooling (black/ruff/coverage) not installed; parity script reports missing Rust steps outside Table.",
+      "created_at": "2026-02-21T19:55:06.062540Z"
+    },
+    {
+      "id": "f77a8b04-786b-4362-98e1-0c4d777ee329",
+      "author": "unknown",
+      "text": "Status: in progress. Did: created conda env , installed black/ruff/coverage/behave; fixed step ambiguities in gsi/table steps; Python black+ruff+coverage/behave now pass; updated parity script (raw string prefixes + regex detection + :d handling) and parity now OK. Next: re-run full make check, then close Phase 3 stories if green. Blockers: none.",
+      "created_at": "2026-02-21T20:15:50.938606Z"
+    },
+    {
+      "id": "3b9a13ad-1003-4b94-bb1e-2b960fef2ab4",
+      "author": "unknown",
+      "text": "Status: in progress. Did: created conda env virtuus, installed black/ruff/coverage/behave; fixed step ambiguities in gsi/table steps; Python black+ruff+coverage/behave now pass; updated parity script (raw string prefixes + regex detection + :d handling) and parity now OK. Next: re-run full make check, then close Phase 3 stories if green. Blockers: none.",
+      "created_at": "2026-02-21T20:15:55.609505Z"
+    },
+    {
+      "id": "5dbbffa5-bd99-4b12-99e4-7e95d766746c",
+      "author": "unknown",
+      "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:19:02.126010Z"
+    },
+    {
+      "id": "bf28a834-e8af-41bb-9b0b-b1302bf57ce3",
+      "author": "unknown",
+      "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:27:09.286773Z"
+    }
+  ],
   "created_at": "2026-02-21T16:42:28.521250Z",
-  "updated_at": "2026-02-21T16:42:28.521250Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T20:27:34.359996Z",
+  "closed_at": "2026-02-21T20:27:34.359996Z",
   "custom": {}
 }

@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 @dataclass(frozen=True)
 class _GsiEntry:
-    pk: str
+    pk: Any
     sort_value: Optional[Any]
 
 
@@ -36,7 +36,6 @@ class GSI:
         :return: Index name.
         :rtype: str
         """
-
         return self._name
 
     @property
@@ -46,7 +45,6 @@ class GSI:
         :return: Partition key field name.
         :rtype: str
         """
-
         return self._partition_key
 
     @property
@@ -56,20 +54,18 @@ class GSI:
         :return: Sort key field name or None.
         :rtype: str | None
         """
-
         return self._sort_key
 
-    def put(self, pk: str, record: dict[str, Any]) -> None:
+    def put(self, pk: Any, record: dict[str, Any]) -> None:
         """Insert a record into the index.
 
         :param pk: Primary key of the record.
-        :type pk: str
+        :type pk: Any
         :param record: Record data.
         :type record: dict[str, Any]
         :return: None
         :rtype: None
         """
-
         partition_value = record.get(self._partition_key)
         if partition_value is None:
             return
@@ -79,17 +75,16 @@ class GSI:
         bucket = self._buckets.setdefault(partition_value, [])
         bucket.append(_GsiEntry(pk=pk, sort_value=sort_value))
 
-    def remove(self, pk: str, record: dict[str, Any]) -> None:
+    def remove(self, pk: Any, record: dict[str, Any]) -> None:
         """Remove a record from the index.
 
         :param pk: Primary key of the record.
-        :type pk: str
+        :type pk: Any
         :param record: Record data.
         :type record: dict[str, Any]
         :return: None
         :rtype: None
         """
-
         partition_value = record.get(self._partition_key)
         if partition_value is None:
             return
@@ -107,11 +102,13 @@ class GSI:
         if not self._buckets[partition_value]:
             self._buckets.pop(partition_value, None)
 
-    def update(self, pk: str, old_record: dict[str, Any], new_record: dict[str, Any]) -> None:
+    def update(
+        self, pk: Any, old_record: dict[str, Any], new_record: dict[str, Any]
+    ) -> None:
         """Update an indexed record.
 
         :param pk: Primary key of the record.
-        :type pk: str
+        :type pk: Any
         :param old_record: Previous record data.
         :type old_record: dict[str, Any]
         :param new_record: Updated record data.
@@ -119,7 +116,6 @@ class GSI:
         :return: None
         :rtype: None
         """
-
         self.remove(pk, old_record)
         self.put(pk, new_record)
 
@@ -128,7 +124,7 @@ class GSI:
         partition_value: Any,
         sort_condition: Optional[Callable[[Any], bool]] = None,
         sort_direction: str = "asc",
-    ) -> list[str]:
+    ) -> list[Any]:
         """Query by partition key with optional sort condition and direction.
 
         :param partition_value: Partition key value to query.
@@ -138,10 +134,9 @@ class GSI:
         :param sort_direction: "asc" or "desc".
         :type sort_direction: str
         :return: List of primary keys.
-        :rtype: list[str]
+        :rtype: list[Any]
         :raises ValueError: If sort_direction is not "asc" or "desc".
         """
-
         if sort_direction not in {"asc", "desc"}:
             raise ValueError("sort_direction must be 'asc' or 'desc'")
         bucket = list(self._buckets.get(partition_value, []))
@@ -195,4 +190,3 @@ def _normalize_for_order(value: Any) -> Any:
 
 def _order_key(value: Any) -> tuple[int, Any]:
     return _value_rank(value), _normalize_for_order(value)
-

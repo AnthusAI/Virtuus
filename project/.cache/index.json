@@ -1,56 +1,56 @@
 {
-  "built_at": "2026-02-21T18:20:44Z",
+  "built_at": "2026-02-21T19:34:53Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771696060.626398,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771696060.631645,
-    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771696060.630281,
+    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771701922.917174,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771696060.632623,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771696060.633247,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771696060.629936,
-    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771696060.635334,
+    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771696060.627461,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771696060.631453,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771696060.629562,
-    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771696060.634979,
+    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771701921.904326,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771696060.630499,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771696060.634331,
-    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771696060.632044,
+    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
     "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771696060.633999,
-    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771696060.626774,
+    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
     "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771696060.627653,
     "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771696060.626578,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
-    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771696060.632816,
+    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771701921.154421,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771696060.625794,
-    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771696060.633778,
-    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771696060.633018,
+    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771701923.173576,
+    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771696060.626932,
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771696060.631862,
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
-    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771696060.625566,
+    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771701897.087795,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771696060.630116,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771696060.627846,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771696060.628951,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771696060.633592,
-    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771696060.630769,
+    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771701925.643636,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771696060.626182,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771696060.625221,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771696060.627292,
-    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771696060.633414,
+    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771701924.682644,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771696060.625044,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
-    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771696060.628469,
+    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771701925.192587,
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771696060.632238,
-    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771696060.634162,
+    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771701923.96373,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771696060.63456,
-    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771696060.63121,
+    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771701924.57815,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771696060.630974,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771696060.635161
   },
@@ -130,7 +130,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:22.917031Z",
+          "id": "3ae85596-9a3f-4154-8589-b0e211eb2935",
+          "text": "Status: in progress. Did: starting event hooks feature. Next: implement on_put/on_delete hooks and error logging. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.576975Z",
       "creator": null,
       "custom": {},
@@ -140,10 +147,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table event hooks",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:11.576975Z"
+      "updated_at": "2026-02-21T19:25:22.917031Z"
     },
     {
       "assignee": null,
@@ -201,8 +208,45 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:55:45.714855Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:39:13.736049Z",
+          "id": "f498ced9-2973-486e-831b-68e22dbe32bd",
+          "text": "Status: planned Phase 2 scope. Did: reviewed GSI feature specs + related query/table specs; captured decisions (skip index on missing keys, raw JSON ordering). Next: implement GSI creation/query/operations in Python+Rust and step defs. Blockers: Vision.md not found via kbs wiki; proceeding from features."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:42:30.584930Z",
+          "id": "7a62b3bf-ceeb-41e8-af11-7a6501f75123",
+          "text": "Status: starting implementation. Did: committed Kanbus updates + .gitignore. Next: implement GSI types and steps, update gsi feature for missing-key behavior. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:49:31.628049Z",
+          "id": "fee2f6c6-72a8-474a-b509-66655258efdf",
+          "text": "Status: in progress. Did: implemented Python GSI class + steps, Rust Gsi module + cucumber steps, updated gsi operations feature. Next: run checks, fix any lint/test issues, then mark stories done. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:54:42.738728Z",
+          "id": "1984f4c1-d746-4c8f-a5fe-e7fa6bc6f053",
+          "text": "Status: in progress. Did: cargo test (Rust) passes; fixed cucumber table handling via step param; removed warning by using #[cucumber::step]. Next: run Python behave (blocked by missing module) and finish Python lint. Blockers: python3 -m behave missing."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:55:43.419940Z",
+          "id": "edad02b3-1160-4767-9b47-2179d659e995",
+          "text": "Status: ready to close. Did: implemented GSI creation/query/operations in Python+Rust, added missing-key scenarios and step defs; Rust cargo test passes. Next: run Python behave/black/ruff once modules installed. Blockers: missing python modules (behave/black/ruff)."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:56:18.986784Z",
+          "id": "35da3492-e7e0-4c7f-9999-a8362d7f5491",
+          "text": "Status: closed. Did: re-ran cargo test after step attribute fix; all Rust tests pass (existing skipped scenarios remain). Next: run Python behave/black/ruff once modules installed. Blockers: missing python modules (behave/black/ruff)."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.360326Z",
       "creator": null,
       "custom": {},
@@ -212,10 +256,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Phase 2: GSI (Global Secondary Index)",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.360326Z"
+      "updated_at": "2026-02-21T18:56:18.986784Z"
     },
     {
       "assignee": null,
@@ -366,7 +410,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:21.904180Z",
+          "id": "7f528ab8-5739-4f51-bf66-755f0c85d323",
+          "text": "Status: in progress. Did: starting GSI integration. Next: wire GSI maintenance in Table. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.752375Z",
       "creator": null,
       "custom": {},
@@ -376,10 +427,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table GSI integration",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:11.752375Z"
+      "updated_at": "2026-02-21T19:25:21.904180Z"
     },
     {
       "assignee": null,
@@ -419,8 +470,27 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:55:12.080628Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:39:21.087714Z",
+          "id": "8c2074b0-fc77-492f-80c8-518e3173af1a",
+          "text": "Status: ready to implement. Did: reviewed gsi_creation.feature. Next: add Python+Rust GSI types and creation logic + step defs. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:48:45.762415Z",
+          "id": "83325bd7-392f-4b33-8665-066efd28fc57",
+          "text": "Status: in progress. Did: added GSI feature scenarios for missing keys; started Python/Rust GSI implementations + step defs. Next: finish Rust cucumber steps + wire exports. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:55:04.123468Z",
+          "id": "a6df35b0-a787-4b75-84d2-6067d5ea9175",
+          "text": "Status: done pending local Python tooling. Did: added GSI creation in Python/Rust, wired exports, updated gsi feature scenarios. Next: run Python behave/black/ruff once installed. Blockers: missing python modules (behave/black/ruff)."
+        }
+      ],
       "created_at": "2026-02-21T16:43:41.680061Z",
       "creator": null,
       "custom": {},
@@ -430,10 +500,10 @@
       "labels": [],
       "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "GSI creation",
       "type": "story",
-      "updated_at": "2026-02-21T16:43:41.680061Z"
+      "updated_at": "2026-02-21T18:55:12.080628Z"
     },
     {
       "assignee": null,
@@ -480,8 +550,33 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:55:23.351337Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:39:23.293962Z",
+          "id": "a1d21288-8903-4b75-9f91-c2ecbc0390d6",
+          "text": "Status: queued after creation. Did: reviewed gsi_query.feature. Next: implement query ordering/sort conditions and steps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:40:18.008880Z",
+          "id": "2e1383eb-bb4a-48f9-a6a5-c542ba63f62f",
+          "text": "Status: in progress. Did: planning complete. Next: implement GSI query logic + steps in Python/Rust. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:48:55.007193Z",
+          "id": "c2f3d996-d9e6-45d0-88ca-8924d84e98a7",
+          "text": "Status: in progress. Did: implemented Python GSI query logic + steps; added Rust GSI query logic. Next: finish Rust cucumber steps + validate ordering. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:55:16.101696Z",
+          "id": "6ba1292c-a200-486c-ad1c-a2f720cbb89c",
+          "text": "Status: done pending local Python tooling. Did: implemented GSI query logic/ordering + steps in Python/Rust; Rust cucumber tests pass. Next: run Python behave/black/ruff once installed. Blockers: missing python modules (behave/black/ruff)."
+        }
+      ],
       "created_at": "2026-02-21T16:43:42.046117Z",
       "creator": null,
       "custom": {},
@@ -491,10 +586,10 @@
       "labels": [],
       "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "GSI query",
       "type": "story",
-      "updated_at": "2026-02-21T16:43:42.046117Z"
+      "updated_at": "2026-02-21T18:55:23.351337Z"
     },
     {
       "assignee": null,
@@ -553,7 +648,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:21.154267Z",
+          "id": "dd68b766-d4cc-42c0-aace-a3ba41029042",
+          "text": "Status: in progress. Did: starting Table creation work. Next: implement Table core struct + init behaviors. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:10.585111Z",
       "creator": null,
       "custom": {},
@@ -563,10 +665,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table creation",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:10.585111Z"
+      "updated_at": "2026-02-21T19:25:21.154267Z"
     },
     {
       "assignee": null,
@@ -589,7 +691,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:23.170203Z",
+          "id": "475a4e41-b4b6-4a97-a9de-855d8cceb26e",
+          "text": "Status: in progress. Did: starting export feature. Next: implement export and round-trip load. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.420073Z",
       "creator": null,
       "custom": {},
@@ -599,15 +708,40 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table export",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:11.420073Z"
+      "updated_at": "2026-02-21T19:25:23.170203Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:55:36.654020Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:39:28.492901Z",
+          "id": "7ec2afc9-5b41-4332-84e2-578b09d30809",
+          "text": "Status: queued after creation. Did: reviewed gsi_operations.feature. Next: implement put/remove/update indexing behaviors and steps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:40:22.261276Z",
+          "id": "986c484f-eecb-4deb-af67-d00e94074327",
+          "text": "Status: in progress. Did: planning complete. Next: implement GSI put/remove/update behaviors + steps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:49:02.173004Z",
+          "id": "5aba0ef4-f9e3-4458-af90-e5bb91b57044",
+          "text": "Status: in progress. Did: implemented GSI put/remove/update in Python/Rust; added missing-key scenarios. Next: finish Rust step coverage for operations. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T18:55:29.135207Z",
+          "id": "f4c11b8a-05cb-4c83-8f54-5f5c43beb8da",
+          "text": "Status: done pending local Python tooling. Did: implemented GSI put/remove/update in Python/Rust; added missing-key scenarios and Rust cucumber coverage. Next: run Python behave/black/ruff once installed. Blockers: missing python modules (behave/black/ruff)."
+        }
+      ],
       "created_at": "2026-02-21T16:43:41.866417Z",
       "creator": null,
       "custom": {},
@@ -617,10 +751,10 @@
       "labels": [],
       "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "GSI operations",
       "type": "story",
-      "updated_at": "2026-02-21T16:43:41.866417Z"
+      "updated_at": "2026-02-21T18:55:36.654020Z"
     },
     {
       "assignee": null,
@@ -679,7 +813,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:24:57.087683Z",
+          "id": "1be5bd8a-9c81-4da2-895c-a2db8d8d2004",
+          "text": "Status: in progress. Did: kicked off Phase 3 implementation. Next: set child stories in_progress and implement Table core + steps (Python/Rust). Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.521250Z",
       "creator": null,
       "custom": {},
@@ -689,10 +830,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Phase 3: Table (Core CRUD + File Persistence + QoL)",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.521250Z"
+      "updated_at": "2026-02-21T19:24:57.087683Z"
     },
     {
       "assignee": null,
@@ -769,7 +910,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:25.643494Z",
+          "id": "bf122c52-38b8-4f58-9db9-0d64ba979f61",
+          "text": "Status: in progress. Did: starting CRUD work. Next: implement put/get/delete/scan/bulk_load + steps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:10.754446Z",
       "creator": null,
       "custom": {},
@@ -779,10 +927,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table CRUD",
       "type": "story",
-      "updated_at": "2026-02-21T17:07:37.020805Z"
+      "updated_at": "2026-02-21T19:25:25.643494Z"
     },
     {
       "assignee": null,
@@ -841,7 +989,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:24.682538Z",
+          "id": "2c83a796-d1bd-4636-9caa-453beff6311e",
+          "text": "Status: in progress. Did: starting file persistence work. Next: implement load/export + atomic write + PK path validation. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.921401Z",
       "creator": null,
       "custom": {},
@@ -851,10 +1006,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table file persistence",
       "type": "story",
-      "updated_at": "2026-02-21T17:07:37.185447Z"
+      "updated_at": "2026-02-21T19:25:24.682538Z"
     },
     {
       "assignee": null,
@@ -926,7 +1081,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:25.192463Z",
+          "id": "05695cd0-0c5c-4dcb-9727-c813d6a570a4",
+          "text": "Status: in progress. Did: starting count feature. Next: implement count for table and GSI. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:10.928294Z",
       "creator": null,
       "custom": {},
@@ -936,10 +1098,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table count",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:10.928294Z"
+      "updated_at": "2026-02-21T19:25:25.192463Z"
     },
     {
       "assignee": null,
@@ -962,7 +1124,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:23.963568Z",
+          "id": "f9112358-ab0d-4ae4-9f28-00760680f40a",
+          "text": "Status: in progress. Did: starting validation feature. Next: implement validation modes and warning/error logging. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.247820Z",
       "creator": null,
       "custom": {},
@@ -972,10 +1141,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table validation",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:11.247820Z"
+      "updated_at": "2026-02-21T19:25:23.963568Z"
     },
     {
       "assignee": null,
@@ -998,7 +1167,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:25:24.578016Z",
+          "id": "40fd4380-3ff7-435d-9d51-ae1bcd287bdf",
+          "text": "Status: in progress. Did: starting describe feature. Next: implement describe output fields + steps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:44:11.083665Z",
       "creator": null,
       "custom": {},
@@ -1008,10 +1184,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Table describe",
       "type": "story",
-      "updated_at": "2026-02-21T16:44:11.083665Z"
+      "updated_at": "2026-02-21T19:25:24.578016Z"
     },
     {
       "assignee": null,

@@ -3,16 +3,53 @@
   "title": "Table file persistence",
   "description": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. Filename convention: {pk}.json for simple PKs, {partition}__{sort}.json for composite PKs. PKs containing path separators (/ or \\) are rejected. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Non-JSON files are ignored. Spec: features/core/table_file_persistence.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "2c83a796-d1bd-4636-9caa-453beff6311e",
+      "author": "unknown",
+      "text": "Status: in progress. Did: starting file persistence work. Next: implement load/export + atomic write + PK path validation. Blockers: none.",
+      "created_at": "2026-02-21T19:25:24.682538Z"
+    },
+    {
+      "id": "6d130b53-0dcc-4907-b6ef-1f5b15c17f9e",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none.",
+      "created_at": "2026-02-21T19:44:47.184988Z"
+    },
+    {
+      "id": "7472a95e-387c-4075-af47-942aa306a75c",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere.",
+      "created_at": "2026-02-21T19:55:12.412857Z"
+    },
+    {
+      "id": "d5b6cc16-0e97-4038-8711-47d217907878",
+      "author": "unknown",
+      "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none.",
+      "created_at": "2026-02-21T20:16:00.202977Z"
+    },
+    {
+      "id": "30f41c35-b350-4393-88c8-9753f26da40f",
+      "author": "unknown",
+      "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:19:02.687087Z"
+    },
+    {
+      "id": "963623c1-faec-4aa9-8119-bac064d11e9a",
+      "author": "unknown",
+      "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:27:08.297853Z"
+    }
+  ],
   "created_at": "2026-02-21T16:44:11.921401Z",
-  "updated_at": "2026-02-21T17:07:37.185447Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T20:27:33.810542Z",
+  "closed_at": "2026-02-21T20:27:33.810542Z",
   "custom": {}
 }

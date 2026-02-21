@@ -1,0 +1,1083 @@
+//! Table storage implementation.
+
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use serde_json::Value;
+
+use crate::gsi::Gsi;
+
+type Hook = Box<dyn Fn(&Value) + Send + Sync>;
+
+/// Primary key representation for simple and composite keys.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TableKey {
+    /// Simple primary key.
+    Simple(String),
+    /// Composite primary key (partition, sort).
+    Composite(String, String),
+}
+
+/// Table with primary key, optional GSIs, and file persistence.
+pub struct Table {
+    name: String,
+    primary_key: Option<String>,
+    partition_key: Option<String>,
+    sort_key: Option<String>,
+    directory: Option<PathBuf>,
+    validation: ValidationMode,
+    records: HashMap<TableKey, Value>,
+    gsis: HashMap<String, Gsi>,
+    warnings: Vec<String>,
+    hook_errors: Vec<String>,
+    on_put: Vec<Hook>,
+    on_delete: Vec<Hook>,
+    last_write_used_atomic: bool,
+    associations: Vec<String>,
+}
+
+impl std::fmt::Debug for Table {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Table")
+            .field("name", &self.name)
+            .field("primary_key", &self.primary_key)
+            .field("partition_key", &self.partition_key)
+            .field("sort_key", &self.sort_key)
+            .field("directory", &self.directory)
+            .field("validation", &self.validation)
+            .field("records", &self.records)
+            .field("gsis", &self.gsis)
+            .field("warnings", &self.warnings)
+            .field("hook_errors", &self.hook_errors)
+            .field("last_write_used_atomic", &self.last_write_used_atomic)
+            .field("associations", &self.associations)
+            .finish()
+    }
+}
+
+/// Validation mode for record inserts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValidationMode {
+    /// Ignore validation errors.
+    Silent,
+    /// Record validation warnings.
+    Warn,
+    /// Raise validation errors.
+    Error,
+}
+
+impl Table {
+    /// Create a new table.
+    pub fn new(
+        name: &str,
+        primary_key: Option<&str>,
+        partition_key: Option<&str>,
+        sort_key: Option<&str>,
+        directory: Option<PathBuf>,
+        validation: ValidationMode,
+    ) -> Self {
+        if primary_key.is_none() && partition_key.is_none() {
+            panic!("primary_key or partition_key is required");
+        }
+        if primary_key.is_some() && partition_key.is_some() {
+            panic!("use either primary_key or partition_key");
+        }
+        if partition_key.is_some() && sort_key.is_none() {
+            panic!("sort_key is required for composite primary keys");
+        }
+        Self {
+            name: name.to_string(),
+            primary_key: primary_key.map(|s| s.to_string()),
+            partition_key: partition_key.map(|s| s.to_string()),
+            sort_key: sort_key.map(|s| s.to_string()),
+            directory,
+            validation,
+            records: HashMap::new(),
+            gsis: HashMap::new(),
+            warnings: Vec::new(),
+            hook_errors: Vec::new(),
+            on_put: Vec::new(),
+            on_delete: Vec::new(),
+            last_write_used_atomic: false,
+            associations: Vec::new(),
+        }
+    }
+
+    /// Register a GSI.
+    pub fn add_gsi(&mut self, name: &str, partition_key: &str, sort_key: Option<&str>) {
+        self.gsis
+            .insert(name.to_string(), Gsi::new(name, partition_key, sort_key));
+    }
+
+    /// Insert or update a record.
+    pub fn put(&mut self, record: Value) {
+        let key = match self.extract_key(&record) {
+            Some(key) => key,
+            None => return,
+        };
+        self.validate_gsi_fields(&record);
+        if let Some(existing) = self.records.get(&key).cloned() {
+            self.remove_from_gsis(&key, &existing);
+        }
+        self.records.insert(key.clone(), record.clone());
+        self.index_in_gsis(&key, &record);
+        if let Some(dir) = self.directory.clone() {
+            self.write_record(&dir, &key, &record);
+        }
+        let hooks = self.on_put.as_slice();
+        let hook_errors = &mut self.hook_errors;
+        Self::fire_hooks(hooks, hook_errors, &record);
+    }
+
+    /// Get a record by primary key.
+    pub fn get(&self, pk: &str, sort: Option<&str>) -> Option<Value> {
+        let key = self.compose_key(pk, sort);
+        self.records.get(&key).cloned()
+    }
+
+    /// Delete a record by primary key.
+    pub fn delete(&mut self, pk: &str, sort: Option<&str>) {
+        let key = self.compose_key(pk, sort);
+        let record = match self.records.remove(&key) {
+            Some(record) => record,
+            None => return,
+        };
+        self.remove_from_gsis(&key, &record);
+        if let Some(dir) = self.directory.clone() {
+            self.delete_record(&dir, &key);
+        }
+        let hooks = self.on_delete.as_slice();
+        let hook_errors = &mut self.hook_errors;
+        Self::fire_hooks(hooks, hook_errors, &record);
+    }
+
+    /// Return all records.
+    pub fn scan(&self) -> Vec<Value> {
+        self.records.values().cloned().collect()
+    }
+
+    /// Bulk load multiple records.
+    pub fn bulk_load(&mut self, records: Vec<Value>) {
+        for record in records {
+            self.put(record);
+        }
+    }
+
+    /// Count records in table or GSI partition.
+    pub fn count(&self, index: Option<&str>, value: Option<&Value>) -> usize {
+        match index {
+            None => self.records.len(),
+            Some(name) => match self.gsis.get(name) {
+                Some(gsi) => gsi.query(value.unwrap_or(&Value::Null), None, false).len(),
+                None => 0,
+            },
+        }
+    }
+
+    /// Describe table metadata.
+    pub fn describe(&self) -> Value {
+        let mut data = serde_json::Map::new();
+        data.insert("name".to_string(), Value::String(self.name.clone()));
+        data.insert(
+            "record_count".to_string(),
+            Value::Number(self.records.len().into()),
+        );
+        data.insert(
+            "gsis".to_string(),
+            Value::Array(self.gsis.keys().map(|k| Value::String(k.clone())).collect()),
+        );
+        data.insert(
+            "associations".to_string(),
+            Value::Array(
+                self.associations
+                    .iter()
+                    .map(|k| Value::String(k.clone()))
+                    .collect(),
+            ),
+        );
+        if let Some(pk) = &self.primary_key {
+            data.insert("primary_key".to_string(), Value::String(pk.clone()));
+        } else {
+            data.insert(
+                "partition_key".to_string(),
+                Value::String(self.partition_key.clone().unwrap_or_default()),
+            );
+            data.insert(
+                "sort_key".to_string(),
+                Value::String(self.sort_key.clone().unwrap_or_default()),
+            );
+        }
+        Value::Object(data)
+    }
+
+    /// Return a reference to warnings.
+    pub fn warnings(&self) -> &Vec<String> {
+        &self.warnings
+    }
+
+    /// Return a reference to hook errors.
+    pub fn hook_errors(&self) -> &Vec<String> {
+        &self.hook_errors
+    }
+
+    /// Return GSIs.
+    pub fn gsis(&self) -> &HashMap<String, Gsi> {
+        &self.gsis
+    }
+
+    /// Return whether the last write used atomic rename.
+    pub fn last_write_used_atomic(&self) -> bool {
+        self.last_write_used_atomic
+    }
+
+    /// Register an association name for describe output.
+    pub fn add_association(&mut self, name: &str) {
+        self.associations.push(name.to_string());
+    }
+
+    /// Register an on_put hook.
+    pub fn register_on_put(&mut self, hook: Hook) {
+        self.on_put.push(hook);
+    }
+
+    /// Register an on_delete hook.
+    pub fn register_on_delete(&mut self, hook: Hook) {
+        self.on_delete.push(hook);
+    }
+
+    /// Query GSI and return full records.
+    pub fn query_gsi(&self, name: &str, partition_value: &Value) -> Vec<Value> {
+        let gsi = self.gsis.get(name).expect("GSI does not exist");
+        let mut result = Vec::new();
+        for pk in gsi.query(partition_value, None, false) {
+            let key = self.key_from_string(&pk);
+            if let Some(record) = self.records.get(&key) {
+                result.push(record.clone());
+            }
+        }
+        result
+    }
+
+    /// Load records from directory.
+    pub fn load_from_dir(&mut self, directory: Option<PathBuf>) {
+        let dir = directory.or_else(|| self.directory.clone());
+        let dir = match dir {
+            Some(d) => d,
+            None => panic!("directory is required"),
+        };
+        if !dir.exists() {
+            return;
+        }
+        for entry in fs::read_dir(&dir).expect("read_dir failed") {
+            let entry = entry.expect("dir entry");
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                continue;
+            }
+            let data = fs::read_to_string(&path).expect("read file");
+            let record: Value = serde_json::from_str(&data).expect("parse json");
+            self.put(record);
+        }
+    }
+
+    /// Export records to directory.
+    pub fn export(&mut self, directory: PathBuf) {
+        fs::create_dir_all(&directory).expect("create export dir");
+        let records: Vec<(TableKey, Value)> = self
+            .records
+            .iter()
+            .map(|(key, record)| (key.clone(), record.clone()))
+            .collect();
+        for (key, record) in records {
+            self.validate_pk_for_path(&key);
+            let filename = self.filename_for_key(&key);
+            let path = directory.join(filename);
+            self.write_json_atomic(&path, &record);
+        }
+    }
+
+    fn extract_key(&mut self, record: &Value) -> Option<TableKey> {
+        if let Some(pk) = &self.primary_key {
+            match record.get(pk) {
+                Some(value) => return Some(TableKey::Simple(value_to_string(value))),
+                None => return self.handle_validation(&format!("missing primary key {pk}")),
+            }
+        }
+        let partition_key = self.partition_key.as_ref().expect("partition key");
+        let sort_key = self.sort_key.as_ref().expect("sort key");
+        let partition = match record.get(partition_key) {
+            Some(value) => value,
+            None => return self.handle_validation("missing composite primary key"),
+        };
+        let sort = match record.get(sort_key) {
+            Some(value) => value,
+            None => return self.handle_validation("missing composite primary key"),
+        };
+        Some(TableKey::Composite(
+            value_to_string(partition),
+            value_to_string(sort),
+        ))
+    }
+
+    fn compose_key(&self, pk: &str, sort: Option<&str>) -> TableKey {
+        if self.primary_key.is_some() {
+            return TableKey::Simple(pk.to_string());
+        }
+        let sort = sort.expect("sort key required");
+        TableKey::Composite(pk.to_string(), sort.to_string())
+    }
+
+    fn index_in_gsis(&mut self, key: &TableKey, record: &Value) {
+        let pk = key_to_string(key);
+        for gsi in self.gsis.values_mut() {
+            gsi.put(&pk, record);
+        }
+    }
+
+    fn remove_from_gsis(&mut self, key: &TableKey, record: &Value) {
+        let pk = key_to_string(key);
+        for gsi in self.gsis.values_mut() {
+            gsi.remove(&pk, record);
+        }
+    }
+
+    fn key_from_string(&self, value: &str) -> TableKey {
+        if self.primary_key.is_some() {
+            return TableKey::Simple(value.to_string());
+        }
+        let mut parts = value.splitn(2, "__");
+        let partition = parts.next().unwrap_or_default();
+        let sort = parts.next().unwrap_or_default();
+        TableKey::Composite(partition.to_string(), sort.to_string())
+    }
+
+    fn validate_gsi_fields(&mut self, record: &Value) {
+        let fields: Vec<(String, Option<String>)> = self
+            .gsis
+            .values()
+            .map(|gsi| {
+                (
+                    gsi.partition_key().to_string(),
+                    gsi.sort_key().map(|key| key.to_string()),
+                )
+            })
+            .collect();
+        for (partition_key, sort_key) in fields {
+            if record.get(&partition_key).is_none() {
+                let _ = self.handle_validation(&format!("missing GSI field {partition_key}"));
+            }
+            if let Some(sort_key) = sort_key {
+                if record.get(&sort_key).is_none() {
+                    let _ = self.handle_validation(&format!("missing GSI field {sort_key}"));
+                }
+            }
+        }
+    }
+
+    fn handle_validation(&mut self, message: &str) -> Option<TableKey> {
+        match self.validation {
+            ValidationMode::Silent => None,
+            ValidationMode::Warn => {
+                self.warnings.push(message.to_string());
+                None
+            }
+            ValidationMode::Error => panic!("{message}"),
+        }
+    }
+
+    fn filename_for_key(&self, key: &TableKey) -> String {
+        match key {
+            TableKey::Simple(pk) => format!("{pk}.json"),
+            TableKey::Composite(partition, sort) => format!("{partition}__{sort}.json"),
+        }
+    }
+
+    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) {
+        self.validate_pk_for_path(key);
+        fs::create_dir_all(directory).expect("create directory");
+        let filename = self.filename_for_key(key);
+        let path = directory.join(filename);
+        self.write_json_atomic(&path, record);
+    }
+
+    fn delete_record(&mut self, directory: &Path, key: &TableKey) {
+        self.validate_pk_for_path(key);
+        let filename = self.filename_for_key(key);
+        let path = directory.join(filename);
+        if path.exists() {
+            fs::remove_file(path).expect("remove file");
+        }
+    }
+
+    fn validate_pk_for_path(&self, key: &TableKey) {
+        let parts = match key {
+            TableKey::Simple(pk) => vec![pk.as_str()],
+            TableKey::Composite(partition, sort) => vec![partition.as_str(), sort.as_str()],
+        };
+        for part in parts {
+            if part.contains('/') || part.contains('\\') {
+                panic!("invalid PK characters");
+            }
+        }
+    }
+
+    fn write_json_atomic(&mut self, path: &Path, record: &Value) {
+        let directory = path.parent().expect("parent dir");
+        fs::create_dir_all(directory).expect("create dir");
+        let temp_name = format!(
+            ".tmp_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        let temp_path = directory.join(temp_name);
+        fs::write(&temp_path, serde_json::to_vec(record).unwrap()).expect("write temp");
+        fs::rename(&temp_path, path).expect("rename");
+        self.last_write_used_atomic = true;
+    }
+
+    fn fire_hooks(hooks: &[Hook], hook_errors: &mut Vec<String>, record: &Value) {
+        for hook in hooks {
+            if let Err(err) =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| hook(record)))
+            {
+                hook_errors.push(format!("{:?}", err));
+            }
+        }
+    }
+}
+
+fn key_to_string(key: &TableKey) -> String {
+    match key {
+        TableKey::Simple(pk) => pk.clone(),
+        TableKey::Composite(partition, sort) => format!("{partition}__{sort}"),
+    }
+}
+
+fn value_to_string(value: &Value) -> String {
+    match value {
+        Value::String(s) => s.clone(),
+        _ => value.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::sync::{Arc, Mutex};
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!(
+            "virtuus_{name}_{}",
+            std::time::SystemTime::now().elapsed().unwrap().as_nanos()
+        ));
+        dir
+    }
+
+    #[test]
+    fn create_simple_table() {
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        assert_eq!(table.primary_key, Some("id".to_string()));
+    }
+
+    #[test]
+    fn create_composite_table() {
+        let table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Silent,
+        );
+        assert_eq!(table.partition_key, Some("user_id".to_string()));
+        assert_eq!(table.sort_key, Some("game_id".to_string()));
+    }
+
+    #[test]
+    fn debug_format_includes_name() {
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let output = format!("{table:?}");
+        assert!(output.contains("users"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn new_requires_primary_or_partition_key() {
+        let _table = Table::new("users", None, None, None, None, ValidationMode::Silent);
+    }
+
+    #[test]
+    #[should_panic]
+    fn new_disallows_both_primary_and_partition_key() {
+        let _table = Table::new(
+            "users",
+            Some("id"),
+            Some("pk"),
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn new_requires_sort_key_for_composite() {
+        let _table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+    }
+
+    #[test]
+    fn put_get_delete_simple() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1", "name": "Alice"}));
+        assert_eq!(table.get("user-1", None).unwrap()["name"], "Alice");
+        table.delete("user-1", None);
+        assert!(table.get("user-1", None).is_none());
+    }
+
+    #[test]
+    fn delete_missing_record_is_noop() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.delete("missing", None);
+        assert_eq!(table.count(None, None), 0);
+    }
+
+    #[test]
+    fn put_get_delete_composite() {
+        let mut table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"user_id": "user-1", "game_id": "game-A", "score": 100}));
+        assert!(table.get("user-1", Some("game-A")).is_some());
+        table.delete("user-1", Some("game-A"));
+        assert!(table.get("user-1", Some("game-A")).is_none());
+    }
+
+    #[test]
+    fn describe_includes_composite_keys() {
+        let table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Silent,
+        );
+        let desc = table.describe();
+        assert_eq!(desc["partition_key"], "user_id");
+        assert_eq!(desc["sort_key"], "game_id");
+    }
+
+    #[test]
+    fn upsert_overwrites() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1", "name": "Alice"}));
+        table.put(json!({"id": "user-1", "name": "Alice Updated"}));
+        assert_eq!(table.get("user-1", None).unwrap()["name"], "Alice Updated");
+    }
+
+    #[test]
+    fn accessors_return_state() {
+        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"name": "Missing"}));
+        table.register_on_put(Box::new(|_| panic!("hook failure")));
+        table.put(json!({"id": "user-1"}));
+        assert!(!table.warnings().is_empty());
+        assert!(!table.hook_errors().is_empty());
+        assert_eq!(table.gsis().len(), 1);
+    }
+
+    #[test]
+    fn scan_returns_all() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1"}));
+        table.put(json!({"id": "user-2"}));
+        assert_eq!(table.scan().len(), 2);
+    }
+
+    #[test]
+    fn validation_silent_ignores_missing_key() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"name": "Alice"}));
+        assert!(table.warnings.is_empty());
+        assert_eq!(table.count(None, None), 0);
+    }
+
+    #[test]
+    fn bulk_load_inserts() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let records = vec![json!({"id": "user-1"}), json!({"id": "user-2"})];
+        table.bulk_load(records);
+        assert_eq!(table.count(None, None), 2);
+    }
+
+    #[test]
+    fn composite_missing_keys_warn() {
+        let mut table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Warn,
+        );
+        table.put(json!({"game_id": "game-A"}));
+        table.put(json!({"user_id": "user-1"}));
+        assert!(table.warnings.len() >= 2);
+    }
+
+    #[test]
+    fn gsi_missing_fields_warn() {
+        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        table.add_gsi("by_email", "email", Some("created_at"));
+        table.put(json!({"id": "user-1"}));
+        assert!(table.warnings.len() >= 2);
+    }
+
+    #[test]
+    fn count_gsi_partition() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"id": "user-1", "status": "active"}));
+        table.put(json!({"id": "user-2", "status": "active"}));
+        let count = table.count(Some("by_status"), Some(&json!("active")));
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn describe_contains_fields() {
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let desc = table.describe();
+        assert_eq!(desc["name"], "users");
+        assert_eq!(desc["primary_key"], "id");
+    }
+
+    #[test]
+    #[should_panic]
+    fn load_requires_directory() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+    }
+
+    #[test]
+    fn load_missing_directory_is_noop() {
+        let mut path = std::env::temp_dir();
+        path.push(format!(
+            "virtuus_missing_{}",
+            std::time::SystemTime::now().elapsed().unwrap().as_nanos()
+        ));
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(Some(path));
+        assert_eq!(table.count(None, None), 0);
+    }
+
+    #[test]
+    fn load_ignores_non_json_files() {
+        let dir = temp_dir("load_non_json");
+        fs::create_dir_all(&dir).unwrap();
+        let json_path = dir.join("user-1.json");
+        let txt_path = dir.join("note.txt");
+        fs::write(&json_path, json!({"id": "user-1"}).to_string()).unwrap();
+        fs::write(&txt_path, "ignore").unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(Some(dir.clone()));
+        assert_eq!(table.count(None, None), 1);
+        assert!(txt_path.exists());
+    }
+
+    #[test]
+    fn validation_warns() {
+        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        table.put(json!({"name": "Alice"}));
+        assert!(!table.warnings.is_empty());
+    }
+
+    #[test]
+    #[should_panic]
+    fn validation_errors() {
+        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Error);
+        table.put(json!({"name": "Alice"}));
+    }
+
+    #[test]
+    fn gsi_maintained_on_put_delete() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"id": "user-1", "status": "active"}));
+        assert_eq!(
+            table.gsis["by_status"]
+                .query(&json!("active"), None, false)
+                .len(),
+            1
+        );
+        table.delete("user-1", None);
+        assert_eq!(
+            table.gsis["by_status"]
+                .query(&json!("active"), None, false)
+                .len(),
+            0
+        );
+    }
+
+    #[test]
+    fn file_persistence_round_trip() {
+        let dir = temp_dir("persist");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1", "name": "Alice"}));
+        let mut loaded = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        loaded.load_from_dir(None);
+        assert_eq!(loaded.count(None, None), 1);
+    }
+
+    #[test]
+    fn delete_removes_persisted_file() {
+        let dir = temp_dir("delete_file");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1"}));
+        table.delete("user-1", None);
+        let path = dir.join("user-1.json");
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn export_writes_files() {
+        let export_dir = temp_dir("export");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1", "name": "Alice"}));
+        table.export(export_dir.clone());
+        let files = fs::read_dir(export_dir).unwrap().count();
+        assert_eq!(files, 1);
+    }
+
+    #[test]
+    fn export_composite_writes_filename() {
+        let export_dir = temp_dir("export_composite");
+        let mut table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"user_id": "user-1", "game_id": "game-A"}));
+        table.export(export_dir.clone());
+        let path = export_dir.join("user-1__game-A.json");
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn export_sets_atomic_flag() {
+        let export_dir = temp_dir("export_atomic");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user-1", "name": "Alice"}));
+        table.export(export_dir);
+        assert!(table.last_write_used_atomic());
+    }
+
+    #[test]
+    fn numeric_primary_key_is_stringified() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": 123, "name": "Alice"}));
+        let record = table.get("123", None).unwrap();
+        assert_eq!(record["name"], "Alice");
+    }
+
+    #[test]
+    fn query_gsi_returns_records() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"id": "user-1", "status": "active"}));
+        let results = table.query_gsi("by_status", &json!("active"));
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0]["id"], "user-1");
+    }
+
+    #[test]
+    fn query_gsi_composite_keys() {
+        let mut table = Table::new(
+            "scores",
+            None,
+            Some("user_id"),
+            Some("game_id"),
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"user_id": "user-1", "game_id": "game-A", "status": "active"}));
+        let results = table.query_gsi("by_status", &json!("active"));
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0]["game_id"], "game-A");
+    }
+
+    #[test]
+    fn hook_errors_capture_panics() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.register_on_put(Box::new(|_| panic!("boom")));
+        table.put(json!({"id": "user-1"}));
+        assert!(!table.hook_errors.is_empty());
+    }
+
+    #[test]
+    fn count_missing_gsi_returns_zero() {
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let count = table.count(Some("missing"), Some(&json!("active")));
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn describe_lists_associations() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.add_association("posts");
+        let desc = table.describe();
+        let associations = desc["associations"].as_array().cloned().unwrap_or_default();
+        assert!(associations
+            .iter()
+            .any(|value| value.as_str() == Some("posts")));
+    }
+
+    #[test]
+    fn register_on_put_and_delete_hooks() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let put_called = Arc::new(Mutex::new(false));
+        let delete_called = Arc::new(Mutex::new(false));
+        let put_clone = put_called.clone();
+        let delete_clone = delete_called.clone();
+        table.register_on_put(Box::new(move |_| {
+            *put_clone.lock().unwrap() = true;
+        }));
+        table.register_on_delete(Box::new(move |_| {
+            *delete_clone.lock().unwrap() = true;
+        }));
+        table.put(json!({"id": "user-1"}));
+        table.delete("user-1", None);
+        assert!(*put_called.lock().unwrap());
+        assert!(*delete_called.lock().unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_pk_characters_panic() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(temp_dir("invalid_pk")),
+            ValidationMode::Silent,
+        );
+        table.put(json!({"id": "user/1"}));
+    }
+
+    #[test]
+    fn event_hooks_fire() {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        let called = std::sync::Arc::new(std::sync::Mutex::new(false));
+        let called_clone = called.clone();
+        table.on_put.push(Box::new(move |_| {
+            let mut guard = called_clone.lock().unwrap();
+            *guard = true;
+        }));
+        table.put(json!({"id": "user-1"}));
+        assert!(*called.lock().unwrap());
+    }
+}

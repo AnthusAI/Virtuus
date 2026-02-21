@@ -187,6 +187,47 @@ mod tests {
     }
 
     #[test]
+    fn remove_missing_partition_key_is_ignored() {
+        let mut gsi = Gsi::new("by_status", "status", None);
+        gsi.remove("user-1", &json!({"name": "Alice"}));
+        let result = gsi.query(&json!("active"), None, false);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn remove_missing_sort_key_is_ignored() {
+        let mut gsi = Gsi::new("by_org", "org_id", Some("created_at"));
+        gsi.remove("user-1", &json!({"org_id": "org-a"}));
+        let result = gsi.query(&json!("org-a"), None, false);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn remove_from_missing_bucket_is_ignored() {
+        let mut gsi = Gsi::new("by_status", "status", None);
+        gsi.remove("user-1", &json!({"status": "active"}));
+        let result = gsi.query(&json!("active"), None, false);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn sort_condition_skips_missing_sort_value() {
+        let mut gsi = Gsi::new("by_status", "status", None);
+        gsi.put("user-1", &json!({"status": "active"}));
+        let condition = SortCondition::Eq(json!("active"));
+        let result = gsi.query(&json!("active"), Some(&condition), false);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn non_object_record_is_ignored() {
+        let mut gsi = Gsi::new("by_status", "status", None);
+        gsi.put("user-1", &json!(["status", "active"]));
+        let result = gsi.query(&json!("active"), None, false);
+        assert!(result.is_empty());
+    }
+
+    #[test]
     fn remove_entry() {
         let mut gsi = Gsi::new("by_status", "status", None);
         gsi.put("user-1", &json!({"status": "active"}));

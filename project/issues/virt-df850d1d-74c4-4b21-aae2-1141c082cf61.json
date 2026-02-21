@@ -3,16 +3,53 @@
   "title": "Table validation",
   "description": "Given a table with opt-in validation enabled, when I put a record missing the PK field or GSI-indexed fields, it should warn or error based on configuration. Default is silent. Spec: features/core/table_validation.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "f9112358-ab0d-4ae4-9f28-00760680f40a",
+      "author": "unknown",
+      "text": "Status: in progress. Did: starting validation feature. Next: implement validation modes and warning/error logging. Blockers: none.",
+      "created_at": "2026-02-21T19:25:23.963568Z"
+    },
+    {
+      "id": "3269666e-fa69-406f-8648-6ea3d71c2f17",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none.",
+      "created_at": "2026-02-21T19:44:47.456264Z"
+    },
+    {
+      "id": "26ed7b98-b1bf-439f-90b6-dce4fee0585e",
+      "author": "unknown",
+      "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere.",
+      "created_at": "2026-02-21T19:55:12.702480Z"
+    },
+    {
+      "id": "74a5baf9-c669-4c1d-8374-1f226db26abe",
+      "author": "unknown",
+      "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none.",
+      "created_at": "2026-02-21T20:16:00.490233Z"
+    },
+    {
+      "id": "fee32c7e-5655-40d5-8438-ccd8e3c7f611",
+      "author": "unknown",
+      "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:19:03.320211Z"
+    },
+    {
+      "id": "232a7723-3381-4c88-a63a-e2f91e54a2ca",
+      "author": "unknown",
+      "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:27:08.841657Z"
+    }
+  ],
   "created_at": "2026-02-21T16:44:11.247820Z",
-  "updated_at": "2026-02-21T16:44:11.247820Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T20:27:34.123313Z",
+  "closed_at": "2026-02-21T20:27:34.123313Z",
   "custom": {}
 }

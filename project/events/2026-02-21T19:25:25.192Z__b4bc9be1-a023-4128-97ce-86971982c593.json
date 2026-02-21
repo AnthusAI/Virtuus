@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "event_id": "b4bc9be1-a023-4128-97ce-86971982c593",
+  "issue_id": "virt-c2baed68-5a58-47eb-b766-b48c78234a85",
+  "event_type": "comment_added",
+  "occurred_at": "2026-02-21T19:25:25.192Z",
+  "actor_id": "unknown",
+  "payload": {
+    "comment_author": "unknown",
+    "comment_id": "05695cd0-0c5c-4dcb-9727-c813d6a570a4"
+  }
+}
