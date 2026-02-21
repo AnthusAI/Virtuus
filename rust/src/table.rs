@@ -20,6 +20,25 @@ pub enum TableKey {
     Composite(String, String),
 }
 
+/// Association definition between tables.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Association {
+    /// Parent lookup by foreign key.
+    BelongsTo {
+        target_table: String,
+        foreign_key: String,
+    },
+    /// Child lookup via target table GSI.
+    HasMany { target_table: String, index: String },
+    /// Many-to-many through a junction table.
+    HasManyThrough {
+        through_table: String,
+        through_index: String,
+        target_table: String,
+        target_foreign_key: String,
+    },
+}
+
 /// Table with primary key, optional GSIs, and file persistence.
 pub struct Table {
     name: String,
@@ -30,6 +49,7 @@ pub struct Table {
     validation: ValidationMode,
     records: HashMap<TableKey, Value>,
     gsis: HashMap<String, Gsi>,
+    association_defs: HashMap<String, Association>,
     warnings: Vec<String>,
     hook_errors: Vec<String>,
     on_put: Vec<Hook>,
@@ -66,6 +86,7 @@ impl std::fmt::Debug for Table {
             .field("validation", &self.validation)
             .field("records", &self.records)
             .field("gsis", &self.gsis)
+            .field("association_defs", &self.association_defs)
             .field("warnings", &self.warnings)
             .field("hook_errors", &self.hook_errors)
             .field("last_write_used_atomic", &self.last_write_used_atomic)
@@ -113,6 +134,7 @@ impl Table {
             validation,
             records: HashMap::new(),
             gsis: HashMap::new(),
+            association_defs: HashMap::new(),
             warnings: Vec::new(),
             hook_errors: Vec::new(),
             on_put: Vec::new(),
@@ -258,9 +280,58 @@ impl Table {
         self.last_write_used_atomic
     }
 
-    /// Register an association name for describe output.
+    /// Register an association name for describe output only.
     pub fn add_association(&mut self, name: &str) {
-        self.associations.push(name.to_string());
+        if !self.associations.contains(&name.to_string()) {
+            self.associations.push(name.to_string());
+        }
+    }
+
+    /// Register a belongs_to association definition.
+    pub fn add_belongs_to(&mut self, name: &str, target_table: &str, foreign_key: &str) {
+        self.register_association(
+            name,
+            Association::BelongsTo {
+                target_table: target_table.to_string(),
+                foreign_key: foreign_key.to_string(),
+            },
+        );
+    }
+
+    /// Register a has_many association definition.
+    pub fn add_has_many(&mut self, name: &str, target_table: &str, index: &str) {
+        self.register_association(
+            name,
+            Association::HasMany {
+                target_table: target_table.to_string(),
+                index: index.to_string(),
+            },
+        );
+    }
+
+    /// Register a has_many_through association definition.
+    pub fn add_has_many_through(
+        &mut self,
+        name: &str,
+        through_table: &str,
+        through_index: &str,
+        target_table: &str,
+        target_foreign_key: &str,
+    ) {
+        self.register_association(
+            name,
+            Association::HasManyThrough {
+                through_table: through_table.to_string(),
+                through_index: through_index.to_string(),
+                target_table: target_table.to_string(),
+                target_foreign_key: target_foreign_key.to_string(),
+            },
+        );
+    }
+
+    /// Retrieve an association definition.
+    pub fn association(&self, name: &str) -> Option<&Association> {
+        self.association_defs.get(name)
     }
 
     /// Register an on_put hook.
@@ -292,6 +363,13 @@ impl Table {
     pub fn mark_checked_now(&mut self, stale: bool) {
         self.last_check_time = Some(SystemTime::now());
         self.last_is_stale = stale;
+    }
+
+    /// Return the primary or partition key field name.
+    pub fn key_field(&self) -> Option<&str> {
+        self.primary_key
+            .as_deref()
+            .or(self.partition_key.as_deref())
     }
 
     /// Query GSI and return full records.
@@ -617,6 +695,11 @@ impl Table {
         self.last_write_used_atomic = true;
     }
 
+    fn register_association(&mut self, name: &str, association: Association) {
+        self.add_association(name);
+        self.association_defs.insert(name.to_string(), association);
+    }
+
     fn fire_hooks(hooks: &[Hook], hook_errors: &mut Vec<String>, record: &Value) {
         for hook in hooks {
             if let Err(err) =
@@ -711,6 +794,7 @@ fn value_to_string(value: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::database::Database;
     use serde_json::json;
     use std::sync::{Arc, Mutex};
 
@@ -1267,6 +1351,128 @@ mod tests {
         assert!(associations
             .iter()
             .any(|value| value.as_str() == Some("posts")));
+    }
+
+    #[test]
+    fn resolves_belongs_to_association() {
+        let mut db = Database::new();
+        let mut posts = Table::new(
+            "posts",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        posts.add_belongs_to("author", "users", "user_id");
+        posts.put(json!({"id": "post-1", "user_id": "user-1"}));
+        let mut users = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        users.put(json!({"id": "user-1", "name": "Alice"}));
+        db.add_table("posts", posts);
+        db.add_table("users", users);
+        let result = db.resolve_association("posts", "author", "post-1");
+        assert_eq!(result["id"], "user-1");
+    }
+
+    #[test]
+    fn resolves_has_many_association() {
+        let mut db = Database::new();
+        let mut users = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        users.add_has_many("posts", "posts", "by_user");
+        let mut posts = Table::new(
+            "posts",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        posts.add_gsi("by_user", "user_id", None);
+        posts.put(json!({"id": "post-1", "user_id": "user-1"}));
+        posts.put(json!({"id": "post-2", "user_id": "user-1"}));
+        posts.put(json!({"id": "post-3", "user_id": "user-2"}));
+        users.put(json!({"id": "user-1"}));
+        db.add_table("users", users);
+        db.add_table("posts", posts);
+        let result = db.resolve_association("users", "posts", "user-1");
+        let array = result.as_array().unwrap();
+        assert_eq!(array.len(), 2);
+        let ids: Vec<String> = array
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        assert!(ids.contains(&"post-1".to_string()));
+        assert!(ids.contains(&"post-2".to_string()));
+    }
+
+    #[test]
+    fn resolves_has_many_through_association() {
+        let mut db = Database::new();
+        let mut jobs = Table::new("jobs", Some("id"), None, None, None, ValidationMode::Silent);
+        jobs.add_has_many_through(
+            "workers",
+            "job_assignments",
+            "by_job",
+            "workers",
+            "worker_id",
+        );
+        jobs.put(json!({"id": "job-1"}));
+
+        let mut assignments = Table::new(
+            "job_assignments",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        assignments.add_gsi("by_job", "job_id", None);
+        assignments.put(json!({"id": "ja-1", "job_id": "job-1", "worker_id": "worker-1"}));
+        assignments.put(json!({"id": "ja-2", "job_id": "job-1", "worker_id": "worker-2"}));
+
+        let mut workers = Table::new(
+            "workers",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        workers.put(json!({"id": "worker-1"}));
+        workers.put(json!({"id": "worker-2"}));
+        workers.put(json!({"id": "worker-3"}));
+
+        db.add_table("jobs", jobs);
+        db.add_table("job_assignments", assignments);
+        db.add_table("workers", workers);
+
+        let result = db.resolve_association("jobs", "workers", "job-1");
+        let array = result.as_array().unwrap();
+        let ids: Vec<String> = array
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        assert!(ids.contains(&"worker-1".to_string()));
+        assert!(ids.contains(&"worker-2".to_string()));
+        assert!(!ids.contains(&"worker-3".to_string()));
     }
 
     #[test]

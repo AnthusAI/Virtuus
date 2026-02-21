@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use crate::table::Table;
+use crate::table::{Association, Table};
 
 /// Collection of tables with cache helpers.
 #[derive(Debug, Default)]
@@ -59,5 +59,107 @@ impl Database {
     /// Access all tables.
     pub fn tables(&self) -> &HashMap<String, Table> {
         &self.tables
+    }
+
+    /// Resolve an association for a record within the database.
+    pub fn resolve_association(&mut self, table: &str, association: &str, pk: &str) -> Value {
+        let assoc = {
+            let table_ref = self.tables.get(table).expect("table not found");
+            table_ref
+                .association(association)
+                .cloned()
+                .expect("association not found")
+        };
+        let record = match self.tables.get(table).and_then(|t| t.get(pk, None)) {
+            Some(record) => record,
+            None => return Value::Null,
+        };
+        match assoc {
+            Association::BelongsTo {
+                target_table,
+                foreign_key,
+            } => {
+                let fk_value = match record.get(&foreign_key) {
+                    Some(value) => value,
+                    None => return Value::Null,
+                };
+                let fk_str = match fk_value.as_str() {
+                    Some(s) => s.to_string(),
+                    None => fk_value.to_string(),
+                };
+                let target = self
+                    .tables
+                    .get_mut(&target_table)
+                    .expect("target table not found");
+                target.get(&fk_str, None).unwrap_or(Value::Null)
+            }
+            Association::HasMany {
+                target_table,
+                index,
+            } => {
+                let key_field = {
+                    let table_ref = self.tables.get(table).unwrap();
+                    table_ref.key_field().map(|s| s.to_string())
+                };
+                let field = match key_field {
+                    Some(f) => f,
+                    None => return Value::Array(vec![]),
+                };
+                let key_value = match record.get(&field) {
+                    Some(value) => value.clone(),
+                    None => return Value::Array(vec![]),
+                };
+                let target = self
+                    .tables
+                    .get_mut(&target_table)
+                    .expect("target table not found");
+                Value::Array(target.query_gsi(&index, &key_value))
+            }
+            Association::HasManyThrough {
+                through_table,
+                through_index,
+                target_table,
+                target_foreign_key,
+            } => {
+                let key_field = {
+                    let table_ref = self.tables.get(table).unwrap();
+                    table_ref.key_field().map(|s| s.to_string())
+                };
+                let field = match key_field {
+                    Some(f) => f,
+                    None => return Value::Array(vec![]),
+                };
+                let key_value = match record.get(&field) {
+                    Some(value) => value.clone(),
+                    None => return Value::Array(vec![]),
+                };
+                let assignments = {
+                    let through = self
+                        .tables
+                        .get_mut(&through_table)
+                        .expect("through table not found");
+                    through.query_gsi(&through_index, &key_value)
+                };
+                let mut related = Vec::new();
+                for assignment in assignments {
+                    let fk_value = match assignment.get(&target_foreign_key) {
+                        Some(value) => value,
+                        None => continue,
+                    };
+                    let fk_str = match fk_value.as_str() {
+                        Some(s) => s,
+                        None => continue,
+                    };
+                    if let Some(record) = self
+                        .tables
+                        .get(&target_table)
+                        .and_then(|t| t.get(fk_str, None))
+                    {
+                        related.push(record);
+                    }
+                }
+                Value::Array(related)
+            }
+        }
     }
 }

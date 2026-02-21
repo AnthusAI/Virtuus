@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "event_id": "f41f8afc-0c06-46df-b3a8-1f2795cf3461",
+  "issue_id": "virt-6957b6b1-df84-4936-8dc0-e900de49c404",
+  "event_type": "state_transition",
+  "occurred_at": "2026-02-21T21:29:15.713Z",
+  "actor_id": "unknown",
+  "payload": {
+    "from_status": "open",
+    "to_status": "in_progress"
+  }
+}

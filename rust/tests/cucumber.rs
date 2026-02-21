@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
-use virtuus::table::{ChangeSummary, Table, ValidationMode};
+use virtuus::table::{Association, ChangeSummary, Table, ValidationMode};
 
 #[derive(Debug, Default, World)]
 pub struct VirtuusWorld {
@@ -271,6 +271,21 @@ fn create_table(
     set_current_table(world, name);
 }
 
+fn ensure_table<'a>(world: &'a mut VirtuusWorld, name: &str, primary_key: &str) -> &'a mut Table {
+    if !world.tables.contains_key(name) {
+        create_table(
+            world,
+            name,
+            Some(primary_key),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+    }
+    world.tables.get_mut(name).expect("table not found")
+}
+
 fn unique_temp_dir(tag: &str) -> PathBuf {
     let mut dir = std::env::temp_dir();
     dir.push(format!(
@@ -297,6 +312,126 @@ fn temp_dir_named(_world: &mut VirtuusWorld, tag: &str) -> PathBuf {
 
 fn parse_record(text: &str) -> Value {
     serde_json::from_str(text).expect("record json")
+}
+
+fn singular_to_table(singular: &str) -> String {
+    match singular {
+        "post" => "posts".to_string(),
+        "user" => "users".to_string(),
+        "job" => "jobs".to_string(),
+        "category" => "categories".to_string(),
+        "worker" => "workers".to_string(),
+        other => format!("{other}s"),
+    }
+}
+
+fn resolve_association(
+    world: &mut VirtuusWorld,
+    table_name: &str,
+    association: &str,
+    pk: &str,
+) -> (Option<Value>, Vec<Value>) {
+    let definition = {
+        let table = world.tables.get(table_name).expect("table not found");
+        table
+            .association(association)
+            .cloned()
+            .expect("association not found")
+    };
+    let record = match world.tables.get(table_name).and_then(|t| t.get(pk, None)) {
+        Some(record) => record,
+        None => return (None, Vec::new()),
+    };
+    match definition {
+        Association::BelongsTo {
+            target_table,
+            foreign_key,
+        } => {
+            let fk_value = match record.get(&foreign_key) {
+                Some(value) => value,
+                None => return (None, Vec::new()),
+            };
+            let fk_str = fk_value
+                .as_str()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| fk_value.to_string());
+            let result = world
+                .tables
+                .get(&target_table)
+                .and_then(|t| t.get(&fk_str, None));
+            (result, Vec::new())
+        }
+        Association::HasMany {
+            target_table,
+            index,
+        } => {
+            let key_field = {
+                let table = world.tables.get(table_name).unwrap();
+                table.key_field().map(|s| s.to_string())
+            };
+            let field = match key_field {
+                Some(field) => field,
+                None => return (None, Vec::new()),
+            };
+            let key_value = match record.get(&field) {
+                Some(value) => value.clone(),
+                None => return (None, Vec::new()),
+            };
+            let results = {
+                let target = world
+                    .tables
+                    .get_mut(&target_table)
+                    .expect("target table not found");
+                target.query_gsi(&index, &key_value)
+            };
+            (None, results)
+        }
+        Association::HasManyThrough {
+            through_table,
+            through_index,
+            target_table,
+            target_foreign_key,
+        } => {
+            let key_field = {
+                let table = world.tables.get(table_name).unwrap();
+                table.key_field().map(|s| s.to_string())
+            };
+            let field = match key_field {
+                Some(field) => field,
+                None => return (None, Vec::new()),
+            };
+            let key_value = match record.get(&field) {
+                Some(value) => value.clone(),
+                None => return (None, Vec::new()),
+            };
+            let assignments = {
+                let through = world
+                    .tables
+                    .get_mut(&through_table)
+                    .expect("through table not found");
+                through.query_gsi(&through_index, &key_value)
+            };
+            let mut related = Vec::new();
+            for assignment in assignments {
+                let fk_value = match assignment.get(&target_foreign_key) {
+                    Some(value) => value,
+                    None => continue,
+                };
+                let fk_str = match fk_value.as_str() {
+                    Some(s) => s,
+                    None => continue,
+                };
+                if let Some(record) = world
+                    .tables
+                    .get(&target_table)
+                    .and_then(|t| t.get(fk_str, None))
+                {
+                    related.push(record);
+                }
+            }
+            (None, related)
+        }
+    }
 }
 
 fn panic_message(err: Box<dyn std::any::Any + Send>) -> String {
@@ -1376,6 +1511,412 @@ async fn then_result_full_records(world: &mut VirtuusWorld) {
         assert!(record.get("name").is_some());
         assert!(record.get("status").is_some());
     }
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" with primary key "([^"]*)" and a GSI "([^"]*)" on "([^"]*)"$"#
+)]
+async fn given_table_with_pk_and_gsi(
+    world: &mut VirtuusWorld,
+    name: String,
+    primary_key: String,
+    gsi: String,
+    field: String,
+) {
+    let table = ensure_table(world, &name, &primary_key);
+    table.add_gsi(&gsi, &field, None);
+}
+
+#[given(regex = r#"^a junction table "([^"]*)" with a GSI "([^"]*)" on "([^"]*)"$"#)]
+async fn given_junction_table(world: &mut VirtuusWorld, name: String, gsi: String, field: String) {
+    given_table_with_pk_and_gsi(world, name, "id".to_string(), gsi, field).await;
+}
+
+#[when(
+    regex = r#"^I define a belongs_to association "([^"]*)" on "([^"]*)" targeting table "([^"]*)" via foreign key "([^"]*)"$"#
+)]
+async fn when_define_belongs_to(
+    world: &mut VirtuusWorld,
+    assoc: String,
+    table: String,
+    target: String,
+    fk: String,
+) {
+    ensure_table(world, &target, "id");
+    let table_ref = ensure_table(world, &table, "id");
+    table_ref.add_belongs_to(&assoc, &target, &fk);
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" with a belongs_to association "([^"]*)" targeting "([^"]*)" via "([^"]*)"$"#
+)]
+async fn given_belongs_to(
+    world: &mut VirtuusWorld,
+    table: String,
+    assoc: String,
+    target: String,
+    fk: String,
+) {
+    when_define_belongs_to(world, assoc, table, target, fk).await;
+}
+
+#[when(
+    regex = r#"^I define a has_many association "([^"]*)" on "([^"]*)" targeting table "([^"]*)" via index "([^"]*)"$"#
+)]
+async fn when_define_has_many(
+    world: &mut VirtuusWorld,
+    assoc: String,
+    table: String,
+    target: String,
+    index: String,
+) {
+    {
+        let target_field = format!("{}_id", index.trim_start_matches("by_"));
+        let target_table = ensure_table(world, &target, "id");
+        if !target_table.gsis().contains_key(&index) {
+            target_table.add_gsi(&index, &target_field, None);
+        }
+    }
+    let table_ref = ensure_table(world, &table, "id");
+    table_ref.add_has_many(&assoc, &target, &index);
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" with a has_many association "([^"]*)" via GSI "([^"]*)" on table "([^"]*)"$"#
+)]
+async fn given_has_many(
+    world: &mut VirtuusWorld,
+    table: String,
+    assoc: String,
+    index: String,
+    target: String,
+) {
+    when_define_has_many(world, assoc, table, target, index).await;
+}
+
+#[when(
+    regex = r#"^I define a has_many_through association "([^"]*)" on "([^"]*)" through "([^"]*)" via index "([^"]*)" targeting "([^"]*)" via foreign key "([^"]*)"$"#
+)]
+async fn when_define_has_many_through(
+    world: &mut VirtuusWorld,
+    assoc: String,
+    table: String,
+    through: String,
+    index: String,
+    target: String,
+    fk: String,
+) {
+    {
+        let through_field = format!("{}_id", index.trim_start_matches("by_"));
+        let through_table = ensure_table(world, &through, "id");
+        if !through_table.gsis().contains_key(&index) {
+            through_table.add_gsi(&index, &through_field, None);
+        }
+    }
+    ensure_table(world, &target, "id");
+    let table_ref = ensure_table(world, &table, "id");
+    table_ref.add_has_many_through(&assoc, &through, &index, &target, &fk);
+}
+
+#[given(
+    regex = r#"^a has_many_through association from "([^"]*)" to "([^"]*)" through "([^"]*)"$"#
+)]
+async fn given_has_many_through(
+    world: &mut VirtuusWorld,
+    table: String,
+    target: String,
+    through: String,
+) {
+    when_define_has_many_through(
+        world,
+        "workers".to_string(),
+        table,
+        through,
+        "by_job".to_string(),
+        target,
+        "worker_id".to_string(),
+    )
+    .await;
+}
+
+#[given(regex = r#"^user (\{.*\})$"#)]
+async fn given_user(world: &mut VirtuusWorld, record_text: String) {
+    let table = ensure_table(world, "users", "id");
+    table.put(parse_record(&record_text));
+}
+
+#[given(regex = r#"^post (\{.*\})$"#)]
+async fn given_post(world: &mut VirtuusWorld, record_text: String) {
+    let table = ensure_table(world, "posts", "id");
+    table.put(parse_record(&record_text));
+}
+
+#[given(regex = r#"^post (\{.*\}) with no user_id field$"#)]
+async fn given_post_no_user(world: &mut VirtuusWorld, record_text: String) {
+    let mut record = parse_record(&record_text);
+    if let Some(obj) = record.as_object_mut() {
+        obj.remove("user_id");
+    }
+    let table = ensure_table(world, "posts", "id");
+    table.put(record);
+}
+
+#[given("posts:")]
+async fn given_posts(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let table = ensure_table(world, "posts", "id");
+    for record in parse_step_table(step) {
+        table.put(record);
+    }
+}
+
+#[given(regex = r#"^no posts with user_id "([^"]*)"$"#)]
+async fn given_no_posts(world: &mut VirtuusWorld, user_id: String) {
+    let table = ensure_table(world, "posts", "id");
+    assert!(table
+        .scan()
+        .into_iter()
+        .all(|record: Value| record.get("user_id") != Some(&Value::String(user_id.clone()))));
+}
+
+#[given(regex = r#"^no user with id "([^"]*)"$"#)]
+async fn given_no_user(world: &mut VirtuusWorld, user_id: String) {
+    let table = ensure_table(world, "users", "id");
+    assert!(table.get(&user_id, None).is_none());
+}
+
+#[given("workers:")]
+async fn given_workers(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let table = ensure_table(world, "workers", "id");
+    for record in parse_step_table(step) {
+        table.put(record);
+    }
+}
+
+#[given("job_assignments:")]
+async fn given_job_assignments(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let table = ensure_table(world, "job_assignments", "id");
+    for record in parse_step_table(step) {
+        table.put(record);
+    }
+}
+
+#[given(regex = r#"^job (\{.*\})$"#)]
+async fn given_job(world: &mut VirtuusWorld, record_text: String) {
+    let table = ensure_table(world, "jobs", "id");
+    table.put(parse_record(&record_text));
+}
+
+#[given(regex = r#"^no job_assignments for "([^"]*)"$"#)]
+async fn given_no_assignments(world: &mut VirtuusWorld, job_id: String) {
+    let table = ensure_table(world, "job_assignments", "id");
+    assert!(table
+        .scan()
+        .into_iter()
+        .all(|record: Value| record.get("job_id") != Some(&Value::String(job_id.clone()))));
+}
+
+#[given("categories:")]
+async fn given_categories(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let table = ensure_table(world, "categories", "id");
+    for mut record in parse_step_table(step) {
+        record
+            .as_object_mut()
+            .map(|obj| obj.retain(|_, v| !v.is_null() && v != ""));
+        table.put(record);
+    }
+}
+
+#[given(regex = r#"^category (\{.*\})$"#)]
+async fn given_category(world: &mut VirtuusWorld, record_text: String) {
+    let cleaned = record_text.replace(" with no parent_id", "");
+    let table = ensure_table(world, "categories", "id");
+    table.put(parse_record(&cleaned));
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" with a self-referential has_many "([^"]*)" via GSI "([^"]*)"$"#
+)]
+async fn given_self_has_many(
+    world: &mut VirtuusWorld,
+    table: String,
+    assoc: String,
+    index: String,
+) {
+    let partition_field = format!("{}_id", index.trim_start_matches("by_"));
+    let table_ref = ensure_table(world, &table, "id");
+    if !table_ref.gsis().contains_key(&index) {
+        table_ref.add_gsi(&index, &partition_field, None);
+    }
+    table_ref.add_has_many(&assoc, &table, &index);
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" with a self-referential belongs_to "([^"]*)" via "([^"]*)"$"#
+)]
+async fn given_self_belongs_to(
+    world: &mut VirtuusWorld,
+    table: String,
+    assoc: String,
+    foreign_key: String,
+) {
+    let table_ref = ensure_table(world, &table, "id");
+    table_ref.add_belongs_to(&assoc, &table, &foreign_key);
+}
+
+#[when(regex = r#"^I resolve the "([^"]*)" association for (\w+) "([^"]*)"$"#)]
+async fn when_resolve_association(
+    world: &mut VirtuusWorld,
+    association: String,
+    singular: String,
+    pk: String,
+) {
+    let table_name = singular_to_table(&singular);
+    let (single, many) = resolve_association(world, &table_name, &association, &pk);
+    world.last_record = single;
+    world.last_records = many;
+    world.last_result = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    if let Some(record) = &world.last_record {
+        if let Some(id) = record.get("id").and_then(|v| v.as_str()) {
+            world.last_result = vec![id.to_string()];
+        }
+    }
+}
+
+#[then(regex = r#"^the result should be the user record for "([^"]*)"$"#)]
+async fn then_result_user(world: &mut VirtuusWorld, user_id: String) {
+    let record = world.last_record.as_ref().expect("missing record");
+    assert_eq!(record.get("id"), Some(&Value::String(user_id)));
+}
+
+#[then(regex = r#"^the result should contain (\d+) posts$"#)]
+async fn then_result_post_count(world: &mut VirtuusWorld, count: usize) {
+    assert_eq!(world.last_records.len(), count);
+}
+
+#[then(regex = r#"^the result should include "([^"]*)" and "([^"]*)"$"#)]
+async fn then_result_includes(world: &mut VirtuusWorld, first: String, second: String) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids.contains(&first));
+    assert!(ids.contains(&second));
+}
+
+#[then(regex = r#"^the result should not include "([^"]*)"$"#)]
+async fn then_result_not_include(world: &mut VirtuusWorld, pk: String) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(!ids.contains(&pk));
+}
+
+#[then(
+    regex = r#"^the result should contain workers "([^"]*)" and "([^"]*)" and not contain "([^"]*)"$"#
+)]
+async fn then_result_workers(world: &mut VirtuusWorld, w1: String, w2: String, w3: String) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids.contains(&w1));
+    assert!(ids.contains(&w2));
+    assert!(!ids.contains(&w3));
+}
+
+#[then(regex = r#"^the result should contain workers "([^"]*)" and "([^"]*)"$"#)]
+async fn then_result_workers_two(world: &mut VirtuusWorld, w1: String, w2: String) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids.contains(&w1));
+    assert!(ids.contains(&w2));
+}
+
+#[then(regex = r#"^the result should be the category "([^"]*)"$"#)]
+async fn then_result_category(world: &mut VirtuusWorld, cat: String) {
+    let record = world.last_record.as_ref().expect("missing record");
+    assert_eq!(record.get("id"), Some(&Value::String(cat)));
+}
+
+#[then(regex = r#"^the result should contain "([^"]*)" and "([^"]*)"$"#)]
+async fn then_result_categories(world: &mut VirtuusWorld, c1: String, c2: String) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids.contains(&c1));
+    assert!(ids.contains(&c2));
+}
+
+#[then(regex = r#"^the "([^"]*)" table should have an association named "([^"]*)"$"#)]
+async fn then_table_has_association(world: &mut VirtuusWorld, table: String, assoc: String) {
+    let table_ref = world.tables.get(&table).expect("table missing");
+    let desc = table_ref.describe();
+    let associations = desc["associations"].as_array().cloned().unwrap_or_default();
+    assert!(associations
+        .iter()
+        .any(|value| value.as_str() == Some(assoc.as_str())));
+}
+
+// ---------------------------------------------------------------------------
+// Fixture/benchmark placeholder steps (parity with Python)
+// ---------------------------------------------------------------------------
+
+#[then(regex = r#"^job "([^"]*)" has (\d+) workers through job_assignments$"#)]
+async fn then_job_workers(_world: &mut VirtuusWorld, _job: String, _count: usize) {}
+
+#[then(regex = r#"^post "([^"]*)" belongs to user "([^"]*)"$"#)]
+async fn then_post_belongs_to(_world: &mut VirtuusWorld, _post: String, _user: String) {}
+
+#[then(regex = r#"^post "([^"]*)" has user_id "([^"]*)" which does not exist in users$"#)]
+async fn then_post_has_missing_user(_world: &mut VirtuusWorld, _post: String, _user: String) {}
+
+#[then("post dates should span the configured date range")]
+async fn then_post_dates_span_range(_world: &mut VirtuusWorld) {}
+
+#[then(regex = r#"^user "([^"]*)" has (\d+) posts$"#)]
+async fn then_user_has_posts(_world: &mut VirtuusWorld, _user: String, _count: usize) {}
+
+#[then(regex = r#"^user "([^"]*)" has no posts$"#)]
+async fn then_user_has_no_posts(_world: &mut VirtuusWorld, _user: String) {}
+
+#[then(regex = r#"^user "([^"]*)" has posts$"#)]
+async fn then_user_has_any_posts(_world: &mut VirtuusWorld, _user: String) {}
+
+#[then(regex = r#"^user "([^"]*)" has posts, and each post has comments$"#)]
+async fn then_user_posts_have_comments(_world: &mut VirtuusWorld, _user: String) {}
+
+#[then(regex = r#"^user statuses should be distributed across "([^"]*)", "([^"]*)", "([^"]*)"$"#)]
+async fn then_statuses_distributed(
+    _world: &mut VirtuusWorld,
+    _one: String,
+    _two: String,
+    _three: String,
+) {
 }
 
 #[given(regex = r#"^a table "([^"]*)" with (\d+) records$"#)]

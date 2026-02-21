@@ -3,16 +3,29 @@
   "title": "Has-many-through associations",
   "description": "Given a has_many_through association with a junction table, when resolved, it should query the junction table's GSI then PK-lookup each target record. Spec: features/associations/has_many_through.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "0e9ae429-d8c1-45fc-bea5-81265d71454d",
+      "author": "unknown",
+      "text": "Standup: starting has_many_through story. Next: implement junction GSI lookup + target PK fetch, steps for both langs. Blockers: none.",
+      "created_at": "2026-02-21T21:29:35.253518Z"
+    },
+    {
+      "id": "be932223-78be-4b35-b499-1a7017d2e8a8",
+      "author": "unknown",
+      "text": "Standup: implemented has-many-through associations in Python & Rust with Behave/Cucumber + unit tests; Next: wrap parity + finalize; Blockers: none.",
+      "created_at": "2026-02-21T21:49:01.253951Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:23.076839Z",
-  "updated_at": "2026-02-21T16:46:23.076839Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:49:05.711339Z",
+  "closed_at": "2026-02-21T21:49:05.711339Z",
   "custom": {}
 }

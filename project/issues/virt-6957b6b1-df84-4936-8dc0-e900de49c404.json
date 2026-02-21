@@ -3,16 +3,29 @@
   "title": "Self-referential associations",
   "description": "Given a table with associations pointing to itself (parent/child trees), when resolved, it should correctly traverse the hierarchy without infinite loops. Spec: features/associations/self_referential.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "d2d08831-83f5-4999-bba8-3d9d9b696e7c",
+      "author": "unknown",
+      "text": "Standup: starting self-referential associations. Next: implement parent/child traversal without loops + steps in Python/Rust. Blockers: none.",
+      "created_at": "2026-02-21T21:29:39.654501Z"
+    },
+    {
+      "id": "7bb777c6-941c-4cd9-99eb-cee10ca5e190",
+      "author": "unknown",
+      "text": "Standup: finished self-referential association support (Python/Rust) with hooks + Behave/Cucumber coverage; Next: finalize parity + clean up; Blockers: none.",
+      "created_at": "2026-02-21T21:49:07.947001Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:23.234858Z",
-  "updated_at": "2026-02-21T16:46:23.234858Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:49:09.805404Z",
+  "closed_at": "2026-02-21T21:49:09.805404Z",
   "custom": {}
 }

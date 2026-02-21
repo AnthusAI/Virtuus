@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-21T21:28:16Z",
+  "built_at": "2026-02-21T21:49:25Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
@@ -11,7 +11,7 @@
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771696060.629936,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771696060.627461,
-    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771696060.631453,
+    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
@@ -24,26 +24,26 @@
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771696060.633999,
     "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
     "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771696060.627653,
-    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771696060.626578,
+    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771710549.805551,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771696060.625794,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
-    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771696060.626932,
+    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771696060.631862,
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771696060.627846,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771696060.628951,
-    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771696060.633592,
+    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771696060.626182,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771696060.625221,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771696060.627292,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
-    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771696060.625044,
+    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
@@ -311,8 +311,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T21:49:05.711339Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:29:35.253518Z",
+          "id": "0e9ae429-d8c1-45fc-bea5-81265d71454d",
+          "text": "Standup: starting has_many_through story. Next: implement junction GSI lookup + target PK fetch, steps for both langs. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:49:01.253951Z",
+          "id": "be932223-78be-4b35-b499-1a7017d2e8a8",
+          "text": "Standup: implemented has-many-through associations in Python & Rust with Behave/Cucumber + unit tests; Next: wrap parity + finalize; Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:23.076839Z",
       "creator": null,
       "custom": {},
@@ -322,10 +335,10 @@
       "labels": [],
       "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Has-many-through associations",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:23.076839Z"
+      "updated_at": "2026-02-21T21:49:05.711339Z"
     },
     {
       "assignee": null,
@@ -733,8 +746,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T21:49:09.805404Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:29:39.654501Z",
+          "id": "d2d08831-83f5-4999-bba8-3d9d9b696e7c",
+          "text": "Standup: starting self-referential associations. Next: implement parent/child traversal without loops + steps in Python/Rust. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:49:07.947001Z",
+          "id": "7bb777c6-941c-4cd9-99eb-cee10ca5e190",
+          "text": "Standup: finished self-referential association support (Python/Rust) with hooks + Behave/Cucumber coverage; Next: finalize parity + clean up; Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:23.234858Z",
       "creator": null,
       "custom": {},
@@ -744,10 +770,10 @@
       "labels": [],
       "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Self-referential associations",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:23.234858Z"
+      "updated_at": "2026-02-21T21:49:09.805404Z"
     },
     {
       "assignee": null,
@@ -940,8 +966,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T21:49:13.383936Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:29:31.861838Z",
+          "id": "dff8528d-72c2-4c1b-a5f2-e05cdecadc77",
+          "text": "Standup: starting has_many association story. Next: implement GSI-backed resolution + specs/steps in Python and Rust with parity. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:49:11.546697Z",
+          "id": "0e5e5bed-3054-49f3-981f-deaf7c9ac081",
+          "text": "Standup: delivered has-many associations end-to-end in Python/Rust with GSI wiring, Behave/Cucumber tests, parity clean; Next: wrap epic; Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:22.742284Z",
       "creator": null,
       "custom": {},
@@ -951,10 +990,10 @@
       "labels": [],
       "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Has-many associations",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:22.742284Z"
+      "updated_at": "2026-02-21T21:49:13.383936Z"
     },
     {
       "assignee": null,
@@ -1146,8 +1185,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T21:49:17.516865Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:29:29.457203Z",
+          "id": "07cca809-9066-46f0-a2b7-9abd1e210788",
+          "text": "Standup: beginning belongs_to association behavior. Next: add step defs + table support to resolve parent via PK lookup in both langs. Blockers: none yet."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:49:15.269849Z",
+          "id": "31b80d6c-a750-456b-ab44-94826cdb934c",
+          "text": "Standup: completed belongs-to associations across Python/Rust with validations, hooks, Behave/Cucumber coverage; Next: close epic; Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:22.917712Z",
       "creator": null,
       "custom": {},
@@ -1157,10 +1209,10 @@
       "labels": [],
       "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Belongs-to associations",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:22.917712Z"
+      "updated_at": "2026-02-21T21:49:17.516865Z"
     },
     {
       "assignee": null,
@@ -1328,8 +1380,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T21:49:21.790375Z",
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:29:25.126522Z",
+          "id": "5e5ba466-b502-44ca-a609-a8d120ae52a9",
+          "text": "Standup: starting Phase 5 associations. Plan: implement belongs_to, has_many, has_many_through, self-referential in Python+Rust tables plus Behave/Cucumber steps and tests; keep parity. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:49:20.292115Z",
+          "id": "b5f28186-1b11-46e1-8818-87e15930aa8b",
+          "text": "Standup: Associations phase delivered (belongs_to, has_many, self-referential, through) in Python/Rust with tests + parity; Next: roll remaining phases; Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.816012Z",
       "creator": null,
       "custom": {},
@@ -1339,10 +1404,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Phase 5: Associations",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.816012Z"
+      "updated_at": "2026-02-21T21:49:21.790375Z"
     },
     {
       "assignee": null,

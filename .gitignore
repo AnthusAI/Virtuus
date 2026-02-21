@@ -1,5 +1,6 @@
 console.log
 AGENTS.override.md
+AGENTS.override
 
 # Python
 __pycache__/

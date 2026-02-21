@@ -3,16 +3,29 @@
   "title": "Has-many associations",
   "description": "Given a table with a has_many association defined, when I resolve the association for a record, it should query the foreign table's GSI to find all related records. Spec: features/associations/has_many.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "dff8528d-72c2-4c1b-a5f2-e05cdecadc77",
+      "author": "unknown",
+      "text": "Standup: starting has_many association story. Next: implement GSI-backed resolution + specs/steps in Python and Rust with parity. Blockers: none.",
+      "created_at": "2026-02-21T21:29:31.861838Z"
+    },
+    {
+      "id": "0e5e5bed-3054-49f3-981f-deaf7c9ac081",
+      "author": "unknown",
+      "text": "Standup: delivered has-many associations end-to-end in Python/Rust with GSI wiring, Behave/Cucumber tests, parity clean; Next: wrap epic; Blockers: none.",
+      "created_at": "2026-02-21T21:49:11.546697Z"
+    }
+  ],
   "created_at": "2026-02-21T16:46:22.742284Z",
-  "updated_at": "2026-02-21T16:46:22.742284Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T21:49:13.383936Z",
+  "closed_at": "2026-02-21T21:49:13.383936Z",
   "custom": {}
 }

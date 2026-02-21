@@ -7,7 +7,7 @@ import os
 import tempfile
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, TypedDict
 
 from virtuus._python.gsi import GSI
 
@@ -18,6 +18,18 @@ class TableKey:
 
     partition: str
     sort: str
+
+
+class AssociationDef(TypedDict, total=False):
+    """Association definition metadata."""
+
+    kind: str
+    target_table: str
+    foreign_key: str
+    index: str
+    through_table: str
+    through_index: str
+    target_foreign_key: str
 
 
 class Table:
@@ -76,6 +88,7 @@ class Table:
         self.on_delete: list[Callable[[dict[str, Any]], None]] = []
         self.on_refresh: list[Callable[[dict[str, int]], None]] = []
         self.associations: list[str] = []
+        self.association_defs: dict[str, AssociationDef] = {}
         self.last_write_used_atomic: bool = False
         self._manifest: dict[str, float] = {}
         self._last_dir_mtime: Optional[float] = None
@@ -124,6 +137,149 @@ class Table:
         if self.directory is not None:
             self._write_record_to_disk(pk, record)
         self._fire_hooks(self.on_put, record)
+
+    def add_belongs_to(self, name: str, target_table: str, foreign_key: str) -> None:
+        """
+        Register a belongs_to association.
+
+        :param name: Association name.
+        :type name: str
+        :param target_table: Target table name.
+        :type target_table: str
+        :param foreign_key: Foreign key field on this table.
+        :type foreign_key: str
+        :return: None
+        :rtype: None
+        """
+        self._register_association(
+            name,
+            {
+                "kind": "belongs_to",
+                "target_table": target_table,
+                "foreign_key": foreign_key,
+            },
+        )
+
+    def add_has_many(self, name: str, target_table: str, index: str) -> None:
+        """
+        Register a has_many association.
+
+        :param name: Association name.
+        :type name: str
+        :param target_table: Target table.
+        :type target_table: str
+        :param index: GSI name on the target table.
+        :type index: str
+        :return: None
+        :rtype: None
+        """
+        self._register_association(
+            name,
+            {
+                "kind": "has_many",
+                "target_table": target_table,
+                "index": index,
+            },
+        )
+
+    def add_has_many_through(
+        self,
+        name: str,
+        through_table: str,
+        through_index: str,
+        target_table: str,
+        target_foreign_key: str,
+    ) -> None:
+        """
+        Register a has_many_through association.
+
+        :param name: Association name.
+        :type name: str
+        :param through_table: Junction table name.
+        :type through_table: str
+        :param through_index: GSI on junction keyed by this table's PK.
+        :type through_index: str
+        :param target_table: Target table name.
+        :type target_table: str
+        :param target_foreign_key: Foreign key field on the junction pointing
+            to the target.
+        :type target_foreign_key: str
+        :return: None
+        :rtype: None
+        """
+        self._register_association(
+            name,
+            {
+                "kind": "has_many_through",
+                "through_table": through_table,
+                "through_index": through_index,
+                "target_table": target_table,
+                "target_foreign_key": target_foreign_key,
+            },
+        )
+
+    def resolve_association(
+        self, name: str, pk: str, tables: dict[str, "Table"]
+    ) -> Any:
+        """
+        Resolve an association for a record.
+
+        :param name: Association name.
+        :type name: str
+        :param pk: Primary key of the source record.
+        :type pk: str
+        :param tables: Mapping of table name to Table instance.
+        :type tables: dict[str, Table]
+        :return: Related record(s) or None.
+        :rtype: Any
+        :raises KeyError: If the association is not defined.
+        """
+        definition = self.association_defs.get(name)
+        if definition is None:
+            raise KeyError(f"association {name} not defined")
+        record = self.get(pk)
+        if record is None:
+            return None
+        kind = definition["kind"]
+        if kind == "belongs_to":
+            foreign_key = definition["foreign_key"]
+            fk_value = record.get(foreign_key)
+            if fk_value is None:
+                return None
+            target = tables[definition["target_table"]]
+            return target.get(fk_value)
+        if kind == "has_many":
+            key_field = self.primary_key or self.partition_key
+            if key_field is None:
+                return []
+            key_value = record.get(key_field)
+            if key_value is None:
+                return []
+            target = tables[definition["target_table"]]
+            return target.query_gsi(definition["index"], key_value)
+        if kind == "has_many_through":
+            key_field = self.primary_key or self.partition_key
+            if key_field is None:
+                return []
+            key_value = record.get(key_field)
+            if key_value is None:
+                return []
+            through_table = tables[definition["through_table"]]
+            assignments = through_table.query_gsi(
+                definition["through_index"], key_value
+            )
+            target_table = tables[definition["target_table"]]
+            target_fk = definition["target_foreign_key"]
+            related: list[dict[str, Any]] = []
+            for assignment in assignments:
+                fk_value = assignment.get(target_fk)
+                if fk_value is None:
+                    continue
+                related_record = target_table.get(fk_value)
+                if related_record is not None:
+                    related.append(related_record)
+            return related
+        return None
 
     def get(self, pk: str, sort: Optional[str] = None) -> Optional[dict[str, Any]]:
         """Get a record by primary key.
@@ -515,6 +671,11 @@ class Table:
             return
         if self.is_stale():
             self.refresh()
+
+    def _register_association(self, name: str, definition: AssociationDef) -> None:
+        if name not in self.associations:
+            self.associations.append(name)
+        self.association_defs[name] = definition
 
     def _fire_hooks(
         self, hooks: list[Callable[[dict[str, Any]], None]], record: dict[str, Any]
