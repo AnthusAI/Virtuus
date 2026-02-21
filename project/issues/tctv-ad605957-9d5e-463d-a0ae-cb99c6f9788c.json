@@ -1,7 +1,7 @@
 {
   "id": "tctv-ad605957-9d5e-463d-a0ae-cb99c6f9788c",
   "title": "Table file persistence",
-  "description": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Spec: features/core/table_file_persistence.feature",
+  "description": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. Filename convention: {pk}.json for simple PKs, {partition}__{sort}.json for composite PKs. PKs containing path separators (/ or \\) are rejected. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Non-JSON files are ignored. Spec: features/core/table_file_persistence.feature",
   "type": "story",
   "status": "open",
   "priority": 2,
@@ -12,7 +12,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-02-21T16:44:11.921401Z",
-  "updated_at": "2026-02-21T16:44:11.921401Z",
+  "updated_at": "2026-02-21T17:07:37.185447Z",
   "closed_at": null,
   "custom": {}
 }

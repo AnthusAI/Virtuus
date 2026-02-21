@@ -1,7 +1,7 @@
 {
   "id": "tctv-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d",
   "title": "CLI server mode",
-  "description": "Given a data directory and schema, when I run virtuus serve, it should load data once and serve queries over HTTP. POST JSON dict-in/dict-out protocol. Spec: features/cli/server_mode.feature",
+  "description": "Given a data directory and schema, when I run virtuus serve, it should load data once and serve queries over HTTP. POST /query for dict-in/dict-out queries. Additional endpoints: GET /health (server status), POST /describe (schema metadata), POST /validate (referential integrity check), POST /warm (proactive refresh). Spec: features/cli/server_mode.feature",
   "type": "story",
   "status": "open",
   "priority": 2,
@@ -12,7 +12,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-02-21T16:48:01.452144Z",
-  "updated_at": "2026-02-21T16:48:01.452144Z",
+  "updated_at": "2026-02-21T17:08:00.445882Z",
   "closed_at": null,
   "custom": {}
 }

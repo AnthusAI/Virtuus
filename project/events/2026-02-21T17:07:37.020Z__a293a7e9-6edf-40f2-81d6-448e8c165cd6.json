@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "a293a7e9-6edf-40f2-81d6-448e8c165cd6",
+  "issue_id": "tctv-9f432a03-5946-4157-ae7f-fdb66d560bb5",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:07:37.020Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given a table, when I put/get/delete/upsert records, the table should maintain correct state. Supports scan, all, and bulk load operations. Spec: features/core/table_crud.feature",
+        "to": "Given a table, when I put/get/delete/upsert records, the table should maintain correct state. Supports scan, all, and bulk load operations. Also supports composite primary keys (partition + sort key): put/get/delete with composite PK, and two records with same partition but different sort keys coexist. Spec: features/core/table_crud.feature"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "27650f2c-51e7-4abb-9fdb-cd7b82cc4390",
+  "issue_id": "tctv-631d58e3-99a3-4aae-9d70-2156f8c9f08a",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:07:56.993Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given a database with tables, when I call execute() with where, pk, fields, or limit directives, it should return matching records with correct field projection and limits. Spec: features/query/execute_basic.feature",
+        "to": "Given a database with tables, when I call execute() with where, pk, fields, or limit directives, it should return matching records with correct field projection and limits. Non-existent table raises an error (fail fast). Non-existent GSI name raises an error. Spec: features/query/execute_basic.feature"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "44ae9635-d236-4cc3-bc79-d6c81fc1e820",
+  "issue_id": "tctv-8454083d-a138-4372-a188-cba03e2050d8",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:07:37.330Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Spec: features/cache/cache_invalidation.feature",
+        "to": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Configurable: check_interval prevents re-checking within the interval; auto_refresh=False disables JIT refresh, requiring explicit warm() calls. Spec: features/cache/cache_invalidation.feature"
+      }
+    }
+  }
+}

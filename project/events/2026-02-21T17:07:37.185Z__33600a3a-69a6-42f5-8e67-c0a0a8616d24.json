@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "33600a3a-69a6-42f5-8e67-c0a0a8616d24",
+  "issue_id": "tctv-ad605957-9d5e-463d-a0ae-cb99c6f9788c",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:07:37.185Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Spec: features/core/table_file_persistence.feature",
+        "to": "Given a table backed by a directory, when I put a record it should be written to a JSON file on disk. Filename convention: {pk}.json for simple PKs, {partition}__{sort}.json for composite PKs. PKs containing path separators (/ or \\) are rejected. When I delete, the file should be removed. Load reads all JSON files from the directory. All writes use atomic temp+rename. Non-JSON files are ignored. Spec: features/core/table_file_persistence.feature"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "ba21fc0b-6919-4080-be62-0a2ce851976b",
+  "issue_id": "tctv-6d061c71-1063-4863-9bcb-e27dd42f1f16",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:07:36.862Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given the virtuus library is available in both Python and Rust, it should load and report a valid version string. This validates the project skeleton, shared Gherkin runner, coverage tooling, and CI pipeline all work end-to-end. Spec: features/smoke/smoke_test.feature",
+        "to": "Given the virtuus library is available in both Python and Rust, it should load and report a valid version string. Both implementations read from a shared VERSION file at the repo root, ensuring version parity. This validates the project skeleton, shared Gherkin runner, coverage tooling, and CI pipeline all work end-to-end. Spec: features/smoke/smoke_test.feature"
+      }
+    }
+  }
+}

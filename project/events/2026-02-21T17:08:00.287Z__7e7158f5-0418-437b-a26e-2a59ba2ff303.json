@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "7e7158f5-0418-437b-a26e-2a59ba2ff303",
+  "issue_id": "tctv-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-21T17:08:00.287Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Spec: features/concurrency/concurrent_writes.feature",
+        "to": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Concurrent puts to the same PK use last-write-wins: no error, final state is one of the written values. Spec: features/concurrency/concurrent_writes.feature"
+      }
+    }
+  }
+}
