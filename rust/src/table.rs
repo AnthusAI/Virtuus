@@ -8,6 +8,7 @@ use std::time::{Duration, SystemTime};
 use serde_json::Value;
 
 use crate::gsi::Gsi;
+use crate::sort::SortCondition;
 
 type Hook = Box<dyn Fn(&Value) + Send + Sync>;
 
@@ -372,12 +373,33 @@ impl Table {
             .or(self.partition_key.as_deref())
     }
 
+    /// Return associations list.
+    pub fn associations(&self) -> &Vec<String> {
+        &self.associations
+    }
+
+    /// Return association definitions map.
+    pub fn association_defs(&self) -> &HashMap<String, Association> {
+        &self.association_defs
+    }
+
+    /// Directory path if file-backed.
+    pub fn directory(&self) -> Option<&PathBuf> {
+        self.directory.as_ref()
+    }
+
     /// Query GSI and return full records.
-    pub fn query_gsi(&mut self, name: &str, partition_value: &Value) -> Vec<Value> {
+    pub fn query_gsi(
+        &mut self,
+        name: &str,
+        partition_value: &Value,
+        sort_condition: Option<&SortCondition>,
+        descending: bool,
+    ) -> Vec<Value> {
         self.maybe_refresh_before_query();
         let gsi = self.gsis.get(name).expect("GSI does not exist");
         let mut result = Vec::new();
-        for pk in gsi.query(partition_value, None, false) {
+        for pk in gsi.query(partition_value, sort_condition, descending) {
             let key = self.key_from_string(&pk);
             if let Some(record) = self.records.get(&key) {
                 result.push(record.clone());
@@ -1284,7 +1306,7 @@ mod tests {
         );
         table.add_gsi("by_status", "status", None);
         table.put(json!({"id": "user-1", "status": "active"}));
-        let results = table.query_gsi("by_status", &json!("active"));
+        let results = table.query_gsi("by_status", &json!("active"), None, false);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0]["id"], "user-1");
     }
@@ -1301,7 +1323,7 @@ mod tests {
         );
         table.add_gsi("by_status", "status", None);
         table.put(json!({"user_id": "user-1", "game_id": "game-A", "status": "active"}));
-        let results = table.query_gsi("by_status", &json!("active"));
+        let results = table.query_gsi("by_status", &json!("active"), None, false);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0]["game_id"], "game-A");
     }

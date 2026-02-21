@@ -125,13 +125,13 @@ def step_given_has_many_through(context, table, target, through):
     )
 
 
-@given("user {record_text}")
+@given(r"user (\{.*\})")
 def step_user_record(context, record_text):
     users = _ensure_table(context, "users")
     users.put(json.loads(record_text))
 
 
-@given("post {record_text}")
+@given(r"post (\{.*\})")
 def step_post_record(context, record_text):
     remove_user = False
     if record_text.endswith(" with no user_id field"):
@@ -183,7 +183,7 @@ def step_job_assignments(context):
         assignments.put(record)
 
 
-@given("job {record_text}")
+@given(r"job (\{.*\})")
 def step_job_record(context, record_text):
     jobs = _ensure_table(context, "jobs")
     jobs.put(json.loads(record_text))

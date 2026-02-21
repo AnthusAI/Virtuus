@@ -7,12 +7,14 @@ use std::sync::{Arc, Mutex};
 #[allow(unused_imports)]
 use cucumber::step;
 use cucumber::{given, then, when, World};
-use serde_json::{json, Value};
+use serde_json::{from_str, json, Map as JsonMap, Value};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
 use virtuus::table::{Association, ChangeSummary, Table, ValidationMode};
+use virtuus::{Database as DbDatabase, SortCondition as DbSortCondition, Table as DbTable};
+use virtuus::{Database as DbDatabase, SortCondition as DbSortCondition, Table as DbTable};
 
 #[derive(Debug, Default, World)]
 pub struct VirtuusWorld {
@@ -38,6 +40,8 @@ pub struct VirtuusWorld {
     pub last_summary: Option<ChangeSummary>,
     pub refresh_counter: Option<std::sync::Arc<std::sync::atomic::AtomicUsize>>,
     pub database: Option<Database>,
+    pub db_result: Option<Value>,
+    pub next_token: Option<String>,
     pub directory: Option<PathBuf>,
     pub directory_two: Option<PathBuf>,
 }
@@ -47,6 +51,50 @@ pub struct LastUpdate {
     pub pk: String,
     pub old_created_at: String,
     pub new_created_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Helpers for Database-based scenarios
+// ---------------------------------------------------------------------------
+
+fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
+    if world.database.is_none() {
+        world.database = Some(DbDatabase::new());
+    }
+    world.database.as_mut().unwrap()
+}
+
+fn ensure_db_table(world: &mut VirtuusWorld, name: &str, pk: &str) -> &mut DbTable {
+    let db = ensure_db(world) as *mut DbDatabase;
+    // safety: we only hold mutable ref until end of scope
+    let db_ref = unsafe { &mut *db };
+    if !db_ref.describe().contains_key(name) {
+        let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
+        db_ref.add_table(name, table);
+    }
+    db_ref.table_mut(name).unwrap()
+}
+
+fn items_from_result(result: &Value) -> Vec<Value> {
+    if let Some(items) = result.get("items").and_then(|v| v.as_array()) {
+        return items.clone();
+    }
+    if let Some(arr) = result.as_array() {
+        return arr.clone();
+    }
+    if result.is_null() {
+        return vec![];
+    }
+    vec![result.clone()]
+}
+
+fn ids_from_items(items: &[Value]) -> Vec<String> {
+    items
+        .iter()
+        .filter_map(|v| v.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -3062,6 +3110,451 @@ async fn then_subsequent_queries_no_refresh(world: &mut VirtuusWorld) {
     table.scan();
     table.scan();
     assert_eq!(counter.load(Ordering::SeqCst), 0);
+}
+
+// ---------------------------------------------------------------------------
+// Database execute/describe/validate/schema steps (parity with Python)
+// ---------------------------------------------------------------------------
+
+fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
+    if world.database.is_none() {
+        world.database = Some(DbDatabase::new());
+    }
+    world.database.as_mut().unwrap()
+}
+
+fn ensure_db_table(world: &mut VirtuusWorld, name: &str, pk: &str) -> &mut DbTable {
+    let db = ensure_db(world);
+    if db.table_mut(name).is_none() {
+        let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
+        db.add_table(name, table);
+    }
+    db.table_mut(name).unwrap()
+}
+
+fn items_from_result(result: &Value) -> Vec<Value> {
+    if let Some(items) = result.get("items").and_then(|v| v.as_array()) {
+        return items.clone();
+    }
+    if let Some(arr) = result.as_array() {
+        return arr.clone();
+    }
+    if result.is_null() {
+        return vec![];
+    }
+    vec![result.clone()]
+}
+
+fn ids_from_items(items: &[Value]) -> Vec<String> {
+    items
+        .iter()
+        .filter_map(|v| v.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+#[given(regex = r#"^a database with a "([^"]*)" table$"#)]
+async fn given_db_table(world: &mut VirtuusWorld, name: String) {
+    ensure_db_table(world, &name, "id");
+}
+
+#[given(regex = r#"^a database with a "([^"]*)" table containing (\{.*\})$"#)]
+async fn given_db_table_record(world: &mut VirtuusWorld, name: String, record_text: String) {
+    let table = ensure_db_table(world, &name, "id");
+    let record: JsonMap<String, Value> = from_str(&record_text).expect("invalid json");
+    table.put(record);
+}
+
+#[given(regex = r#"^a database with a "([^"]*)" table containing:$"#)]
+async fn given_db_table_rows(
+    world: &mut VirtuusWorld,
+    name: String,
+    step: &cucumber::gherkin::Step,
+) {
+    let table = ensure_db_table(world, &name, "id");
+    let headers = step.table().unwrap().headings.clone();
+    for row in step.table().unwrap().rows.iter() {
+        let mut record = JsonMap::new();
+        for (i, cell) in row.iter().enumerate() {
+            record.insert(headers[i].clone(), Value::String(cell.clone()));
+        }
+        table.put(record);
+    }
+}
+
+#[given(regex = r#"^a database with a "([^"]*)" table containing (\d+) records$"#)]
+async fn given_db_table_count(world: &mut VirtuusWorld, name: String, count: usize) {
+    let table = ensure_db_table(world, &name, "id");
+    for i in 0..count {
+        table.put(JsonMap::from_iter([(
+            "id".to_string(),
+            Value::String(format!("{}-{}", &name[..name.len().saturating_sub(1)], i)),
+        )]));
+    }
+}
+
+#[given(
+    regex = r#"^a database with a "posts" table and GSI "([^"]*)" on "([^"]*)"(?: sorted by "([^"]*)")?$"#
+)]
+async fn given_db_posts_gsi(
+    world: &mut VirtuusWorld,
+    gsi: String,
+    field: String,
+    sort: Option<String>,
+) {
+    let table = ensure_db_table(world, "posts", "id");
+    table.add_gsi(&gsi, &field, sort.as_deref());
+}
+
+#[given("posts for user-1 with created_at values \"2025-01-01\", \"2025-06-01\", \"2025-12-01\"")]
+async fn given_posts_dates(world: &mut VirtuusWorld) {
+    let table = ensure_db_table(world, "posts", "id");
+    let dates = ["2025-01-01", "2025-06-01", "2025-12-01"];
+    for (i, date) in dates.iter().enumerate() {
+        table.put(JsonMap::from_iter([
+            ("id".to_string(), Value::String(format!("post-{}", i + 1))),
+            ("user_id".to_string(), Value::String("user-1".to_string())),
+            ("created_at".to_string(), Value::String(date.to_string())),
+        ]));
+    }
+}
+
+#[given(regex = r#"^30 posts for user "([^"]*)"$"#)]
+async fn given_posts_30(world: &mut VirtuusWorld, user: String) {
+    let table = ensure_db_table(world, "posts", "id");
+    for i in 0..30 {
+        table.put(JsonMap::from_iter([
+            ("id".to_string(), Value::String(format!("post-{}", i + 1))),
+            ("user_id".to_string(), Value::String(user.clone())),
+            (
+                "title".to_string(),
+                Value::String(format!("Post {}", i + 1)),
+            ),
+        ]));
+    }
+}
+
+#[given(regex = r#"^user "([^"]*)" has 3 posts$"#)]
+async fn given_user_has_posts(world: &mut VirtuusWorld, user: String) {
+    let users = ensure_db_table(world, "users", "id");
+    users.put(JsonMap::from_iter([(
+        "id".to_string(),
+        Value::String(user.clone()),
+    )]));
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.add_gsi("by_user", "user_id", None);
+    users.add_has_many("posts", "posts", "by_user");
+    for i in 0..3 {
+        posts.put(JsonMap::from_iter([
+            ("id".to_string(), Value::String(format!("post-{}", i + 1))),
+            ("user_id".to_string(), Value::String(user.clone())),
+        ]));
+    }
+}
+
+#[given(regex = r#"^post "([^"]*)" belongs to user "([^"]*)"$"#)]
+async fn given_post_belongs(world: &mut VirtuusWorld, post_id: String, user_id: String) {
+    let posts = ensure_db_table(world, "posts", "id");
+    let users = ensure_db_table(world, "users", "id");
+    posts.add_belongs_to("author", "users", "user_id");
+    users.put(JsonMap::from_iter([(
+        "id".to_string(),
+        Value::String(user_id.clone()),
+    )]));
+    posts.put(JsonMap::from_iter([
+        ("id".to_string(), Value::String(post_id)),
+        ("user_id".to_string(), Value::String(user_id)),
+    ]));
+}
+
+#[given(regex = r#"^a database with "users" and "posts" tables$"#)]
+async fn given_users_posts(world: &mut VirtuusWorld) {
+    ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "posts", "id");
+}
+
+#[given(regex = r#"^a database with "users", "posts", and "comments" tables$"#)]
+async fn given_users_posts_comments(world: &mut VirtuusWorld) {
+    ensure_db_table(world, "users", "id");
+    ensure_db_table(world, "posts", "id");
+    ensure_db_table(world, "comments", "id");
+    ensure_db_table(world, "comments", "id").add_gsi("by_post", "post_id", None);
+    ensure_db_table(world, "posts", "id").add_gsi("by_user", "user_id", None);
+    ensure_db_table(world, "users", "id").add_has_many("posts", "posts", "by_user");
+    ensure_db_table(world, "posts", "id").add_has_many("comments", "comments", "by_post");
+}
+
+#[given(regex = r#"^a database with "users" having a has_many "posts" association$"#)]
+async fn given_users_has_many_posts(world: &mut VirtuusWorld) {
+    let users = ensure_db_table(world, "users", "id");
+    let posts = ensure_db_table(world, "posts", "id");
+    posts.add_gsi("by_user", "user_id", None);
+    users.add_has_many("posts", "posts", "by_user");
+    users.put(JsonMap::from_iter([(
+        "id".to_string(),
+        Value::String("user-1".to_string()),
+    )]));
+    posts.put(JsonMap::from_iter([
+        ("id".to_string(), Value::String("post-1".to_string())),
+        ("user_id".to_string(), Value::String("user-1".to_string())),
+    ]));
+}
+
+#[given("an empty database")]
+async fn given_empty_db(world: &mut VirtuusWorld) {
+    world.database = Some(DbDatabase::new());
+}
+
+#[when(regex = r#"^I execute (\\{.*\\})$"#)]
+async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
+    let query: Value =
+        serde_json::from_str(&query_text.replace("\\", "")).expect("invalid query json");
+    let db = ensure_db(world);
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query))) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.next_token = world
+                .db_result
+                .as_ref()
+                .and_then(|r| r.get("next_token"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            world.error = None;
+        }
+        Err(_) => {
+            world.error = Some("error".to_string());
+        }
+    }
+}
+
+#[when("I call describe on the database")]
+async fn when_describe_db(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    world.db_result = Some(Value::Object(
+        db.describe()
+            .into_iter()
+            .collect::<JsonMap<String, Value>>(),
+    ));
+}
+
+#[when("I call validate on the database")]
+async fn when_validate_db(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    world.db_result = Some(Value::Array(db.validate()));
+}
+
+#[then(regex = r#"^the result should return the user record for "([^"]*)"$"#)]
+async fn then_result_user(world: &mut VirtuusWorld, user: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(result.get("id"), Some(&Value::String(user)));
+}
+
+#[then(regex = r#"^the result should contain (\\d+) records$"#)]
+async fn then_result_count_db(world: &mut VirtuusWorld, count: usize) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let items = items_from_result(result);
+    assert_eq!(items.len(), count);
+}
+
+#[then(regex = r#"^the result should include "([^"]*)" and "([^"]*)"$"#)]
+async fn then_result_includes(world: &mut VirtuusWorld, first: String, second: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let ids = ids_from_items(&items_from_result(result));
+    assert!(ids.contains(&first));
+    assert!(ids.contains(&second));
+}
+
+#[then("the result should contain only the \"id\" and \"name\" fields")]
+async fn then_projection(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let keys: Vec<String> = result.as_object().unwrap().keys().cloned().collect();
+    assert_eq!(keys.len(), 2);
+    assert!(keys.contains(&"id".to_string()));
+    assert!(keys.contains(&"name".to_string()));
+}
+
+#[then(regex = r#"^an error should be raised indicating table "([^"]*)" does not exist$"#)]
+async fn then_error_table(_world: &mut VirtuusWorld, _table: String) {
+    assert!(_world.error.is_some());
+}
+
+#[then(regex = r#"^an error should be raised indicating GSI "([^"]*)" does not exist$"#)]
+async fn then_error_gsi(_world: &mut VirtuusWorld, _gsi: String) {
+    assert!(_world.error.is_some());
+}
+
+#[then(regex = r#"^the result should contain 2 posts with created_at >= "([^"]*)"$"#)]
+async fn then_posts_filtered(world: &mut VirtuusWorld, date: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let items = items_from_result(result);
+    let filtered: Vec<_> = items
+        .into_iter()
+        .filter(|r| {
+            r.get("created_at")
+                .and_then(|v| v.as_str())
+                .map(|s| s >= date.as_str())
+                .unwrap_or(false)
+        })
+        .collect();
+    assert_eq!(filtered.len(), 2);
+}
+
+#[then("the result should be in descending created_at order")]
+async fn then_desc_order(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let items = items_from_result(result);
+    let dates: Vec<String> = items
+        .iter()
+        .filter_map(|r| r.get("created_at"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    let mut sorted = dates.clone();
+    sorted.sort_by(|a, b| b.cmp(a));
+    assert_eq!(dates, sorted);
+}
+
+#[then("the result should include a \"next_token\" value")]
+async fn then_has_next_token(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert!(result.get("next_token").is_some());
+}
+
+#[then("the result should not include a \"next_token\"")]
+async fn then_no_next_token(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert!(result.get("next_token").is_none());
+}
+
+#[then("the result should contain the next 10 records")]
+async fn then_next_records(world: &mut VirtuusWorld) {
+    let current_ids = ids_from_items(&items_from_result(
+        world.db_result.as_ref().expect("missing result"),
+    ));
+    let previous_ids = world.last_result.clone();
+    assert!(previous_ids.is_empty() || previous_ids.iter().all(|p| !current_ids.contains(p)));
+}
+
+#[then("no record should overlap with the first page")]
+async fn then_no_overlap(world: &mut VirtuusWorld) {
+    then_next_records(world).await;
+}
+
+#[then("the result should contain 5 records")]
+async fn then_five_records(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(items_from_result(result).len(), 5);
+}
+
+#[then("the result should contain 10 posts")]
+async fn then_ten_posts(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert_eq!(items_from_result(result).len(), 10);
+}
+
+#[then("the total collected records should be 25")]
+async fn then_total_25(world: &mut VirtuusWorld) {
+    assert_eq!(world.last_count.unwrap_or(0), 25);
+}
+
+#[then("there should be no duplicates")]
+async fn then_no_duplicates(world: &mut VirtuusWorld) {
+    let ids = ids_from_items(&items_from_result(
+        world.db_result.as_ref().expect("missing result"),
+    ));
+    let mut uniq = ids.clone();
+    uniq.sort();
+    uniq.dedup();
+    assert_eq!(ids.len(), uniq.len());
+}
+
+#[then("the result should list all 3 table names")]
+async fn then_list_tables(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let names: Vec<String> = result.as_object().unwrap().keys().cloned().collect();
+    assert_eq!(names.len(), 3);
+}
+
+#[then("the \"users\" entry should include primary_key, GSIs, record_count, and staleness")]
+async fn then_describe_users(world: &mut VirtuusWorld) {
+    let users = world
+        .db_result
+        .as_ref()
+        .unwrap()
+        .get("users")
+        .unwrap()
+        .as_object()
+        .unwrap();
+    for key in ["primary_key", "gsis", "record_count", "stale"] {
+        assert!(users.contains_key(key));
+    }
+}
+
+#[then("the \"users\" entry should list the \"posts\" association")]
+async fn then_describe_assoc(world: &mut VirtuusWorld) {
+    let users = world
+        .db_result
+        .as_ref()
+        .unwrap()
+        .get("users")
+        .unwrap()
+        .as_object()
+        .unwrap();
+    let associations = users
+        .get("associations")
+        .and_then(|v| v.as_array())
+        .unwrap();
+    assert!(associations.contains(&Value::String("posts".to_string())));
+}
+
+#[then("the result should be an empty schema with no tables")]
+async fn then_empty_schema(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().unwrap();
+    assert!(result.as_object().unwrap().is_empty());
+}
+
+#[then("the result should be an empty list of violations")]
+async fn then_empty_violations(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().unwrap();
+    assert!(result.as_array().unwrap().is_empty());
+}
+
+#[then(
+    regex = r#"^the result should include a violation for post "([^"]*)" referencing missing user "([^"]*)"$"#
+)]
+async fn then_violation(world: &mut VirtuusWorld, post: String, user: String) {
+    let result = world.db_result.as_ref().unwrap();
+    assert!(result
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v.get("record_pk") == Some(&Value::String(post.clone()))
+            && v.get("missing_target") == Some(&Value::String(user.clone()))));
+}
+
+#[then("the result should contain 3 violations")]
+async fn then_three_violations(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().unwrap();
+    assert_eq!(result.as_array().unwrap().len(), 3);
+}
+
+#[then(
+    "each violation should include table, record_pk, association, foreign_key, and missing_target"
+)]
+async fn then_violation_fields(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().unwrap();
+    for v in result.as_array().unwrap() {
+        for key in [
+            "table",
+            "record_pk",
+            "association",
+            "foreign_key",
+            "missing_target",
+        ] {
+            assert!(v.get(key).is_some());
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

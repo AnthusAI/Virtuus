@@ -16,10 +16,16 @@
       "author": "unknown",
       "text": "Standup: starting database validate (referential integrity) story; will plan validation hooks post schema load. Next: craft specs then implement validations. Blockers: none.",
       "created_at": "2026-02-21T21:51:50.894137Z"
+    },
+    {
+      "id": "9fe7062a-11de-4886-a5eb-f824fc41b2db",
+      "author": "unknown",
+      "text": "Standup: Python validate (referential integrity) implemented/passing. Rust validate still pending. Blockers: none.",
+      "created_at": "2026-02-21T22:15:33.187189Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.769532Z",
-  "updated_at": "2026-02-21T21:51:52.576551Z",
+  "updated_at": "2026-02-21T22:15:33.187189Z",
   "closed_at": null,
   "custom": {}
 }

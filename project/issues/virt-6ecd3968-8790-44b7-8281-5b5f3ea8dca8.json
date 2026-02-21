@@ -16,10 +16,16 @@
       "author": "unknown",
       "text": "Standup: starting nested queries with includes story; will design specs for nested execute + associations after base execute in place. Next: author features, then implement. Blockers: none.",
       "created_at": "2026-02-21T21:51:45.433640Z"
+    },
+    {
+      "id": "f15cf82f-73b0-4836-90c9-6d4b8a8e8c75",
+      "author": "unknown",
+      "text": "Standup: Python nested includes implemented/passing; will mirror in Rust execute/association includes. Blockers: none.",
+      "created_at": "2026-02-21T22:15:30.105810Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.308720Z",
-  "updated_at": "2026-02-21T21:51:47.011069Z",
+  "updated_at": "2026-02-21T22:15:30.105810Z",
   "closed_at": null,
   "custom": {}
 }

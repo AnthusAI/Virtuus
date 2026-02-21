@@ -6,6 +6,10 @@ pub mod database;
 pub mod gsi;
 pub mod sort;
 pub mod table;
+pub use database::Database;
+pub use gsi::Gsi;
+pub use sort::SortCondition;
+pub use table::Table;
 
 /// Returns the library version string.
 pub fn version() -> &'static str {

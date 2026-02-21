@@ -1,33 +1,33 @@
 {
-  "built_at": "2026-02-21T21:49:25Z",
+  "built_at": "2026-02-21T22:37:59Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
-    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
+    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771712110.52731,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771696060.626398,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771696060.631645,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771696060.632623,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771696060.633247,
-    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771696060.629936,
+    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771712115.441283,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
-    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771696060.627461,
+    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771712119.354686,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
-    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771696060.630499,
+    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771712133.187345,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
     "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771696060.633999,
     "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
-    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771696060.627653,
+    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771712123.404354,
     "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771710549.805551,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
-    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771696060.625794,
+    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771712130.105949,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
@@ -40,7 +40,7 @@
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771696060.626182,
-    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771696060.625221,
+    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771710675.310765,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771696060.627292,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
@@ -76,7 +76,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:20.470362Z",
+          "id": "ec02d152-8d13-41ad-99fc-93bd86af4ef1",
+          "text": "Standup: beginning Schema-from-YAML loader; plan spec-first for DB from schema definitions. Next: design specs and implement loader; Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:10.526345Z",
+          "id": "02b0cdc7-2836-4178-897a-bff6a02eadc1",
+          "text": "Standup: Python schema-from-yaml + describe/validate/execute steps done & green; Rust parity next. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:43.934530Z",
       "creator": null,
       "custom": {},
@@ -86,10 +99,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Schema from YAML",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:43.934530Z"
+      "updated_at": "2026-02-21T22:15:10.526345Z"
     },
     {
       "assignee": null,
@@ -221,7 +234,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:27.781765Z",
+          "id": "2991e7c5-3a6f-4ab0-bbf2-6e0be26c62da",
+          "text": "Standup: kicking off database describe story; will design specs to expose schema/state info. Next: write feature scenarios + impl after schema loader. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:15.441146Z",
+          "id": "f968c542-79bd-4729-9724-6a5550402828",
+          "text": "Standup: Python database.describe implemented & passing Behave; Rust describe pending. Next: port to Rust + Cucumber."
+        }
+      ],
       "created_at": "2026-02-21T16:46:43.611559Z",
       "creator": null,
       "custom": {},
@@ -231,10 +257,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Database describe",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:43.611559Z"
+      "updated_at": "2026-02-21T22:15:15.441146Z"
     },
     {
       "assignee": null,
@@ -294,7 +320,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:33.134606Z",
+          "id": "1f079ed3-8946-4bd9-8a65-4a70fb65752e",
+          "text": "Standup: starting execute indexed queries; will add specs for GSI-based execute pipeline once schema loader lands. Next: author scenarios + hook into DB execute. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:19.327826Z",
+          "id": "02372a68-1c78-4cd0-a384-98cc207168b3",
+          "text": "Standup: Python execute indexed queries passing; will implement Rust execute + GSI queries next. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:43.152329Z",
       "creator": null,
       "custom": {},
@@ -304,10 +343,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Execute indexed queries",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:43.152329Z"
+      "updated_at": "2026-02-21T22:15:19.327826Z"
     },
     {
       "assignee": null,
@@ -539,7 +578,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:50.894137Z",
+          "id": "9b754762-783d-48ed-a4c2-0df286e82228",
+          "text": "Standup: starting database validate (referential integrity) story; will plan validation hooks post schema load. Next: craft specs then implement validations. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:33.187189Z",
+          "id": "9fe7062a-11de-4886-a5eb-f824fc41b2db",
+          "text": "Standup: Python validate (referential integrity) implemented/passing. Rust validate still pending. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:43.769532Z",
       "creator": null,
       "custom": {},
@@ -549,10 +601,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Database validate (referential integrity)",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:43.769532Z"
+      "updated_at": "2026-02-21T22:15:33.187189Z"
     },
     {
       "assignee": null,
@@ -729,7 +781,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:38.411173Z",
+          "id": "14456047-24a5-4615-ae69-342a69269ebe",
+          "text": "Standup: starting execute basic queries story; plan to spec key-based reads + simple filters via execute API. Next: draft Gherkin + implement after schema/execute plumbing. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:23.404010Z",
+          "id": "7b9eef0a-7792-4c59-8952-2e7c77550f8b",
+          "text": "Standup: Python execute basic queries passing (pk/where/projection/limit/errors). Next: port execute to Rust. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:42.964912Z",
       "creator": null,
       "custom": {},
@@ -739,10 +804,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Execute basic queries",
       "type": "story",
-      "updated_at": "2026-02-21T17:07:56.993709Z"
+      "updated_at": "2026-02-21T22:15:23.404010Z"
     },
     {
       "assignee": null,
@@ -851,7 +916,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:45.433640Z",
+          "id": "f73e2f30-6c7f-4695-8bab-b7f6f39b4aa0",
+          "text": "Standup: starting nested queries with includes story; will design specs for nested execute + associations after base execute in place. Next: author features, then implement. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T22:15:30.105810Z",
+          "id": "f15cf82f-73b0-4836-90c9-6d4b8a8e8c75",
+          "text": "Standup: Python nested includes implemented/passing; will mirror in Rust execute/association includes. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:46:43.308720Z",
       "creator": null,
       "custom": {},
@@ -861,10 +939,10 @@
       "labels": [],
       "parent": "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Execute nested queries with includes",
       "type": "story",
-      "updated_at": "2026-02-21T16:46:43.308720Z"
+      "updated_at": "2026-02-21T22:15:30.105810Z"
     },
     {
       "assignee": null,
@@ -1290,7 +1368,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T21:51:13.559390Z",
+          "id": "517ad0cc-336f-44a3-826d-03595bcdd4e8",
+          "text": "Standup: starting Phase 6 (DB execute + schema-from-YAML). Next: set child stories in progress and plan execution/features. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.963677Z",
       "creator": null,
       "custom": {},
@@ -1300,10 +1385,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Phase 6: Database + execute() + Schema-from-YAML",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.963677Z"
+      "updated_at": "2026-02-21T21:51:15.310587Z"
     },
     {
       "assignee": null,

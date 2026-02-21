@@ -369,13 +369,23 @@ class Table:
             description["sort_key"] = self.sort_key
         return description
 
-    def query_gsi(self, name: str, partition_value: Any) -> list[dict[str, Any]]:
+    def query_gsi(
+        self,
+        name: str,
+        partition_value: Any,
+        sort_condition: Optional[Callable[[Any], bool]] = None,
+        descending: bool = False,
+    ) -> list[dict[str, Any]]:
         """Query a GSI and return full records.
 
         :param name: GSI name.
         :type name: str
         :param partition_value: Partition key value.
         :type partition_value: Any
+        :param sort_condition: Optional sort condition predicate.
+        :type sort_condition: Callable[[Any], bool] | None
+        :param descending: Whether results should be in descending order.
+        :type descending: bool
         :return: List of records.
         :rtype: list[dict[str, Any]]
         :raises KeyError: If the GSI does not exist.
@@ -385,7 +395,8 @@ class Table:
         if gsi is None:
             raise KeyError(f"GSI {name} does not exist")
         result = []
-        for pk in gsi.query(partition_value):
+        direction = "desc" if descending else "asc"
+        for pk in gsi.query(partition_value, sort_condition, direction):
             record = self.records.get(pk)
             if record is not None:
                 result.append(record)

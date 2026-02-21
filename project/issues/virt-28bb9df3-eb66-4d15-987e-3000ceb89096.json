@@ -16,10 +16,16 @@
       "author": "unknown",
       "text": "Standup: kicking off database describe story; will design specs to expose schema/state info. Next: write feature scenarios + impl after schema loader. Blockers: none.",
       "created_at": "2026-02-21T21:51:27.781765Z"
+    },
+    {
+      "id": "f968c542-79bd-4729-9724-6a5550402828",
+      "author": "unknown",
+      "text": "Standup: Python database.describe implemented & passing Behave; Rust describe pending. Next: port to Rust + Cucumber.",
+      "created_at": "2026-02-21T22:15:15.441146Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.611559Z",
-  "updated_at": "2026-02-21T21:51:29.644017Z",
+  "updated_at": "2026-02-21T22:15:15.441146Z",
   "closed_at": null,
   "custom": {}
 }

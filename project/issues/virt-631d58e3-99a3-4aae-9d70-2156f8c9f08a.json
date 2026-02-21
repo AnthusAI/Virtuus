@@ -16,10 +16,16 @@
       "author": "unknown",
       "text": "Standup: starting execute basic queries story; plan to spec key-based reads + simple filters via execute API. Next: draft Gherkin + implement after schema/execute plumbing. Blockers: none.",
       "created_at": "2026-02-21T21:51:38.411173Z"
+    },
+    {
+      "id": "7b9eef0a-7792-4c59-8952-2e7c77550f8b",
+      "author": "unknown",
+      "text": "Standup: Python execute basic queries passing (pk/where/projection/limit/errors). Next: port execute to Rust. Blockers: none.",
+      "created_at": "2026-02-21T22:15:23.404010Z"
     }
   ],
   "created_at": "2026-02-21T16:46:42.964912Z",
-  "updated_at": "2026-02-21T21:51:40.298726Z",
+  "updated_at": "2026-02-21T22:15:23.404010Z",
   "closed_at": null,
   "custom": {}
 }
