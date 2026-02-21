@@ -42,3 +42,13 @@ Feature: GSI operations
     Given a hash-only GSI "by_status" with partition key "status"
     When I put records "user-1", "user-2", "user-3" all with status "active"
     Then querying the GSI for partition "active" should return all 3 PKs
+
+  Scenario: Missing partition key is skipped for hash-only GSI
+    Given a hash-only GSI "by_status" with partition key "status"
+    When I put a record with pk "user-1" and missing status
+    Then querying the GSI for partition "active" should be empty
+
+  Scenario: Missing sort key is skipped for hash+range GSI
+    Given a hash+range GSI "by_org" with partition key "org_id" and sort key "created_at"
+    When I put a record with pk "user-1", org_id "org-a", and missing created_at
+    Then querying the GSI for partition "org-a" should be empty

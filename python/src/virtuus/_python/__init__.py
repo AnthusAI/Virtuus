@@ -2,9 +2,10 @@
 
 import os as _os
 
+from virtuus._python.gsi import GSI
 from virtuus._python.sort import Sort
 
-__all__ = ["__version__", "Sort"]
+__all__ = ["__version__", "GSI", "Sort"]
 
 
 def _read_version() -> str:
