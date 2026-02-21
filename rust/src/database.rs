@@ -7,7 +7,7 @@ use serde_json::Value;
 use crate::table::Table;
 
 /// Collection of tables with cache helpers.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Database {
     tables: HashMap<String, Table>,
 }
@@ -54,5 +54,10 @@ impl Database {
     /// Access a table mutably.
     pub fn table_mut(&mut self, name: &str) -> Option<&mut Table> {
         self.tables.get_mut(name)
+    }
+
+    /// Access all tables.
+    pub fn tables(&self) -> &HashMap<String, Table> {
+        &self.tables
     }
 }

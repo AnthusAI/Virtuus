@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Plan: Incremental refresh partially wired in Rust (manifest/dir mtime); Python complete. Next: finalize change detection + tests and exercise via cache features. Blockers: none.",
       "created_at": "2026-02-21T20:53:53.808234Z"
+    },
+    {
+      "id": "9ca1cb4f-4fc7-4788-b00d-b7da475f2c68",
+      "author": "unknown",
+      "text": "Progress: Incremental refresh logic + manifest handling wired in Rust; added cache Cucumber steps and unit tests. Next: finish remaining validation/behave runs and close story.",
+      "created_at": "2026-02-21T21:17:26.694729Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.591795Z",
-  "updated_at": "2026-02-21T20:53:53.808234Z",
+  "updated_at": "2026-02-21T21:17:26.694729Z",
   "closed_at": null,
   "custom": {}
 }

@@ -14,23 +14,23 @@ def _coerce(value):
     return value
 
 
-@given(u'a sort condition of "{op}" with value "{value}"')
+@given('a sort condition of "{op}" with value "{value}"')
 def step_sort_condition_single(context, op, value):
     factory = getattr(Sort, op)
     context.predicate = factory(_coerce(value))
 
 
-@given(u'a sort condition of "begins_with" with value ""')
+@given('a sort condition of "begins_with" with value ""')
 def step_sort_begins_with_empty(context):
     context.predicate = Sort.begins_with("")
 
 
-@given(u'a sort condition of "contains" with value ""')
+@given('a sort condition of "contains" with value ""')
 def step_sort_contains_empty(context):
     context.predicate = Sort.contains("")
 
 
-@given(u'a sort condition of "eq" with value ""')
+@given('a sort condition of "eq" with value ""')
 def step_sort_eq_empty(context):
     context.predicate = Sort.eq("")
 
@@ -40,12 +40,12 @@ def step_sort_condition_between(context, low, high):
     context.predicate = Sort.between(_coerce(low), _coerce(high))
 
 
-@when(u'evaluated against "{input_value}"')
+@when('evaluated against "{input_value}"')
 def step_evaluate_against_string(context, input_value):
     context.result = context.predicate(_coerce(input_value))
 
 
-@when(u'evaluated against ""')
+@when('evaluated against ""')
 def step_evaluate_against_empty(context):
     context.result = context.predicate("")
 

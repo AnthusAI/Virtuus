@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Plan: Cache check/dry-run implemented in Python; Rust check/auto-refresh behavior still needs tests + fixes. Next: complete Rust logic and Cucumber steps, run make check. Blockers: none.",
       "created_at": "2026-02-21T20:53:56.726035Z"
+    },
+    {
+      "id": "9c0b9d60-94b3-4ee8-9f8f-f08d9e00284c",
+      "author": "unknown",
+      "text": "Progress: Added cache check/dry-run support + parity steps in Rust; lint/tests green. Next: final verification before closure. Blockers: none.",
+      "created_at": "2026-02-21T21:17:30.148467Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.955311Z",
-  "updated_at": "2026-02-21T20:53:56.726035Z",
+  "updated_at": "2026-02-21T21:17:30.148467Z",
   "closed_at": null,
   "custom": {}
 }

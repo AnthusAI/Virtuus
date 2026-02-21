@@ -323,20 +323,10 @@ impl Table {
                 }
             }
         }
-        let dir_mtime = self.dir_mtime();
-        if !force_scan {
-            if let (Some(prev), Some(curr)) = (self.last_dir_mtime, dir_mtime) {
-                if prev == curr {
-                    self.last_check_time = Some(now);
-                    self.last_is_stale = false;
-                    return false;
-                }
-            }
-        }
         let (summary, _, _, _) = self.compute_changes();
         self.last_check_time = Some(now);
         self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
-        self.last_dir_mtime = dir_mtime;
+        self.last_dir_mtime = self.dir_mtime();
         self.last_is_stale
     }
 
@@ -579,8 +569,10 @@ impl Table {
         self.write_json_atomic(&path, record);
         if let Ok(meta) = fs::metadata(&path) {
             if let Ok(mtime) = meta.modified() {
-                self.manifest
-                    .insert(path.file_name().unwrap().to_string_lossy().to_string(), mtime);
+                self.manifest.insert(
+                    path.file_name().unwrap().to_string_lossy().to_string(),
+                    mtime,
+                );
                 self.last_dir_mtime = self.dir_mtime();
             }
         }
@@ -589,7 +581,7 @@ impl Table {
     fn delete_record(&mut self, directory: &Path, key: &TableKey) {
         self.validate_pk_for_path(key);
         let filename = self.filename_for_key(key);
-        let path = directory.join(filename);
+        let path = directory.join(&filename);
         if path.exists() {
             fs::remove_file(path).expect("remove file");
             self.manifest.remove(&filename);
@@ -726,7 +718,10 @@ mod tests {
         let mut dir = std::env::temp_dir();
         dir.push(format!(
             "virtuus_{name}_{}",
-            std::time::SystemTime::now().elapsed().unwrap().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         dir
     }
@@ -1332,5 +1327,213 @@ mod tests {
         }));
         table.put(json!({"id": "user-1"}));
         assert!(*called.lock().unwrap());
+    }
+
+    #[test]
+    fn cache_is_stale_detects_changes() {
+        let dir = temp_dir("cache_stale");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("user-0.json");
+        fs::write(
+            &path,
+            json!({"id": "user-0", "status": "active"}).to_string(),
+        )
+        .unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+        assert!(!table.is_stale(false));
+        fs::write(
+            &path,
+            json!({"id": "user-0", "status": "inactive"}).to_string(),
+        )
+        .unwrap();
+        assert!(table.is_stale(false));
+    }
+
+    #[test]
+    fn cache_check_reports_without_refreshing() {
+        let dir = temp_dir("cache_check");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            &dir.join("user-0.json"),
+            json!({"id": "user-0"}).to_string(),
+        )
+        .unwrap();
+        fs::write(
+            &dir.join("user-1.json"),
+            json!({"id": "user-1"}).to_string(),
+        )
+        .unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+        let before = table.count(None, None);
+        fs::write(
+            &dir.join("user-2.json"),
+            json!({"id": "user-2"}).to_string(),
+        )
+        .unwrap();
+        let summary = table.check();
+        assert_eq!(summary.added, 1);
+        assert_eq!(table.count(None, None), before);
+    }
+
+    #[test]
+    fn cache_refresh_updates_gsi_and_records() {
+        let dir = temp_dir("cache_refresh");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("user-0.json");
+        fs::write(
+            &path,
+            json!({"id": "user-0", "status": "active"}).to_string(),
+        )
+        .unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.load_from_dir(None);
+        fs::write(
+            &path,
+            json!({"id": "user-0", "status": "inactive"}).to_string(),
+        )
+        .unwrap();
+        let summary = table.refresh();
+        assert_eq!(summary.modified, 1);
+        assert_eq!(summary.reread, 1);
+        assert_eq!(
+            table
+                .gsis()
+                .get("by_status")
+                .unwrap()
+                .query(&json!("inactive"), None, false),
+            vec!["user-0".to_string()]
+        );
+        assert_eq!(
+            table.get("user-0", None).unwrap().get("status").unwrap(),
+            "inactive"
+        );
+    }
+
+    #[test]
+    fn cache_check_interval_skips_recent_checks() {
+        let dir = temp_dir("cache_interval");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("user-0.json");
+        fs::write(&path, json!({"id": "user-0"}).to_string()).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_check_interval(60);
+        table.load_from_dir(None);
+        table.mark_checked_now(false);
+        fs::write(
+            &path,
+            json!({"id": "user-0", "name": "Updated"}).to_string(),
+        )
+        .unwrap();
+        assert!(!table.is_stale(false));
+    }
+
+    #[test]
+    fn cache_auto_refresh_can_be_disabled() {
+        let dir = temp_dir("cache_auto");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            &dir.join("user-0.json"),
+            json!({"id": "user-0"}).to_string(),
+        )
+        .unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_auto_refresh(false);
+        table.load_from_dir(None);
+        fs::write(
+            &dir.join("user-1.json"),
+            json!({"id": "user-1"}).to_string(),
+        )
+        .unwrap();
+        let initial_ids: Vec<String> = table
+            .scan()
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        assert!(!initial_ids.contains(&"user-1".to_string()));
+        table.warm();
+        let refreshed_ids: Vec<String> = table
+            .scan()
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        assert!(refreshed_ids.contains(&"user-1".to_string()));
+    }
+
+    #[test]
+    fn cache_on_refresh_hook_receives_summary() {
+        let dir = temp_dir("cache_hook");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            &dir.join("user-0.json"),
+            json!({"id": "user-0"}).to_string(),
+        )
+        .unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let calls = Arc::new(Mutex::new(Vec::<Value>::new()));
+        let calls_clone = calls.clone();
+        table.register_on_refresh(Box::new(move |summary| {
+            calls_clone.lock().unwrap().push(summary.clone());
+        }));
+        table.load_from_dir(None);
+        fs::write(
+            &dir.join("user-1.json"),
+            json!({"id": "user-1"}).to_string(),
+        )
+        .unwrap();
+        table.refresh();
+        assert!(!calls.lock().unwrap().is_empty());
+        let last = calls.lock().unwrap().last().cloned().unwrap();
+        for key in ["added", "modified", "deleted"] {
+            assert!(last.get(key).is_some());
+        }
     }
 }

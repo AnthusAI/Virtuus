@@ -39,7 +39,9 @@ def _infer_partition_key(gsi_name: str) -> str:
     return gsi_name
 
 
-def _make_gsi(context, name: str, partition_key: str, sort_key: str | None = None) -> GSI:
+def _make_gsi(
+    context, name: str, partition_key: str, sort_key: str | None = None
+) -> GSI:
     _exercise_gsi_coverage()
     gsis = _ensure_gsis(context)
     gsi = GSI(name, partition_key, sort_key)
@@ -75,7 +77,9 @@ def _exercise_gsi_coverage() -> None:
     _order_key(set([1]))
 
 
-def _sort_condition(op: str, low: str, high: str | None = None) -> Callable[[Any], bool]:
+def _sort_condition(
+    op: str, low: str, high: str | None = None
+) -> Callable[[Any], bool]:
     if op == "between":
         return Sort.between(low, high)
     factory = getattr(Sort, op)
@@ -103,7 +107,9 @@ def step_hash_only_gsi(context, name, partition_key):
     _make_gsi(context, name, partition_key)
 
 
-@given('a hash+range GSI "{name}" with partition key "{partition_key}" and sort key "{sort_key}"')
+@given(
+    'a hash+range GSI "{name}" with partition key "{partition_key}" and sort key "{sort_key}"'
+)
 def step_hash_range_gsi(context, name, partition_key, sort_key):
     _make_gsi(context, name, partition_key, sort_key)
 
@@ -115,7 +121,9 @@ def step_hash_only_populated(context, name):
         gsi.put(record["pk"], record)
 
 
-@given('a hash+range GSI "{name}" with partition key "{partition_key}" and sort key "{sort_key}" populated with:')
+@given(
+    'a hash+range GSI "{name}" with partition key "{partition_key}" and sort key "{sort_key}" populated with:'
+)
 def step_hash_range_populated(context, name, partition_key, sort_key):
     gsi = _make_gsi(context, name, partition_key, sort_key)
     for record in _parse_table(context.table):
@@ -136,7 +144,9 @@ def step_query_partition(context, partition_value):
     context.last_result = gsi.query(partition_value)
 
 
-@when(r'I query the GSI for partition "([^"]*)" with sort condition ([^ ]+) "([^"]*)"\Z')
+@when(
+    r'I query the GSI for partition "([^"]*)" with sort condition ([^ ]+) "([^"]*)"\Z'
+)
 def step_query_partition_with_sort_condition(context, partition_value, op, value):
     gsi = _current_gsi(context)
     predicate = _sort_condition(op, value)
@@ -182,7 +192,7 @@ def step_result_only(context, pk):
     assert context.last_result == [pk]
 
 
-@then('the result should be empty')
+@then("the result should be empty")
 def step_result_empty(context):
     assert context.last_result == []
 
@@ -193,7 +203,7 @@ def step_gsi_exists_partition(context, partition_key):
     assert gsi.partition_key == partition_key
 
 
-@then('the GSI should have no sort key')
+@then("the GSI should have no sort key")
 def step_gsi_no_sort_key(context):
     gsi = _current_gsi(context)
     assert gsi.sort_key is None
@@ -205,7 +215,7 @@ def step_gsi_has_sort_key(context, sort_key):
     assert gsi.sort_key == sort_key
 
 
-@then('both GSIs should exist independently')
+@then("both GSIs should exist independently")
 def step_both_gsis_exist(context):
     assert len(_ensure_gsis(context)) == 2
 
@@ -228,7 +238,9 @@ def step_index_record_hash_only(context, pk, status):
     gsi.put(pk, {"pk": pk, "status": status})
 
 
-@given('a record with pk "{pk}", org_id "{org_id}", and created_at "{created_at}" is indexed')
+@given(
+    'a record with pk "{pk}", org_id "{org_id}", and created_at "{created_at}" is indexed'
+)
 def step_index_record_hash_range(context, pk, org_id, created_at):
     gsi = _current_gsi(context)
     gsi.put(pk, {"pk": pk, "org_id": org_id, "created_at": created_at})
@@ -240,7 +252,9 @@ def step_remove_hash_only(context, pk, status):
     gsi.remove(pk, {"pk": pk, "status": status})
 
 
-@when('I remove the record with pk "{pk}", org_id "{org_id}", and created_at "{created_at}"')
+@when(
+    'I remove the record with pk "{pk}", org_id "{org_id}", and created_at "{created_at}"'
+)
 def step_remove_hash_range(context, pk, org_id, created_at):
     gsi = _current_gsi(context)
     gsi.remove(pk, {"pk": pk, "org_id": org_id, "created_at": created_at})
@@ -252,7 +266,9 @@ def step_update_partition_change(context, pk, old_status, new_status):
     gsi.update(pk, {"pk": pk, "status": old_status}, {"pk": pk, "status": new_status})
 
 
-@when('I update the record with pk "{pk}" to created_at "{new_created_at}" (same org_id)')
+@when(
+    'I update the record with pk "{pk}" to created_at "{new_created_at}" (same org_id)'
+)
 def step_update_sort_change(context, pk, new_created_at):
     gsi = _current_gsi(context)
     context.last_update = {
@@ -307,7 +323,9 @@ def step_query_partition_all_three(context, partition_value):
     assert len(result) == 3
 
 
-@then('the record should appear at the new sort position in partition "{partition_value}"')
+@then(
+    'the record should appear at the new sort position in partition "{partition_value}"'
+)
 def step_record_new_sort_position(context, partition_value):
     gsi = _current_gsi(context)
     new_created_at = context.last_update["new_created_at"]

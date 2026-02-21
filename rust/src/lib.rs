@@ -2,8 +2,8 @@
 /// Cargo.toml is kept in sync with the repo-root VERSION file.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub mod gsi;
 pub mod database;
+pub mod gsi;
 pub mod sort;
 pub mod table;
 

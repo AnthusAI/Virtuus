@@ -81,7 +81,12 @@ class Table:
         self._last_dir_mtime: Optional[float] = None
         self._last_check_time: Optional[float] = None
         self._last_is_stale: bool = False
-        self.last_change_summary: dict[str, int] = {"added": 0, "modified": 0, "deleted": 0, "reread": 0}
+        self.last_change_summary: dict[str, int] = {
+            "added": 0,
+            "modified": 0,
+            "deleted": 0,
+            "reread": 0,
+        }
 
     def add_gsi(
         self, name: str, partition_key: str, sort_key: Optional[str] = None
@@ -233,7 +238,8 @@ class Table:
     def is_stale(self, force_scan: bool = False) -> bool:
         """Check whether on-disk files have changed.
 
-        :param force_scan: If True, always scan the directory even if within the check interval.
+        :param force_scan: If True, always scan the directory even if within the
+            check interval.
         :type force_scan: bool
         :return: True if changes are detected, otherwise False.
         :rtype: bool
@@ -241,14 +247,14 @@ class Table:
         if self.directory is None:
             return False
         now = time.time()
-        if not force_scan and self.check_interval > 0 and self._last_check_time is not None:
+        if (
+            not force_scan
+            and self.check_interval > 0
+            and self._last_check_time is not None
+        ):
             if now - self._last_check_time < self.check_interval:
                 return self._last_is_stale
         dir_mtime = self._dir_mtime()
-        if not force_scan and self._last_dir_mtime is not None and dir_mtime == self._last_dir_mtime:
-            self._last_check_time = now
-            self._last_is_stale = False
-            return False
         summary, _, _, _ = self._compute_changes()
         self._last_check_time = now
         self._last_is_stale = any(summary.values())
@@ -285,7 +291,9 @@ class Table:
                     self.delete(pk.partition, pk.sort)
                 else:
                     self.delete(pk)
-        self._manifest = {os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()}
+        self._manifest = {
+            os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()
+        }
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()
         summary["reread"] = reread
@@ -437,7 +445,11 @@ class Table:
             names = os.listdir(self.directory)
         except FileNotFoundError:
             return []
-        return (os.path.join(self.directory, name) for name in names if name.endswith(".json"))
+        return (
+            os.path.join(self.directory, name)
+            for name in names
+            if name.endswith(".json")
+        )
 
     def _dir_mtime(self) -> float:
         if self.directory is None:
@@ -458,11 +470,26 @@ class Table:
         self,
     ) -> tuple[dict[str, int], set[str], set[str], set[str]]:
         if self.directory is None:
-            return {"added": 0, "modified": 0, "deleted": 0, "reread": 0}, set(), set(), set()
-        current_files = {os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()}
+            return (
+                {"added": 0, "modified": 0, "deleted": 0, "reread": 0},
+                set(),
+                set(),
+                set(),
+            )
+        current_files = {
+            os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()
+        }
         previous = self._manifest
-        added = {os.path.join(self.directory, name) for name in current_files if name not in previous}
-        deleted = {os.path.join(self.directory, name) for name in previous if name not in current_files}
+        added = {
+            os.path.join(self.directory, name)
+            for name in current_files
+            if name not in previous
+        }
+        deleted = {
+            os.path.join(self.directory, name)
+            for name in previous
+            if name not in current_files
+        }
         modified = {
             os.path.join(self.directory, name)
             for name, mtime in current_files.items()

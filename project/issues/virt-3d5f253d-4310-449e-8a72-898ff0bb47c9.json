@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Plan: Python cache implemented; Rust cache features and tests pending. Next: finish Rust implementation, add Cucumber steps, run make check, close stories. Blockers: none.",
       "created_at": "2026-02-21T20:53:46.373019Z"
+    },
+    {
+      "id": "70753bce-0279-49ab-867f-e80ad56a96f2",
+      "author": "unknown",
+      "text": "Update: Rust cache implementation + unit/Cucumber steps added; parity fixed and clippy/cargo test/black/ruff clean. Behave run still blocked by unrelated pending steps. Next: finalize docs/tests as needed and close stories after verification.",
+      "created_at": "2026-02-21T21:17:10.454464Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.668053Z",
-  "updated_at": "2026-02-21T20:53:46.373019Z",
+  "updated_at": "2026-02-21T21:17:10.454464Z",
   "closed_at": null,
   "custom": {}
 }

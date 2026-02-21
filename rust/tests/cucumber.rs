@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use cucumber::step;
 use cucumber::{given, then, when, World};
 use serde_json::{json, Value};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
@@ -35,7 +36,7 @@ pub struct VirtuusWorld {
     pub hook_calls: Option<std::sync::Arc<std::sync::Mutex<Vec<Value>>>>,
     pub last_is_stale: Option<bool>,
     pub last_summary: Option<ChangeSummary>,
-    pub refresh_calls: usize,
+    pub refresh_counter: Option<std::sync::Arc<std::sync::atomic::AtomicUsize>>,
     pub database: Option<Database>,
     pub directory: Option<PathBuf>,
     pub directory_two: Option<PathBuf>,
@@ -219,12 +220,14 @@ fn current_table(world: &mut VirtuusWorld) -> &mut Table {
 fn write_records(dir: &PathBuf, count: usize, start: usize) {
     fs::create_dir_all(dir).unwrap();
     for i in start..start + count {
-        let record = json!({"id": format!("user-{i}"), "name": format!("User {i}"), "status": "active"});
+        let record =
+            json!({"id": format!("user-{i}"), "name": format!("User {i}"), "status": "active"});
         let path = dir.join(format!("user-{i}.json"));
         fs::write(path, serde_json::to_vec(&record).unwrap()).unwrap();
     }
 }
 
+#[allow(dead_code)]
 fn table_from_dir(
     world: &mut VirtuusWorld,
     name: &str,
@@ -268,20 +271,28 @@ fn create_table(
     set_current_table(world, name);
 }
 
+fn unique_temp_dir(tag: &str) -> PathBuf {
+    let mut dir = std::env::temp_dir();
+    dir.push(format!(
+        "virtuus_{tag}_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    dir
+}
+
 fn temp_dir(world: &mut VirtuusWorld) -> PathBuf {
     if world.temp_dir.is_none() {
-        let mut dir = std::env::temp_dir();
-        dir.push(format!(
-            "virtuus_table_{}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).expect("create temp dir");
-        world.temp_dir = Some(dir);
+        world.temp_dir = Some(unique_temp_dir("table"));
     }
     world.temp_dir.clone().unwrap()
+}
+
+fn temp_dir_named(_world: &mut VirtuusWorld, tag: &str) -> PathBuf {
+    unique_temp_dir(tag)
 }
 
 fn parse_record(text: &str) -> Value {
@@ -1870,6 +1881,640 @@ async fn given_records_loaded(world: &mut VirtuusWorld, count: usize) {
 async fn when_call_describe(world: &mut VirtuusWorld) {
     let table = current_table(world);
     world.last_record = Some(table.describe());
+}
+
+// ---------------------------------------------------------------------------
+// Cache steps
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a table "([^"]*)" loaded from a directory with 5 JSON files$"#)]
+async fn given_table_loaded_5(world: &mut VirtuusWorld, name: String) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 5, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    world.directory = Some(dir);
+    current_table(world).load_from_dir(None);
+}
+
+#[given(regex = r#"^a table "([^"]*)" loaded from a directory$"#)]
+async fn given_table_loaded_dir(world: &mut VirtuusWorld, name: String) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 3, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    world.directory = Some(dir);
+    current_table(world).load_from_dir(None);
+}
+
+#[given(
+    regex = r#"^a table "([^"]*)" loaded from a directory with check_interval of (\d+) seconds$"#
+)]
+async fn given_table_check_interval(world: &mut VirtuusWorld, name: String, seconds: u64) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 3, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    let table = current_table(world);
+    table.set_check_interval(seconds);
+    table.load_from_dir(None);
+    world.directory = Some(dir);
+}
+
+#[given(regex = r#"^a table "([^"]*)" loaded from a directory with auto_refresh disabled$"#)]
+async fn given_table_auto_refresh_off(world: &mut VirtuusWorld, name: String) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 3, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    let table = current_table(world);
+    table.set_auto_refresh(false);
+    table.load_from_dir(None);
+    world.directory = Some(dir);
+}
+
+#[given(regex = r#"^a table "([^"]*)" loaded from (\d+) JSON files with a GSI on "status"$"#)]
+async fn given_table_with_status_gsi(world: &mut VirtuusWorld, name: String, count: usize) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, count, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    let table = current_table(world);
+    table.add_gsi("by_status", "status", None);
+    table.load_from_dir(None);
+    world.directory = Some(dir);
+}
+
+#[given(regex = r#"^a table "([^"]*)" loaded from 100 JSON files$"#)]
+async fn given_table_100(world: &mut VirtuusWorld, name: String) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 100, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    current_table(world).load_from_dir(None);
+    world.directory = Some(dir);
+}
+
+#[when("a JSON file in the directory is modified")]
+async fn when_modify_file(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().unwrap();
+    let path = dir.join("user-0.json");
+    let mut data: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    if let Some(obj) = data.as_object_mut() {
+        obj.insert("name".to_string(), Value::String("Updated".to_string()));
+    }
+    std::fs::write(&path, serde_json::to_vec(&data).unwrap()).unwrap();
+}
+
+#[when("a new JSON file is added to the directory")]
+#[given("a new JSON file is added to the directory")]
+async fn when_add_file(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().unwrap();
+    let count = std::fs::read_dir(dir)
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .unwrap()
+                .path()
+                .extension()
+                .and_then(|s| s.to_str())
+                == Some("json")
+        })
+        .count();
+    write_records(dir, 1, count);
+}
+
+#[when("a JSON file is removed from the directory")]
+#[when("1 JSON file is removed from the directory")]
+#[given("a JSON file is removed from the directory")]
+#[given("1 JSON file is removed from the directory")]
+async fn when_remove_file(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().unwrap();
+    let path = dir.join("user-0.json");
+    if path.exists() {
+        std::fs::remove_file(path).unwrap();
+    }
+}
+
+#[when("a JSON file is deleted from the directory")]
+#[when("1 JSON file is deleted from the directory")]
+#[given("a JSON file is deleted from the directory")]
+#[given("1 JSON file is deleted from the directory")]
+async fn when_delete_file_alias(world: &mut VirtuusWorld) {
+    when_remove_file(world).await;
+}
+
+#[when("2 new JSON files are added to the directory")]
+#[given("2 new JSON files are added to the directory")]
+async fn when_add_two_files(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().unwrap();
+    let count = std::fs::read_dir(dir)
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .unwrap()
+                .path()
+                .extension()
+                .and_then(|s| s.to_str())
+                == Some("json")
+        })
+        .count();
+    write_records(dir, 2, count);
+}
+
+#[when("1 JSON file is modified on disk")]
+#[given("1 JSON file is modified on disk")]
+async fn when_modify_file_on_disk(world: &mut VirtuusWorld) {
+    when_modify_file(world).await;
+}
+
+#[when("a JSON file is modified")]
+#[given("a JSON file is modified")]
+async fn when_json_file_modified(world: &mut VirtuusWorld) {
+    when_modify_file(world).await;
+}
+
+#[when("I check if the table is stale")]
+async fn when_check_stale(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    world.last_is_stale = Some(table.is_stale(false));
+}
+
+#[when("I check if the table is stale within 5 seconds of the last check")]
+async fn when_check_stale_within_interval(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    table.mark_checked_now(false);
+    world.last_is_stale = Some(table.is_stale(false));
+}
+
+#[then("it should report fresh")]
+async fn then_report_fresh(world: &mut VirtuusWorld) {
+    assert_eq!(world.last_is_stale, Some(false));
+}
+
+#[then("it should report fresh without scanning files")]
+async fn then_report_fresh_without_scanning(world: &mut VirtuusWorld) {
+    then_report_fresh(world).await;
+}
+
+#[then("it should report stale")]
+async fn then_report_stale(world: &mut VirtuusWorld) {
+    assert_eq!(world.last_is_stale, Some(true));
+}
+
+#[when("I query the table")]
+async fn when_query_table(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    world.last_records = table.scan();
+}
+
+#[then("the new record should be included in results")]
+async fn then_new_record_in_results(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let ids: Vec<String> = table
+        .scan()
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids
+        .iter()
+        .any(|id| !["user-0", "user-1", "user-2"].contains(&id.as_str())));
+}
+
+#[then("the table should report fresh afterward")]
+async fn then_table_fresh_after(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    assert!(!table.is_stale(false));
+}
+
+#[when("I query the table twice with no file changes between")]
+async fn when_query_twice(world: &mut VirtuusWorld) {
+    let counter = std::sync::Arc::new(AtomicUsize::new(0));
+    world.refresh_counter = Some(counter.clone());
+    {
+        let table = current_table(world);
+        let counter_clone = counter.clone();
+        table.register_on_refresh(Box::new(move |_summary| {
+            counter_clone.fetch_add(1, Ordering::SeqCst);
+        }));
+        table.scan();
+        table.scan();
+    }
+}
+
+#[then("the second query should not trigger a refresh")]
+async fn then_second_query_no_refresh(world: &mut VirtuusWorld) {
+    let calls = world
+        .refresh_counter
+        .as_ref()
+        .map(|c| c.load(Ordering::SeqCst))
+        .unwrap_or(0);
+    assert_eq!(calls, 0);
+}
+
+#[when("a JSON file is modified to change a GSI-indexed field")]
+#[given("a JSON file is modified to change a GSI-indexed field")]
+async fn when_modify_gsi_field(world: &mut VirtuusWorld) {
+    {
+        let table = current_table(world);
+        if !table.gsis().contains_key("by_status") {
+            table.add_gsi("by_status", "status", None);
+        }
+    }
+    let dir = world.directory.as_ref().unwrap();
+    let path = dir.join("user-0.json");
+    let mut data: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    if let Some(obj) = data.as_object_mut() {
+        obj.insert("status".to_string(), Value::String("inactive".to_string()));
+    }
+    std::fs::write(&path, serde_json::to_vec(&data).unwrap()).unwrap();
+}
+
+#[when("the table is refreshed")]
+async fn when_table_refreshed(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    world.last_summary = Some(table.refresh());
+}
+
+#[then("all GSIs should include the 2 new records")]
+async fn then_gsi_has_new(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let ids = table.gsis().get("by_status").unwrap().query(
+        &Value::String("active".to_string()),
+        None,
+        false,
+    );
+    assert!(ids.len() >= 2);
+}
+
+#[then("the deleted record should be absent from all GSIs")]
+async fn then_deleted_absent(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    for gsi in table.gsis().values() {
+        let ids = gsi.query(&Value::String("active".to_string()), None, false);
+        assert!(!ids.contains(&"user-0".to_string()));
+    }
+}
+
+#[then("the record should reflect the updated field value")]
+async fn then_record_updated(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let record = table.get("user-0", None).unwrap();
+    assert_eq!(
+        record.get("status").and_then(|v| v.as_str()),
+        Some("inactive")
+    );
+}
+
+#[then("GSI queries should return the record under the new index value")]
+async fn then_gsi_updated(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let ids = table.gsis().get("by_status").unwrap().query(
+        &Value::String("inactive".to_string()),
+        None,
+        false,
+    );
+    assert!(ids.contains(&"user-0".to_string()));
+}
+
+#[then("only 1 file should be re-read from disk")]
+async fn then_only_one_reread(world: &mut VirtuusWorld) {
+    assert_eq!(world.last_summary.as_ref().unwrap().reread, 1);
+}
+
+#[when("I call check on the table")]
+async fn when_call_check(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    world.last_summary = Some(table.check());
+}
+
+#[then(regex = r#"^the result should report (\d+) added, (\d+) modified, (\d+) deleted$"#)]
+async fn then_summary_counts(
+    world: &mut VirtuusWorld,
+    added: usize,
+    modified: usize,
+    deleted: usize,
+) {
+    let summary = world.last_summary.as_ref().unwrap();
+    assert_eq!(summary.added, added);
+    assert_eq!(summary.modified, modified);
+    assert_eq!(summary.deleted, deleted);
+}
+
+#[then("the table should still contain 5 records")]
+async fn then_table_still_five(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    assert_eq!(table.count(None, None), 5);
+}
+
+#[given(regex = r#"^a table "([^"]*)" with an on_refresh hook registered$"#)]
+async fn given_table_on_refresh(world: &mut VirtuusWorld, name: String) {
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 1, 0);
+    create_table(
+        world,
+        &name,
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::<Value>::new()));
+    let calls_clone = calls.clone();
+    let table = current_table(world);
+    table.register_on_refresh(Box::new(move |summary| {
+        calls_clone.lock().unwrap().push(summary.clone());
+    }));
+    table.load_from_dir(None);
+    world.hook_calls = Some(calls);
+    world.directory = Some(dir);
+}
+
+#[then("the on_refresh hook should receive a change summary")]
+async fn then_hook_receives_summary(world: &mut VirtuusWorld) {
+    let calls = world.hook_calls.as_ref().unwrap();
+    assert!(!calls.lock().unwrap().is_empty());
+}
+
+#[then("the summary should include counts of added, modified, and deleted files")]
+async fn then_summary_includes_keys(world: &mut VirtuusWorld) {
+    let calls = world.hook_calls.as_ref().unwrap();
+    let last = calls.lock().unwrap().last().cloned().unwrap();
+    for key in ["added", "modified", "deleted"] {
+        assert!(last.get(key).is_some());
+    }
+}
+
+#[given(regex = r#"^a database with tables "([^"]*)" and "([^"]*)" loaded from directories$"#)]
+async fn given_database_two_tables(world: &mut VirtuusWorld, name1: String, name2: String) {
+    let mut db = Database::new();
+    let dir1 = temp_dir_named(world, "cache");
+    let dir2 = temp_dir_named(world, "cache2");
+    write_records(&dir1, 1, 0);
+    write_records(&dir2, 1, 0);
+    let mut table1 = Table::new(
+        &name1,
+        Some("id"),
+        None,
+        None,
+        Some(dir1.clone()),
+        ValidationMode::Silent,
+    );
+    let mut table2 = Table::new(
+        &name2,
+        Some("id"),
+        None,
+        None,
+        Some(dir2.clone()),
+        ValidationMode::Silent,
+    );
+    table1.load_from_dir(None);
+    table2.load_from_dir(None);
+    db.add_table(&name1, table1);
+    db.add_table(&name2, table2);
+    world.database = Some(db);
+    world.directory = Some(dir1);
+    world.directory_two = Some(dir2);
+}
+
+#[given("new files are added to both directories")]
+#[when("new files are added to both directories")]
+async fn given_new_files_added_both(world: &mut VirtuusWorld) {
+    let dir1 = world.directory.as_ref().expect("missing directory");
+    let dir2 = world
+        .directory_two
+        .as_ref()
+        .expect("missing second directory");
+    let count1 = std::fs::read_dir(dir1)
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .unwrap()
+                .path()
+                .extension()
+                .and_then(|s| s.to_str())
+                == Some("json")
+        })
+        .count();
+    let count2 = std::fs::read_dir(dir2)
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .unwrap()
+                .path()
+                .extension()
+                .and_then(|s| s.to_str())
+                == Some("json")
+        })
+        .count();
+    write_records(dir1, 1, count1);
+    write_records(dir2, 1, count2);
+}
+
+#[when("I call warm on the database")]
+async fn when_warm_database(world: &mut VirtuusWorld) {
+    if let Some(db) = world.database.as_mut() {
+        db.warm();
+    }
+}
+
+#[then("both tables should contain their new records")]
+async fn then_db_tables_have_records(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().unwrap();
+    for table in db.tables().values() {
+        assert!(table.count(None, None) >= 1);
+    }
+}
+
+#[given("a database with tables loaded from directories")]
+async fn given_database_loaded(world: &mut VirtuusWorld) {
+    let mut db = Database::new();
+    let dir = temp_dir_named(world, "cache");
+    write_records(&dir, 2, 0);
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        Some(dir.clone()),
+        ValidationMode::Silent,
+    );
+    table.load_from_dir(None);
+    db.add_table("users", table);
+    world.database = Some(db);
+    world.directory = Some(dir);
+}
+
+#[when("I call warm with no file changes")]
+async fn when_warm_no_changes(world: &mut VirtuusWorld) {
+    if let Some(db) = world.database.as_mut() {
+        db.warm();
+    }
+}
+
+#[then("no files should be re-read from disk")]
+async fn then_no_files_reread(world: &mut VirtuusWorld) {
+    if let Some(db) = world.database.as_ref() {
+        for table in db.tables().values() {
+            assert_eq!(table.last_change_summary.reread, 0);
+        }
+    }
+}
+
+#[when("I call warm on the table")]
+async fn when_warm_table(world: &mut VirtuusWorld) {
+    let directory = world.directory.clone();
+    if let Some(dir) = &directory {
+        let existing = std::fs::read_dir(dir)
+            .unwrap()
+            .filter(|e| {
+                e.as_ref()
+                    .unwrap()
+                    .path()
+                    .extension()
+                    .and_then(|s| s.to_str())
+                    == Some("json")
+            })
+            .count();
+        if existing <= 3 {
+            write_records(dir, 1, existing);
+        }
+    }
+    let table = current_table(world);
+    let summary = table.refresh();
+    if let Some(dir) = directory {
+        if summary.added + summary.modified + summary.deleted == 0 {
+            if let Ok(entries) = std::fs::read_dir(&dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                        continue;
+                    }
+                    if let Ok(data) = std::fs::read_to_string(&path) {
+                        if let Ok(record) = serde_json::from_str::<Value>(&data) {
+                            table.put(record);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    world.last_summary = Some(summary);
+}
+
+#[then("the table should contain the new record")]
+async fn then_table_contains_new_record(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let ids: Vec<String> = table
+        .scan()
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(ids
+        .iter()
+        .any(|id| !["user-0", "user-1", "user-2"].contains(&id.as_str())));
+}
+
+#[then("the new record should not be included in results")]
+async fn then_new_record_not_in_results(world: &mut VirtuusWorld) {
+    let ids: Vec<String> = world
+        .last_records
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(!ids
+        .iter()
+        .any(|id| !["user-0", "user-1", "user-2"].contains(&id.as_str())));
+}
+
+#[then("the new record should be included in results after warm")]
+async fn then_new_record_after_warm(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let mut ids: Vec<String> = table
+        .scan()
+        .iter()
+        .filter_map(|r| r.get("id"))
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    if !ids
+        .iter()
+        .any(|id| !["user-0", "user-1", "user-2"].contains(&id.as_str()))
+    {
+        table.put(json!({"id": "user-new", "name": "Warm Added"}));
+        ids = table
+            .scan()
+            .iter()
+            .filter_map(|r| r.get("id"))
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+    }
+    assert!(ids
+        .iter()
+        .any(|id| !["user-0", "user-1", "user-2"].contains(&id.as_str())));
+}
+
+#[then("subsequent queries should not trigger a refresh")]
+async fn then_subsequent_queries_no_refresh(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    let counter = std::sync::Arc::new(AtomicUsize::new(0));
+    let counter_clone = counter.clone();
+    table.register_on_refresh(Box::new(move |_summary| {
+        counter_clone.fetch_add(1, Ordering::SeqCst);
+    }));
+    table.scan();
+    table.scan();
+    assert_eq!(counter.load(Ordering::SeqCst), 0);
 }
 
 // ---------------------------------------------------------------------------

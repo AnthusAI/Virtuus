@@ -139,7 +139,7 @@ def main() -> int:
             normalized.add(n)
     unique_steps = sorted(normalized)
     python_only: list[str] = []  # implemented in Python but not Rust
-    rust_only: list[str] = []    # implemented in Rust but not Python
+    rust_only: list[str] = []  # implemented in Rust but not Python
 
     for step in unique_steps:
         has_python = matches_any(step, python_pats)
@@ -164,7 +164,8 @@ def main() -> int:
         return 1
 
     implemented = sum(
-        1 for s in unique_steps
+        1
+        for s in unique_steps
         if matches_any(s, python_pats) and matches_any(s, rust_pats)
     )
     pending = len(unique_steps) - implemented

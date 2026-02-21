@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Plan: Python cache invalidation behavior implemented; Rust auto-refresh/staleness detection in progress. Next: finish Rust logic, add tests + steps, verify specs. Blockers: none.",
       "created_at": "2026-02-21T20:53:51.846244Z"
+    },
+    {
+      "id": "9c757ec6-03b1-4739-96a9-a98a46e86c74",
+      "author": "unknown",
+      "text": "Progress: Cache invalidation implemented in Rust with staleness checks and warm query flow; cache features passing after parity fixes. Next: keep monitoring behave parity; close after final check.",
+      "created_at": "2026-02-21T21:17:21.102757Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.418713Z",
-  "updated_at": "2026-02-21T20:53:51.846244Z",
+  "updated_at": "2026-02-21T21:17:21.102757Z",
   "closed_at": null,
   "custom": {}
 }

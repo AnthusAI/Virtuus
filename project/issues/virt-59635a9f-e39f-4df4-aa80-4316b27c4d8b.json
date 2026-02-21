@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Plan: Python warm reindex coverage done; Rust cache warm/refresh logic still in progress. Next: finalize Rust implementation + tests and run make check. Blockers: none.",
       "created_at": "2026-02-21T20:53:50.035817Z"
+    },
+    {
+      "id": "731619d9-ca52-4455-b5d9-a4e63ca461e3",
+      "author": "unknown",
+      "text": "Progress: Rust warm/refresh logic implemented with cache steps; warm reindex scenarios passing. Next: wrap up documentation/tests and close once remaining suite validated. Blockers: none.",
+      "created_at": "2026-02-21T21:17:15.828634Z"
     }
   ],
   "created_at": "2026-02-21T16:45:45.764538Z",
-  "updated_at": "2026-02-21T20:53:50.035817Z",
+  "updated_at": "2026-02-21T21:17:15.828634Z",
   "closed_at": null,
   "custom": {}
 }

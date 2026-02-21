@@ -26,8 +26,20 @@ def _write_records(directory: str, count: int, start: int = 0) -> None:
             json.dump(record, handle)
 
 
-def _table_from_dir(context, name: str, directory: str, check_interval: int = 0, auto_refresh: bool = True) -> Table:
-    table = Table(name, primary_key="id", directory=directory, check_interval=check_interval, auto_refresh=auto_refresh)
+def _table_from_dir(
+    context,
+    name: str,
+    directory: str,
+    check_interval: int = 0,
+    auto_refresh: bool = True,
+) -> Table:
+    table = Table(
+        name,
+        primary_key="id",
+        directory=directory,
+        check_interval=check_interval,
+        auto_refresh=auto_refresh,
+    )
     table.load_from_dir()
     context.tables = getattr(context, "tables", {})
     context.tables[name] = table
@@ -55,7 +67,9 @@ def step_table_loaded_dir(context, name):
     context.directory = directory
 
 
-@given('a table "{name}" loaded from a directory with check_interval of {seconds:d} seconds')
+@given(
+    'a table "{name}" loaded from a directory with check_interval of {seconds:d} seconds'
+)
 def step_table_check_interval(context, name, seconds):
     directory = _temp_dir(context)
     _write_records(directory, 3)
@@ -117,9 +131,21 @@ def step_delete_file(context):
         os.remove(path)
 
 
+@when("1 JSON file is removed from the directory")
+@given("1 JSON file is removed from the directory")
+def step_delete_file_one(context):
+    step_delete_file(context)
+
+
 @when("a JSON file is deleted from the directory")
 def step_delete_file_incremental(context):
     step_delete_file(context)
+
+
+@when("1 JSON file is deleted from the directory")
+@given("1 JSON file is deleted from the directory")
+def step_delete_file_incremental_one(context):
+    step_delete_file_incremental(context)
 
 
 @when("2 new JSON files are added to the directory")
@@ -129,12 +155,20 @@ def step_add_two_files(context):
     for offset in range(2):
         idx = current + offset
         record = {"id": f"user-{idx}", "name": f"User {idx}", "status": "active"}
-        with open(os.path.join(directory, f"user-{idx}.json"), "w", encoding="utf-8") as handle:
+        with open(
+            os.path.join(directory, f"user-{idx}.json"), "w", encoding="utf-8"
+        ) as handle:
             json.dump(record, handle)
 
 
 @when("1 JSON file is modified on disk")
 def step_modify_file_on_disk(context):
+    step_modify_file(context)
+
+
+@when("a JSON file is modified")
+@given("a JSON file is modified")
+def step_modify_file_alias(context):
     step_modify_file(context)
 
 
@@ -154,6 +188,11 @@ def step_check_stale_within_interval(context):
 @then("it should report fresh")
 def step_assert_fresh(context):
     assert context.is_stale is False
+
+
+@then("it should report fresh without scanning files")
+def step_assert_fresh_no_scan(context):
+    step_assert_fresh(context)
 
 
 @then("it should report stale")
@@ -176,7 +215,9 @@ def step_new_record_in_results(context):
 @then("the new record should not be included in results")
 def step_new_record_not_in_results(context):
     ids = {record["id"] for record in context.last_result}
-    assert not any("user-" in i and i not in {"user-0", "user-1", "user-2"} for i in ids)
+    assert not any(
+        "user-" in i and i not in {"user-0", "user-1", "user-2"} for i in ids
+    )
 
 
 @then("the new record should be included in results after warm")
@@ -206,6 +247,7 @@ def step_query_twice(context):
 
 
 @then("the second query should not trigger a refresh")
+@then("subsequent queries should not trigger a refresh")
 def step_second_query_no_refresh(context):
     assert context.refresh_calls == 0
 
@@ -225,12 +267,6 @@ def step_modify_gsi_field(context):
 def step_refresh_table(context):
     table = _current_table(context)
     context.last_summary = table.refresh()
-
-
-@then("the table should contain {count:d} records")
-def step_table_record_count(context, count):
-    table = _current_table(context)
-    assert table.count() == count
 
 
 @then("all GSIs should include the 2 new records")
@@ -274,7 +310,9 @@ def step_call_check(context):
     context.last_summary = table.check()
 
 
-@then('the result should report {added:d} added, {modified:d} modified, {deleted:d} deleted')
+@then(
+    "the result should report {added:d} added, {modified:d} modified, {deleted:d} deleted"
+)
 def step_assert_summary(context, added, modified, deleted):
     summary = context.last_summary
     assert summary["added"] == added
@@ -300,12 +338,6 @@ def step_table_on_refresh(context, name):
 
     table.on_refresh.append(hook)
     context.directory = directory
-
-
-@when("the table is refreshed")
-def step_refresh_table_hook(context):
-    table = _current_table(context)
-    context.last_summary = table.refresh()
 
 
 @then("the on_refresh hook should receive a change summary")
@@ -336,6 +368,14 @@ def step_database_two_tables(context, name1, name2):
     context.directory_two = dir2
 
 
+@when("new files are added to both directories")
+@given("new files are added to both directories")
+def step_add_files_both_directories(context):
+    for directory in (context.directory, context.directory_two):
+        current = len([f for f in os.listdir(directory) if f.endswith(".json")])
+        _write_records(directory, 1, current)
+
+
 @when("I call warm on the database")
 def step_warm_database(context):
     context.database.warm()
@@ -348,7 +388,7 @@ def step_db_tables_have_records(context):
         assert table.count() >= 1
 
 
-@given('a database with tables loaded from directories')
+@given("a database with tables loaded from directories")
 def step_database_loaded(context):
     db = Database()
     dir1 = _temp_dir(context)
@@ -372,3 +412,10 @@ def step_no_files_reread(context):
 @when("I call warm on the table")
 def step_warm_table(context):
     _current_table(context).warm()
+
+
+@then("the table should contain the new record")
+def step_table_contains_new_record(context):
+    table = _current_table(context)
+    ids = {record["id"] for record in table.scan()}
+    assert any(i not in {"user-0", "user-1", "user-2"} for i in ids)
