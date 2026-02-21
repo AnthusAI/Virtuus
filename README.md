@@ -205,4 +205,4 @@ make bench-scale    # run at 1x, 2x, 5x, 10x for scaling charts
 
 ## License
 
-TBD
+MIT License. See `LICENSE`.
