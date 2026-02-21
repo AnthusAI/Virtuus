@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Optional
 
@@ -34,6 +35,10 @@ class Table:
     :type directory: str | None
     :param validation: Validation mode: "silent", "warn", or "error".
     :type validation: str
+    :param check_interval: Minimum seconds between staleness checks.
+    :type check_interval: int
+    :param auto_refresh: Whether queries should auto-refresh when stale.
+    :type auto_refresh: bool
     """
 
     def __init__(
@@ -44,6 +49,8 @@ class Table:
         sort_key: Optional[str] = None,
         directory: Optional[str] = None,
         validation: str = "silent",
+        check_interval: int = 0,
+        auto_refresh: bool = True,
     ) -> None:
         if primary_key is None and partition_key is None:
             raise ValueError("primary_key or partition_key is required")
@@ -59,14 +66,22 @@ class Table:
         self.sort_key = sort_key
         self.directory = directory
         self.validation = validation
+        self.check_interval = check_interval
+        self.auto_refresh = auto_refresh
         self.records: dict[Any, dict[str, Any]] = {}
         self.gsis: dict[str, GSI] = {}
         self.warnings: list[str] = []
         self.hook_errors: list[str] = []
         self.on_put: list[Callable[[dict[str, Any]], None]] = []
         self.on_delete: list[Callable[[dict[str, Any]], None]] = []
+        self.on_refresh: list[Callable[[dict[str, int]], None]] = []
         self.associations: list[str] = []
         self.last_write_used_atomic: bool = False
+        self._manifest: dict[str, float] = {}
+        self._last_dir_mtime: Optional[float] = None
+        self._last_check_time: Optional[float] = None
+        self._last_is_stale: bool = False
+        self.last_change_summary: dict[str, int] = {"added": 0, "modified": 0, "deleted": 0, "reread": 0}
 
     def add_gsi(
         self, name: str, partition_key: str, sort_key: Optional[str] = None
@@ -143,6 +158,7 @@ class Table:
         :return: List of record dicts.
         :rtype: list[dict[str, Any]]
         """
+        self._maybe_refresh_before_query()
         return list(self.records.values())
 
     def bulk_load(self, records: Iterable[dict[str, Any]]) -> None:
@@ -203,6 +219,7 @@ class Table:
         :rtype: list[dict[str, Any]]
         :raises KeyError: If the GSI does not exist.
         """
+        self._maybe_refresh_before_query()
         gsi = self.gsis.get(name)
         if gsi is None:
             raise KeyError(f"GSI {name} does not exist")
@@ -212,6 +229,76 @@ class Table:
             if record is not None:
                 result.append(record)
         return result
+
+    def is_stale(self, force_scan: bool = False) -> bool:
+        """Check whether on-disk files have changed.
+
+        :param force_scan: If True, always scan the directory even if within the check interval.
+        :type force_scan: bool
+        :return: True if changes are detected, otherwise False.
+        :rtype: bool
+        """
+        if self.directory is None:
+            return False
+        now = time.time()
+        if not force_scan and self.check_interval > 0 and self._last_check_time is not None:
+            if now - self._last_check_time < self.check_interval:
+                return self._last_is_stale
+        dir_mtime = self._dir_mtime()
+        if not force_scan and self._last_dir_mtime is not None and dir_mtime == self._last_dir_mtime:
+            self._last_check_time = now
+            self._last_is_stale = False
+            return False
+        summary, _, _, _ = self._compute_changes()
+        self._last_check_time = now
+        self._last_is_stale = any(summary.values())
+        self._last_dir_mtime = dir_mtime
+        return self._last_is_stale
+
+    def check(self) -> dict[str, int]:
+        """Dry-run change detection without mutating table.
+
+        :return: Summary of added, modified, deleted counts.
+        :rtype: dict[str, int]
+        """
+        summary, _, _, _ = self._compute_changes()
+        return summary
+
+    def refresh(self) -> dict[str, int]:
+        """Incrementally refresh the table from disk.
+
+        :return: Change summary including reread count.
+        :rtype: dict[str, int]
+        """
+        summary, added, modified, deleted = self._compute_changes()
+        reread = 0
+        for path in added | modified:
+            record = self._read_record_file(path)
+            if record is None:
+                continue
+            self.put(record)
+            reread += 1
+        for path in deleted:
+            pk = self._pk_from_filename(os.path.basename(path))
+            if pk is not None:
+                if isinstance(pk, TableKey):
+                    self.delete(pk.partition, pk.sort)
+                else:
+                    self.delete(pk)
+        self._manifest = {os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()}
+        self._last_dir_mtime = self._dir_mtime()
+        self._last_check_time = time.time()
+        summary["reread"] = reread
+        self.last_change_summary = summary
+        self._fire_hooks(self.on_refresh, summary)
+        self._last_is_stale = False
+        return summary
+
+    def warm(self) -> None:
+        """Proactively refresh regardless of staleness."""
+        if self.directory is None:
+            return
+        self.refresh()
 
     def load_from_dir(self, directory: Optional[str] = None) -> None:
         """Load records from JSON files in a directory.
@@ -233,6 +320,10 @@ class Table:
             with open(path, "r", encoding="utf-8") as handle:
                 record = json.load(handle)
             self.put(record)
+            self._manifest[name] = os.path.getmtime(path)
+        self._last_dir_mtime = self._dir_mtime()
+        self._last_check_time = time.time()
+        self._last_is_stale = False
 
     def export(self, directory: str) -> None:
         """Export all records to a directory.
@@ -306,6 +397,8 @@ class Table:
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         self._write_json_atomic(path, record)
+        self._manifest[filename] = os.path.getmtime(path)
+        self._last_dir_mtime = self._dir_mtime()
 
     def _delete_record_from_disk(self, pk: Any) -> None:
         self._validate_pk_for_path(pk)
@@ -313,6 +406,8 @@ class Table:
         path = os.path.join(self.directory, filename)
         if os.path.exists(path):
             os.remove(path)
+            self._manifest.pop(filename, None)
+            self._last_dir_mtime = self._dir_mtime()
 
     def _validate_pk_for_path(self, pk: Any) -> None:
         if isinstance(pk, TableKey):
@@ -334,6 +429,65 @@ class Table:
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+
+    def _iter_json_files(self) -> Iterable[str]:
+        if self.directory is None:
+            return []
+        try:
+            names = os.listdir(self.directory)
+        except FileNotFoundError:
+            return []
+        return (os.path.join(self.directory, name) for name in names if name.endswith(".json"))
+
+    def _dir_mtime(self) -> float:
+        if self.directory is None:
+            return 0.0
+        try:
+            return os.path.getmtime(self.directory)
+        except FileNotFoundError:
+            return 0.0
+
+    def _pk_from_filename(self, filename: str) -> Optional[Any]:
+        name = filename.replace(".json", "")
+        if "__" in name:
+            partition, sort = name.split("__", 1)
+            return TableKey(partition, sort)
+        return name
+
+    def _compute_changes(
+        self,
+    ) -> tuple[dict[str, int], set[str], set[str], set[str]]:
+        if self.directory is None:
+            return {"added": 0, "modified": 0, "deleted": 0, "reread": 0}, set(), set(), set()
+        current_files = {os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()}
+        previous = self._manifest
+        added = {os.path.join(self.directory, name) for name in current_files if name not in previous}
+        deleted = {os.path.join(self.directory, name) for name in previous if name not in current_files}
+        modified = {
+            os.path.join(self.directory, name)
+            for name, mtime in current_files.items()
+            if name in previous and previous[name] != mtime
+        }
+        summary = {
+            "added": len(added),
+            "modified": len(modified),
+            "deleted": len(deleted),
+            "reread": 0,
+        }
+        return summary, added, modified, deleted
+
+    def _read_record_file(self, path: str) -> Optional[dict[str, Any]]:
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                return json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            return None
+
+    def _maybe_refresh_before_query(self) -> None:
+        if self.directory is None or not self.auto_refresh:
+            return
+        if self.is_stale():
+            self.refresh()
 
     def _fire_hooks(
         self, hooks: list[Callable[[dict[str, Any]], None]], record: dict[str, Any]

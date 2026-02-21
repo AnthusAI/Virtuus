@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
 use serde_json::Value;
 
@@ -33,8 +34,25 @@ pub struct Table {
     hook_errors: Vec<String>,
     on_put: Vec<Hook>,
     on_delete: Vec<Hook>,
+    on_refresh: Vec<Hook>,
     last_write_used_atomic: bool,
     associations: Vec<String>,
+    check_interval: Duration,
+    auto_refresh: bool,
+    manifest: HashMap<String, SystemTime>,
+    last_dir_mtime: Option<SystemTime>,
+    last_check_time: Option<SystemTime>,
+    last_is_stale: bool,
+    pub last_change_summary: ChangeSummary,
+}
+
+/// Summary of changes detected during refresh or check.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ChangeSummary {
+    pub added: usize,
+    pub modified: usize,
+    pub deleted: usize,
+    pub reread: usize,
 }
 
 impl std::fmt::Debug for Table {
@@ -99,8 +117,16 @@ impl Table {
             hook_errors: Vec::new(),
             on_put: Vec::new(),
             on_delete: Vec::new(),
+            on_refresh: Vec::new(),
             last_write_used_atomic: false,
             associations: Vec::new(),
+            check_interval: Duration::from_secs(0),
+            auto_refresh: true,
+            manifest: HashMap::new(),
+            last_dir_mtime: None,
+            last_check_time: None,
+            last_is_stale: false,
+            last_change_summary: ChangeSummary::default(),
         }
     }
 
@@ -153,7 +179,8 @@ impl Table {
     }
 
     /// Return all records.
-    pub fn scan(&self) -> Vec<Value> {
+    pub fn scan(&mut self) -> Vec<Value> {
+        self.maybe_refresh_before_query();
         self.records.values().cloned().collect()
     }
 
@@ -246,8 +273,30 @@ impl Table {
         self.on_delete.push(hook);
     }
 
+    /// Register an on_refresh hook.
+    pub fn register_on_refresh(&mut self, hook: Hook) {
+        self.on_refresh.push(hook);
+    }
+
+    /// Configure minimum seconds between staleness checks.
+    pub fn set_check_interval(&mut self, seconds: u64) {
+        self.check_interval = Duration::from_secs(seconds);
+    }
+
+    /// Enable or disable auto refresh on queries.
+    pub fn set_auto_refresh(&mut self, enabled: bool) {
+        self.auto_refresh = enabled;
+    }
+
+    /// Mark last staleness check time manually (useful for tests).
+    pub fn mark_checked_now(&mut self, stale: bool) {
+        self.last_check_time = Some(SystemTime::now());
+        self.last_is_stale = stale;
+    }
+
     /// Query GSI and return full records.
-    pub fn query_gsi(&self, name: &str, partition_value: &Value) -> Vec<Value> {
+    pub fn query_gsi(&mut self, name: &str, partition_value: &Value) -> Vec<Value> {
+        self.maybe_refresh_before_query();
         let gsi = self.gsis.get(name).expect("GSI does not exist");
         let mut result = Vec::new();
         for pk in gsi.query(partition_value, None, false) {
@@ -257,6 +306,103 @@ impl Table {
             }
         }
         result
+    }
+
+    /// Determine whether on-disk files are stale relative to the manifest.
+    pub fn is_stale(&mut self, force_scan: bool) -> bool {
+        if self.directory.is_none() {
+            return false;
+        }
+        let now = SystemTime::now();
+        if !force_scan {
+            if let Some(last_check) = self.last_check_time {
+                if self.check_interval > Duration::from_secs(0)
+                    && now.duration_since(last_check).unwrap_or_default() < self.check_interval
+                {
+                    return self.last_is_stale;
+                }
+            }
+        }
+        let dir_mtime = self.dir_mtime();
+        if !force_scan {
+            if let (Some(prev), Some(curr)) = (self.last_dir_mtime, dir_mtime) {
+                if prev == curr {
+                    self.last_check_time = Some(now);
+                    self.last_is_stale = false;
+                    return false;
+                }
+            }
+        }
+        let (summary, _, _, _) = self.compute_changes();
+        self.last_check_time = Some(now);
+        self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
+        self.last_dir_mtime = dir_mtime;
+        self.last_is_stale
+    }
+
+    /// Dry-run change detection without mutating the table.
+    pub fn check(&self) -> ChangeSummary {
+        let (summary, _, _, _) = self.compute_changes();
+        summary
+    }
+
+    /// Incrementally refresh from disk.
+    pub fn refresh(&mut self) -> ChangeSummary {
+        if self.directory.is_none() {
+            return ChangeSummary::default();
+        }
+        let (mut summary, added, modified, deleted) = self.compute_changes();
+        let mut reread = 0;
+        for path in added.iter().chain(modified.iter()) {
+            if let Some(record) = self.read_record(path) {
+                self.put(record);
+                reread += 1;
+            }
+        }
+        for path in deleted {
+            if let Some(key) = self.key_from_filename(path) {
+                match key {
+                    TableKey::Simple(pk) => {
+                        self.delete(&pk, None);
+                    }
+                    TableKey::Composite(partition, sort) => {
+                        self.delete(&partition, Some(&sort));
+                    }
+                }
+            }
+        }
+        self.manifest = self
+            .iter_json_files()
+            .into_iter()
+            .filter_map(|path| {
+                let name = path.file_name()?.to_string_lossy().to_string();
+                let mtime = fs::metadata(&path).ok()?.modified().ok()?;
+                Some((name, mtime))
+            })
+            .collect();
+        self.last_dir_mtime = self.dir_mtime();
+        self.last_check_time = Some(SystemTime::now());
+        self.last_is_stale = false;
+        summary.reread = reread;
+        self.last_change_summary = summary.clone();
+        let hooks = self.on_refresh.as_slice();
+        let hook_errors = &mut self.hook_errors;
+        let summary_value = serde_json::json!({
+            "added": summary.added,
+            "modified": summary.modified,
+            "deleted": summary.deleted,
+            "reread": summary.reread
+        });
+        Self::fire_hooks(hooks, hook_errors, &summary_value);
+        summary
+    }
+
+    /// Proactively refresh regardless of staleness.
+    pub fn warm(&mut self) {
+        if self.directory.is_none() {
+            return;
+        }
+        self.refresh();
     }
 
     /// Load records from directory.
@@ -278,7 +424,18 @@ impl Table {
             let data = fs::read_to_string(&path).expect("read file");
             let record: Value = serde_json::from_str(&data).expect("parse json");
             self.put(record);
+            if let Ok(meta) = fs::metadata(&path) {
+                if let Ok(mtime) = meta.modified() {
+                    if let Some(name) = path.file_name() {
+                        self.manifest
+                            .insert(name.to_string_lossy().to_string(), mtime);
+                    }
+                }
+            }
         }
+        self.last_dir_mtime = self.dir_mtime();
+        self.last_check_time = Some(SystemTime::now());
+        self.last_is_stale = false;
     }
 
     /// Export records to directory.
@@ -342,6 +499,15 @@ impl Table {
         }
     }
 
+    fn maybe_refresh_before_query(&mut self) {
+        if self.directory.is_none() || !self.auto_refresh {
+            return;
+        }
+        if self.is_stale(false) {
+            self.refresh();
+        }
+    }
+
     fn key_from_string(&self, value: &str) -> TableKey {
         if self.primary_key.is_some() {
             return TableKey::Simple(value.to_string());
@@ -350,6 +516,18 @@ impl Table {
         let partition = parts.next().unwrap_or_default();
         let sort = parts.next().unwrap_or_default();
         TableKey::Composite(partition.to_string(), sort.to_string())
+    }
+
+    fn key_from_filename(&self, path: PathBuf) -> Option<TableKey> {
+        let name = path.file_name()?.to_string_lossy().replace(".json", "");
+        if name.contains("__") {
+            let mut parts = name.splitn(2, "__");
+            let partition = parts.next().unwrap_or_default().to_string();
+            let sort = parts.next().unwrap_or_default().to_string();
+            Some(TableKey::Composite(partition, sort))
+        } else {
+            Some(TableKey::Simple(name))
+        }
     }
 
     fn validate_gsi_fields(&mut self, record: &Value) {
@@ -399,6 +577,13 @@ impl Table {
         let filename = self.filename_for_key(key);
         let path = directory.join(filename);
         self.write_json_atomic(&path, record);
+        if let Ok(meta) = fs::metadata(&path) {
+            if let Ok(mtime) = meta.modified() {
+                self.manifest
+                    .insert(path.file_name().unwrap().to_string_lossy().to_string(), mtime);
+                self.last_dir_mtime = self.dir_mtime();
+            }
+        }
     }
 
     fn delete_record(&mut self, directory: &Path, key: &TableKey) {
@@ -407,6 +592,8 @@ impl Table {
         let path = directory.join(filename);
         if path.exists() {
             fs::remove_file(path).expect("remove file");
+            self.manifest.remove(&filename);
+            self.last_dir_mtime = self.dir_mtime();
         }
     }
 
@@ -446,6 +633,72 @@ impl Table {
                 hook_errors.push(format!("{:?}", err));
             }
         }
+    }
+
+    fn iter_json_files(&self) -> Vec<PathBuf> {
+        if let Some(dir) = &self.directory {
+            if let Ok(entries) = fs::read_dir(dir) {
+                return entries
+                    .filter_map(|entry| entry.ok())
+                    .map(|entry| entry.path())
+                    .filter(|path| path.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+            }
+        }
+        Vec::new()
+    }
+
+    fn dir_mtime(&self) -> Option<SystemTime> {
+        self.directory
+            .as_ref()
+            .and_then(|dir| fs::metadata(dir).ok())
+            .and_then(|meta| meta.modified().ok())
+    }
+
+    fn compute_changes(&self) -> (ChangeSummary, Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>) {
+        if self.directory.is_none() {
+            return (ChangeSummary::default(), vec![], vec![], vec![]);
+        }
+        let current_files: HashMap<String, SystemTime> = self
+            .iter_json_files()
+            .into_iter()
+            .filter_map(|path| {
+                let name = path.file_name()?.to_string_lossy().to_string();
+                let mtime = fs::metadata(&path).ok()?.modified().ok()?;
+                Some((name, mtime))
+            })
+            .collect();
+        let mut added = Vec::new();
+        let mut deleted = Vec::new();
+        let mut modified = Vec::new();
+        for (name, mtime) in current_files.iter() {
+            match self.manifest.get(name) {
+                None => added.push(self.directory.as_ref().unwrap().join(name)),
+                Some(prev_mtime) => {
+                    if prev_mtime != mtime {
+                        modified.push(self.directory.as_ref().unwrap().join(name));
+                    }
+                }
+            }
+        }
+        for name in self.manifest.keys() {
+            if !current_files.contains_key(name) {
+                deleted.push(self.directory.as_ref().unwrap().join(name));
+            }
+        }
+        let summary = ChangeSummary {
+            added: added.len(),
+            modified: modified.len(),
+            deleted: deleted.len(),
+            reread: 0,
+        };
+        (summary, added, modified, deleted)
+    }
+
+    fn read_record(&self, path: &PathBuf) -> Option<Value> {
+        fs::read_to_string(path)
+            .ok()
+            .and_then(|data| serde_json::from_str(&data).ok())
     }
 }
 

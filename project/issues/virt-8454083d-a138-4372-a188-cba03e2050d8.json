@@ -3,16 +3,29 @@
   "title": "Cache invalidation",
   "description": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Configurable: check_interval prevents re-checking within the interval; auto_refresh=False disables JIT refresh, requiring explicit warm() calls. Spec: features/cache/cache_invalidation.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "7d56a79e-4c7e-4d6e-8aec-019f2b21df1d",
+      "author": "unknown",
+      "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none.",
+      "created_at": "2026-02-21T20:30:39.726123Z"
+    },
+    {
+      "id": "9325af45-1121-4264-8b0a-66624b3505e4",
+      "author": "unknown",
+      "text": "Plan: Python cache invalidation behavior implemented; Rust auto-refresh/staleness detection in progress. Next: finish Rust logic, add tests + steps, verify specs. Blockers: none.",
+      "created_at": "2026-02-21T20:53:51.846244Z"
+    }
+  ],
   "created_at": "2026-02-21T16:45:45.418713Z",
-  "updated_at": "2026-02-21T17:07:37.330244Z",
+  "updated_at": "2026-02-21T20:53:51.846244Z",
   "closed_at": null,
   "custom": {}
 }

@@ -3,16 +3,29 @@
   "title": "Cache check (dry-run refresh)",
   "description": "Given a table, when I call check(), it should return what WOULD change (added/modified/deleted files) without actually refreshing. The on_refresh hook fires after actual refreshes with a change summary. Spec: features/cache/cache_check.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "b8220405-0d7c-4d88-b967-0143c4b5fcb7",
+      "author": "unknown",
+      "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none.",
+      "created_at": "2026-02-21T20:30:40.058449Z"
+    },
+    {
+      "id": "28b83958-5202-40aa-9f08-66f564f5c517",
+      "author": "unknown",
+      "text": "Plan: Cache check/dry-run implemented in Python; Rust check/auto-refresh behavior still needs tests + fixes. Next: complete Rust logic and Cucumber steps, run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:53:56.726035Z"
+    }
+  ],
   "created_at": "2026-02-21T16:45:45.955311Z",
-  "updated_at": "2026-02-21T16:45:45.955311Z",
+  "updated_at": "2026-02-21T20:53:56.726035Z",
   "closed_at": null,
   "custom": {}
 }

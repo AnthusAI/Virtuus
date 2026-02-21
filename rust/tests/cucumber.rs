@@ -8,9 +8,10 @@ use std::sync::{Arc, Mutex};
 use cucumber::step;
 use cucumber::{given, then, when, World};
 use serde_json::{json, Value};
+use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
-use virtuus::table::{Table, ValidationMode};
+use virtuus::table::{ChangeSummary, Table, ValidationMode};
 
 #[derive(Debug, Default, World)]
 pub struct VirtuusWorld {
@@ -32,6 +33,12 @@ pub struct VirtuusWorld {
     pub export_dir: Option<PathBuf>,
     pub error: Option<String>,
     pub hook_calls: Option<std::sync::Arc<std::sync::Mutex<Vec<Value>>>>,
+    pub last_is_stale: Option<bool>,
+    pub last_summary: Option<ChangeSummary>,
+    pub refresh_calls: usize,
+    pub database: Option<Database>,
+    pub directory: Option<PathBuf>,
+    pub directory_two: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -207,6 +214,37 @@ fn set_current_table(world: &mut VirtuusWorld, name: &str) {
 fn current_table(world: &mut VirtuusWorld) -> &mut Table {
     let name = world.current_table.as_ref().expect("No current table");
     world.tables.get_mut(name).expect("Table not found")
+}
+
+fn write_records(dir: &PathBuf, count: usize, start: usize) {
+    fs::create_dir_all(dir).unwrap();
+    for i in start..start + count {
+        let record = json!({"id": format!("user-{i}"), "name": format!("User {i}"), "status": "active"});
+        let path = dir.join(format!("user-{i}.json"));
+        fs::write(path, serde_json::to_vec(&record).unwrap()).unwrap();
+    }
+}
+
+fn table_from_dir(
+    world: &mut VirtuusWorld,
+    name: &str,
+    directory: PathBuf,
+    check_interval: u64,
+    auto_refresh: bool,
+) {
+    let mut table = Table::new(
+        name,
+        Some("id"),
+        None,
+        None,
+        Some(directory),
+        ValidationMode::Silent,
+    );
+    table.set_check_interval(check_interval);
+    table.set_auto_refresh(auto_refresh);
+    table.load_from_dir(None);
+    ensure_tables(world).insert(name.to_string(), table);
+    set_current_table(world, name);
 }
 
 fn create_table(

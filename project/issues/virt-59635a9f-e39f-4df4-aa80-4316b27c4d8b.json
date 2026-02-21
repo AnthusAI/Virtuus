@@ -3,16 +3,29 @@
   "title": "Warm reindex",
   "description": "Given a database with tables, when I call warm(), all tables should proactively refresh without waiting for a query. When already fresh, warm is a no-op. Spec: features/cache/warm_reindex.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "3f18e6a5-ff63-4f22-8697-6f161d502dbe",
+      "author": "unknown",
+      "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none.",
+      "created_at": "2026-02-21T20:30:39.577414Z"
+    },
+    {
+      "id": "e98d0e5c-b0c4-4d8b-b57d-a61569ea0fdb",
+      "author": "unknown",
+      "text": "Plan: Python warm reindex coverage done; Rust cache warm/refresh logic still in progress. Next: finalize Rust implementation + tests and run make check. Blockers: none.",
+      "created_at": "2026-02-21T20:53:50.035817Z"
+    }
+  ],
   "created_at": "2026-02-21T16:45:45.764538Z",
-  "updated_at": "2026-02-21T16:45:45.764538Z",
+  "updated_at": "2026-02-21T20:53:50.035817Z",
   "closed_at": null,
   "custom": {}
 }

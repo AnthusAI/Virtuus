@@ -3,16 +3,29 @@
   "title": "Incremental refresh",
   "description": "Given a stale table, when refreshed, only added/modified/deleted files should be reloaded - not the entire table. GSIs must be updated for all changed records. Spec: features/cache/incremental_refresh.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "62bd8afe-9f02-4edf-b22a-aae2654b43e3",
+      "author": "unknown",
+      "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none.",
+      "created_at": "2026-02-21T20:30:39.902959Z"
+    },
+    {
+      "id": "99f1ca62-58c3-4979-b016-2dfd9f083325",
+      "author": "unknown",
+      "text": "Plan: Incremental refresh partially wired in Rust (manifest/dir mtime); Python complete. Next: finalize change detection + tests and exercise via cache features. Blockers: none.",
+      "created_at": "2026-02-21T20:53:53.808234Z"
+    }
+  ],
   "created_at": "2026-02-21T16:45:45.591795Z",
-  "updated_at": "2026-02-21T16:45:45.591795Z",
+  "updated_at": "2026-02-21T20:53:53.808234Z",
   "closed_at": null,
   "custom": {}
 }

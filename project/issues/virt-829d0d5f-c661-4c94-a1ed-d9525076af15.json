@@ -52,10 +52,16 @@
       "author": "unknown",
       "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none.",
       "created_at": "2026-02-21T20:27:09.286773Z"
+    },
+    {
+      "id": "c18e3116-6312-4036-ab22-ba6624c964f9",
+      "author": "unknown",
+      "text": "Status: Done. Did: added MIT license file and updated README License section; pushed to main. Next: none. Blockers: none.",
+      "created_at": "2026-02-21T20:29:45.444453Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.521250Z",
-  "updated_at": "2026-02-21T20:27:34.359996Z",
+  "updated_at": "2026-02-21T20:29:45.444453Z",
   "closed_at": "2026-02-21T20:27:34.359996Z",
   "custom": {}
 }

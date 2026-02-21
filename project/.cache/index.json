@@ -1,11 +1,11 @@
 {
-  "built_at": "2026-02-21T19:34:53Z",
+  "built_at": "2026-02-21T20:53:13Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771696060.626398,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771696060.631645,
-    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771701922.917174,
+    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771696060.632623,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771696060.633247,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771696060.629936,
@@ -15,10 +15,10 @@
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
-    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771696060.629562,
-    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771701921.904326,
+    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771705839.428909,
+    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771696060.630499,
-    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771696060.634331,
+    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771705839.57754,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
     "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771696060.633999,
@@ -26,31 +26,31 @@
     "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771696060.627653,
     "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771696060.626578,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
-    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771701921.154421,
+    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771696060.625794,
-    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771701923.173576,
+    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771696060.626932,
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771696060.631862,
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
-    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771701897.087795,
-    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771696060.630116,
+    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
+    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771705839.72624,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771696060.627846,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771696060.628951,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771696060.633592,
-    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771701925.643636,
+    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771696060.626182,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771696060.625221,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771696060.627292,
-    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771701924.682644,
+    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771696060.625044,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
-    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771701925.192587,
-    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771696060.632238,
-    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771701923.96373,
-    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771696060.63456,
-    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771701924.57815,
+    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
+    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771705839.903068,
+    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771705654.123434,
+    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771705840.058563,
+    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771696060.630974,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771696060.635161
   },
@@ -129,13 +129,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:34.279699Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:22.917031Z",
           "id": "3ae85596-9a3f-4154-8589-b0e211eb2935",
           "text": "Status: in progress. Did: starting event hooks feature. Next: implement on_put/on_delete hooks and error logging. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.594840Z",
+          "id": "4847413d-84d0-4ad7-b80c-8bfe11d7d9ad",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.846742Z",
+          "id": "528abf7e-0ffd-4842-b87e-ca375507328c",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.638163Z",
+          "id": "ee73ce89-aa06-4439-a694-21e95e724413",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:03.624932Z",
+          "id": "5e7158c3-bc5f-4f5d-96f1-69d99a484a76",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:09.142623Z",
+          "id": "1e43a4c2-6e54-475e-b82b-885d0fca8a0a",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.576975Z",
@@ -147,10 +177,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table event hooks",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:22.917031Z"
+      "updated_at": "2026-02-21T20:27:34.279699Z"
     },
     {
       "assignee": null,
@@ -392,7 +422,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:30:39.428784Z",
+          "id": "102b3fc2-fa7a-45e4-b467-1c125d14dfab",
+          "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.668053Z",
       "creator": null,
       "custom": {},
@@ -402,20 +439,50 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Phase 4: Cache & Incremental Invalidation",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.668053Z"
+      "updated_at": "2026-02-21T20:30:39.428784Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:33.890370Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:21.904180Z",
           "id": "7f528ab8-5739-4f51-bf66-755f0c85d323",
           "text": "Status: in progress. Did: starting GSI integration. Next: wire GSI maintenance in Table. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.254807Z",
+          "id": "cd50bf3e-75ab-44a0-b9bc-7cf222552c8c",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.483240Z",
+          "id": "c0ed56c7-b531-4703-95a0-e7f4ac76a014",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.267034Z",
+          "id": "6c5048fd-f9f9-4cec-9c39-eedb5773ed22",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.843891Z",
+          "id": "d6a82ad5-d5ce-41c7-b17b-5833325caeac",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.438191Z",
+          "id": "1b29cdf1-61e9-414e-9b45-8aff7fabd474",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.752375Z",
@@ -427,10 +494,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table GSI integration",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:21.904180Z"
+      "updated_at": "2026-02-21T20:27:33.890370Z"
     },
     {
       "assignee": null,
@@ -453,7 +520,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:30:39.577414Z",
+          "id": "3f18e6a5-ff63-4f22-8697-6f161d502dbe",
+          "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:45:45.764538Z",
       "creator": null,
       "custom": {},
@@ -463,10 +537,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Warm reindex",
       "type": "story",
-      "updated_at": "2026-02-21T16:45:45.764538Z"
+      "updated_at": "2026-02-21T20:30:39.577414Z"
     },
     {
       "assignee": null,
@@ -647,13 +721,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:33.616672Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:21.154267Z",
           "id": "dd68b766-d4cc-42c0-aace-a3ba41029042",
           "text": "Status: in progress. Did: starting Table creation work. Next: implement Table core struct + init behaviors. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.033936Z",
+          "id": "e79deffd-cdeb-4bbc-bc94-25de55fade9c",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.220512Z",
+          "id": "f8588d70-1541-413c-ac34-993953441b47",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.034239Z",
+          "id": "7d038fb6-8b2a-4ae1-b289-f4a9938abc58",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.316721Z",
+          "id": "2bb2e872-8406-4de6-b478-32f0f5b305b5",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.005962Z",
+          "id": "d5531c0d-7a6f-4fba-bde6-2664db89dd7e",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:10.585111Z",
@@ -665,10 +769,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table creation",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:21.154267Z"
+      "updated_at": "2026-02-21T20:27:33.616672Z"
     },
     {
       "assignee": null,
@@ -690,13 +794,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:34.200715Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:23.170203Z",
           "id": "475a4e41-b4b6-4a97-a9de-855d8cceb26e",
           "text": "Status: in progress. Did: starting export feature. Next: implement export and round-trip load. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.526855Z",
+          "id": "fca61440-f70b-46ba-8664-8cfe0b7604e8",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.776465Z",
+          "id": "a54e55bc-0090-41c7-a51d-8c8936033bc2",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.572580Z",
+          "id": "2c0dc2ca-fcce-4872-b1d9-1765cf14a601",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:03.471239Z",
+          "id": "5c58f362-ff8d-4cd3-89b7-25338dc39c9b",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.999569Z",
+          "id": "473b51ce-4688-47e8-a9ef-9bc42e09b9a9",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.420073Z",
@@ -708,10 +842,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table export",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:23.170203Z"
+      "updated_at": "2026-02-21T20:27:34.200715Z"
     },
     {
       "assignee": null,
@@ -812,13 +946,55 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:34.359996Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:24:57.087683Z",
           "id": "1be5bd8a-9c81-4da2-895c-a2db8d8d2004",
           "text": "Status: in progress. Did: kicked off Phase 3 implementation. Next: set child stories in_progress and implement Table core + steps (Python/Rust). Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:46.937827Z",
+          "id": "58db129a-c6bd-4dc8-a4f1-69b5b6ccbe41",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:06.062540Z",
+          "id": "aba27c5e-904f-4682-bb8d-cd550b734e3a",
+          "text": "Status: in progress. Did: fixed Rust Table core, hooks/GSI parsing; added Rust cucumber steps and unit tests; cargo test + clippy pass. Updated Python Table + steps and file-load behavior. Next: run Python black/ruff/coverage once deps available; resolve parity check failures (pre-existing missing Rust steps). Blockers: Python tooling (black/ruff/coverage) not installed; parity script reports missing Rust steps outside Table."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:15:50.938606Z",
+          "id": "f77a8b04-786b-4362-98e1-0c4d777ee329",
+          "text": "Status: in progress. Did: created conda env , installed black/ruff/coverage/behave; fixed step ambiguities in gsi/table steps; Python black+ruff+coverage/behave now pass; updated parity script (raw string prefixes + regex detection + :d handling) and parity now OK. Next: re-run full make check, then close Phase 3 stories if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:15:55.609505Z",
+          "id": "3b9a13ad-1003-4b94-bb1e-2b960fef2ab4",
+          "text": "Status: in progress. Did: created conda env virtuus, installed black/ruff/coverage/behave; fixed step ambiguities in gsi/table steps; Python black+ruff+coverage/behave now pass; updated parity script (raw string prefixes + regex detection + :d handling) and parity now OK. Next: re-run full make check, then close Phase 3 stories if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.126010Z",
+          "id": "5dbbffa5-bd99-4b12-99e4-7e95d766746c",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:09.286773Z",
+          "id": "bf28a834-e8af-41bb-9b0b-b1302bf57ce3",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:29:45.444453Z",
+          "id": "c18e3116-6312-4036-ab22-ba6624c964f9",
+          "text": "Status: Done. Did: added MIT license file and updated README License section; pushed to main. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:42:28.521250Z",
@@ -830,15 +1006,22 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Phase 3: Table (Core CRUD + File Persistence + QoL)",
       "type": "epic",
-      "updated_at": "2026-02-21T19:24:57.087683Z"
+      "updated_at": "2026-02-21T20:29:45.444453Z"
     },
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:30:39.726123Z",
+          "id": "7d56a79e-4c7e-4d6e-8aec-019f2b21df1d",
+          "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:45:45.418713Z",
       "creator": null,
       "custom": {},
@@ -848,10 +1031,10 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Cache invalidation",
       "type": "story",
-      "updated_at": "2026-02-21T17:07:37.330244Z"
+      "updated_at": "2026-02-21T20:30:39.726123Z"
     },
     {
       "assignee": null,
@@ -909,13 +1092,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:33.705859Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:25.643494Z",
           "id": "bf122c52-38b8-4f58-9db9-0d64ba979f61",
           "text": "Status: in progress. Did: starting CRUD work. Next: implement put/get/delete/scan/bulk_load + steps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.110946Z",
+          "id": "9ffd18da-1abf-4a57-9b9a-d95c51b64c20",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.328036Z",
+          "id": "c9d623cf-13f3-49cd-baae-9189106c6c5a",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.112940Z",
+          "id": "351ed6f6-6b81-4211-82ab-b84798ff9cd8",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.493994Z",
+          "id": "74095141-5336-4302-99e1-28e71405c64a",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.159298Z",
+          "id": "a14ada71-ba01-41be-a8d0-b32b122dc2df",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:10.754446Z",
@@ -927,10 +1140,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table CRUD",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:25.643494Z"
+      "updated_at": "2026-02-21T20:27:33.705859Z"
     },
     {
       "assignee": null,
@@ -988,13 +1201,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:33.810542Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:24.682538Z",
           "id": "2c83a796-d1bd-4636-9caa-453beff6311e",
           "text": "Status: in progress. Did: starting file persistence work. Next: implement load/export + atomic write + PK path validation. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.184988Z",
+          "id": "6d130b53-0dcc-4907-b6ef-1f5b15c17f9e",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.412857Z",
+          "id": "7472a95e-387c-4075-af47-942aa306a75c",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.202977Z",
+          "id": "d5b6cc16-0e97-4038-8711-47d217907878",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.687087Z",
+          "id": "30f41c35-b350-4393-88c8-9753f26da40f",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.297853Z",
+          "id": "963623c1-faec-4aa9-8119-bac064d11e9a",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.921401Z",
@@ -1006,10 +1249,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table file persistence",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:24.682538Z"
+      "updated_at": "2026-02-21T20:27:33.810542Z"
     },
     {
       "assignee": null,
@@ -1080,13 +1323,43 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:33.967036Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:25.192463Z",
           "id": "05695cd0-0c5c-4dcb-9727-c813d6a570a4",
           "text": "Status: in progress. Did: starting count feature. Next: implement count for table and GSI. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.321494Z",
+          "id": "6d6fb208-5066-4f2c-9ccc-c55b26044333",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.557158Z",
+          "id": "245f2536-4441-45d0-a0d8-d5c42dc3769b",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.342502Z",
+          "id": "de4ee79c-50c0-4d2a-b046-6b0ae3bd5e20",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:02.996711Z",
+          "id": "c3d06c90-a4bd-4143-ab97-1944ca342f22",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.573420Z",
+          "id": "249aee7f-8cdc-4527-adb7-1007fca94317",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:10.928294Z",
@@ -1098,15 +1371,22 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table count",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:25.192463Z"
+      "updated_at": "2026-02-21T20:27:33.967036Z"
     },
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:30:39.902959Z",
+          "id": "62bd8afe-9f02-4edf-b22a-aae2654b43e3",
+          "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:45:45.591795Z",
       "creator": null,
       "custom": {},
@@ -1116,20 +1396,50 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Incremental refresh",
       "type": "story",
-      "updated_at": "2026-02-21T16:45:45.591795Z"
+      "updated_at": "2026-02-21T20:30:39.902959Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:34.123313Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:23.963568Z",
           "id": "f9112358-ab0d-4ae4-9f28-00760680f40a",
           "text": "Status: in progress. Did: starting validation feature. Next: implement validation modes and warning/error logging. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.456264Z",
+          "id": "3269666e-fa69-406f-8648-6ea3d71c2f17",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.702480Z",
+          "id": "26ed7b98-b1bf-439f-90b6-dce4fee0585e",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.490233Z",
+          "id": "74a5baf9-c669-4c1d-8374-1f226db26abe",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:03.320211Z",
+          "id": "fee32c7e-5655-40d5-8438-ccd8e3c7f611",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.841657Z",
+          "id": "232a7723-3381-4c88-a63a-e2f91e54a2ca",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.247820Z",
@@ -1141,15 +1451,22 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table validation",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:23.963568Z"
+      "updated_at": "2026-02-21T20:27:34.123313Z"
     },
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:30:40.058449Z",
+          "id": "b8220405-0d7c-4d88-b967-0143c4b5fcb7",
+          "text": "Status: Starting Phase 4 cache/invalidation work. Did: Phase 3 complete and pushed. Next: review cache features + specs, outline implementation plan and gaps. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:45:45.955311Z",
       "creator": null,
       "custom": {},
@@ -1159,20 +1476,50 @@
       "labels": [],
       "parent": "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Cache check (dry-run refresh)",
       "type": "story",
-      "updated_at": "2026-02-21T16:45:45.955311Z"
+      "updated_at": "2026-02-21T20:30:40.058449Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-21T20:27:34.044236Z",
       "comments": [
         {
           "author": "unknown",
           "created_at": "2026-02-21T19:25:24.578016Z",
           "id": "40fd4380-3ff7-435d-9d51-ae1bcd287bdf",
           "text": "Status: in progress. Did: starting describe feature. Next: implement describe output fields + steps. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:44:47.385409Z",
+          "id": "cbe9f5e0-7b71-4003-9ba7-ced2a1699c83",
+          "text": "Status: in progress. Did: implemented Python Table core + GSI validation/persistence/hooks, added Table exports, began step definitions; Rust Table core and composite GSI parsing updated, added Rust table steps. Next: finish step parity cleanup, run linters/tests, close stories when green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T19:55:12.627594Z",
+          "id": "790e6d46-bee2-41de-a5f0-e426ed053c6b",
+          "text": "Status: in progress. Did: implemented Table behaviors + steps (Python/Rust), added Rust unit tests and cucumber steps; Rust cargo test/clippy pass. Next: run Python black/ruff/coverage when deps available; resolve parity script failures not related to Table. Blockers: missing Python tooling; parity check missing Rust steps elsewhere."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:16:00.416109Z",
+          "id": "89bf4c8e-6621-4939-a2dc-2baca1c05582",
+          "text": "Status: in progress. Did: Python behave now passes with conda env; step ambiguities resolved; parity script updated and passing. Next: run make check, then close if green. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:19:03.144247Z",
+          "id": "6f8f0529-e318-4e68-b2e0-0b4aaccf0458",
+          "text": "Status: Using conda env virtuus; running coverage and closing remaining Python gaps. Next: add missing coverage steps, re-run make check. Blockers: none."
+        },
+        {
+          "author": "unknown",
+          "created_at": "2026-02-21T20:27:08.703240Z",
+          "id": "a6218e12-4b38-4882-bf79-a658167ecf5b",
+          "text": "Status: Done. Did: implemented Table core + steps/tests in Python/Rust, added missing coverage and parity step, make check passes. Next: none. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:44:11.083665Z",
@@ -1184,10 +1531,10 @@
       "labels": [],
       "parent": "virt-829d0d5f-c661-4c94-a1ed-d9525076af15",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Table describe",
       "type": "story",
-      "updated_at": "2026-02-21T19:25:24.578016Z"
+      "updated_at": "2026-02-21T20:27:34.044236Z"
     },
     {
       "assignee": null,

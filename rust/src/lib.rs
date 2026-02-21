@@ -3,6 +3,7 @@
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod gsi;
+pub mod database;
 pub mod sort;
 pub mod table;
 

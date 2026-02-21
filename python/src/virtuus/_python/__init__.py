@@ -2,11 +2,12 @@
 
 import os as _os
 
+from virtuus._python.database import Database
 from virtuus._python.gsi import GSI
 from virtuus._python.sort import Sort
 from virtuus._python.table import Table
 
-__all__ = ["__version__", "GSI", "Sort", "Table"]
+__all__ = ["__version__", "Database", "GSI", "Sort", "Table"]
 
 
 def _read_version() -> str:
