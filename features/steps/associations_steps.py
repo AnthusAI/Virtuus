@@ -189,6 +189,7 @@ def step_job_record(context, record_text):
     jobs = _ensure_table(context, "jobs")
     jobs.put(json.loads(record_text))
 
+
 @given('user {"id": "user-1", "name": "Alice"}')
 def step_user_alice(context):
     step_user_record(context, '{"id": "user-1", "name": "Alice"}')
@@ -201,19 +202,21 @@ def step_post_hello(context):
 
 @given('post {"id": "post-1", "user_id": "user-999", "title": "Orphan"}')
 def step_post_orphan(context):
-    step_post_record(context, '{"id": "post-1", "user_id": "user-999", "title": "Orphan"}')
+    step_post_record(
+        context, '{"id": "post-1", "user_id": "user-999", "title": "Orphan"}'
+    )
 
 
 @given('post {"id": "post-1", "title": "No Author"} with no user_id field')
 def step_post_no_author(context):
-    step_post_record(context, '{"id": "post-1", "title": "No Author"} with no user_id field')
+    step_post_record(
+        context, '{"id": "post-1", "title": "No Author"} with no user_id field'
+    )
 
 
 @given('job {"id": "job-1"}')
 def step_job_one(context):
     step_job_record(context, '{"id": "job-1"}')
-
-
 
 
 @given('no job_assignments for "{job_id}"')

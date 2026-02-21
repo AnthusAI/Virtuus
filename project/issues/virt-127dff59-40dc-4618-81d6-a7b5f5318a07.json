@@ -3,7 +3,7 @@
   "title": "Schema from YAML",
   "description": "Given a YAML file defining tables, GSIs, and associations, when I call Database.from_schema(path, data_dir), it should create a fully configured database. Declarative, versionable, shared between Rust and Python. Spec: features/schema/schema_from_yaml.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -34,10 +34,16 @@
       "author": "unknown",
       "text": "Continuing Rust Cucumber parity: fixing duplicate step compile errors, will rerun make check; blockers none.",
       "created_at": "2026-02-21T23:23:45.924023Z"
+    },
+    {
+      "id": "0b54c0e2-055a-4710-9de8-4a9189bc6236",
+      "author": "unknown",
+      "text": "Closed: added missing Rust schema steps (GSIs + composite pk), parity script green; cargo fmt/clippy/test + tarpaulin and behave all passing. Next: none.",
+      "created_at": "2026-02-21T23:42:14.473950Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.934530Z",
-  "updated_at": "2026-02-21T23:23:45.924023Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T23:42:14.473950Z",
+  "closed_at": "2026-02-21T23:42:00.216305Z",
   "custom": {}
 }

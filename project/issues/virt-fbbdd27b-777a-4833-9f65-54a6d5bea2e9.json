@@ -3,7 +3,7 @@
   "title": "Execute paginated queries",
   "description": "Given a large result set, when I execute() with limit and next_token directives, it should return paginated results with cursor-based pagination matching the DynamoDB pattern. Supports descending sort direction: pagination with sort_direction desc traverses in correct reverse order. Full traversal yields all records with no duplicates. Spec: features/query/execute_pagination.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,16 @@
       "author": "unknown",
       "text": "Parity follow-up: cleaning Rust cucumber compile errors before rerunning make check; coverage already at 100%; no blockers.",
       "created_at": "2026-02-21T23:23:49.469526Z"
+    },
+    {
+      "id": "57d9ba4e-b886-43ee-b2c8-3f821339375b",
+      "author": "unknown",
+      "text": "Closed: pagination/query parity implemented in Rust (next_token steps, projection fixes); cargo fmt/clippy/test and Python behave passing; no blockers.",
+      "created_at": "2026-02-21T23:42:20.881653Z"
     }
   ],
   "created_at": "2026-02-21T16:46:43.461577Z",
-  "updated_at": "2026-02-21T23:23:49.469526Z",
-  "closed_at": null,
+  "updated_at": "2026-02-21T23:42:20.881653Z",
+  "closed_at": "2026-02-21T23:42:06.674077Z",
   "custom": {}
 }

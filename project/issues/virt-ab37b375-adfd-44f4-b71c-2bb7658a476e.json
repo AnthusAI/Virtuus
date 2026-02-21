@@ -40,10 +40,16 @@
       "author": "unknown",
       "text": "Working through parity gaps: fixing Rust cucumber compile errors so make check can pass. Coverage OK; no new blockers.",
       "created_at": "2026-02-21T23:23:52.948581Z"
+    },
+    {
+      "id": "165c7923-c6c9-4c1e-b8c8-8066005e3753",
+      "author": "unknown",
+      "text": "Parity gaps for schema/pagination closed in Rust; cargo fmt/clippy/test + tarpaulin and python black/ruff/behave now clean. Stories virt-127dff and virt-fbbdd2 closed; continuing remaining work under epic.",
+      "created_at": "2026-02-21T23:42:27.131132Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.963677Z",
-  "updated_at": "2026-02-21T23:23:52.948581Z",
+  "updated_at": "2026-02-21T23:42:27.131132Z",
   "closed_at": null,
   "custom": {}
 }

@@ -3222,19 +3222,6 @@ async fn given_db_posts_gsi_sorted(
     table.add_gsi(&gsi, &field, Some(&sort));
 }
 
-#[given("posts for user-1 with created_at values \"2025-01-01\", \"2025-06-01\", \"2025-12-01\"")]
-async fn given_posts_dates(world: &mut VirtuusWorld) {
-    let table = ensure_db_table(world, "posts", "id");
-    let dates = ["2025-01-01", "2025-06-01", "2025-12-01"];
-    for (i, date) in dates.iter().enumerate() {
-        table.put(Value::Object(JsonMap::from_iter([
-            ("id".to_string(), Value::String(format!("post-{}", i + 1))),
-            ("user_id".to_string(), Value::String("user-1".to_string())),
-            ("created_at".to_string(), Value::String(date.to_string())),
-        ])));
-    }
-}
-
 #[given(regex = r#"^30 posts for user "([^"]*)"$"#)]
 async fn given_posts_30(world: &mut VirtuusWorld, user: String) {
     let table = ensure_db_table(world, "posts", "id");
@@ -3299,8 +3286,23 @@ async fn given_post_belongs(world: &mut VirtuusWorld, post_id: String, user_id: 
 
 #[given(regex = r#"^a database with "users" and "posts" tables$"#)]
 async fn given_users_posts(world: &mut VirtuusWorld) {
-    ensure_db_table(world, "users", "id");
-    ensure_db_table(world, "posts", "id");
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        if !posts.gsis().contains_key("by_user") {
+            posts.add_gsi("by_user", "user_id", None);
+        }
+    }
+    {
+        let users = ensure_db_table(world, "users", "id");
+        if !users.associations().contains(&"posts".to_string()) {
+            users.add_has_many("posts", "posts", "by_user");
+        }
+    }
+}
+
+#[given(regex = r#"^a database with "posts" and "users" tables$"#)]
+async fn given_posts_users(world: &mut VirtuusWorld) {
+    given_users_posts(world).await;
 }
 
 #[given(regex = r#"^a database with "users", "posts", and "comments" tables$"#)]
@@ -3387,20 +3389,20 @@ async fn then_db_result_user(world: &mut VirtuusWorld, user: String) {
     assert_eq!(result.get("id"), Some(&Value::String(user)));
 }
 
+#[then(regex = r#"^the result should contain only the "id" and "name" fields$"#)]
+async fn then_result_projection(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let obj = result.as_object().expect("result should be object");
+    assert_eq!(obj.len(), 2);
+    assert!(obj.contains_key("id"));
+    assert!(obj.contains_key("name"));
+}
+
 #[then(regex = r#"^the result should contain (\\d+) records$"#)]
 async fn then_result_count_db(world: &mut VirtuusWorld, count: usize) {
     let result = world.db_result.as_ref().expect("missing result");
     let items = items_from_result(result);
     assert_eq!(items.len(), count);
-}
-
-#[then("the result should contain only the \"id\" and \"name\" fields")]
-async fn then_projection(world: &mut VirtuusWorld) {
-    let result = world.db_result.as_ref().expect("missing result");
-    let keys: Vec<String> = result.as_object().unwrap().keys().cloned().collect();
-    assert_eq!(keys.len(), 2);
-    assert!(keys.contains(&"id".to_string()));
-    assert!(keys.contains(&"name".to_string()));
 }
 
 #[then(regex = r#"^an error should be raised indicating table "([^"]*)" does not exist$"#)]
@@ -3444,18 +3446,18 @@ async fn then_desc_order(world: &mut VirtuusWorld) {
     assert_eq!(dates, sorted);
 }
 
-#[then("the result should include a \"next_token\" value")]
+#[then(regex = r#"^the result should include a "next_token" value$"#)]
 async fn then_has_next_token(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
     assert!(result.get("next_token").is_some());
 }
 
-#[then("the result should include a \"next_token\"")]
+#[then(regex = r#"^the result should include a "next_token"$"#)]
 async fn then_has_next_token_short(world: &mut VirtuusWorld) {
     then_has_next_token(world).await;
 }
 
-#[then("the result should not include a \"next_token\"")]
+#[then(regex = r#"^the result should not include a "next_token"$"#)]
 async fn then_no_next_token(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
     assert!(result.get("next_token").is_none());
@@ -3488,9 +3490,12 @@ async fn then_total_25(world: &mut VirtuusWorld) {
 
 #[then("there should be no duplicates")]
 async fn then_no_duplicates(world: &mut VirtuusWorld) {
-    let ids = ids_from_items(&items_from_result(
-        world.db_result.as_ref().expect("missing result"),
-    ));
+    let items: Vec<Value> = if !world.pages.is_empty() {
+        world.pages.iter().flat_map(|p| p.clone()).collect()
+    } else {
+        items_from_result(world.db_result.as_ref().expect("missing result"))
+    };
+    let ids = ids_from_items(&items);
     let mut uniq = ids.clone();
     uniq.sort();
     uniq.dedup();
@@ -3504,7 +3509,7 @@ async fn then_list_tables(world: &mut VirtuusWorld) {
     assert_eq!(names.len(), 3);
 }
 
-#[then("the \"users\" entry should include primary_key, GSIs, record_count, and staleness")]
+#[then(regex = r#"^the "users" entry should include primary_key, GSIs, record_count, and staleness$"#)]
 async fn then_describe_users(world: &mut VirtuusWorld) {
     let users = world
         .db_result
@@ -3519,7 +3524,7 @@ async fn then_describe_users(world: &mut VirtuusWorld) {
     }
 }
 
-#[then("the \"users\" entry should list the \"posts\" association")]
+#[then(regex = r#"^the "users" entry should list the "posts" association$"#)]
 async fn then_describe_assoc(world: &mut VirtuusWorld) {
     let users = world
         .db_result
@@ -3623,24 +3628,6 @@ async fn given_schema_single_table(world: &mut VirtuusWorld, table: String, pk: 
     world.data_root = Some(dir.clone());
 }
 
-#[given("a YAML schema file defining a \"users\" table with GSIs \"by_email\" and \"by_status\"")]
-async fn given_schema_with_gsis(world: &mut VirtuusWorld) {
-    let dir = unique_temp("schema_gsi");
-    fs::create_dir_all(&dir).unwrap();
-    let schema = r#"
-tables:
-  users:
-    primary_key: id
-    gsis:
-      by_email: { partition_key: email }
-      by_status: { partition_key: status }
-"#;
-    let schema_path = dir.join("schema.yml");
-    fs::write(&schema_path, schema).unwrap();
-    world.schema_path = Some(schema_path);
-    world.data_root = Some(dir);
-}
-
 #[given("a YAML schema file defining:")]
 async fn given_schema_from_doc(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
     let dir = unique_temp("schema_doc");
@@ -3675,15 +3662,30 @@ tables:
     world.data_root = Some(dir);
 }
 
-#[given("a YAML schema defining a table with partition_key \"item_id\" and sort_key \"name\"")]
-async fn given_schema_composite(world: &mut VirtuusWorld) {
-    let dir = unique_temp("schema_composite");
+#[given("a YAML schema file with a missing required field")]
+async fn given_schema_missing_field(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_invalid");
+    fs::create_dir_all(&dir).unwrap();
+    let schema_path = dir.join("schema.yml");
+    fs::write(&schema_path, "tables:\n  users: {}\n").unwrap();
+    world.schema_path = Some(schema_path);
+    world.data_root = Some(dir);
+}
+
+#[given(regex = r#"^a YAML schema file defining a "users" table with GSIs "by_email" and "by_status"$"#)]
+async fn given_schema_with_gsis(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_gsis");
     fs::create_dir_all(&dir).unwrap();
     let schema = r#"
 tables:
-  items:
-    partition_key: item_id
-    sort_key: name
+  users:
+    primary_key: id
+    directory: users
+    gsis:
+      by_email:
+        partition_key: email
+      by_status:
+        partition_key: status
 "#;
     let schema_path = dir.join("schema.yml");
     fs::write(&schema_path, schema).unwrap();
@@ -3691,12 +3693,20 @@ tables:
     world.data_root = Some(dir);
 }
 
-#[given("a YAML schema file with a missing required field")]
-async fn given_schema_missing_field(world: &mut VirtuusWorld) {
-    let dir = unique_temp("schema_invalid");
-    fs::create_dir_all(&dir).unwrap();
+#[given(regex = r#"^a YAML schema defining a table with partition_key "item_id" and sort_key "name"$"#)]
+async fn given_schema_composite(world: &mut VirtuusWorld) {
+    let dir = unique_temp("schema_composite_keys");
+    let items_dir = dir.join("items");
+    fs::create_dir_all(&items_dir).unwrap();
+    let schema = r#"
+tables:
+  items:
+    partition_key: item_id
+    sort_key: name
+    directory: items
+"#;
     let schema_path = dir.join("schema.yml");
-    fs::write(&schema_path, "tables:\n  users: {}\n").unwrap();
+    fs::write(&schema_path, schema).unwrap();
     world.schema_path = Some(schema_path);
     world.data_root = Some(dir);
 }
@@ -3776,19 +3786,10 @@ async fn then_table_has_gsi_pk(world: &mut VirtuusWorld, table: String, gsi: Str
 
 #[then("a clear error should be raised indicating what is missing")]
 async fn then_schema_error(world: &mut VirtuusWorld) {
-    assert!(world
-        .error
-        .as_ref()
-        .map(|e| e.contains("expect"))
-        .unwrap_or(true));
-}
-
-// Pagination helpers
-fn seed_users(world: &mut VirtuusWorld, count: usize) {
-    let table = ensure_db_table(world, "users", "id");
-    for i in 0..count {
-        table.put(json!({"id": format!("user-{}", i+1), "name": format!("User {}", i+1)}));
-    }
+    assert!(
+        world.error.is_some(),
+        "expected schema loading to raise an error"
+    );
 }
 
 #[given(regex = r#"^a database with a "users" table and GSI "([^"]*)" on "([^"]*)"$"#)]
@@ -3796,6 +3797,15 @@ async fn given_db_users_gsi(world: &mut VirtuusWorld, gsi: String, field: String
     let table = ensure_db_table(world, "users", "id");
     if !table.gsis().contains_key(&gsi) {
         table.add_gsi(&gsi, &field, None);
+    }
+}
+
+#[given(regex = r#"^a database with a "users" table with GSI "by_email" and 25 records$"#)]
+async fn given_users_gsi_records(world: &mut VirtuusWorld) {
+    let table = ensure_db_table(world, "users", "id");
+    table.add_gsi("by_email", "email", None);
+    for i in 0..25 {
+        table.put(json!({"id": format!("user-{}", i), "email": format!("user-{}@example.com", i)}));
     }
 }
 
@@ -3810,29 +3820,24 @@ async fn given_db_violation(world: &mut VirtuusWorld) {
 
 #[given("a database with only has_many associations defined")]
 async fn given_db_only_has_many(world: &mut VirtuusWorld) {
-    let users = ensure_db_table(world, "users", "id");
-    let posts = ensure_db_table(world, "posts", "id");
-    posts.add_gsi("by_user", "user_id", None);
-    users.add_has_many("posts", "posts", "by_user");
-}
-
-#[given("a database with a \"users\" table with GSI \"by_email\" and 25 records")]
-async fn given_users_gsi_records(world: &mut VirtuusWorld) {
-    let users = ensure_db_table(world, "users", "id");
-    users.add_gsi("by_email", "email", None);
-    for i in 0..25 {
-        users.put(json!({"id": format!("user-{}", i), "email": format!("user-{}@example.com", i)}));
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        posts.add_gsi("by_user", "user_id", None);
+    }
+    {
+        let users = ensure_db_table(world, "users", "id");
+        users.add_has_many("posts", "posts", "by_user");
     }
 }
 
-#[given(r#"^a database with "jobs", "job_assignments", and "workers" tables$"#)]
+#[given(regex = r#"^a database with "jobs", "job_assignments", and "workers" tables$"#)]
 async fn given_jobs_tables(world: &mut VirtuusWorld) {
     ensure_db_table(world, "jobs", "id");
     ensure_db_table(world, "job_assignments", "id");
     ensure_db_table(world, "workers", "id");
 }
 
-#[given(r#"^a database with tables "users", "posts", and "comments"$"#)]
+#[given(regex = r#"^a database with tables "users", "posts", and "comments"$"#)]
 async fn given_db_three_tables(world: &mut VirtuusWorld) {
     ensure_db_table(world, "users", "id");
     ensure_db_table(world, "posts", "id");
@@ -3852,13 +3857,13 @@ async fn given_posts_specific(world: &mut VirtuusWorld, dates: String) {
     }
 }
 
-#[given(r#"^a database with a "users" table and no GSI named "by_foo"$"#)]
+#[given(regex = r#"^a database with a "users" table and no GSI named "by_foo"$"#)]
 async fn given_db_no_gsi(world: &mut VirtuusWorld) {
     let table = ensure_db_table(world, "users", "id");
     assert!(!table.gsis().contains_key("by_foo"));
 }
 
-#[given(r#"^20 posts for user "([^"]*)" with sequential created_at values$"#)]
+#[given(regex = r#"^20 posts for user "([^"]*)" with sequential created_at values$"#)]
 async fn given_posts_seq(world: &mut VirtuusWorld, user: String) {
     let posts = ensure_db_table(world, "posts", "id");
     if !posts.gsis().contains_key("by_user") {
@@ -3875,12 +3880,24 @@ async fn given_posts_seq(world: &mut VirtuusWorld, user: String) {
 
 #[given("3 posts for user-1 with ascending created_at values")]
 async fn given_posts_three(world: &mut VirtuusWorld) {
-    given_posts_seq(world, "user-1".to_string()).await;
+    let posts = ensure_db_table(world, "posts", "id");
+    if !posts.gsis().contains_key("by_user") {
+        posts.add_gsi("by_user", "user_id", Some("created_at"));
+    }
+    for i in 0..3 {
+        posts.put(json!({
+            "id": format!("post-{}", i+1),
+            "user_id": "user-1",
+            "created_at": format!("2025-01-{:02}", i+1)
+        }));
+    }
 }
 
 #[given("3 posts reference non-existent users")]
 async fn given_posts_missing_users(world: &mut VirtuusWorld) {
+    ensure_db_table(world, "users", "id");
     let posts = ensure_db_table(world, "posts", "id");
+    posts.add_belongs_to("user", "users", "user_id");
     posts.put(json!({"id":"p1","user_id":"missing-1"}));
     posts.put(json!({"id":"p2","user_id":"missing-2"}));
     posts.put(json!({"id":"p3","user_id":"missing-3"}));
@@ -3890,7 +3907,7 @@ async fn given_posts_missing_users(world: &mut VirtuusWorld) {
 async fn when_page_through_limit(world: &mut VirtuusWorld) {
     let mut token: Option<String> = None;
     let mut pages = Vec::new();
-    let mut db = ensure_db(world);
+    let db = ensure_db(world);
     loop {
         let mut query = json!({"users": {"limit": 10}});
         if let Some(tok) = token.clone() {
@@ -3933,7 +3950,7 @@ async fn when_page_through_query(world: &mut VirtuusWorld, query_text: String) {
     let mut query: Value = serde_json::from_str(&query_text).expect("invalid json");
     let mut token: Option<String> = None;
     let mut pages = Vec::new();
-    let mut db = ensure_db(world);
+    let db = ensure_db(world);
     loop {
         if let Some(tok) = token.clone() {
             let map = query.as_object_mut().unwrap();
@@ -3992,7 +4009,7 @@ async fn then_full_desc(world: &mut VirtuusWorld) {
         all.extend(page.clone());
     }
     assert_eq!(all.len(), 20);
-    let mut dates: Vec<String> = all
+    let dates: Vec<String> = all
         .iter()
         .filter_map(|r| r.get("created_at"))
         .filter_map(|v| v.as_str())
@@ -4015,37 +4032,6 @@ async fn then_empty_list(world: &mut VirtuusWorld) {
     assert!(result.as_array().map(|a| a.is_empty()).unwrap_or(false));
 }
 
-// Nested include expectations
-#[then("the result should include the user with a nested \"posts\" array of 3 records")]
-async fn then_nested_posts(world: &mut VirtuusWorld) {
-    let result = world.db_result.as_ref().expect("missing result");
-    assert_eq!(
-        result
-            .get("posts")
-            .and_then(|p| p.as_array())
-            .map(|a| a.len()),
-        Some(3)
-    );
-}
-
-#[then("the result should include the post with a nested \"author\" object")]
-async fn then_nested_author(world: &mut VirtuusWorld) {
-    let result = world.db_result.as_ref().expect("missing result");
-    assert!(result.get("author").and_then(|a| a.as_object()).is_some());
-}
-
-#[then("the result should include the job with a nested \"workers\" array of 2 records")]
-async fn then_nested_workers(world: &mut VirtuusWorld) {
-    let result = world.db_result.as_ref().expect("missing result");
-    assert_eq!(
-        result
-            .get("workers")
-            .and_then(|w| w.as_array())
-            .map(|a| a.len()),
-        Some(2)
-    );
-}
-
 #[then("the result should include user → posts → comments nested 3 levels deep")]
 async fn then_nested_three(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
@@ -4053,7 +4039,34 @@ async fn then_nested_three(world: &mut VirtuusWorld) {
     assert!(posts.first().unwrap().get("comments").is_some());
 }
 
-#[then(r#"^each nested post should only contain "([^"]*)" and "([^"]*)" fields$"#)]
+#[then(regex = r#"^the result should include the user with a nested "posts" array of (\d+) records$"#)]
+async fn then_nested_posts(world: &mut VirtuusWorld, count: usize) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let posts = result.get("posts").and_then(|p| p.as_array()).unwrap();
+    assert_eq!(posts.len(), count);
+}
+
+#[then(regex = r#"^the result should include the post with a nested "author" object$"#)]
+async fn then_nested_author(world: &mut VirtuusWorld) {
+    let result = world.db_result.as_ref().expect("missing result");
+    assert!(result
+        .get("author")
+        .map(|a| a.is_object())
+        .unwrap_or(false));
+}
+
+#[then(regex = r#"^the result should include the job with a nested "workers" array of (\d+) records$"#)]
+async fn then_nested_workers(world: &mut VirtuusWorld, count: usize) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let len = result
+        .get("workers")
+        .and_then(|w| w.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+    assert_eq!(len, count);
+}
+
+#[then(regex = r#"^each nested post should only contain "([^"]*)" and "([^"]*)" fields$"#)]
 async fn then_nested_projection(world: &mut VirtuusWorld, f1: String, f2: String) {
     let result = world.db_result.as_ref().expect("missing result");
     let posts = result.get("posts").and_then(|p| p.as_array()).unwrap();
@@ -4065,7 +4078,7 @@ async fn then_nested_projection(world: &mut VirtuusWorld, f1: String, f2: String
     }
 }
 
-#[then("the nested \"posts\" array should be empty")]
+#[then(regex = r#"^the nested "posts" array should be empty$"#)]
 async fn then_nested_posts_empty(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
     assert_eq!(
