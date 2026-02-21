@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "c9352218-fe03-4554-9783-ccf0b47e3e0d",
+  "issue_id": "tctv-8454083d-a138-4372-a188-cba03e2050d8",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:45:45.418Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table loaded from a directory, when files on disk change (modified, added, deleted), the cache should detect staleness via two-tier mtime checking. JIT refresh happens automatically before query results are returned. Spec: features/cache/cache_invalidation.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+    "priority": 2,
+    "status": "open",
+    "title": "Cache invalidation"
+  }
+}

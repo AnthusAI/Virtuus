@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "f27bfb55-aec3-4dfc-9967-9845585d2c02",
+  "issue_id": "tctv-9f432a03-5946-4157-ae7f-fdb66d560bb5",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:44:10.754Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table, when I put/get/delete/upsert records, the table should maintain correct state. Supports scan, all, and bulk load operations. Spec: features/core/table_crud.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "priority": 2,
+    "status": "open",
+    "title": "Table CRUD"
+  }
+}

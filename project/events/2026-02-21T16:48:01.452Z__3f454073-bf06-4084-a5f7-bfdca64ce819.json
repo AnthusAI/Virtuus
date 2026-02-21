@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "3f454073-bf06-4084-a5f7-bfdca64ce819",
+  "issue_id": "tctv-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:01.452Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a data directory and schema, when I run virtuus serve, it should load data once and serve queries over HTTP. POST JSON dict-in/dict-out protocol. Spec: features/cli/server_mode.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+    "priority": 2,
+    "status": "open",
+    "title": "CLI server mode"
+  }
+}

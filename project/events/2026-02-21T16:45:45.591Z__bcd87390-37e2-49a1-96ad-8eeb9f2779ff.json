@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "bcd87390-37e2-49a1-96ad-8eeb9f2779ff",
+  "issue_id": "tctv-c34e6bd7-4c6d-4891-b55c-32ec7b496c06",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:45:45.591Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a stale table, when refreshed, only added/modified/deleted files should be reloaded - not the entire table. GSIs must be updated for all changed records. Spec: features/cache/incremental_refresh.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+    "priority": 2,
+    "status": "open",
+    "title": "Incremental refresh"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "45e7d78b-4c14-4310-a229-c5c8762b3dc8",
+  "issue_id": "tctv-631d58e3-99a3-4aae-9d70-2156f8c9f08a",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:46:42.965Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a database with tables, when I call execute() with where, pk, fields, or limit directives, it should return matching records with correct field projection and limits. Spec: features/query/execute_basic.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+    "priority": 2,
+    "status": "open",
+    "title": "Execute basic queries"
+  }
+}

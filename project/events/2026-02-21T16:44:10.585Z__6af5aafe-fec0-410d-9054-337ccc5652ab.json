@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "6af5aafe-fec0-410d-9054-337ccc5652ab",
+  "issue_id": "tctv-6e91f815-7799-4997-b950-fbaa63dccea8",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:44:10.585Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table name and primary key field, when I create a table, it should be ready to store and retrieve records by PK. Supports simple PK and composite PK (partition + sort key). Spec: features/core/table_creation.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "priority": 2,
+    "status": "open",
+    "title": "Table creation"
+  }
+}

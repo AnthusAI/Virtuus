@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "80f81739-e9ba-40e3-be57-2c91dd1e0996",
+  "issue_id": "tctv-df850d1d-74c4-4b21-aae2-1141c082cf61",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:44:11.247Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table with opt-in validation enabled, when I put a record missing the PK field or GSI-indexed fields, it should warn or error based on configuration. Default is silent. Spec: features/core/table_validation.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "priority": 2,
+    "status": "open",
+    "title": "Table validation"
+  }
+}

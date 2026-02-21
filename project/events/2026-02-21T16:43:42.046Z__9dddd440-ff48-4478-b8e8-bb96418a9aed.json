@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "9dddd440-ff48-4478-b8e8-bb96418a9aed",
+  "issue_id": "tctv-605c81b5-ac99-4e69-b14a-3f4e36dca3d7",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:43:42.046Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a populated GSI, when I query by partition key (with optional sort conditions and direction), it should return matching record PKs in the correct order. Empty partitions return empty results. Spec: features/gsi/gsi_query.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+    "priority": 2,
+    "status": "open",
+    "title": "GSI query"
+  }
+}

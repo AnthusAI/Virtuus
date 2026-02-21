@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "3569ad54-4e58-4eb4-8ad2-1025282d70d0",
+  "issue_id": "tctv-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:02.267Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given filesystem edge cases (file appears/disappears during scan, truncated JSON), Virtuus should handle all gracefully without crashing. Corrupted files are reported as errors, valid records remain accessible. Spec: features/concurrency/file_race_conditions.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "priority": 2,
+    "status": "open",
+    "title": "File race conditions"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "f3465d35-3f1a-43b4-b57d-ce2c86a57f92",
+  "issue_id": "tctv-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:42:29.113Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Implement CLI with query mode (load, query, print, exit) and server mode (load once, serve HTTP queries). Python via Click+uvicorn, Rust via clap+axum. POST JSON dict-in/dict-out protocol. See Vision.md for full details.",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Phase 7: CLI (Query + Server)"
+  }
+}

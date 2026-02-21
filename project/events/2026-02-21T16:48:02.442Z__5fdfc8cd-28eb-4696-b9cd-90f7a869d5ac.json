@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "5fdfc8cd-28eb-4696-b9cd-90f7a869d5ac",
+  "issue_id": "tctv-36594452-858f-4e15-a388-b3510125ff23",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:02.442Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given concurrent deletes and association resolution, the system should return either a valid result or clean null/empty, never a dangling reference or crash. Spec: features/concurrency/referential_integrity_under_load.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "priority": 2,
+    "status": "open",
+    "title": "Referential integrity under load"
+  }
+}

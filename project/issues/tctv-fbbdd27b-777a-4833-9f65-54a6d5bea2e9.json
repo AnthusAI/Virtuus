@@ -1,0 +1,18 @@
+{
+  "id": "tctv-fbbdd27b-777a-4833-9f65-54a6d5bea2e9",
+  "title": "Execute paginated queries",
+  "description": "Given a large result set, when I execute() with limit and next_token directives, it should return paginated results with cursor-based pagination matching the DynamoDB pattern. Spec: features/query/execute_pagination.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:43.461577Z",
+  "updated_at": "2026-02-21T16:46:43.461577Z",
+  "closed_at": null,
+  "custom": {}
+}

@@ -1,0 +1,18 @@
+{
+  "id": "tctv-17b867e4-5655-483b-9b75-b371b203a333",
+  "title": "Concurrent reads",
+  "description": "Given a database under concurrent read load, when N threads query simultaneously, all should return consistent results with no partial reads or crashes. Spec: features/concurrency/concurrent_reads.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:48:01.615090Z",
+  "updated_at": "2026-02-21T16:48:01.615090Z",
+  "closed_at": null,
+  "custom": {}
+}

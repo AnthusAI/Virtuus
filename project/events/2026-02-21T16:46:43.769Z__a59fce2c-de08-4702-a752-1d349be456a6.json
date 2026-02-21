@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a59fce2c-de08-4702-a752-1d349be456a6",
+  "issue_id": "tctv-4be56aba-fa68-4fb3-8023-0cd68aca361a",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:46:43.769Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a database with belongs_to associations, when I call db.validate(), it should walk all FKs and verify each resolves to a record in the target table. Returns a list of violations. Spec: features/query/database_validate.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+    "priority": 2,
+    "status": "open",
+    "title": "Database validate (referential integrity)"
+  }
+}

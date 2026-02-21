@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "c85c40c1-8ff7-475a-b167-83e6d9c17c6c",
+  "issue_id": "tctv-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:42:06.887Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Set up the full project skeleton with dual Rust+Python structure, shared Gherkin specs, and coverage tooling. One smoke-test feature passes in both languages at 100% coverage from the first commit. See Vision.md for full details.",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Phase 0: Project Scaffolding + Coverage Infrastructure"
+  }
+}

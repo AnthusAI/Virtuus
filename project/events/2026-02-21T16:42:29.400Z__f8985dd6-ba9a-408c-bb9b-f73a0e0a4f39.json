@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "f8985dd6-ba9a-408c-bb9b-f73a0e0a4f39",
+  "issue_id": "tctv-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:42:29.400Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Compile Rust library as Python extension module via PyO3+maturin. All existing Gherkin specs must pass with both pure-Python and Rust backends. Transparent fallback import pattern. See Vision.md for full details.",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Phase 9: PyO3 Bridge"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+  "title": "Phase 4: Cache & Incremental Invalidation",
+  "description": "Implement mtime-based cache layer with two-tier staleness detection (O(1) dir check, O(N) file scan), JIT invalidation on query, warm reindex for proactive refresh, and incremental reload of only changed files. See Vision.md for full details.",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:42:28.668053Z",
+  "updated_at": "2026-02-21T16:42:28.668053Z",
+  "closed_at": null,
+  "custom": {}
+}

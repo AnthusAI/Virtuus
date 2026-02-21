@@ -1,0 +1,18 @@
+{
+  "id": "tctv-4be56aba-fa68-4fb3-8023-0cd68aca361a",
+  "title": "Database validate (referential integrity)",
+  "description": "Given a database with belongs_to associations, when I call db.validate(), it should walk all FKs and verify each resolves to a record in the target table. Returns a list of violations. Spec: features/query/database_validate.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "tctv-ab37b375-adfd-44f4-b71c-2bb7658a476e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:46:43.769532Z",
+  "updated_at": "2026-02-21T16:46:43.769532Z",
+  "closed_at": null,
+  "custom": {}
+}

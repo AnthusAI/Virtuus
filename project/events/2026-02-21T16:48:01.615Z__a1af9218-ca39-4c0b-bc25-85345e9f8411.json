@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a1af9218-ca39-4c0b-bc25-85345e9f8411",
+  "issue_id": "tctv-17b867e4-5655-483b-9b75-b371b203a333",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:01.615Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a database under concurrent read load, when N threads query simultaneously, all should return consistent results with no partial reads or crashes. Spec: features/concurrency/concurrent_reads.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "priority": 2,
+    "status": "open",
+    "title": "Concurrent reads"
+  }
+}

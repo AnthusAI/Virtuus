@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a69a0f2e-97c3-407e-ae93-8854f1c84ecd",
+  "issue_id": "tctv-59635a9f-e39f-4df4-aa80-4316b27c4d8b",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:45:45.764Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a database with tables, when I call warm(), all tables should proactively refresh without waiting for a query. When already fresh, warm is a no-op. Spec: features/cache/warm_reindex.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-3d5f253d-4310-449e-8a72-898ff0bb47c9",
+    "priority": 2,
+    "status": "open",
+    "title": "Warm reindex"
+  }
+}

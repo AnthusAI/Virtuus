@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "d4fff0d5-9c89-4bbe-a7b6-f90a47d45ab4",
+  "issue_id": "tctv-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:01.778Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Spec: features/concurrency/concurrent_writes.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "priority": 2,
+    "status": "open",
+    "title": "Concurrent writes"
+  }
+}

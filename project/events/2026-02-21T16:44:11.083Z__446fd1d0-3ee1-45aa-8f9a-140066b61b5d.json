@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "446fd1d0-3ee1-45aa-8f9a-140066b61b5d",
+  "issue_id": "tctv-ec83d65c-61d0-4c34-83fb-e3e55a2979cb",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:44:11.083Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table, when I call describe(), it should return a metadata dict with name, PK, GSI definitions, association names, record count, and staleness status. REPL-friendly output. Spec: features/core/table_describe.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+    "priority": 2,
+    "status": "open",
+    "title": "Table describe"
+  }
+}

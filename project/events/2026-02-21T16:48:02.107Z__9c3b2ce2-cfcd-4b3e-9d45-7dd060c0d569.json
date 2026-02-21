@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "9c3b2ce2-cfcd-4b3e-9d45-7dd060c0d569",
+  "issue_id": "tctv-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:48:02.107Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given files changing on disk while queries are in flight, readers should get either the old state or the new state, never a mix. JIT refresh + concurrent reads must be safe. Spec: features/concurrency/concurrent_refresh.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+    "priority": 2,
+    "status": "open",
+    "title": "Concurrent refresh"
+  }
+}

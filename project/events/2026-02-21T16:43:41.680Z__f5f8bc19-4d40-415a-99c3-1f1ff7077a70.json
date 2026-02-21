@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "f5f8bc19-4d40-415a-99c3-1f1ff7077a70",
+  "issue_id": "tctv-59862e11-3b04-4dca-832a-1062309db8b4",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-21T16:43:41.680Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Given a table, when I create a GSI with a partition key (and optionally a sort key), it should be registered and ready to index records. Supports hash-only and hash+range configurations. Spec: features/gsi/gsi_creation.feature",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "tctv-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
+    "priority": 2,
+    "status": "open",
+    "title": "GSI creation"
+  }
+}

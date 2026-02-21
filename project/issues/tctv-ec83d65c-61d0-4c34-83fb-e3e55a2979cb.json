@@ -1,0 +1,18 @@
+{
+  "id": "tctv-ec83d65c-61d0-4c34-83fb-e3e55a2979cb",
+  "title": "Table describe",
+  "description": "Given a table, when I call describe(), it should return a metadata dict with name, PK, GSI definitions, association names, record count, and staleness status. REPL-friendly output. Spec: features/core/table_describe.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "tctv-829d0d5f-c661-4c94-a1ed-d9525076af15",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:44:11.083665Z",
+  "updated_at": "2026-02-21T16:44:11.083665Z",
+  "closed_at": null,
+  "custom": {}
+}

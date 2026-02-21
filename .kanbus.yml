@@ -1,5 +1,4 @@
 project_directory: project
-external_projects: []
 ignore_paths: []
 console_port: 4451
 project_key: tctv

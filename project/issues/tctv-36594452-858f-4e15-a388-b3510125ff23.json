@@ -1,0 +1,18 @@
+{
+  "id": "tctv-36594452-858f-4e15-a388-b3510125ff23",
+  "title": "Referential integrity under load",
+  "description": "Given concurrent deletes and association resolution, the system should return either a valid result or clean null/empty, never a dangling reference or crash. Spec: features/concurrency/referential_integrity_under_load.feature",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "tctv-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-21T16:48:02.442228Z",
+  "updated_at": "2026-02-21T16:48:02.442228Z",
+  "closed_at": null,
+  "custom": {}
+}
