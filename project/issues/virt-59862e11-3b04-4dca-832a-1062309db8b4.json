@@ -3,16 +3,23 @@
   "title": "GSI creation",
   "description": "Given a table, when I create a GSI with a partition key (and optionally a sort key), it should be registered and ready to index records. Supports hash-only and hash+range configurations. Spec: features/gsi/gsi_creation.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "8c2074b0-fc77-492f-80c8-518e3173af1a",
+      "author": "unknown",
+      "text": "Status: ready to implement. Did: reviewed gsi_creation.feature. Next: add Python+Rust GSI types and creation logic + step defs. Blockers: none.",
+      "created_at": "2026-02-21T18:39:21.087714Z"
+    }
+  ],
   "created_at": "2026-02-21T16:43:41.680061Z",
-  "updated_at": "2026-02-21T16:43:41.680061Z",
+  "updated_at": "2026-02-21T18:39:21.087714Z",
   "closed_at": null,
   "custom": {}
 }

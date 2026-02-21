@@ -3,16 +3,29 @@
   "title": "GSI query",
   "description": "Given a populated GSI, when I query by partition key (with optional sort conditions and direction), it should return matching record PKs in the correct order. Empty partitions return empty results. Spec: features/gsi/gsi_query.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "a1d21288-8903-4b75-9f91-c2ecbc0390d6",
+      "author": "unknown",
+      "text": "Status: queued after creation. Did: reviewed gsi_query.feature. Next: implement query ordering/sort conditions and steps. Blockers: none.",
+      "created_at": "2026-02-21T18:39:23.293962Z"
+    },
+    {
+      "id": "2e1383eb-bb4a-48f9-a6a5-c542ba63f62f",
+      "author": "unknown",
+      "text": "Status: in progress. Did: planning complete. Next: implement GSI query logic + steps in Python/Rust. Blockers: none.",
+      "created_at": "2026-02-21T18:40:18.008880Z"
+    }
+  ],
   "created_at": "2026-02-21T16:43:42.046117Z",
-  "updated_at": "2026-02-21T16:43:42.046117Z",
+  "updated_at": "2026-02-21T18:40:18.008880Z",
   "closed_at": null,
   "custom": {}
 }

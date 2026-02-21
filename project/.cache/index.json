@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-21T18:06:26Z",
+  "built_at": "2026-02-21T18:20:44Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771696060.629171,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771696060.628306,
@@ -12,9 +12,9 @@
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771696060.635334,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771696060.627461,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771696060.631453,
-    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771696060.628768,
+    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
-    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771696060.629755,
+    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771696060.629562,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771696060.634979,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771696060.630499,
@@ -45,7 +45,7 @@
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771696060.633414,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771696060.625044,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
-    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771696060.625396,
+    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771696060.628469,
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771696060.632238,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771696060.634162,
@@ -255,8 +255,27 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:15:32.291940Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:07:17.766644Z",
+          "id": "8bcd8cc9-15e6-45b7-878a-fc5861a9adec",
+          "text": "Working on Phase 1: Sort Conditions.\n\nProgress so far:\n- Gherkin spec already existed (features/sort/sort_conditions.feature) — 9 operators covered with Scenario Outlines, null handling, empty string edge cases\n- Added Scenario Outline for null input across all 8 single-value operators (was only testing eq before; needed to reach 100% coverage)\n- Python: sort.py implemented with Sort class, all 9 operators (_coerce helper for numeric string coercion). 100% coverage. Black + Ruff clean.\n- Python step definitions: features/steps/sort_steps.py — handles empty-string edge cases with explicit steps since behave regex can't match empty quoted values\n- Rust: sort.rs implemented with SortCondition enum + OrderedValue newtype (implements Ord for serde_json::Value). 100% coverage via unit tests.\n- Rust cucumber steps added to tests/cucumber.rs using regex= attribute to handle parametric operators\n- parity checker failing: regex= steps in Rust not matched by parity checker pattern\n\nNext: fix parity checker to extract regex= raw-string patterns from Rust steps, then run make check."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:15:32.618783Z",
+          "id": "9af3351b-3c80-4d33-9f63-b13e35aa3314",
+          "text": "Phase 1 complete and landed. make check fully green: Python 100%, Rust 100%, parity 13/13 steps. Parity checker updated to handle Rust regex= raw string attributes and Python u'...' prefixes. Committed and pushed."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:15:40.085398Z",
+          "id": "28abce65-e18b-4f8f-92dd-f8eec6838b55",
+          "text": "Phase 1 complete and landed. make check fully green: Python 100%, Rust 100%, parity 13/13 steps. Parity checker updated to handle Rust regex= raw string attributes and Python u'...' prefixes. Committed and pushed."
+        }
+      ],
       "created_at": "2026-02-21T16:43:03.606518Z",
       "creator": null,
       "custom": {},
@@ -266,10 +285,10 @@
       "labels": [],
       "parent": "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Sort condition operators",
       "type": "story",
-      "updated_at": "2026-02-21T16:43:03.606518Z"
+      "updated_at": "2026-02-21T18:15:40.085398Z"
     },
     {
       "assignee": null,
@@ -291,8 +310,27 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:15:40.428696Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:07:21.427281Z",
+          "id": "bcbc3c06-d030-4bb2-9586-01ccc6927eff",
+          "text": "Phase 1 in progress. Sort conditions implemented in Python and Rust. Parity checker needs update to handle Rust regex= step attributes. See virt-337cae for detail."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:15:40.762793Z",
+          "id": "094c2e7a-e647-41d3-aae0-c0984611773f",
+          "text": "Phase 1 complete. All sort condition operators implemented in both Python and Rust at 100% coverage. Committed and pushed (a258eef)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:15:53.668359Z",
+          "id": "8da9cdfc-5079-4f57-a80a-ec002c9b38e9",
+          "text": "Phase 1 complete. All sort condition operators implemented in both Python and Rust at 100% coverage. Committed and pushed (a258eef)."
+        }
+      ],
       "created_at": "2026-02-21T16:42:28.197802Z",
       "creator": null,
       "custom": {},
@@ -302,10 +340,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Phase 1: Sort Conditions",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:28.197802Z"
+      "updated_at": "2026-02-21T18:15:53.668359Z"
     },
     {
       "assignee": null,
@@ -856,8 +894,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-21T18:07:00.043911Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:07:00.110572Z",
+          "id": "03e6a447-cc8e-4710-8463-b42f61c570f1",
+          "text": "Phase 0 complete. make check fully green: Python 100% coverage, Rust 100% coverage, parity 7/7 steps, all lint clean. Committed and pushed."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-21T18:07:03.246765Z",
+          "id": "d725cb7a-09ab-4817-a28d-142a8eda5a95",
+          "text": "Phase 0 complete. make check fully green: Python 100% coverage, Rust 100% coverage, parity 7/7 steps, all lint clean. Committed and pushed."
+        }
+      ],
       "created_at": "2026-02-21T16:42:06.887131Z",
       "creator": null,
       "custom": {},
@@ -867,10 +918,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Phase 0: Project Scaffolding + Coverage Infrastructure",
       "type": "epic",
-      "updated_at": "2026-02-21T17:18:43.214640Z"
+      "updated_at": "2026-02-21T18:07:03.246765Z"
     },
     {
       "assignee": null,

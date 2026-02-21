@@ -3,16 +3,23 @@
   "title": "Phase 2: GSI (Global Secondary Index)",
   "description": "Implement hash-partitioned index with optional sorted range key. GSIs support partition-only and partition+sort configurations, with put/remove/update operations and query with sort conditions and direction. See Vision.md for full details.",
   "type": "epic",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "f498ced9-2973-486e-831b-68e22dbe32bd",
+      "author": "unknown",
+      "text": "Status: planned Phase 2 scope. Did: reviewed GSI feature specs + related query/table specs; captured decisions (skip index on missing keys, raw JSON ordering). Next: implement GSI creation/query/operations in Python+Rust and step defs. Blockers: Vision.md not found via kbs wiki; proceeding from features.",
+      "created_at": "2026-02-21T18:39:13.736049Z"
+    }
+  ],
   "created_at": "2026-02-21T16:42:28.360326Z",
-  "updated_at": "2026-02-21T16:42:28.360326Z",
+  "updated_at": "2026-02-21T18:39:13.736049Z",
   "closed_at": null,
   "custom": {}
 }
