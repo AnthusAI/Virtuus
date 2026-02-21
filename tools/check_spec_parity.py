@@ -15,14 +15,21 @@ REPO_ROOT = Path(__file__).parent.parent
 STEP_KEYWORDS = ("Given ", "When ", "Then ", "And ", "But ")
 
 # Python: @given("..."), @when("..."), @then("..."), @step("...")
+# Also handles u"..." and u'...' string prefixes.
 PYTHON_PATTERN = re.compile(
-    r'@(?:given|when|then|step)\s*\(\s*["\'](.+?)["\']\s*\)',
+    r'@(?:given|when|then|step)\s*\(\s*u?["\'](.+?)["\']\s*\)',
     re.IGNORECASE,
 )
 
 # Rust: #[given("...")], #[when("...")], #[then("...")]
-RUST_PATTERN = re.compile(
-    r'#\[\s*(?:given|when|then)\s*\(\s*["\'](.+?)["\']\s*\)\s*\]',
+# Handles both plain strings and regex = r#"..."# raw string syntax.
+# Two patterns: one for raw strings r#"..."#, one for plain strings.
+RUST_PATTERN_RAW = re.compile(
+    r'#\[\s*(?:given|when|then)\s*\([^)]*?regex\s*=\s*r#"(.+?)"#\s*\)\s*\]',
+    re.IGNORECASE | re.DOTALL,
+)
+RUST_PATTERN_PLAIN = re.compile(
+    r'#\[\s*(?:given|when|then)\s*\(\s*"([^"]+)"\s*\)\s*\]',
     re.IGNORECASE,
 )
 
@@ -48,14 +55,33 @@ def extract_python_patterns() -> list[str]:
 
 
 def extract_rust_patterns() -> list[str]:
+    """Extract step patterns from Rust cucumber test files.
+
+    :return: List of step pattern strings (plain literals and raw regexes).
+    :rtype: list[str]
+    """
     patterns: list[str] = []
     for path in sorted(REPO_ROOT.glob("rust/tests/**/*.rs")):
-        patterns.extend(RUST_PATTERN.findall(path.read_text()))
+        text = path.read_text()
+        patterns.extend(RUST_PATTERN_RAW.findall(text))
+        patterns.extend(RUST_PATTERN_PLAIN.findall(text))
     return patterns
 
 
 def _to_regex(pattern: str) -> re.Pattern:
-    """Convert a step pattern to a regex, handling {param} placeholders."""
+    """Convert a step pattern to a regex, handling {param} placeholders.
+
+    If the pattern already looks like a regex (starts with ``^``), it is
+    used as-is.  Otherwise it is treated as a behave/cucumber literal pattern
+    with ``{param}`` placeholders and quoted-value wildcards.
+
+    :param pattern: The raw step pattern string.
+    :type pattern: str
+    :return: Compiled regular expression.
+    :rtype: re.Pattern
+    """
+    if pattern.startswith("^"):
+        return re.compile(pattern, re.IGNORECASE)
     escaped = re.escape(pattern)
     # {param} → .*  (behave/cucumber style)
     escaped = re.sub(r"\\\{[^}]+\\\}", ".*", escaped)
@@ -65,6 +91,15 @@ def _to_regex(pattern: str) -> re.Pattern:
 
 
 def matches_any(step: str, patterns: list[str]) -> bool:
+    """Return True if *step* matches any pattern in *patterns*.
+
+    :param step: The Gherkin step text to test.
+    :type step: str
+    :param patterns: List of step patterns from Python or Rust implementations.
+    :type patterns: list[str]
+    :return: True if a match is found.
+    :rtype: bool
+    """
     for p in patterns:
         try:
             if _to_regex(p).match(step):
@@ -86,7 +121,16 @@ def main() -> int:
     python_pats = extract_python_patterns()
     rust_pats = extract_rust_patterns()
 
-    unique_steps = sorted(set(steps))
+    # Normalize Gherkin Scenario Outline placeholders <param> → {param}
+    # so they match Python {param} patterns and Rust regex captures.
+    # Skip steps that still contain {param} placeholders after normalization —
+    # those are abstract outline forms; the concrete expanded forms are what matter.
+    normalized: set[str] = set()
+    for s in steps:
+        n = re.sub(r"<([^>]+)>", r"{\1}", s)
+        if "{" not in n:
+            normalized.add(n)
+    unique_steps = sorted(normalized)
     python_only: list[str] = []  # implemented in Python but not Rust
     rust_only: list[str] = []    # implemented in Rust but not Python
 

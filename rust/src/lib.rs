@@ -2,6 +2,8 @@
 /// Cargo.toml is kept in sync with the repo-root VERSION file.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub mod sort;
+
 /// Returns the library version string.
 pub fn version() -> &'static str {
     VERSION

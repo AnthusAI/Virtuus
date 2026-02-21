@@ -1,13 +1,17 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use cucumber::{given, then, World};
+use cucumber::{given, then, when, World};
+use serde_json::Value;
+use virtuus::sort::SortCondition;
 
 #[derive(Debug, Default, World)]
 pub struct VirtuusWorld {
     pub version_file: Option<PathBuf>,
     pub python_version: Option<String>,
     pub rust_version: Option<String>,
+    pub predicate: Option<SortCondition>,
+    pub predicate_result: Option<bool>,
 }
 
 // ---------------------------------------------------------------------------
@@ -89,6 +93,86 @@ async fn then_same_version(world: &mut VirtuusWorld) {
     let py = world.python_version.as_deref().unwrap_or("");
     let rs = world.rust_version.as_deref().unwrap_or("");
     assert_eq!(py, rs, "Python version {py:?} != Rust version {rs:?}");
+}
+
+// ---------------------------------------------------------------------------
+// Sort condition helpers
+// ---------------------------------------------------------------------------
+
+/// Parse a step table value string into a serde_json Value, coercing numbers.
+fn parse_value(s: &str) -> Value {
+    if let Ok(n) = s.parse::<i64>() {
+        return Value::Number(n.into());
+    }
+    if let Ok(f) = s.parse::<f64>() {
+        if let Some(n) = serde_json::Number::from_f64(f) {
+            return Value::Number(n);
+        }
+    }
+    Value::String(s.to_string())
+}
+
+// ---------------------------------------------------------------------------
+// Sort condition steps
+// ---------------------------------------------------------------------------
+
+#[given(
+    regex = r#"^a sort condition of "(eq|ne|lt|lte|gt|gte|begins_with|contains)" with value "([^"]*)"$"#
+)]
+async fn given_sort_condition_single(world: &mut VirtuusWorld, op: String, value: String) {
+    let v = parse_value(&value);
+    world.predicate = Some(match op.as_str() {
+        "eq" => SortCondition::Eq(v),
+        "ne" => SortCondition::Ne(v),
+        "lt" => SortCondition::Lt(v),
+        "lte" => SortCondition::Lte(v),
+        "gt" => SortCondition::Gt(v),
+        "gte" => SortCondition::Gte(v),
+        "begins_with" => SortCondition::BeginsWith(value),
+        "contains" => SortCondition::Contains(value),
+        _ => panic!("Unknown sort operator: {op}"),
+    });
+}
+
+#[given(regex = r#"^a sort condition of "between" with low "([^"]*)" and high "([^"]*)"$"#)]
+async fn given_sort_condition_between(world: &mut VirtuusWorld, low: String, high: String) {
+    world.predicate = Some(SortCondition::Between(
+        parse_value(&low),
+        parse_value(&high),
+    ));
+}
+
+#[when(regex = r#"^evaluated against "([^"]*)"$"#)]
+async fn when_evaluated_against(world: &mut VirtuusWorld, input: String) {
+    let v = parse_value(&input);
+    let result = world.predicate.as_ref().unwrap().evaluate(&v);
+    world.predicate_result = Some(result);
+}
+
+#[when("evaluated against a null value")]
+async fn when_evaluated_against_null(world: &mut VirtuusWorld) {
+    let result = world.predicate.as_ref().unwrap().evaluate(&Value::Null);
+    world.predicate_result = Some(result);
+}
+
+#[then("the result should be true")]
+async fn then_result_true(world: &mut VirtuusWorld) {
+    assert_eq!(
+        world.predicate_result,
+        Some(true),
+        "Expected true but got {:?}",
+        world.predicate_result
+    );
+}
+
+#[then("the result should be false")]
+async fn then_result_false(world: &mut VirtuusWorld) {
+    assert_eq!(
+        world.predicate_result,
+        Some(false),
+        "Expected false but got {:?}",
+        world.predicate_result
+    );
 }
 
 // ---------------------------------------------------------------------------

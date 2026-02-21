@@ -937,6 +937,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "cucumber",
+ "serde_json",
  "tokio",
 ]
 

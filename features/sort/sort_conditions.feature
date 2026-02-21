@@ -111,10 +111,21 @@ Feature: Sort condition operators
       | error     | error         | true   |
       |           | anything      | true   |
 
-  Scenario: Null input returns false for all comparison operators
-    Given a sort condition of "eq" with value "alice"
+  Scenario Outline: Null input returns false for single-value operators
+    Given a sort condition of "<op>" with value "alice"
     When evaluated against a null value
     Then the result should be false
+
+    Examples:
+      | op          |
+      | eq          |
+      | ne          |
+      | lt          |
+      | lte         |
+      | gt          |
+      | gte         |
+      | begins_with |
+      | contains    |
 
   Scenario: Null input returns false for between
     Given a sort condition of "between" with low "a" and high "z"

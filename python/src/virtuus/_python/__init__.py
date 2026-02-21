@@ -1,4 +1,10 @@
+"""Pure-Python backend for Virtuus."""
+
 import os as _os
+
+from virtuus._python.sort import Sort
+
+__all__ = ["__version__", "Sort"]
 
 
 def _read_version() -> str:
