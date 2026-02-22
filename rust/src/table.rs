@@ -1464,22 +1464,40 @@ mod tests {
 
     #[test]
     fn iter_json_files_returns_empty_without_directory() {
-        let table =
-            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
         assert!(table.iter_json_files().is_empty());
     }
 
     #[test]
     fn dir_mtime_none_when_no_directory() {
-        let table =
-            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
         assert!(table.dir_mtime().is_none());
     }
 
     #[test]
     fn compute_changes_without_directory_is_empty() {
-        let table =
-            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
         let (summary, added, modified, deleted) = table.compute_changes();
         assert_eq!(summary.added, 0);
         assert_eq!(summary.modified, 0);
@@ -1548,10 +1566,9 @@ mod tests {
         assert!(table.gsis().contains_key("by_status"));
         table.remove_gsi("by_status");
         assert!(table.gsis().is_empty());
-        table.gsis_mut().insert(
-            "manual".to_string(),
-            Gsi::new("manual", "status", None),
-        );
+        table
+            .gsis_mut()
+            .insert("manual".to_string(), Gsi::new("manual", "status", None));
         assert_eq!(table.key_field(), Some("id"));
         assert_eq!(table.directory(), Some(&dir));
         assert_eq!(table.check(), ChangeSummary::default());
