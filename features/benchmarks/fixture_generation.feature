@@ -1,4 +1,4 @@
-@python-only
+@python-only @bench
 Feature: Benchmark fixture generation
   As a developer measuring performance
   I want to generate realistic test data at various scales

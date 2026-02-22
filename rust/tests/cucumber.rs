@@ -6036,38 +6036,6 @@ async fn given_concurrent_users_with_gsi(world: &mut VirtuusWorld) {
     table.add_gsi("by_status", "status", None);
 }
 
-#[given("a database with \"users\" table loaded from files")]
-#[given(r#"a database with "users" table loaded from files"#)]
-async fn given_database_users_loaded_from_files(world: &mut VirtuusWorld) {
-    let dir = unique_temp("refresh_users");
-    let users_dir = dir.join("users");
-    fs::create_dir_all(&users_dir).unwrap();
-    for i in 0..200 {
-        let status = if i % 2 == 0 { "active" } else { "inactive" };
-        let path = users_dir.join(format!("user-{i}.json"));
-        fs::write(
-            &path,
-            serde_json::to_string(&json!({"id": format!("user-{i}"), "status": status})).unwrap(),
-        )
-        .unwrap();
-    }
-    let mut table = Table::new(
-        "users",
-        Some("id"),
-        None,
-        None,
-        Some(users_dir.clone()),
-        ValidationMode::Silent,
-    );
-    table.add_gsi("by_status", "status", None);
-    table.load_from_dir(Some(users_dir));
-    world.refresh_dir = Some(dir);
-    world.refresh_table = Some(Arc::new(Mutex::new(table)));
-    world.refresh_expected = Some((200, 200));
-    world.refresh_counts.clear();
-    world.refresh_reread = None;
-}
-
 #[given(regex = r#"^a GSI "([^"]*)" on "([^"]*)"$"#)]
 async fn given_concurrent_gsi(world: &mut VirtuusWorld, name: String, field: String) {
     let table = world.concurrent_table.as_ref().expect("missing table");

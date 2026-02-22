@@ -1,3 +1,4 @@
+@python-only
 Feature: CLI server mode
   As a developer running Virtuus in a container
   I want to start a persistent HTTP server

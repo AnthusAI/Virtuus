@@ -1,3 +1,4 @@
+@python-only
 Feature: Concurrent reads
   As a developer deploying Virtuus under load
   I want concurrent readers to get consistent results

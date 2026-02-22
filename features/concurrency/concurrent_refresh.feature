@@ -1,3 +1,4 @@
+@python-only
 Feature: Concurrent refresh
   As a developer with files changing while queries run
   I want refresh and reads to be safe together

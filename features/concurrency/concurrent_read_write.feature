@@ -1,3 +1,4 @@
+@python-only
 Feature: Concurrent read-write
   As a developer with mixed read/write workloads
   I want readers and writers to operate safely in parallel

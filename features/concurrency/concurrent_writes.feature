@@ -1,3 +1,4 @@
+@python-only
 Feature: Concurrent writes
   As a developer handling parallel write operations
   I want concurrent puts to all succeed without data loss

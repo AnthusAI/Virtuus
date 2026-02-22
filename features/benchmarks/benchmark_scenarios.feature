@@ -1,4 +1,4 @@
-@python-only
+@python-only @bench
 Feature: Benchmark scenarios
   As a developer tracking performance
   I want to run benchmark scenarios that produce valid timing output
