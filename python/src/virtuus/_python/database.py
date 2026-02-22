@@ -113,6 +113,68 @@ class Database:
                 table.load_from_dir()
         return db
 
+    @classmethod
+    def from_schema_dict(
+        cls, schema: dict[str, Any], data_root: Optional[str] = None
+    ) -> "Database":
+        """
+        Load a database from an in-memory schema dict (same shape as the YAML).
+
+        :param schema: Parsed schema dictionary.
+        :type schema: dict[str, Any]
+        :param data_root: Optional root directory for table data.
+        :type data_root: str | None
+        :return: Initialized database.
+        :rtype: Database
+        """
+        tables_conf = schema.get("tables", {}) if isinstance(schema, dict) else {}
+        db = cls()
+        for name, conf in tables_conf.items():
+            directory = conf.get("directory")
+            if directory is not None and data_root is not None:
+                directory = os.path.join(data_root, directory)
+            table = Table(
+                name,
+                primary_key=conf.get("primary_key"),
+                partition_key=conf.get("partition_key"),
+                sort_key=conf.get("sort_key"),
+                directory=directory,
+                validation="warn",
+            )
+            for gsi_name, gsi_conf in conf.get("gsis", {}).items():
+                table.add_gsi(
+                    gsi_name,
+                    gsi_conf["partition_key"],
+                    gsi_conf.get("sort_key"),
+                )
+            for assoc_name, assoc_conf in conf.get("associations", {}).items():
+                kind = assoc_conf.get("type")
+                if kind == "belongs_to":
+                    table.add_belongs_to(
+                        assoc_name,
+                        assoc_conf["table"],
+                        assoc_conf["foreign_key"],
+                    )
+                elif kind == "has_many":
+                    table.add_has_many(
+                        assoc_name,
+                        assoc_conf["table"],
+                        assoc_conf["index"],
+                    )
+                elif kind == "has_many_through":
+                    table.add_has_many_through(
+                        assoc_name,
+                        assoc_conf["through"],
+                        assoc_conf["index"],
+                        assoc_conf["table"],
+                        assoc_conf["foreign_key"],
+                    )
+            db.add_table(name, table)
+        for table in db.tables.values():
+            if table.directory is not None:
+                table.load_from_dir()
+        return db
+
     def describe(self) -> dict[str, dict[str, Any]]:
         """
         Describe all tables in the database.

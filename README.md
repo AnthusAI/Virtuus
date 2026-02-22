@@ -43,6 +43,10 @@ from virtuus import Database
 # Load from a YAML schema + data directory
 db = Database.from_schema("schema.yml", "./data")
 
+# Or build programmatically from a dict schema
+schema = {"tables": {"users": {"primary_key": "id", "directory": "users"}}}
+db = Database.from_schema_dict(schema, "./data")
+
 # Query by primary key
 user = db.execute({"users": {"pk": "user-123"}})
 
