@@ -1,19 +1,19 @@
 {
-  "built_at": "2026-02-22T02:00:21Z",
+  "built_at": "2026-02-22T04:12:41Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
-    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771696060.626398,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771733483.782737,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
-    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771696060.632623,
-    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771696060.633247,
+    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771726059.332986,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771733497.775265,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771714054.091713,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
-    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771696060.625994,
+    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771726492.781843,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
@@ -31,8 +31,8 @@
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
-    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771696060.631862,
-    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
+    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771727546.19616,
+    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771733469.534283,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
@@ -41,17 +41,17 @@
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771723894.886977,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771723350.841414,
-    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725285.311161,
+    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725634.155066,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
-    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
+    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771727537.486045,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771709284.516897,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771705654.123434,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771709290.662331,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
-    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771696060.630974,
+    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771726504.254243,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771717340.88181
   },
   "issues": [
@@ -138,7 +138,20 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:33:38.760518Z",
+          "id": "43a7a0e6-535c-4148-8946-4cd2f879cee0",
+          "text": "Starting benchmark scenarios + visualization outputs. Next: implement benchmark runner + SVG/report generation. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:11:17.204628Z",
+          "id": "0cbd0c4e-9fe8-4547-bd58-1afdfceae8e9",
+          "text": "Done. Implemented benchmark scenarios/visualization steps in Python + Rust, added regression checks, and stabilized temp bench reuse. Ran Rust cucumber fail-fast and Python behave benchmark features. Next: commit + push. Issues: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.936135Z",
       "creator": null,
       "custom": {},
@@ -148,10 +161,10 @@
       "labels": [],
       "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "priority": 2,
-      "status": "open",
+      "status": "done",
       "title": "Benchmark scenarios and visualization",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.936135Z"
+      "updated_at": "2026-02-22T04:11:23.782595Z"
     },
     {
       "assignee": null,
@@ -247,8 +260,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T02:07:39.332838Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:01:02.443360Z",
+          "id": "8aabb8ee-d7cb-4b33-ba1d-19fc1df5260c",
+          "text": "Starting: review feature scenarios and existing step coverage; plan implementation for Rust/Python steps. Next: add steps + tests. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:07:37.071630Z",
+          "id": "337c4f61-a0a9-4020-9791-6882bb531c68",
+          "text": "Done: added refresh error tracking, Python/Rust steps for file race conditions, and verified behave + rust cucumber. Next: referential integrity under load. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.267826Z",
       "creator": null,
       "custom": {},
@@ -258,15 +284,28 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "File race conditions",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.267826Z"
+      "updated_at": "2026-02-22T02:07:39.332838Z"
     },
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:33:25.691966Z",
+          "id": "939a317f-a373-441f-9dfc-fe9250af7422",
+          "text": "Starting Phase 10 benchmarks/visualization. Next: implement fixture generation + benchmark runner + charts. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:11:30.585412Z",
+          "id": "3f4f8b4e-499b-4f75-9ef6-6bccdc8094f5",
+          "text": "Done. Phase 10 benchmarks completed: fixtures + benchmark scenarios + visualization/regression steps (Python/Rust). Tests: Python behave benchmarks and Rust cucumber fail-fast. Next: commit + push. Issues: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:29.540022Z",
       "creator": null,
       "custom": {},
@@ -276,10 +315,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "done",
       "title": "Phase 10: Benchmarks & Visualization",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:29.540022Z"
+      "updated_at": "2026-02-22T04:11:37.775119Z"
     },
     {
       "assignee": null,
@@ -486,8 +525,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T02:14:52.781694Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:07:46.660076Z",
+          "id": "f99eda51-ece5-4a67-b7de-57d116b4dfab",
+          "text": "Starting: review referential integrity under load scenarios and add missing steps. Next: implement Python/Rust steps + tests. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:14:49.347058Z",
+          "id": "a51ca8ab-ef80-48b7-a57d-1c770c8a3012",
+          "text": "Done: added Python/Rust steps for referential integrity under load and validated with behave + rust cucumber. Next: proceed to Phase 9 or other remaining issues. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.442228Z",
       "creator": null,
       "custom": {},
@@ -497,10 +549,10 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Referential integrity under load",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.442228Z"
+      "updated_at": "2026-02-22T02:14:52.781694Z"
     },
     {
       "assignee": null,
@@ -1192,8 +1244,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T02:32:26.196022Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:15:45.887710Z",
+          "id": "6772279a-a91a-4981-a4f7-bb24b620e39f",
+          "text": "Starting Phase 9: set up PyO3 bridge + transparent fallback. Next: implement Python import fallback and build wiring. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:32:21.870512Z",
+          "id": "a9c56d27-debd-4144-8302-ee54c9ad7072",
+          "text": "Done: implemented PyO3 bridge and transparent fallback import; story closed. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:42:29.400285Z",
       "creator": null,
       "custom": {},
@@ -1203,15 +1268,28 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Phase 9: PyO3 Bridge",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:29.400285Z"
+      "updated_at": "2026-02-22T02:32:26.196022Z"
     },
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:33:32.715622Z",
+          "id": "9894d6eb-cc87-4900-8786-b37cb11c3da5",
+          "text": "Starting fixture generation: implement profiles + scale and validate associations. Next: wire CLI/steps. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:10:32.765427Z",
+          "id": "657ab4bd-6d70-4f8e-8f6f-55acde761563",
+          "text": "Done. Implemented fixture generation steps for benchmarks (Python + Rust), added reuse-safe bench roots, and cleaned temp benches; ran Rust cucumber fail-fast (passes) and Python behave benchmarks. Next: commit + push. Issues: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.770959Z",
       "creator": null,
       "custom": {},
@@ -1221,10 +1299,10 @@
       "labels": [],
       "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "priority": 2,
-      "status": "open",
+      "status": "done",
       "title": "Benchmark fixture generation",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.770959Z"
+      "updated_at": "2026-02-22T04:11:09.533958Z"
     },
     {
       "assignee": null,
@@ -1596,13 +1674,19 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-22T02:00:34.154927Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-22T01:54:45.311023Z",
           "id": "42765983-6874-4bd9-a8e3-c5b68f44c0c1",
           "text": "Status: in_progress. Done: starting concurrent writes story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_writes.feature (puts with unique/same PKs, disk checks, GSI counts) and run targeted tests. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:00:32.250296Z",
+          "id": "3193831b-dd80-43f4-ba0f-60e2ac00d6a3",
+          "text": "Done: implemented concurrent writes steps in Rust/Python, resolved step ambiguities, verified rust cucumber pass. Next: finalize commit/push. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:48:01.778024Z",
@@ -1614,10 +1698,10 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Concurrent writes",
       "type": "story",
-      "updated_at": "2026-02-22T01:54:45.311023Z"
+      "updated_at": "2026-02-22T02:00:34.154927Z"
     },
     {
       "assignee": null,
@@ -1707,8 +1791,21 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T02:32:17.485887Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:15:54.727716Z",
+          "id": "be5efb55-6912-434b-ac13-b58eea045906",
+          "text": "Starting: inspect current Python/Rust packaging and implement PyO3 bridge + fallback import. Next: adjust build files + expose Rust types to Python. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:32:14.252835Z",
+          "id": "3f884659-51d5-44ad-b905-01d8cbe85505",
+          "text": "Done: added PyO3 bridge module + Python fallback import wiring, plus maturin pyproject. Next: run backend validation if needed. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.605882Z",
       "creator": null,
       "custom": {},
@@ -1718,10 +1815,10 @@
       "labels": [],
       "parent": "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "PyO3 bridge with transparent fallback",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.605882Z"
+      "updated_at": "2026-02-22T02:32:17.485887Z"
     },
     {
       "assignee": null,
@@ -2019,8 +2116,15 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T02:15:04.254123Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T02:15:01.893390Z",
+          "id": "821283cb-93c8-4b2a-8ea5-dde0df7a011e",
+          "text": "Done: all Phase 8 concurrency stories implemented and tests passing."
+        }
+      ],
       "created_at": "2026-02-21T16:42:29.266069Z",
       "creator": null,
       "custom": {},
@@ -2030,10 +2134,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Phase 8: Concurrency & Integration Testing",
       "type": "epic",
-      "updated_at": "2026-02-21T16:42:29.266069Z"
+      "updated_at": "2026-02-22T02:15:04.254123Z"
     },
     {
       "assignee": null,

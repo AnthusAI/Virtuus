@@ -3,7 +3,7 @@
   "title": "Phase 6: Database + execute() + Schema-from-YAML",
   "description": "Implement Database container with nested dict query interface (execute), cursor-based pagination, field projection, database-level describe/validate diagnostics, and declarative YAML schema loading. See Vision.md for full details.",
   "type": "epic",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -52,10 +52,16 @@
       "author": "ryan.porter",
       "text": "Fixed Rust Cucumber Python-version step to use /opt/anaconda3/bin/conda fallback; make check green.",
       "created_at": "2026-02-22T01:22:30.840107Z"
+    },
+    {
+      "id": "8a129ca3-6515-4b94-93ea-b3bbafa637ad",
+      "author": "ryan.porter",
+      "text": "Done. Phase 6 complete; all execute/schema/describe/validate stories closed and tests green. Next: monitor for regressions. Issues: none.",
+      "created_at": "2026-02-22T04:12:48.513894Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.963677Z",
-  "updated_at": "2026-02-22T01:22:30.840107Z",
+  "updated_at": "2026-02-22T04:12:55.490269Z",
   "closed_at": null,
   "custom": {}
 }
