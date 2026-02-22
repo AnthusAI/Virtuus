@@ -1,3 +1,5 @@
+PYTHON ?= python
+
 .PHONY: check check-python check-rust check-parity \
         build build-rust \
         coverage coverage-python coverage-rust
@@ -16,14 +18,14 @@ build-rust:
 # ── Python ──────────────────────────────────────────────────────────────────
 
 check-python: build-rust
-	cd python && python3 -m black --check .
-	cd python && python3 -m ruff check .
-	cd python && python3 -m coverage run -m behave
-	cd python && python3 -m coverage report --fail-under=100
+	cd python && $(PYTHON) -m black --check .
+	cd python && $(PYTHON) -m ruff check .
+	cd python && $(PYTHON) -m coverage run -m behave
+	cd python && $(PYTHON) -m coverage report --fail-under=100
 
 coverage-python: build-rust
-	cd python && python3 -m coverage run -m behave
-	cd python && python3 -m coverage report --fail-under=100
+	cd python && $(PYTHON) -m coverage run -m behave
+	cd python && $(PYTHON) -m coverage report --fail-under=100
 
 # ── Rust ────────────────────────────────────────────────────────────────────
 
@@ -39,7 +41,7 @@ coverage-rust:
 # ── Parity ──────────────────────────────────────────────────────────────────
 
 check-parity:
-	python3 tools/check_spec_parity.py
+	$(PYTHON) tools/check_spec_parity.py
 
 # ── Combined coverage ────────────────────────────────────────────────────────
 

@@ -451,7 +451,11 @@ def step_put_unique(context):
 
 @then("the table should contain 100 records")
 def step_table_has_100(context):
-    assert context.write_table.count() == 100
+    table = getattr(context, "write_table", None)
+    if table is None and hasattr(context, "current_table"):
+        table = _current_table(context)
+    assert table is not None
+    assert table.count() == 100
 
 
 @then("all 100 JSON files should exist on disk")

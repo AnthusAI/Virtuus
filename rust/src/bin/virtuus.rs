@@ -266,7 +266,7 @@ fn read_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest> {
             "empty request",
         ));
     }
-    let mut parts = request_line.trim_end().split_whitespace();
+    let mut parts = request_line.split_whitespace();
     let method = parts.next().unwrap_or("").to_string();
     let path = parts.next().unwrap_or("/").to_string();
     let mut headers = HashMap::new();
@@ -300,7 +300,7 @@ fn write_response(stream: &mut TcpStream, status: u16, body: &str) -> std::io::R
     };
     let response = format!(
         "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-        body.as_bytes().len()
+        body.len()
     );
     stream.write_all(response.as_bytes())?;
     stream.flush()?;

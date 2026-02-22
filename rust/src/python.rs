@@ -95,7 +95,9 @@ impl PyGsi {
         entries.retain(|(_, sort_value)| match sort_value {
             Some(v) => {
                 let obj = pythonize(py, v).expect("pythonize");
-                predicate.call1((obj,)).is_ok_and(|result| result.is_true().unwrap_or(false))
+                predicate
+                    .call1((obj,))
+                    .is_ok_and(|result| result.is_true().unwrap_or(false))
             }
             None => false,
         });
@@ -207,7 +209,9 @@ impl PyTableGsi {
         entries.retain(|(_, sort_value)| match sort_value {
             Some(v) => {
                 let obj = pythonize(py, v).expect("pythonize");
-                predicate.call1((obj,)).is_ok_and(|result| result.is_true().unwrap_or(false))
+                predicate
+                    .call1((obj,))
+                    .is_ok_and(|result| result.is_true().unwrap_or(false))
             }
             None => false,
         });
@@ -378,7 +382,9 @@ impl PyTable {
     #[getter]
     fn directory(&self) -> PyResult<Option<String>> {
         let table = self.inner.lock().expect("lock table");
-        Ok(table.directory().map(|path| path.to_string_lossy().to_string()))
+        Ok(table
+            .directory()
+            .map(|path| path.to_string_lossy().to_string()))
     }
 
     #[getter]
@@ -567,10 +573,7 @@ impl PyTable {
     fn scan(&self, py: Python<'_>) -> PyResult<Vec<PyObject>> {
         let mut table = self.inner.lock().expect("lock table");
         let records = table.scan();
-        records
-            .iter()
-            .map(|record| pythonize(py, record))
-            .collect()
+        records.iter().map(|record| pythonize(py, record)).collect()
     }
 
     fn bulk_load(&self, records: &PyAny) -> PyResult<()> {
@@ -687,7 +690,11 @@ impl PyTable {
         drop(table);
         let definition = match definition {
             Some(def) => def,
-            None => return Err(PyKeyError::new_err(format!("association {name} not defined"))),
+            None => {
+                return Err(PyKeyError::new_err(format!(
+                    "association {name} not defined"
+                )))
+            }
         };
         let record = match record {
             Some(record) => record,
@@ -838,13 +845,11 @@ impl PyDatabase {
                             Some(value) => value.clone(),
                             None => continue,
                         };
-                        let target = tables
-                            .get(target_table)
-                            .and_then(|target| {
-                                let target = target.lock().expect("lock table");
-                                let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
-                                target.get(fk_str, None)
-                            });
+                        let target = tables.get(target_table).and_then(|target| {
+                            let target = target.lock().expect("lock table");
+                            let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
+                            target.get(fk_str, None)
+                        });
                         if target.is_none() {
                             violations.push(serde_json::json!({
                                 "table": table_name,
@@ -866,23 +871,29 @@ impl PyDatabase {
         let (table_name, directive) = parse_query(&query_value)?;
         let table_ref = {
             let tables = self.tables.lock().expect("lock tables");
-            tables
-                .get(&table_name)
-                .cloned()
-                .ok_or_else(|| {
-                    PyKeyError::new_err(format!("table \"{table_name}\" does not exist"))
-                })?
+            tables.get(&table_name).cloned().ok_or_else(|| {
+                PyKeyError::new_err(format!("table \"{table_name}\" does not exist"))
+            })?
         };
         let directive = directive.as_object().cloned().unwrap_or_default();
         let mut table = table_ref.lock().expect("lock table");
         if let Some(pk_value) = directive.get("pk") {
-            let pk = pk_value.as_str().unwrap_or(&pk_value.to_string()).to_string();
-            let sort = directive.get("sort").and_then(|value| value.as_str()).map(|s| s.to_string());
+            let pk = pk_value
+                .as_str()
+                .unwrap_or(&pk_value.to_string())
+                .to_string();
+            let sort = directive
+                .get("sort")
+                .and_then(|value| value.as_str())
+                .map(|s| s.to_string());
             let mut result = table.get(&pk, sort.as_deref()).unwrap_or(Value::Null);
             if let Some(fields) = directive.get("fields").and_then(|v| v.as_array()) {
                 result = project(&result, fields);
             }
-            let includes = directive.get("include").and_then(|v| v.as_object()).cloned();
+            let includes = directive
+                .get("include")
+                .and_then(|v| v.as_object())
+                .cloned();
             drop(table);
             let enriched = apply_includes(self, &table_name, result, includes.as_ref());
             return Ok(pythonize(py, &enriched)?);
@@ -900,16 +911,22 @@ impl PyDatabase {
                 .get(gsi_name)
                 .ok_or_else(|| PyKeyError::new_err(format!("GSI \"{gsi_name}\" does not exist")))?;
             let partition_field = gsi.partition_key().to_string();
-            let partition_value = where_map.get(&partition_field).cloned().unwrap_or(Value::Null);
-            let sort_condition = directive
-                .get("sort")
-                .and_then(build_sort_condition);
+            let partition_value = where_map
+                .get(&partition_field)
+                .cloned()
+                .unwrap_or(Value::Null);
+            let sort_condition = directive.get("sort").and_then(build_sort_condition);
             let descending = directive
                 .get("sort_direction")
                 .and_then(|v| v.as_str())
                 .map(|s| s == "desc")
                 .unwrap_or(false);
-            table.query_gsi(gsi_name, &partition_value, sort_condition.as_ref(), descending)
+            table.query_gsi(
+                gsi_name,
+                &partition_value,
+                sort_condition.as_ref(),
+                descending,
+            )
         } else {
             let where_map = directive
                 .get("where")
@@ -957,7 +974,10 @@ impl PyDatabase {
                 .expect("result map")
                 .insert("next_token".to_string(), Value::String(token));
         }
-        if let Some(include_map) = directive.get("include").and_then(|v| v.as_object()).cloned()
+        if let Some(include_map) = directive
+            .get("include")
+            .and_then(|v| v.as_object())
+            .cloned()
         {
             let items = result.get_mut("items").and_then(|v| v.as_array_mut());
             if let Some(items) = items {
@@ -970,7 +990,12 @@ impl PyDatabase {
     }
 
     #[classmethod]
-    fn from_schema(_cls: &PyType, py: Python<'_>, path: String, data_root: Option<String>) -> PyResult<Py<PyDatabase>> {
+    fn from_schema(
+        _cls: &PyType,
+        py: Python<'_>,
+        path: String,
+        data_root: Option<String>,
+    ) -> PyResult<Py<PyDatabase>> {
         let content = std::fs::read_to_string(&path)
             .map_err(|err| PyValueError::new_err(format!("failed to read schema: {err}")))?;
         let schema: serde_yaml::Value = serde_yaml::from_str(&content)
@@ -986,7 +1011,10 @@ impl PyDatabase {
             let primary_key = conf.get("primary_key").and_then(|v| v.as_str());
             let partition_key = conf.get("partition_key").and_then(|v| v.as_str());
             let sort_key = conf.get("sort_key").and_then(|v| v.as_str());
-            let mut directory = conf.get("directory").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let mut directory = conf
+                .get("directory")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
             if let (Some(root), Some(dir)) = (data_root.as_ref(), directory.as_ref()) {
                 directory = Some(PathBuf::from(root).join(dir).to_string_lossy().to_string());
             }
@@ -1012,25 +1040,58 @@ impl PyDatabase {
             }
             if let Some(assocs) = conf.get("associations").and_then(|v| v.as_object()) {
                 for (assoc_name, assoc_conf) in assocs {
-                    let kind = assoc_conf.get("type").and_then(|v| v.as_str()).unwrap_or("");
+                    let kind = assoc_conf
+                        .get("type")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
                     let mut table = table_ref.lock().expect("lock table");
                     match kind {
                         "belongs_to" => {
-                            let target_table = assoc_conf.get("table").and_then(|v| v.as_str()).unwrap_or("");
-                            let foreign_key = assoc_conf.get("foreign_key").and_then(|v| v.as_str()).unwrap_or("");
+                            let target_table = assoc_conf
+                                .get("table")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let foreign_key = assoc_conf
+                                .get("foreign_key")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
                             table.add_belongs_to(assoc_name, target_table, foreign_key);
                         }
                         "has_many" => {
-                            let target_table = assoc_conf.get("table").and_then(|v| v.as_str()).unwrap_or("");
-                            let index = assoc_conf.get("index").and_then(|v| v.as_str()).unwrap_or("");
+                            let target_table = assoc_conf
+                                .get("table")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let index = assoc_conf
+                                .get("index")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
                             table.add_has_many(assoc_name, target_table, index);
                         }
                         "has_many_through" => {
-                            let through_table = assoc_conf.get("through").and_then(|v| v.as_str()).unwrap_or("");
-                            let index = assoc_conf.get("index").and_then(|v| v.as_str()).unwrap_or("");
-                            let target_table = assoc_conf.get("table").and_then(|v| v.as_str()).unwrap_or("");
-                            let foreign_key = assoc_conf.get("foreign_key").and_then(|v| v.as_str()).unwrap_or("");
-                            table.add_has_many_through(assoc_name, through_table, index, target_table, foreign_key);
+                            let through_table = assoc_conf
+                                .get("through")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let index = assoc_conf
+                                .get("index")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let target_table = assoc_conf
+                                .get("table")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let foreign_key = assoc_conf
+                                .get("foreign_key")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            table.add_has_many_through(
+                                assoc_name,
+                                through_table,
+                                index,
+                                target_table,
+                                foreign_key,
+                            );
                         }
                         _ => {}
                     }
@@ -1078,9 +1139,7 @@ fn parse_query(query: &Value) -> PyResult<(String, Value)> {
         .as_object()
         .ok_or_else(|| PyValueError::new_err("query must be a mapping"))?;
     if map.len() != 1 {
-        return Err(PyValueError::new_err(
-            "query must target exactly one table",
-        ));
+        return Err(PyValueError::new_err("query must target exactly one table"));
     }
     let (table_name, directive) = map.iter().next().expect("checked");
     Ok((table_name.clone(), directive.clone()))
@@ -1161,7 +1220,10 @@ fn resolve_association_py(
             let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
             table.borrow().get(py, fk_str.to_string(), None)
         }
-        Association::HasMany { target_table, index } => {
+        Association::HasMany {
+            target_table,
+            index,
+        } => {
             let key_field = record
                 .get("id")
                 .and_then(|v| v.as_str())
@@ -1193,9 +1255,10 @@ fn resolve_association_py(
                 .ok_or_else(|| PyKeyError::new_err("through table not found"))?;
             let through = through_obj.downcast::<PyCell<PyTable>>()?;
             let key_obj = pythonize(py, &Value::String(key_value))?;
-            let junctions = through
-                .borrow()
-                .query_gsi(py, through_index, key_obj.as_ref(py), None, false)?;
+            let junctions =
+                through
+                    .borrow()
+                    .query_gsi(py, through_index, key_obj.as_ref(py), None, false)?;
             let target_obj = tables_dict
                 .get_item(target_table)
                 .ok_or_else(|| PyKeyError::new_err("target table not found"))?;
@@ -1204,7 +1267,10 @@ fn resolve_association_py(
             for junction in junctions {
                 let junction_value = depythonize::<Value>(junction.as_ref(py))?;
                 if let Some(fk_value) = junction_value.get(&target_foreign_key) {
-                    let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string()).to_string();
+                    let fk_str = fk_value
+                        .as_str()
+                        .unwrap_or(&fk_value.to_string())
+                        .to_string();
                     let record = target.borrow().get(py, fk_str, None)?;
                     if !record.is_none(py) {
                         results.push(record);
@@ -1321,7 +1387,10 @@ fn resolve_association_value(
                 Value::Null
             }
         }
-        Association::HasMany { target_table, index } => {
+        Association::HasMany {
+            target_table,
+            index,
+        } => {
             let key_field = record
                 .get("id")
                 .and_then(|v| v.as_str())

@@ -2907,11 +2907,7 @@ async fn when_modify_and_refresh(world: &mut VirtuusWorld) {
 
 #[when("a JSON file in the directory is replaced with truncated content")]
 async fn when_truncate_json_file(world: &mut VirtuusWorld) {
-    let dir = world
-        .directory
-        .as_ref()
-        .expect("missing directory")
-        .clone();
+    let dir = world.directory.as_ref().expect("missing directory").clone();
     let path = dir.join("user-0.json");
     let expected = {
         let table = current_table(world);
@@ -2997,11 +2993,7 @@ async fn then_no_unhandled_error(world: &mut VirtuusWorld) {
 
 #[when("a new file is created while a refresh scan is in progress")]
 async fn when_new_file_during_scan(world: &mut VirtuusWorld) {
-    let dir = world
-        .directory
-        .as_ref()
-        .expect("missing directory")
-        .clone();
+    let dir = world.directory.as_ref().expect("missing directory").clone();
     let expected = {
         let table = current_table(world);
         table.count(None, None)
@@ -3302,7 +3294,12 @@ async fn then_posts_reference_users(world: &mut VirtuusWorld) {
     let users: std::collections::HashSet<String> = fs::read_dir(users_dir)
         .expect("users dir")
         .filter_map(|entry| entry.ok())
-        .filter_map(|entry| entry.path().file_stem().map(|s| s.to_string_lossy().to_string()))
+        .filter_map(|entry| {
+            entry
+                .path()
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+        })
         .collect();
     for entry in fs::read_dir(posts_dir).expect("posts dir") {
         let path = entry.expect("post").path();
@@ -3323,7 +3320,12 @@ async fn then_comments_reference_posts(world: &mut VirtuusWorld) {
     let posts: std::collections::HashSet<String> = fs::read_dir(posts_dir)
         .expect("posts dir")
         .filter_map(|entry| entry.ok())
-        .filter_map(|entry| entry.path().file_stem().map(|s| s.to_string_lossy().to_string()))
+        .filter_map(|entry| {
+            entry
+                .path()
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+        })
         .collect();
     for entry in fs::read_dir(comments_dir).expect("comments dir") {
         let path = entry.expect("comment").path();
@@ -3498,7 +3500,10 @@ async fn when_incremental_refresh(world: &mut VirtuusWorld, name: String) {
     let users = db.table_mut("users").expect("users");
     let dir = users.directory().cloned().expect("dir");
     let new_id = format!("user-new-{}", 100000);
-    write_json(&dir.join(format!("{new_id}.json")), &json!({"id": new_id, "status": "active"}));
+    write_json(
+        &dir.join(format!("{new_id}.json")),
+        &json!({"id": new_id, "status": "active"}),
+    );
     let start = Instant::now();
     let _ = users.refresh();
     let elapsed = start.elapsed().as_secs_f64() * 1000.0;
@@ -3576,10 +3581,9 @@ async fn given_valid_benchmark_output(world: &mut VirtuusWorld) {
 async fn when_run_visualization(world: &mut VirtuusWorld) {
     let output_dir = bench_root(world).join("charts");
     fs::create_dir_all(&output_dir).expect("charts dir");
-    let data: Value = serde_json::from_slice(
-        &fs::read(world.bench_output.as_ref().expect("output")).unwrap(),
-    )
-    .unwrap();
+    let data: Value =
+        serde_json::from_slice(&fs::read(world.bench_output.as_ref().expect("output")).unwrap())
+            .unwrap();
     let items = data.as_array().unwrap();
     for item in items {
         let name = item
@@ -3638,13 +3642,10 @@ async fn when_run_regression_checker(world: &mut VirtuusWorld) {
     let output_path = world.bench_output.as_ref().expect("output");
     let baseline_path = world.bench_report_path.as_ref().expect("baseline");
     if !baseline_path.exists() {
-        fs::write(baseline_path, fs::read(output_path).unwrap())
-            .expect("write baseline");
+        fs::write(baseline_path, fs::read(output_path).unwrap()).expect("write baseline");
     }
-    let results: Value =
-        serde_json::from_slice(&fs::read(output_path).unwrap()).unwrap();
-    let baseline: Value =
-        serde_json::from_slice(&fs::read(baseline_path).unwrap()).unwrap();
+    let results: Value = serde_json::from_slice(&fs::read(output_path).unwrap()).unwrap();
+    let baseline: Value = serde_json::from_slice(&fs::read(baseline_path).unwrap()).unwrap();
     let baseline_items = baseline.as_array().unwrap();
     let mut baseline_map = HashMap::new();
     for item in baseline_items {
@@ -3654,7 +3655,10 @@ async fn when_run_regression_checker(world: &mut VirtuusWorld) {
     }
     let mut report = Vec::new();
     for item in results.as_array().unwrap() {
-        let name = item.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
+        let name = item
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
         let status = if baseline_map.contains_key(name) {
             "pass"
         } else {
@@ -3806,11 +3810,7 @@ async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
                     Ok(Value::Array(items)) => {
                         for item in items {
                             if let Some(obj) = item.as_object() {
-                                if obj
-                                    .get("user_id")
-                                    .and_then(|v| v.as_str())
-                                    != Some(user_id)
-                                {
+                                if obj.get("user_id").and_then(|v| v.as_str()) != Some(user_id) {
                                     invalid
                                         .lock()
                                         .expect("lock invalid")
