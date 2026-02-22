@@ -126,6 +126,18 @@ impl Gsi {
         bucket.into_iter().map(|entry| entry.pk).collect()
     }
 
+    /// Return entries for a partition key (pk + sort value).
+    pub fn entries(&self, partition_value: &Value) -> Vec<(String, Option<Value>)> {
+        let key = partition_key(partition_value);
+        self.buckets
+            .get(&key)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .map(|entry| (entry.pk, entry.sort_value))
+            .collect()
+    }
+
     fn extract_sort_value(&self, record: &Value) -> Option<Value> {
         let sort_key = self.sort_key.as_ref()?;
         get_field(record, sort_key)

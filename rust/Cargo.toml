@@ -7,6 +7,7 @@ description = "File-backed in-memory indexed table engine"
 [lib]
 name = "virtuus"
 path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
 
 [[bin]]
 name = "virtuus"
@@ -18,8 +19,13 @@ harness = false
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
+pyo3 = { version = "0.21", features = ["extension-module", "serde"], optional = true }
+pythonize = { version = "0.21", optional = true }
 serde_json = "1"
 serde_yaml = "0.9"
+
+[features]
+python = ["pyo3", "pythonize"]
 
 [dev-dependencies]
 cucumber = "0.21"

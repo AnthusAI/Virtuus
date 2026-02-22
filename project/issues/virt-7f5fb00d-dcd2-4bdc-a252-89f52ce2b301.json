@@ -3,16 +3,29 @@
   "title": "Phase 9: PyO3 Bridge",
   "description": "Compile Rust library as Python extension module via PyO3+maturin. All existing Gherkin specs must pass with both pure-Python and Rust backends. Transparent fallback import pattern. See Vision.md for full details.",
   "type": "epic",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "6772279a-a91a-4981-a4f7-bb24b620e39f",
+      "author": "ryan.porter",
+      "text": "Starting Phase 9: set up PyO3 bridge + transparent fallback. Next: implement Python import fallback and build wiring. Blockers: none.",
+      "created_at": "2026-02-22T02:15:45.887710Z"
+    },
+    {
+      "id": "a9c56d27-debd-4144-8302-ee54c9ad7072",
+      "author": "ryan.porter",
+      "text": "Done: implemented PyO3 bridge and transparent fallback import; story closed. Blockers: none.",
+      "created_at": "2026-02-22T02:32:21.870512Z"
+    }
+  ],
   "created_at": "2026-02-21T16:42:29.400285Z",
-  "updated_at": "2026-02-21T16:42:29.400285Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T02:32:26.196022Z",
+  "closed_at": "2026-02-22T02:32:26.196022Z",
   "custom": {}
 }

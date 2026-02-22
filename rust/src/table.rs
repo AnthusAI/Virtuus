@@ -161,6 +161,11 @@ impl Table {
             .insert(name.to_string(), Gsi::new(name, partition_key, sort_key));
     }
 
+    /// Remove a GSI definition by name.
+    pub fn remove_gsi(&mut self, name: &str) -> Option<Gsi> {
+        self.gsis.remove(name)
+    }
+
     /// Insert or update a record.
     pub fn put(&mut self, record: Value) {
         let key = match self.extract_key(&record) {
@@ -276,6 +281,41 @@ impl Table {
     /// Return GSIs.
     pub fn gsis(&self) -> &HashMap<String, Gsi> {
         &self.gsis
+    }
+
+    /// Return a mutable reference to GSIs.
+    pub fn gsis_mut(&mut self) -> &mut HashMap<String, Gsi> {
+        &mut self.gsis
+    }
+
+    /// Return the table name.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Return the primary key field name, if any.
+    pub fn primary_key(&self) -> Option<&str> {
+        self.primary_key.as_deref()
+    }
+
+    /// Return the partition key field name, if any.
+    pub fn partition_key(&self) -> Option<&str> {
+        self.partition_key.as_deref()
+    }
+
+    /// Return the sort key field name, if any.
+    pub fn sort_key(&self) -> Option<&str> {
+        self.sort_key.as_deref()
+    }
+
+    /// Return the validation mode.
+    pub fn validation(&self) -> ValidationMode {
+        self.validation
+    }
+
+    /// Return the records map.
+    pub fn records(&self) -> &HashMap<TableKey, Value> {
+        &self.records
     }
 
     /// Return whether the last write used atomic rename.

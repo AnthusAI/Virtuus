@@ -11,6 +11,9 @@ pub use gsi::Gsi;
 pub use sort::SortCondition;
 pub use table::Table;
 
+#[cfg(feature = "python")]
+mod python;
+
 /// Returns the library version string.
 pub fn version() -> &'static str {
     VERSION
