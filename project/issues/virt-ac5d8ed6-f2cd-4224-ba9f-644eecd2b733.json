@@ -3,16 +3,23 @@
   "title": "Concurrent writes",
   "description": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Concurrent puts to the same PK use last-write-wins: no error, final state is one of the written values. Spec: features/concurrency/concurrent_writes.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "42765983-6874-4bd9-a8e3-c5b68f44c0c1",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: starting concurrent writes story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_writes.feature (puts with unique/same PKs, disk checks, GSI counts) and run targeted tests. Blockers: none.",
+      "created_at": "2026-02-22T01:54:45.311023Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:01.778024Z",
-  "updated_at": "2026-02-21T17:08:00.287434Z",
+  "updated_at": "2026-02-22T01:54:45.311023Z",
   "closed_at": null,
   "custom": {}
 }
