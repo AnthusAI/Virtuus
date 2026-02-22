@@ -7,6 +7,7 @@ import random
 import struct
 import time
 import zlib
+from typing import Callable
 from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -109,6 +110,35 @@ def _format_value_ms(value: float) -> str:
     if value >= 1:
         return f"{value:.3f} MS"
     return f"{value:.6f} MS"
+
+
+def _measure_overhead_ns(batch_size: int, repeats: int = 7) -> float:
+    samples: list[float] = []
+    for _ in range(repeats):
+        start = time.perf_counter_ns()
+        for _ in range(batch_size):
+            pass
+        elapsed = time.perf_counter_ns() - start
+        samples.append(elapsed / batch_size)
+    samples.sort()
+    return samples[len(samples) // 2]
+
+
+def _collect_timings(
+    op: Callable[[], None], min_samples: int, batch_size: int, min_total_ns: int
+) -> list[float]:
+    overhead = _measure_overhead_ns(batch_size)
+    samples: list[float] = []
+    total_ns = 0
+    while len(samples) < min_samples or total_ns < min_total_ns:
+        start = time.perf_counter_ns()
+        for _ in range(batch_size):
+            op()
+        elapsed = time.perf_counter_ns() - start
+        total_ns += elapsed
+        per_op_ns = max(0.0, (elapsed / batch_size) - overhead)
+        samples.append(per_op_ns / 1_000_000.0)
+    return samples
 
 
 _FONT_5X7: dict[str, list[str]] = {
@@ -708,27 +738,39 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
     db = _load_warm_db(context)
     users = db.tables["users"]
     posts = db.tables["posts"]
-    timings: list[float] = []
     user_ids = [record["id"] for record in users.scan()][:iterations]
+    min_total_ns = 200_000_000
+    batch_size = 1
     if benchmark == "pk_lookup":
-        for i in range(iterations):
-            pk = user_ids[i % len(user_ids)]
-            start = time.perf_counter()
-            _ = users.get(pk)
-            timings.append((time.perf_counter() - start) * 1000.0)
+        min_total_ns = 150_000_000
+        batch_size = 200
+
+        def op() -> None:
+            pk = user_ids[random.randrange(len(user_ids))]
+            users.get(pk)
+
+        timings = _collect_timings(op, iterations, batch_size, min_total_ns)
     elif benchmark == "gsi_partition_lookup":
-        for i in range(iterations):
-            user_id = user_ids[i % len(user_ids)]
-            start = time.perf_counter()
-            _ = posts.query_gsi("by_user", user_id)
-            timings.append((time.perf_counter() - start) * 1000.0)
+        min_total_ns = 250_000_000
+        batch_size = 40
+
+        def op() -> None:
+            user_id = user_ids[random.randrange(len(user_ids))]
+            posts.query_gsi("by_user", user_id)
+
+        timings = _collect_timings(op, iterations, batch_size, min_total_ns)
     elif benchmark == "gsi_sorted_query":
+        min_total_ns = 300_000_000
+        batch_size = 20
         predicate = Sort.gte("2025-06-01")
-        for i in range(iterations):
-            user_id = user_ids[i % len(user_ids)]
-            start = time.perf_counter()
-            _ = posts.query_gsi("by_user_created", user_id, predicate, False)
-            timings.append((time.perf_counter() - start) * 1000.0)
+
+        def op() -> None:
+            user_id = user_ids[random.randrange(len(user_ids))]
+            posts.query_gsi("by_user_created", user_id, predicate, False)
+
+        timings = _collect_timings(op, iterations, batch_size, min_total_ns)
+    else:
+        timings = []
     timings_sorted = sorted(timings)
     counts = getattr(context, "bench_counts", None)
     metadata = {
@@ -736,6 +778,9 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
         "p95": _percentile(timings_sorted, 95),
         "p99": _percentile(timings_sorted, 99),
         "scale": getattr(context, "bench_scale", 1),
+        "samples": len(timings_sorted),
+        "batch_size": batch_size,
+        "min_total_ms": min_total_ns / 1_000_000.0,
     }
     if isinstance(counts, dict):
         metadata["counts"] = counts

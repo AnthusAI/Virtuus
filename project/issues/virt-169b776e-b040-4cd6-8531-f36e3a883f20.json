@@ -3,7 +3,7 @@
   "title": "Benchmark scenarios and visualization",
   "description": "Given generated fixture data, when I run benchmarks (load-time, query-time, cache, concurrency, memory), each scenario should produce valid timing output. Visualization generates SVG charts and a markdown report. Spec: features/benchmarks/benchmark_scenarios.feature",
   "type": "story",
-  "status": "closed",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -76,10 +76,16 @@
       "author": "ryan.porter",
       "text": "Done: fixture directories ignored; reports/charts stay tracked. Next: none. Blockers: none.",
       "created_at": "2026-02-22T06:50:50.557948Z"
+    },
+    {
+      "id": "f90a1499-92cd-4554-8aa6-7bb0dbbc8e85",
+      "author": "ryan.porter",
+      "text": "Did: reworked benchmark timing to reduce small-corpus noise (perf_counter_ns batching + overhead subtraction). Next: regenerate benchmarks and charts, commit outputs. Blockers: none.",
+      "created_at": "2026-02-22T06:59:23.124956Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.936135Z",
-  "updated_at": "2026-02-22T06:50:50.654344Z",
-  "closed_at": "2026-02-22T06:50:50.654344Z",
+  "updated_at": "2026-02-22T06:59:23.124956Z",
+  "closed_at": null,
   "custom": {}
 }
