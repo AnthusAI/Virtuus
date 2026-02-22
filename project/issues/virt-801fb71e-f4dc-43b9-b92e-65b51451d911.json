@@ -3,7 +3,7 @@
   "title": "Benchmark fixture generation",
   "description": "Given a fixture profile (social_media, ecommerce, complex_hierarchy) and scale factor, when I generate fixtures, it should produce the correct number of records with valid associations and realistic data distribution. Spec: features/benchmarks/fixture_generation.feature",
   "type": "story",
-  "status": "done",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,16 @@
       "author": "ryan.porter",
       "text": "Done. Implemented fixture generation steps for benchmarks (Python + Rust), added reuse-safe bench roots, and cleaned temp benches; ran Rust cucumber fail-fast (passes) and Python behave benchmarks. Next: commit + push. Issues: none.",
       "created_at": "2026-02-22T04:10:32.765427Z"
+    },
+    {
+      "id": "28f64401-f864-4fe4-844e-69da305419b8",
+      "author": "ryan.porter",
+      "text": "Closing issue to satisfy Kanbus validation (done -> closed).",
+      "created_at": "2026-02-22T04:14:02.775847Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.770959Z",
-  "updated_at": "2026-02-22T04:11:09.533958Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T04:14:09.091398Z",
+  "closed_at": "2026-02-22T04:14:09.091398Z",
   "custom": {}
 }

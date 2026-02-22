@@ -3,7 +3,7 @@
   "title": "Phase 6: Database + execute() + Schema-from-YAML",
   "description": "Implement Database container with nested dict query interface (execute), cursor-based pagination, field projection, database-level describe/validate diagnostics, and declarative YAML schema loading. See Vision.md for full details.",
   "type": "epic",
-  "status": "done",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -58,10 +58,16 @@
       "author": "ryan.porter",
       "text": "Done. Phase 6 complete; all execute/schema/describe/validate stories closed and tests green. Next: monitor for regressions. Issues: none.",
       "created_at": "2026-02-22T04:12:48.513894Z"
+    },
+    {
+      "id": "074c8bcd-0ef4-4e67-a5a7-4b09b66b3f5a",
+      "author": "ryan.porter",
+      "text": "Closing issue to satisfy Kanbus validation (done -> closed).",
+      "created_at": "2026-02-22T04:14:39.663234Z"
     }
   ],
   "created_at": "2026-02-21T16:42:28.963677Z",
-  "updated_at": "2026-02-22T04:12:55.490269Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T04:14:46.154207Z",
+  "closed_at": "2026-02-22T04:14:46.154207Z",
   "custom": {}
 }
