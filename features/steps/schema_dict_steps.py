@@ -25,7 +25,8 @@ def step_schema_dict(context):
 
 @when("I create a database from the schema dictionary")
 def step_build_db(context):
-    context.db = Database.from_schema_dict(context.schema_dict, data_root=context.data_root)
+    data_root = getattr(context, "data_root", None)
+    context.db = Database.from_schema_dict(context.schema_dict, data_root=data_root)
 
 
 @then("the database should have loaded 1 user record from disk")
@@ -60,3 +61,15 @@ def step_assert_schema_config(context):
 
     assert "workers" in jobs.association_defs
     assert jobs.association_defs["workers"]["kind"] == "has_many_through"
+
+
+@then("the database should contain tables {table_list}")
+def step_assert_table_list(context, table_list):
+    expected = {name.strip().strip('\"') for name in table_list.split("and")}
+    assert set(context.db.tables.keys()) == expected
+
+
+@then("the database should have no associations on {table_name}")
+def step_no_associations(context, table_name):
+    table = context.db.tables[table_name]
+    assert len(table.associations) == 0

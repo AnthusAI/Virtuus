@@ -20,7 +20,7 @@ build-rust:
 check-python: build-rust
 	cd python && $(PYTHON) -m black --check .
 	cd python && $(PYTHON) -m ruff check .
-	cd python && $(PYTHON) -m coverage run -m behave
+	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave
 	cd python && $(PYTHON) -m coverage report --fail-under=100
 
 coverage-python: build-rust
