@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "f09f60a3-51f5-40b6-9ca0-8ce072b5de97",
+  "issue_id": "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T07:35:19.725Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "CI: Python 3.9+ matrix"
+  }
+}

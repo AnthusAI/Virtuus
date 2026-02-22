@@ -1,0 +1,25 @@
+{
+  "id": "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57",
+  "title": "CI: Python 3.9+ matrix",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "a865909b-bdc4-4bed-aeeb-bdc295611515",
+      "author": "ryan.porter",
+      "text": "Did: starting CI matrix for Python 3.9+. Next: update GitHub Actions to run matrix and keep full make check on latest. Blockers: none.",
+      "created_at": "2026-02-22T07:36:04.392697Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:35:19.724757Z",
+  "updated_at": "2026-02-22T07:36:04.392697Z",
+  "closed_at": null,
+  "custom": {}
+}

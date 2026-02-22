@@ -1,0 +1,25 @@
+{
+  "id": "virt-384faa72-ce06-4e0e-96eb-11202977de8c",
+  "title": "Explore performance improvements (thought experiment)",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "c831d4c1-6d58-4958-8dab-e3cd3b04ba25",
+      "author": "ryan.porter",
+      "text": "Did: created task to explore perf improvements. Next: outline candidate optimizations + tradeoffs (GSI query, storage, IO). Blockers: none.",
+      "created_at": "2026-02-22T07:34:14.256855Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:34:10.355149Z",
+  "updated_at": "2026-02-22T07:34:14.256855Z",
+  "closed_at": null,
+  "custom": {}
+}
