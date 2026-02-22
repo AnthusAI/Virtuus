@@ -1,0 +1,107 @@
+[
+  {
+    "total_users": 100,
+    "gsi_count": 0,
+    "include_posts": true,
+    "rss_kb": 3168,
+    "rss_bytes": 3244032
+  },
+  {
+    "total_users": 100,
+    "gsi_count": 1,
+    "include_posts": true,
+    "rss_kb": 3248,
+    "rss_bytes": 3325952
+  },
+  {
+    "total_users": 100,
+    "gsi_count": 3,
+    "include_posts": true,
+    "rss_kb": 3264,
+    "rss_bytes": 3342336
+  },
+  {
+    "total_users": 500,
+    "gsi_count": 0,
+    "include_posts": true,
+    "rss_kb": 5040,
+    "rss_bytes": 5160960
+  },
+  {
+    "total_users": 500,
+    "gsi_count": 1,
+    "include_posts": true,
+    "rss_kb": 5232,
+    "rss_bytes": 5357568
+  },
+  {
+    "total_users": 500,
+    "gsi_count": 3,
+    "include_posts": true,
+    "rss_kb": 5232,
+    "rss_bytes": 5357568
+  },
+  {
+    "total_users": 1000,
+    "gsi_count": 0,
+    "include_posts": true,
+    "rss_kb": 7088,
+    "rss_bytes": 7258112
+  },
+  {
+    "total_users": 1000,
+    "gsi_count": 1,
+    "include_posts": true,
+    "rss_kb": 7184,
+    "rss_bytes": 7356416
+  },
+  {
+    "total_users": 1000,
+    "gsi_count": 3,
+    "include_posts": true,
+    "rss_kb": 7488,
+    "rss_bytes": 7667712
+  },
+  {
+    "total_users": 5000,
+    "gsi_count": 0,
+    "include_posts": true,
+    "rss_kb": 21808,
+    "rss_bytes": 22331392
+  },
+  {
+    "total_users": 5000,
+    "gsi_count": 1,
+    "include_posts": true,
+    "rss_kb": 20000,
+    "rss_bytes": 20480000
+  },
+  {
+    "total_users": 5000,
+    "gsi_count": 3,
+    "include_posts": true,
+    "rss_kb": 23632,
+    "rss_bytes": 24199168
+  },
+  {
+    "total_users": 10000,
+    "gsi_count": 0,
+    "include_posts": true,
+    "rss_kb": 41088,
+    "rss_bytes": 42074112
+  },
+  {
+    "total_users": 10000,
+    "gsi_count": 1,
+    "include_posts": true,
+    "rss_kb": 40464,
+    "rss_bytes": 41435136
+  },
+  {
+    "total_users": 10000,
+    "gsi_count": 3,
+    "include_posts": true,
+    "rss_kb": 45168,
+    "rss_bytes": 46252032
+  }
+]

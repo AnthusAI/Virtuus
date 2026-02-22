@@ -264,6 +264,14 @@ Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for 
 ![Rust vs Python at 10k](benchmarks/output_compare/charts/compare_10000.png)
 ![Rust vs Python at 100k](benchmarks/output_compare/charts/compare_100000.png)
 
+### Memory footprint (RSS) snapshots
+
+We measured server RSS while serving pre-generated JSON datasets, varying corpus size and GSI count (with `posts` associations enabled). Lower data sizes stay lightweight; adding multiple GSIs raises steady-state memory modestly.
+
+![Memory RSS](benchmarks/output_memory/memory_rss.png)
+
+See `benchmarks/output_memory/results.csv` for the raw numbers.
+
 - Gap is smallest on hot-path hash lookups (PK + hash-only GSI) at small sizes; Python stays in low single-digit ms.
 - Sorted GSI queries widen the gap because the Python path spends more time ordering partition results.
 - Cold-load gap is most pronounced because file I/O dominates and Rust streams faster; both stay linear with corpus size.

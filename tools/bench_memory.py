@@ -29,9 +29,13 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Iterable
+import sys
+import socket
 
 ROOT = Path(__file__).resolve().parents[1]
 VIRTUUS_BIN = ROOT / "rust" / "target" / "release" / "virtuus"
+sys.path.insert(0, str(ROOT))
+from features.steps import benchmark_steps as viz  # type: ignore
 
 
 def ensure_binary() -> Path:
@@ -127,6 +131,19 @@ def start_server(bin_path: Path, data_dir: Path, schema_path: Path, port: int) -
     )
 
 
+def wait_for_port(host: str, port: int, timeout: float = 10.0) -> bool:
+    start = time.time()
+    while time.time() - start < timeout:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.5)
+            try:
+                sock.connect((host, port))
+                return True
+            except OSError:
+                time.sleep(0.2)
+    return False
+
+
 def query_memory(bin_path: Path, port: int, retries: int = 20, delay: float = 0.25) -> dict:
     for attempt in range(retries):
         try:
@@ -193,6 +210,10 @@ def main() -> None:
 
                     proc = start_server(bin_path, data_root, schema_path, port)
                     try:
+                        if not wait_for_port("127.0.0.1", port, timeout=10.0):
+                            raise RuntimeError(f"server did not open port {port}")
+                        if proc.poll() is not None:
+                            raise RuntimeError(f"server exited early with code {proc.returncode}")
                         mem = query_memory(bin_path, port)
                     finally:
                         stop_process(proc)
@@ -219,6 +240,33 @@ def main() -> None:
             f"{row['total_users']},{row['gsi_count']},{int(row['include_posts'])},{row.get('rss_kb','')}"
         )
     (out_dir / "results.csv").write_text("\n".join(csv_lines) + "\n", encoding="utf-8")
+
+    # render chart
+    categories = sorted({r["total_users"] for r in results})
+    series_labels = [str(g) for g in sorted({r["gsi_count"] for r in results})]
+    data: dict[str, dict[str, float]] = {}
+    for total in categories:
+        label = f"{total:,} users"
+        data[label] = {}
+        for g in series_labels:
+            match = next(
+                (
+                    r
+                    for r in results
+                    if r["total_users"] == total and str(r["gsi_count"]) == g and r["include_posts"]
+                ),
+                None,
+            )
+            if match:
+                data[label][g] = float(match.get("rss_kb") or 0)
+    chart_path = out_dir / "memory_rss.png"
+    viz._render_horizontal_bar_chart(
+        "RSS by corpus size and GSI count (includes posts associations)",
+        [f"{c:,} users" for c in categories],
+        [f"{g} GSIs" for g in series_labels],
+        data,
+        chart_path,
+    )
 
     print(f"Wrote {len(results)} samples to {results_path}")
 
