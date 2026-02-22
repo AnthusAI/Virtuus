@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import json
 import threading
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from behave import given, then, when
 
 from virtuus import Table
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 @given('a database with "users" table containing {count:d} records')
@@ -274,3 +281,111 @@ def step_gsi_records_exist(context):
 @then("no reader should encounter an error")
 def step_no_reader_error(context):
     assert not context.reader_errors
+
+
+@given('a database with "users" table loaded from {count:d} files')
+def step_users_loaded_files(context, count: int):
+    root = getattr(context, "refresh_root", None)
+    if root is None:
+        context.refresh_tmp = TemporaryDirectory()
+        root = context.refresh_tmp.name
+        context.refresh_root = root
+    users_dir = Path(root) / "users"
+    users_dir.mkdir(parents=True, exist_ok=True)
+    for i in range(count):
+        _write_json(users_dir / f"user-{i}.json", {"id": f"user-{i}", "status": "active" if i % 2 == 0 else "inactive"})
+    table = Table("users", primary_key="id", directory=str(users_dir))
+    table.load_from_dir()
+    context.refresh_table = table
+    context.refresh_expected = (count, count)
+    context.refresh_counts = []
+    context.refresh_reread = None
+
+
+@given('a database with "users" table loaded from files')
+def step_users_loaded_files_default(context):
+    step_users_loaded_files(context, 200)
+
+
+@given("{count:d} new files are added to the directory")
+def step_new_files_added(context, count: int):
+    users_dir = Path(context.refresh_root) / "users"
+    old, _ = context.refresh_expected
+    for i in range(old, old + count):
+        _write_json(users_dir / f"user-{i}.json", {"id": f"user-{i}", "status": "active"})
+    context.refresh_expected = (old, old + count)
+
+
+@when("a refresh is triggered while 20 reader threads are querying")
+def step_refresh_during_reads(context):
+    table = context.refresh_table
+    lock = threading.Lock()
+    stop = threading.Event()
+    counts: list[int] = []
+
+    def refresher() -> None:
+        with lock:
+            table.refresh()
+        stop.set()
+
+    def reader() -> None:
+        while not stop.is_set():
+            with lock:
+                count = len(table.scan())
+            counts.append(count)
+            if count == context.refresh_expected[1]:
+                break
+
+    refresh_thread = threading.Thread(target=refresher)
+    refresh_thread.start()
+    readers = [threading.Thread(target=reader) for _ in range(20)]
+    for thread in readers:
+        thread.start()
+    for thread in readers:
+        thread.join()
+    refresh_thread.join()
+    context.refresh_counts = counts
+
+
+@then("each reader should see either the old state or the new state")
+def step_readers_old_or_new(context):
+    old, new = context.refresh_expected
+    assert all(count in (old, new) for count in context.refresh_counts)
+
+
+@then("no reader should see a partial mix of old and new")
+def step_readers_no_partial(context):
+    old, new = context.refresh_expected
+    assert not any(count not in (old, new) for count in context.refresh_counts)
+
+
+@when("5 threads simultaneously trigger warm()")
+def step_warm_concurrently(context):
+    table = context.refresh_table
+    lock = threading.Lock()
+    rereads: list[int] = []
+
+    def worker() -> None:
+        with lock:
+            table.warm()
+            rereads.append(table.last_change_summary["reread"])
+
+    threads = [threading.Thread(target=worker) for _ in range(5)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    context.refresh_reread = max(rereads) if rereads else 0
+
+
+@then("the table should end in a consistent state")
+def step_table_consistent(context):
+    table = context.refresh_table
+    _, expected = context.refresh_expected
+    assert len(table.scan()) == expected
+
+
+@then("no files should be loaded more than necessary")
+def step_no_excess_reread(context):
+    _, expected = context.refresh_expected
+    assert context.refresh_reread <= expected

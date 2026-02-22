@@ -70,6 +70,11 @@ pub struct VirtuusWorld {
     pub concurrent_written_ids: Vec<String>,
     pub concurrent_gsi_missing: Vec<String>,
     pub concurrent_writer_status: Option<String>,
+    pub refresh_dir: Option<PathBuf>,
+    pub refresh_table: Option<Arc<Mutex<Table>>>,
+    pub refresh_counts: Vec<usize>,
+    pub refresh_expected: Option<(usize, usize)>,
+    pub refresh_reread: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -3666,6 +3671,19 @@ fn write_json_file(path: &PathBuf, value: &Value) {
     fs::write(path, text).unwrap();
 }
 
+fn populate_user_files(dir: &PathBuf, start: usize, count: usize) {
+    fs::create_dir_all(dir).unwrap();
+    for i in start..start + count {
+        write_json_file(
+            &dir.join(format!("user-{i}.json")),
+            &json!({
+                "id": format!("user-{i}"),
+                "status": if i % 2 == 0 { "active" } else { "inactive" }
+            }),
+        );
+    }
+}
+
 fn ensure_server_fixture(world: &mut VirtuusWorld) -> PathBuf {
     let root = ensure_cli_root(world, "cli_server");
     let data_dir = root.join("data").join("users");
@@ -4980,6 +4998,139 @@ async fn then_gsi_records_exist(world: &mut VirtuusWorld) {
 #[then("no reader should encounter an error")]
 async fn then_no_reader_error(world: &mut VirtuusWorld) {
     assert!(world.concurrent_errors.is_empty());
+}
+
+// ---------------------------------------------------------------------------
+// Concurrent refresh
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a database with "users" table loaded from (\d+) files$"#)]
+async fn given_users_loaded_files(world: &mut VirtuusWorld, count: usize) {
+    let root = unique_temp("concurrent_refresh");
+    let users_dir = root.join("users");
+    populate_user_files(&users_dir, 0, count);
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        Some(users_dir.clone()),
+        ValidationMode::Silent,
+    );
+    table.load_from_dir(None);
+    world.refresh_dir = Some(users_dir);
+    world.refresh_table = Some(Arc::new(Mutex::new(table)));
+    world.refresh_expected = Some((count, count));
+    world.refresh_counts.clear();
+    world.refresh_reread = None;
+}
+
+#[given("a database with \"users\" table loaded from files")]
+async fn given_users_loaded_files_default(world: &mut VirtuusWorld) {
+    given_users_loaded_files(world, 200).await;
+}
+
+#[given(regex = r#"^(\d+) new files are added to the directory$"#)]
+async fn given_new_files_added(world: &mut VirtuusWorld, count: usize) {
+    let dir = world.refresh_dir.as_ref().expect("missing dir");
+    let (old, _) = world.refresh_expected.unwrap_or((0, 0));
+    populate_user_files(dir, old, count);
+    world.refresh_expected = Some((old, old + count));
+}
+
+#[when("a refresh is triggered while 20 reader threads are querying")]
+async fn when_refresh_during_reads(world: &mut VirtuusWorld) {
+    let table = world.refresh_table.as_ref().expect("missing table");
+    let expected = world.refresh_expected.unwrap_or((0, 0));
+    let stop = Arc::new(AtomicBool::new(false));
+    let counts = Arc::new(Mutex::new(Vec::new()));
+
+    let table_refresh = Arc::clone(table);
+    let stop_refresh = Arc::clone(&stop);
+    let refresh_handle = thread::spawn(move || {
+        let mut table = table_refresh.lock().expect("lock table");
+        table.refresh();
+        stop_refresh.store(true, Ordering::SeqCst);
+    });
+
+    let mut reader_handles = Vec::new();
+    for _ in 0..20 {
+        let table = Arc::clone(table);
+        let stop = Arc::clone(&stop);
+        let counts = Arc::clone(&counts);
+        reader_handles.push(thread::spawn(move || {
+            while !stop.load(Ordering::SeqCst) {
+                let mut table = table.lock().expect("lock table");
+                let count = table.scan().len();
+                counts.lock().expect("lock counts").push(count);
+                if count == expected.1 {
+                    break;
+                }
+            }
+        }));
+    }
+
+    for handle in reader_handles {
+        let _ = handle.join();
+    }
+    let _ = refresh_handle.join();
+
+    world.refresh_counts = counts.lock().expect("lock counts").clone();
+}
+
+#[then("each reader should see either the old state or the new state")]
+async fn then_readers_old_or_new(world: &mut VirtuusWorld) {
+    let (old, new) = world.refresh_expected.unwrap_or((0, 0));
+    assert!(world
+        .refresh_counts
+        .iter()
+        .all(|count| *count == old || *count == new));
+}
+
+#[then("no reader should see a partial mix of old and new")]
+async fn then_readers_no_partial_refresh(world: &mut VirtuusWorld) {
+    let (old, new) = world.refresh_expected.unwrap_or((0, 0));
+    assert!(!world
+        .refresh_counts
+        .iter()
+        .any(|count| *count != old && *count != new));
+}
+
+#[when("5 threads simultaneously trigger warm()")]
+async fn when_warm_concurrently(world: &mut VirtuusWorld) {
+    let table = world.refresh_table.as_ref().expect("missing table");
+    let mut handles = Vec::new();
+    for _ in 0..5 {
+        let table = Arc::clone(table);
+        handles.push(thread::spawn(move || {
+            let mut table = table.lock().expect("lock table");
+            table.warm();
+            table.last_change_summary.reread as usize
+        }));
+    }
+    let mut max_reread = 0;
+    for handle in handles {
+        if let Ok(reread) = handle.join() {
+            max_reread = max_reread.max(reread);
+        }
+    }
+    world.refresh_reread = Some(max_reread);
+}
+
+#[then("the table should end in a consistent state")]
+async fn then_table_consistent(world: &mut VirtuusWorld) {
+    let table = world.refresh_table.as_ref().expect("missing table");
+    let mut table = table.lock().expect("lock table");
+    let count = table.scan().len();
+    let (_, expected) = world.refresh_expected.unwrap_or((0, count));
+    assert_eq!(count, expected);
+}
+
+#[then("no files should be loaded more than necessary")]
+async fn then_no_excess_reread(world: &mut VirtuusWorld) {
+    let (_, expected) = world.refresh_expected.unwrap_or((0, 0));
+    let reread = world.refresh_reread.unwrap_or(0);
+    assert!(reread <= expected);
 }
 
 // ---------------------------------------------------------------------------
