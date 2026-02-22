@@ -75,6 +75,10 @@ pub struct VirtuusWorld {
     pub refresh_counts: Vec<usize>,
     pub refresh_expected: Option<(usize, usize)>,
     pub refresh_reread: Option<usize>,
+    pub write_dir: Option<PathBuf>,
+    pub write_table: Option<Arc<Mutex<Table>>>,
+    pub write_versions: Vec<Value>,
+    pub write_errors: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -1116,6 +1120,11 @@ async fn then_table_composite_keys(
 
 #[then(regex = r#"^the table should contain (\d+) records$"#)]
 async fn then_table_contains_records(world: &mut VirtuusWorld, count: usize) {
+    if let Some(table) = world.write_table.as_ref() {
+        let table = table.lock().expect("lock table");
+        assert_eq!(table.count(None, None), count);
+        return;
+    }
     let table = current_table(world);
     assert_eq!(table.count(None, None), count);
 }
@@ -3213,6 +3222,23 @@ async fn then_subsequent_queries_no_refresh(world: &mut VirtuusWorld) {
 #[given(regex = r#"^a database with a "([^"]*)" table$"#)]
 async fn given_db_table(world: &mut VirtuusWorld, name: String) {
     ensure_db_table(world, &name, "id");
+    if name == "users" && world.write_table.is_none() {
+        let root = unique_temp("concurrent_writes_users");
+        let users_dir = root.join("users");
+        fs::create_dir_all(&users_dir).unwrap();
+        let table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(users_dir.clone()),
+            ValidationMode::Silent,
+        );
+        world.write_dir = Some(users_dir);
+        world.write_table = Some(Arc::new(Mutex::new(table)));
+        world.write_errors.clear();
+        world.write_versions.clear();
+    }
 }
 
 #[given(regex = r#"^a database with a "([^"]*)" table containing (\{.*\})$"#)]
@@ -3981,6 +4007,35 @@ async fn given_db_users_gsi(world: &mut VirtuusWorld, gsi: String, field: String
     let table = ensure_db_table(world, "users", "id");
     if !table.gsis().contains_key(&gsi) {
         table.add_gsi(&gsi, &field, None);
+    }
+    if world.write_table.is_none() {
+        let mut write_table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        write_table.add_gsi(&gsi, &field, None);
+        world.write_table = Some(Arc::new(Mutex::new(write_table)));
+        world.write_errors.clear();
+        world.write_versions.clear();
+    }
+    if world.concurrent_table.is_none() {
+        let mut concurrent_table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        concurrent_table.add_gsi(&gsi, &field, None);
+        world.concurrent_table = Some(Arc::new(Mutex::new(concurrent_table)));
+        world.concurrent_writer_status = Some("active".to_string());
+        world.concurrent_errors.clear();
+        world.concurrent_gsi_missing.clear();
     }
 }
 
@@ -4901,23 +4956,6 @@ async fn then_written_records_visible(world: &mut VirtuusWorld) {
     }
 }
 
-#[given("a database with \"users\" table and GSI \"by_status\" on \"status\"")]
-async fn given_users_table_gsi(world: &mut VirtuusWorld) {
-    let mut table = Table::new(
-        "users",
-        Some("id"),
-        None,
-        None,
-        None,
-        ValidationMode::Silent,
-    );
-    table.add_gsi("by_status", "status", None);
-    world.concurrent_table = Some(Arc::new(Mutex::new(table)));
-    world.concurrent_writer_status = Some("active".to_string());
-    world.concurrent_errors.clear();
-    world.concurrent_gsi_missing.clear();
-}
-
 #[when("writers continuously put records with status \"active\"")]
 async fn when_writers_active(world: &mut VirtuusWorld) {
     world.concurrent_writer_count = Some(10);
@@ -5131,6 +5169,215 @@ async fn then_no_excess_reread(world: &mut VirtuusWorld) {
     let (_, expected) = world.refresh_expected.unwrap_or((0, 0));
     let reread = world.refresh_reread.unwrap_or(0);
     assert!(reread <= expected);
+}
+
+// ---------------------------------------------------------------------------
+// Concurrent writes
+// ---------------------------------------------------------------------------
+
+#[given("a database with an empty \"users\" table")]
+async fn given_empty_users_table(world: &mut VirtuusWorld) {
+    let root = unique_temp("concurrent_writes");
+    let users_dir = root.join("users");
+    fs::create_dir_all(&users_dir).unwrap();
+    let table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        Some(users_dir.clone()),
+        ValidationMode::Silent,
+    );
+    world.write_dir = Some(users_dir);
+    world.write_table = Some(Arc::new(Mutex::new(table)));
+    world.write_errors.clear();
+    world.write_versions.clear();
+}
+
+#[when("100 threads simultaneously put records with unique PKs")]
+async fn when_put_unique(world: &mut VirtuusWorld) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let mut handles = Vec::new();
+    for i in 0..100 {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        handles.push(thread::spawn(move || {
+            let record = json!({
+                "id": format!("user-{i}"),
+                "status": if i % 2 == 0 { "active" } else { "inactive" }
+            });
+            let mut table = table.lock().expect("lock table");
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| table.put(record))).is_err()
+            {
+                errors
+                    .lock()
+                    .expect("lock errors")
+                    .push("panic".to_string());
+            }
+        }));
+    }
+    for handle in handles {
+        let _ = handle.join();
+    }
+    world.write_errors = errors.lock().expect("lock errors").clone();
+}
+
+#[then("all 100 JSON files should exist on disk")]
+async fn then_100_files_exist(world: &mut VirtuusWorld) {
+    let dir = world.write_dir.as_ref().expect("missing dir");
+    let count = fs::read_dir(dir)
+        .unwrap()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
+        .count();
+    assert_eq!(count, 100);
+}
+
+#[when("50 threads simultaneously put records")]
+async fn when_put_50(world: &mut VirtuusWorld) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let mut handles = Vec::new();
+    for i in 0..50 {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        handles.push(thread::spawn(move || {
+            let record = json!({
+                "id": format!("user-{i}"),
+                "status": "active"
+            });
+            let mut table = table.lock().expect("lock table");
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| table.put(record))).is_err()
+            {
+                errors
+                    .lock()
+                    .expect("lock errors")
+                    .push("panic".to_string());
+            }
+        }));
+    }
+    for handle in handles {
+        let _ = handle.join();
+    }
+    world.write_errors = errors.lock().expect("lock errors").clone();
+}
+
+#[then("every JSON file on disk should contain valid JSON")]
+async fn then_files_valid_json(world: &mut VirtuusWorld) {
+    let dir = world.write_dir.as_ref().expect("missing dir");
+    for entry in fs::read_dir(dir).unwrap() {
+        let entry = entry.unwrap();
+        if entry.path().extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let data = fs::read_to_string(entry.path()).unwrap();
+        let _: Value = serde_json::from_str(&data).unwrap();
+    }
+}
+
+#[when("100 threads simultaneously put records with various statuses")]
+async fn when_put_various_status(world: &mut VirtuusWorld) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let statuses = ["active", "inactive", "suspended"];
+    let mut handles = Vec::new();
+    for i in 0..100 {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        let status = statuses[i % statuses.len()].to_string();
+        handles.push(thread::spawn(move || {
+            let record = json!({
+                "id": format!("user-{i}"),
+                "status": status
+            });
+            let mut table = table.lock().expect("lock table");
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| table.put(record))).is_err()
+            {
+                errors
+                    .lock()
+                    .expect("lock errors")
+                    .push("panic".to_string());
+            }
+        }));
+    }
+    for handle in handles {
+        let _ = handle.join();
+    }
+    world.write_errors = errors.lock().expect("lock errors").clone();
+}
+
+#[then("the sum of all GSI partition sizes should equal the total record count")]
+async fn then_gsi_sum_matches(world: &mut VirtuusWorld) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let mut table = table.lock().expect("lock table");
+    let total = table.count(None, None);
+    let mut sum = 0;
+    for status in ["active", "inactive", "suspended"] {
+        sum += table
+            .query_gsi("by_status", &json!(status), None, false)
+            .len();
+    }
+    assert_eq!(sum, total);
+}
+
+#[when(
+    regex = r#"^10 threads simultaneously put records with the same PK "([^"]*)" but different data$"#
+)]
+async fn when_put_same_pk(world: &mut VirtuusWorld, pk: String) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let versions = Arc::new(Mutex::new(Vec::new()));
+    let mut handles = Vec::new();
+    for i in 0..10 {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        let versions = Arc::clone(&versions);
+        let pk = pk.clone();
+        handles.push(thread::spawn(move || {
+            let record = json!({
+                "id": pk,
+                "name": format!("User {i}")
+            });
+            let mut table = table.lock().expect("lock table");
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| table.put(record.clone())))
+                .is_err()
+            {
+                errors
+                    .lock()
+                    .expect("lock errors")
+                    .push("panic".to_string());
+            } else {
+                versions.lock().expect("lock versions").push(record);
+            }
+        }));
+    }
+    for handle in handles {
+        let _ = handle.join();
+    }
+    world.write_errors = errors.lock().expect("lock errors").clone();
+    world.write_versions = versions.lock().expect("lock versions").clone();
+}
+
+#[then(regex = r#"^the table should contain exactly 1 record with PK "([^"]*)"$"#)]
+async fn then_one_record_pk(world: &mut VirtuusWorld, pk: String) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let table = table.lock().expect("lock table");
+    assert_eq!(table.count(None, None), 1);
+    assert!(table.get(&pk, None).is_some());
+}
+
+#[then("the record should match one of the 10 written versions")]
+async fn then_record_matches_version(world: &mut VirtuusWorld) {
+    let table = world.write_table.as_ref().expect("missing table");
+    let table = table.lock().expect("lock table");
+    let record = table.get("user-1", None).expect("missing record");
+    assert!(world.write_versions.iter().any(|v| v == &record));
+}
+
+#[then("no error should have occurred")]
+async fn then_no_error_writes(world: &mut VirtuusWorld) {
+    assert!(world.write_errors.is_empty());
 }
 
 // ---------------------------------------------------------------------------

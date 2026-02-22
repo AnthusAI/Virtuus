@@ -1,10 +1,10 @@
 {
-  "built_at": "2026-02-22T01:43:31Z",
+  "built_at": "2026-02-22T02:00:21Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771696060.626398,
-    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771696060.631645,
+    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771696060.632623,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771696060.633247,
@@ -35,13 +35,13 @@
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771696060.629353,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
-    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771696060.627846,
-    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771696060.628951,
+    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
+    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771725252.018969,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771723894.886977,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771723350.841414,
-    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771696060.627292,
+    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725285.311161,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771696060.627118,
@@ -155,8 +155,27 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T01:47:15.473444Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:43:44.121683Z",
+          "id": "39f7cb63-5650-4272-91fe-d05705dfad30",
+          "text": "Status: in_progress. Done: starting concurrent reads story, reviewed feature scope. Next: implement missing Python/Rust steps for concurrent_reads.feature and add any needed concurrency helpers/tests. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:47:11.275033Z",
+          "id": "af83612e-adb1-4589-8297-7ba24b403ede",
+          "text": "Status: in_progress. Done: added Rust+Python concurrency steps for concurrent_reads.feature; Rust cucumber run passed; Python behave concurrent_reads.feature passed. Next: clean warnings, commit, and mark story closed if no regressions. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:47:19.359221Z",
+          "id": "adab2382-7daa-4010-918f-c2eb4afe1c51",
+          "text": "Status: closed (kbs does not accept 'done'). Done: implemented concurrent_reads steps in Rust+Python with locking and result assertions. Tests: cargo test --test cucumber passed (before final cleanup); behave features/concurrency/concurrent_reads.feature passed. Note: did not rerun full Rust cucumber after removing an unused mut warning."
+        }
+      ],
       "created_at": "2026-02-21T16:48:01.615090Z",
       "creator": null,
       "custom": {},
@@ -166,10 +185,10 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Concurrent reads",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:01.615090Z"
+      "updated_at": "2026-02-22T01:47:19.359221Z"
     },
     {
       "assignee": null,
@@ -1325,8 +1344,27 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T01:50:34.130701Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:47:54.119869Z",
+          "id": "8e1e6562-bd02-40be-9b58-c8821f78fb17",
+          "text": "Status: in_progress. Done: moved to concurrent read-write story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_read_write.feature and wire any concurrency helpers. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:50:28.584746Z",
+          "id": "397ac30e-09e0-4232-993d-33ea44976fa1",
+          "text": "Status: in_progress. Done: added concurrent read-write steps for Rust+Python with writer/reader loops and validation; cargo test --test cucumber passed; behave concurrent_read_write.feature passed. Next: close story and commit/push changes. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:50:39.274803Z",
+          "id": "289c1565-9db1-43bb-9183-bd9f90f6bbad",
+          "text": "Status: closed (kbs does not accept 'done'). Done: implemented concurrent_read_write steps in Rust+Python with reader/writer loops and GSI consistency checks. Tests: cargo test --test cucumber passed; behave features/concurrency/concurrent_read_write.feature passed."
+        }
+      ],
       "created_at": "2026-02-21T16:48:01.936420Z",
       "creator": null,
       "custom": {},
@@ -1336,15 +1374,34 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Concurrent read-write",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:01.936420Z"
+      "updated_at": "2026-02-22T01:50:39.274803Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-22T01:54:08.511533Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:51:13.689388Z",
+          "id": "3be85496-8f63-48ee-a1c3-78ca9b451428",
+          "text": "Status: in_progress. Done: moved to concurrent refresh story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_refresh.feature and validate refresh consistency. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:54:05.469105Z",
+          "id": "1f979536-ce38-48ae-a842-89bbdd91c822",
+          "text": "Status: in_progress. Done: implemented concurrent_refresh steps in Rust+Python with file fixtures, refresh/reader concurrency, and warm() checks; cargo test --test cucumber passed; behave concurrent_refresh.feature passed. Next: close story and commit/push. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:54:12.018818Z",
+          "id": "cacebc90-f50a-4f31-a7a6-0fa78c86f063",
+          "text": "Status: closed (kbs does not accept 'done'). Done: added Rust+Python concurrent_refresh steps with file-backed fixtures, refresh/reader concurrency, and warm() consistency checks. Tests: cargo test --test cucumber passed; behave features/concurrency/concurrent_refresh.feature passed."
+        }
+      ],
       "created_at": "2026-02-21T16:48:02.107568Z",
       "creator": null,
       "custom": {},
@@ -1354,10 +1411,10 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Concurrent refresh",
       "type": "story",
-      "updated_at": "2026-02-21T16:48:02.107568Z"
+      "updated_at": "2026-02-22T01:54:12.018818Z"
     },
     {
       "assignee": null,
@@ -1540,7 +1597,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T01:54:45.311023Z",
+          "id": "42765983-6874-4bd9-a8e3-c5b68f44c0c1",
+          "text": "Status: in_progress. Done: starting concurrent writes story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_writes.feature (puts with unique/same PKs, disk checks, GSI counts) and run targeted tests. Blockers: none."
+        }
+      ],
       "created_at": "2026-02-21T16:48:01.778024Z",
       "creator": null,
       "custom": {},
@@ -1550,10 +1614,10 @@
       "labels": [],
       "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Concurrent writes",
       "type": "story",
-      "updated_at": "2026-02-21T17:08:00.287434Z"
+      "updated_at": "2026-02-22T01:54:45.311023Z"
     },
     {
       "assignee": null,

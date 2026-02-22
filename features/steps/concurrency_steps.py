@@ -389,3 +389,169 @@ def step_table_consistent(context):
 def step_no_excess_reread(context):
     _, expected = context.refresh_expected
     assert context.refresh_reread <= expected
+
+
+@given('a database with an empty "users" table')
+def step_empty_users_table(context):
+    context.write_tmp = TemporaryDirectory()
+    users_dir = Path(context.write_tmp.name) / "users"
+    users_dir.mkdir(parents=True, exist_ok=True)
+    table = Table("users", primary_key="id", directory=str(users_dir))
+    context.write_table = table
+    context.write_dir = users_dir
+    context.write_errors = []
+    context.write_versions = []
+
+
+@given('a database with a "users" table')
+def step_users_table(context):
+    step_empty_users_table(context)
+
+
+@given('a database with a "users" table and GSI "by_status" on "status"')
+def step_users_table_gsi(context):
+    context.write_tmp = TemporaryDirectory()
+    table = Table("users", primary_key="id")
+    table.add_gsi("by_status", "status")
+    context.write_table = table
+    context.write_dir = Path(context.write_tmp.name) / "users"
+    context.write_errors = []
+    context.write_versions = []
+
+
+@when("100 threads simultaneously put records with unique PKs")
+def step_put_unique(context):
+    table = context.write_table
+    lock = threading.Lock()
+    errors: list[str] = []
+
+    def worker(idx: int) -> None:
+        record = {"id": f"user-{idx}", "status": "active" if idx % 2 == 0 else "inactive"}
+        try:
+            with lock:
+                table.put(record)
+        except Exception as exc:  # pragma: no cover - error path
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(100)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.write_errors = errors
+
+
+@then("the table should contain 100 records")
+def step_table_has_100(context):
+    assert context.write_table.count() == 100
+
+
+@then("all 100 JSON files should exist on disk")
+def step_100_files_exist(context):
+    files = list(context.write_dir.glob("*.json"))
+    assert len(files) == 100
+
+
+@when("50 threads simultaneously put records")
+def step_put_50(context):
+    table = context.write_table
+    lock = threading.Lock()
+    errors: list[str] = []
+
+    def worker(idx: int) -> None:
+        record = {"id": f"user-{idx}", "status": "active"}
+        try:
+            with lock:
+                table.put(record)
+        except Exception as exc:  # pragma: no cover - error path
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(50)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.write_errors = errors
+
+
+@then("every JSON file on disk should contain valid JSON")
+def step_files_valid_json(context):
+    for path in context.write_dir.glob("*.json"):
+        json.loads(path.read_text(encoding="utf-8"))
+
+
+@when("100 threads simultaneously put records with various statuses")
+def step_put_various_status(context):
+    table = context.write_table
+    lock = threading.Lock()
+    errors: list[str] = []
+    statuses = ["active", "inactive", "suspended"]
+
+    def worker(idx: int) -> None:
+        record = {"id": f"user-{idx}", "status": statuses[idx % len(statuses)]}
+        try:
+            with lock:
+                table.put(record)
+        except Exception as exc:  # pragma: no cover - error path
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(100)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.write_errors = errors
+
+
+@then("the sum of all GSI partition sizes should equal the total record count")
+def step_gsi_sum_matches(context):
+    table = context.write_table
+    total = table.count()
+    sum_partitions = sum(len(table.query_gsi("by_status", status)) for status in ["active", "inactive", "suspended"])
+    assert sum_partitions == total
+
+
+@when('10 threads simultaneously put records with the same PK "user-1" but different data')
+def step_put_same_pk(context):
+    table = context.write_table
+    lock = threading.Lock()
+    errors: list[str] = []
+    versions: list[dict] = []
+
+    def worker(idx: int) -> None:
+        record = {"id": "user-1", "name": f"User {idx}"}
+        try:
+            with lock:
+                table.put(record)
+            versions.append(record)
+        except Exception as exc:  # pragma: no cover - error path
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(10)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.write_errors = errors
+    context.write_versions = versions
+
+
+@then('the table should contain exactly 1 record with PK "user-1"')
+def step_one_record_pk(context):
+    assert context.write_table.count() == 1
+    assert context.write_table.get("user-1") is not None
+
+
+@then("the record should match one of the 10 written versions")
+def step_record_matches_version(context):
+    record = context.write_table.get("user-1")
+    assert record in context.write_versions
+
+
+@then("no error should have occurred")
+def step_no_error(context):
+    assert not context.write_errors

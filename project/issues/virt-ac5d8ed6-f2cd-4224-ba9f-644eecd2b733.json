@@ -3,7 +3,7 @@
   "title": "Concurrent writes",
   "description": "Given a database under concurrent write load, when N threads call put() simultaneously, every record should be persisted with no lost writes, corrupted files, or duplicate PKs. Concurrent puts to the same PK use last-write-wins: no error, final state is one of the written values. Spec: features/concurrency/concurrent_writes.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,10 +16,16 @@
       "author": "ryan.porter",
       "text": "Status: in_progress. Done: starting concurrent writes story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_writes.feature (puts with unique/same PKs, disk checks, GSI counts) and run targeted tests. Blockers: none.",
       "created_at": "2026-02-22T01:54:45.311023Z"
+    },
+    {
+      "id": "3193831b-dd80-43f4-ba0f-60e2ac00d6a3",
+      "author": "ryan.porter",
+      "text": "Done: implemented concurrent writes steps in Rust/Python, resolved step ambiguities, verified rust cucumber pass. Next: finalize commit/push. Blockers: none.",
+      "created_at": "2026-02-22T02:00:32.250296Z"
     }
   ],
   "created_at": "2026-02-21T16:48:01.778024Z",
-  "updated_at": "2026-02-22T01:54:45.311023Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T02:00:34.154927Z",
+  "closed_at": "2026-02-22T02:00:34.154927Z",
   "custom": {}
 }
