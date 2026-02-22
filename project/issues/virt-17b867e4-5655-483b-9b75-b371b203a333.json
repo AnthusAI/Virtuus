@@ -3,16 +3,35 @@
   "title": "Concurrent reads",
   "description": "Given a database under concurrent read load, when N threads query simultaneously, all should return consistent results with no partial reads or crashes. Spec: features/concurrency/concurrent_reads.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "39f7cb63-5650-4272-91fe-d05705dfad30",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: starting concurrent reads story, reviewed feature scope. Next: implement missing Python/Rust steps for concurrent_reads.feature and add any needed concurrency helpers/tests. Blockers: none.",
+      "created_at": "2026-02-22T01:43:44.121683Z"
+    },
+    {
+      "id": "af83612e-adb1-4589-8297-7ba24b403ede",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: added Rust+Python concurrency steps for concurrent_reads.feature; Rust cucumber run passed; Python behave concurrent_reads.feature passed. Next: clean warnings, commit, and mark story closed if no regressions. Blockers: none.",
+      "created_at": "2026-02-22T01:47:11.275033Z"
+    },
+    {
+      "id": "adab2382-7daa-4010-918f-c2eb4afe1c51",
+      "author": "ryan.porter",
+      "text": "Status: closed (kbs does not accept 'done'). Done: implemented concurrent_reads steps in Rust+Python with locking and result assertions. Tests: cargo test --test cucumber passed (before final cleanup); behave features/concurrency/concurrent_reads.feature passed. Note: did not rerun full Rust cucumber after removing an unused mut warning.",
+      "created_at": "2026-02-22T01:47:19.359221Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:01.615090Z",
-  "updated_at": "2026-02-21T16:48:01.615090Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T01:47:19.359221Z",
+  "closed_at": "2026-02-22T01:47:15.473444Z",
   "custom": {}
 }

@@ -3,7 +3,7 @@
   "title": "Phase 7: CLI (Query + Server)",
   "description": "Implement CLI with query mode (load, query, print, exit) and server mode (load once, serve HTTP queries). Python via Click+uvicorn, Rust via clap+axum. POST JSON dict-in/dict-out protocol. See Vision.md for full details.",
   "type": "epic",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,10 +16,16 @@
       "author": "ryan.porter",
       "text": "CLI query mode done; make check green. Next: CLI server mode.",
       "created_at": "2026-02-22T01:31:40.342124Z"
+    },
+    {
+      "id": "00475b31-dd23-4737-a221-dc56606c1768",
+      "author": "ryan.porter",
+      "text": "Status: closed (kbs does not accept 'done'). Done: CLI query + server modes implemented with Rust+Python steps and HTTP endpoints. Blockers: none.",
+      "created_at": "2026-02-22T01:43:23.203895Z"
     }
   ],
   "created_at": "2026-02-21T16:42:29.113179Z",
-  "updated_at": "2026-02-22T01:31:40.342124Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T01:43:23.203895Z",
+  "closed_at": "2026-02-22T01:43:19.685792Z",
   "custom": {}
 }

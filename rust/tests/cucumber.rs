@@ -60,6 +60,11 @@ pub struct VirtuusWorld {
     pub http_status: Option<u16>,
     pub http_headers: Option<HashMap<String, String>>,
     pub http_body: Option<String>,
+    pub concurrent_table: Option<Arc<Mutex<Table>>>,
+    pub concurrent_results: Vec<Vec<String>>,
+    pub concurrent_counts: Vec<usize>,
+    pub concurrent_lookups: Vec<(String, Option<String>)>,
+    pub concurrent_errors: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -4624,6 +4629,159 @@ async fn then_tables_refreshed(world: &mut VirtuusWorld) {
         .cloned()
         .unwrap_or_default();
     assert!(tables.iter().any(|v| v.as_str() == Some("users")));
+}
+
+// ---------------------------------------------------------------------------
+// Concurrent reads
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a database with "users" table containing (\d+) records$"#)]
+async fn given_concurrent_users(world: &mut VirtuusWorld, count: usize) {
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        None,
+        ValidationMode::Silent,
+    );
+    for i in 0..count {
+        let status = if i % 2 == 0 { "active" } else { "inactive" };
+        table.put(json!({
+            "id": format!("user-{i}"),
+            "status": status
+        }));
+    }
+    world.concurrent_table = Some(Arc::new(Mutex::new(table)));
+    world.concurrent_results.clear();
+    world.concurrent_counts.clear();
+    world.concurrent_lookups.clear();
+    world.concurrent_errors.clear();
+}
+
+#[given(regex = r#"^a GSI "([^"]*)" on "([^"]*)"$"#)]
+async fn given_concurrent_gsi(world: &mut VirtuusWorld, name: String, field: String) {
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut table = table.lock().expect("lock table");
+    table.add_gsi(&name, &field, None);
+    let records = table.scan();
+    for record in records {
+        table.put(record);
+    }
+}
+
+#[when(regex = r#"^100 threads simultaneously query index "([^"]*)" for "([^"]*)"$"#)]
+async fn when_concurrent_gsi_queries(world: &mut VirtuusWorld, index: String, value: String) {
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut handles = Vec::new();
+    for _ in 0..100 {
+        let table = Arc::clone(table);
+        let index = index.clone();
+        let value = value.clone();
+        handles.push(thread::spawn(move || {
+            let mut table = table.lock().expect("lock table");
+            let items = table.query_gsi(&index, &json!(value), None, false);
+            let mut ids = ids_from_items(&items);
+            ids.sort();
+            ids
+        }));
+    }
+    let mut results = Vec::new();
+    let mut errors = Vec::new();
+    for handle in handles {
+        match handle.join() {
+            Ok(ids) => results.push(ids),
+            Err(_) => errors.push("panic".to_string()),
+        }
+    }
+    world.concurrent_results = results;
+    world.concurrent_errors = errors;
+}
+
+#[then("all 100 threads should return the same result set")]
+async fn then_concurrent_same_results(world: &mut VirtuusWorld) {
+    let mut iter = world.concurrent_results.iter();
+    let first = iter.next().cloned().unwrap_or_default();
+    for result in iter {
+        assert_eq!(&first, result);
+    }
+}
+
+#[then("no errors should occur")]
+async fn then_concurrent_no_errors(world: &mut VirtuusWorld) {
+    assert!(world.concurrent_errors.is_empty());
+}
+
+#[when("50 threads simultaneously get different records by PK")]
+async fn when_concurrent_pk_get(world: &mut VirtuusWorld) {
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut handles = Vec::new();
+    for i in 0..50 {
+        let table = Arc::clone(table);
+        let pk = format!("user-{i}");
+        handles.push(thread::spawn(move || {
+            let table = table.lock().expect("lock table");
+            let record = table.get(&pk, None);
+            let returned = record.and_then(|v| {
+                v.get("id")
+                    .and_then(|id| id.as_str())
+                    .map(|s| s.to_string())
+            });
+            (pk, returned)
+        }));
+    }
+    let mut lookups = Vec::new();
+    let mut errors = Vec::new();
+    for handle in handles {
+        match handle.join() {
+            Ok(item) => lookups.push(item),
+            Err(_) => errors.push("panic".to_string()),
+        }
+    }
+    world.concurrent_lookups = lookups;
+    world.concurrent_errors = errors;
+}
+
+#[then("each thread should receive the correct record")]
+async fn then_concurrent_pk_correct(world: &mut VirtuusWorld) {
+    for (requested, returned) in &world.concurrent_lookups {
+        assert_eq!(returned.as_deref(), Some(requested.as_str()));
+    }
+}
+
+#[then("no thread should receive another thread's record")]
+async fn then_concurrent_pk_unique(world: &mut VirtuusWorld) {
+    for (requested, returned) in &world.concurrent_lookups {
+        assert_eq!(returned.as_deref(), Some(requested.as_str()));
+    }
+}
+
+#[when("20 threads simultaneously scan the table")]
+async fn when_concurrent_scan(world: &mut VirtuusWorld) {
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut handles = Vec::new();
+    for _ in 0..20 {
+        let table = Arc::clone(table);
+        handles.push(thread::spawn(move || {
+            let mut table = table.lock().expect("lock table");
+            table.scan().len()
+        }));
+    }
+    let mut counts = Vec::new();
+    let mut errors = Vec::new();
+    for handle in handles {
+        match handle.join() {
+            Ok(count) => counts.push(count),
+            Err(_) => errors.push("panic".to_string()),
+        }
+    }
+    world.concurrent_counts = counts;
+    world.concurrent_errors = errors;
+}
+
+#[then("all 20 scans should return 500 records each")]
+async fn then_concurrent_scans_count(world: &mut VirtuusWorld) {
+    assert!(world.concurrent_counts.iter().all(|c| *c == 500));
 }
 
 // ---------------------------------------------------------------------------
