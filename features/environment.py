@@ -7,3 +7,11 @@ _repo_root = os.path.dirname(_features_dir)
 _python_src = os.path.join(_repo_root, "python", "src")
 if _python_src not in sys.path:
     sys.path.insert(0, _python_src)
+
+
+def after_scenario(context, scenario):
+    proc = getattr(context, "server_process", None)
+    if proc is not None:
+        proc.terminate()
+        proc.wait(timeout=5)
+        context.server_process = None

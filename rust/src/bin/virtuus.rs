@@ -1,6 +1,13 @@
 use clap::{Parser, Subcommand};
-use serde_json::{Map as JsonMap, Value};
+use serde_json::{json, Map as JsonMap, Value};
+use std::collections::HashMap;
+use std::io::{BufRead, BufReader, Read, Write};
+use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 use virtuus::table::ValidationMode;
 use virtuus::{Database, Table};
 
@@ -34,6 +41,18 @@ enum Commands {
         #[arg(long, value_name = "key=value")]
         r#where: Option<String>,
     },
+    /// Start an HTTP server for persistent queries.
+    Serve {
+        /// Data directory containing table folders.
+        #[arg(long)]
+        dir: PathBuf,
+        /// Schema file for database definition.
+        #[arg(long)]
+        schema: PathBuf,
+        /// Port to listen on.
+        #[arg(long, default_value = "8080")]
+        port: u16,
+    },
 }
 
 fn main() {
@@ -54,6 +73,7 @@ fn run(cli: Cli) -> Result<(), String> {
             pk,
             r#where,
         } => run_query(dir, schema, table, index, pk, r#where),
+        Commands::Serve { dir, schema, port } => run_serve(dir, schema, port),
     }
 }
 
@@ -125,6 +145,165 @@ fn run_query(
     };
     let json_text = serde_json::to_string(&output).map_err(|err| err.to_string())?;
     println!("{json_text}");
+    Ok(())
+}
+
+struct HttpRequest {
+    method: String,
+    path: String,
+    body: Vec<u8>,
+}
+
+fn run_serve(dir: PathBuf, schema: PathBuf, port: u16) -> Result<(), String> {
+    let db = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        Database::from_schema(&schema, Some(dir.as_path()))
+    }))
+    .map_err(|err| format!("failed to load schema: {}", panic_message(err)))?;
+    let state = Arc::new(Mutex::new(db));
+    let load_count = Arc::new(AtomicUsize::new(1));
+    let refresh_count = Arc::new(AtomicUsize::new(0));
+    let listener = TcpListener::bind(("127.0.0.1", port)).map_err(|err| err.to_string())?;
+    for stream in listener.incoming() {
+        let stream = stream.map_err(|err| err.to_string())?;
+        let state = Arc::clone(&state);
+        let load_count = Arc::clone(&load_count);
+        let refresh_count = Arc::clone(&refresh_count);
+        thread::spawn(move || {
+            if let Err(err) = handle_connection(stream, state, load_count, refresh_count) {
+                eprintln!("server error: {err}");
+            }
+        });
+    }
+    Ok(())
+}
+
+fn handle_connection(
+    mut stream: TcpStream,
+    state: Arc<Mutex<Database>>,
+    load_count: Arc<AtomicUsize>,
+    refresh_count: Arc<AtomicUsize>,
+) -> std::io::Result<()> {
+    stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+    let request = match read_request(&mut stream) {
+        Ok(req) => req,
+        Err(_) => return Ok(()),
+    };
+    let path = request
+        .path
+        .split('?')
+        .next()
+        .unwrap_or(request.path.as_str());
+    let mut status = 200u16;
+    let response = match (request.method.as_str(), path) {
+        ("GET", "/health") => {
+            json!({
+                "status": "ok",
+                "load_count": load_count.load(Ordering::SeqCst),
+                "refresh_count": refresh_count.load(Ordering::SeqCst)
+            })
+        }
+        ("POST", "/query") => {
+            let text = String::from_utf8_lossy(&request.body);
+            match serde_json::from_str::<Value>(&text) {
+                Ok(query) => {
+                    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        let mut db = state.lock().expect("db lock");
+                        db.execute(&query)
+                    }));
+                    match result {
+                        Ok(value) => value,
+                        Err(err) => {
+                            status = 400;
+                            json!({ "error": panic_message(err) })
+                        }
+                    }
+                }
+                Err(err) => {
+                    status = 400;
+                    json!({ "error": format!("invalid json: {err}") })
+                }
+            }
+        }
+        ("POST", "/describe") => {
+            let mut db = state.lock().expect("db lock");
+            let describe = db.describe();
+            serde_json::to_value(describe).unwrap_or_else(|_| json!({}))
+        }
+        ("POST", "/validate") => {
+            let mut db = state.lock().expect("db lock");
+            let violations = db.validate();
+            json!({
+                "valid": violations.is_empty(),
+                "violations": violations
+            })
+        }
+        ("POST", "/warm") => {
+            let mut db = state.lock().expect("db lock");
+            db.warm();
+            refresh_count.fetch_add(1, Ordering::SeqCst);
+            let tables: Vec<String> = db.tables().keys().cloned().collect();
+            json!({
+                "status": "ok",
+                "tables": tables
+            })
+        }
+        _ => {
+            status = 404;
+            json!({ "error": "not found" })
+        }
+    };
+    let body = serde_json::to_string(&response).unwrap_or_else(|_| "{}".to_string());
+    write_response(&mut stream, status, &body)
+}
+
+fn read_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest> {
+    let mut reader = BufReader::new(stream.try_clone()?);
+    let mut request_line = String::new();
+    reader.read_line(&mut request_line)?;
+    if request_line.trim().is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::UnexpectedEof,
+            "empty request",
+        ));
+    }
+    let mut parts = request_line.trim_end().split_whitespace();
+    let method = parts.next().unwrap_or("").to_string();
+    let path = parts.next().unwrap_or("/").to_string();
+    let mut headers = HashMap::new();
+    loop {
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
+        if line == "\r\n" || line.is_empty() {
+            break;
+        }
+        if let Some((name, value)) = line.split_once(':') {
+            headers.insert(name.trim().to_lowercase(), value.trim().to_string());
+        }
+    }
+    let length = headers
+        .get("content-length")
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(0);
+    let mut body = vec![0u8; length];
+    if length > 0 {
+        reader.read_exact(&mut body)?;
+    }
+    Ok(HttpRequest { method, path, body })
+}
+
+fn write_response(stream: &mut TcpStream, status: u16, body: &str) -> std::io::Result<()> {
+    let reason = match status {
+        200 => "OK",
+        400 => "Bad Request",
+        404 => "Not Found",
+        _ => "OK",
+    };
+    let response = format!(
+        "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.as_bytes().len()
+    );
+    stream.write_all(response.as_bytes())?;
+    stream.flush()?;
     Ok(())
 }
 

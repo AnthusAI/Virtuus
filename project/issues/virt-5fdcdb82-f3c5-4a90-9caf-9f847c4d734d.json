@@ -3,16 +3,41 @@
   "title": "CLI server mode",
   "description": "Given a data directory and schema, when I run virtuus serve, it should load data once and serve queries over HTTP. POST /query for dict-in/dict-out queries. Additional endpoints: GET /health (server status), POST /describe (schema metadata), POST /validate (referential integrity check), POST /warm (proactive refresh). Spec: features/cli/server_mode.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "2eeeb7b2-1ab4-4c30-bd39-4cdd3b6731ad",
+      "author": "ryan.porter",
+      "text": "Status: set to in_progress. Done: kicked off server mode work and started reviewing server_mode.feature + existing CLI/query code. Next: implement serve subcommand + HTTP endpoints and add cucumber steps/tests. Blockers: none.",
+      "created_at": "2026-02-22T01:32:31.617107Z"
+    },
+    {
+      "id": "c2870d2c-17eb-4af2-a176-6e5ae7b1f0a1",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: added Rust CLI serve subcommand + HTTP handling, and added server-mode cucumber steps in Rust and Python with helpers. Next: wire remaining server-mode behavior, run tests (cargo/behave), fix failures. Blockers: none.",
+      "created_at": "2026-02-22T01:37:31.000688Z"
+    },
+    {
+      "id": "8c5ef74b-2d89-46e2-a4b6-9bcb677de841",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: server-mode steps green in Rust + Python; cargo test --test cucumber passed; Python behave for server_mode.feature passed. Next: decide on full behave run (still fails on pre-existing undefined benchmark/concurrency steps), update issue to done and prep commit. Blockers: full behave still errors due to undefined benchmark/concurrency steps.",
+      "created_at": "2026-02-22T01:41:37.690466Z"
+    },
+    {
+      "id": "7d727e10-d3ba-4c4c-ae37-d7a0dead5ffa",
+      "author": "ryan.porter",
+      "text": "Status: closed (kbs does not accept 'done'). Done: implemented CLI serve mode with HTTP endpoints (/query, /health, /describe, /validate, /warm), added Rust+Python server-mode steps with random port handling, added test cleanup, and fixed step matchers. Tests: cargo test --test cucumber passed; behave server_mode.feature passed; full behave still fails due to pre-existing undefined benchmark/concurrency steps.",
+      "created_at": "2026-02-22T01:42:39.585954Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:01.452144Z",
-  "updated_at": "2026-02-21T17:08:00.445882Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T01:42:39.585954Z",
+  "closed_at": "2026-02-22T01:42:36.417817Z",
   "custom": {}
 }

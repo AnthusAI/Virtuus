@@ -1,8 +1,13 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
+use std::process::Child;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 #[allow(unused_imports)]
 use cucumber::step;
@@ -50,6 +55,11 @@ pub struct VirtuusWorld {
     pub cli_stdout: Option<String>,
     pub cli_stderr: Option<String>,
     pub cli_status: Option<i32>,
+    pub server_process: Option<Child>,
+    pub server_port: Option<u16>,
+    pub http_status: Option<u16>,
+    pub http_headers: Option<HashMap<String, String>>,
+    pub http_body: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,6 +67,15 @@ pub struct LastUpdate {
     pub pk: String,
     pub old_created_at: String,
     pub new_created_at: String,
+}
+
+impl Drop for VirtuusWorld {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.server_process.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -3637,6 +3656,113 @@ fn write_json_file(path: &PathBuf, value: &Value) {
     fs::write(path, text).unwrap();
 }
 
+fn ensure_server_fixture(world: &mut VirtuusWorld) -> PathBuf {
+    let root = ensure_cli_root(world, "cli_server");
+    let data_dir = root.join("data").join("users");
+    if !data_dir.exists() {
+        fs::create_dir_all(&data_dir).unwrap();
+        write_json_file(
+            &data_dir.join("user-1.json"),
+            &json!({
+                "id": "user-1",
+                "name": "Alice"
+            }),
+        );
+    }
+    let schema_path = root.join("schema.yml");
+    if !schema_path.exists() {
+        let schema = r#"
+tables:
+  users:
+    primary_key: id
+    directory: users
+"#;
+        fs::write(&schema_path, schema).unwrap();
+    }
+    root
+}
+
+fn pick_free_port() -> u16 {
+    TcpListener::bind(("127.0.0.1", 0))
+        .expect("bind port")
+        .local_addr()
+        .expect("local addr")
+        .port()
+}
+
+fn start_server(world: &mut VirtuusWorld, port: u16) {
+    if world.server_process.is_some() {
+        return;
+    }
+    let root = ensure_server_fixture(world);
+    let bin = env!("CARGO_BIN_EXE_virtuus");
+    let child = Command::new(bin)
+        .arg("serve")
+        .arg("--dir")
+        .arg("./data")
+        .arg("--schema")
+        .arg("schema.yml")
+        .arg("--port")
+        .arg(port.to_string())
+        .current_dir(root)
+        .spawn()
+        .expect("failed to start server");
+    world.server_process = Some(child);
+    world.server_port = Some(port);
+    wait_for_server(port);
+}
+
+fn wait_for_server(port: u16) {
+    let addr = ("127.0.0.1", port);
+    for _ in 0..30 {
+        if let Ok(mut stream) = TcpStream::connect(addr) {
+            let _ = stream
+                .write_all(b"GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+            let mut resp = String::new();
+            let _ = stream.read_to_string(&mut resp);
+            if resp.contains("200") {
+                return;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+}
+
+fn http_request(
+    port: u16,
+    method: &str,
+    path: &str,
+    body: Option<&str>,
+) -> (u16, HashMap<String, String>, String) {
+    let addr = ("127.0.0.1", port);
+    let mut stream = TcpStream::connect(addr).expect("connect failed");
+    let body_text = body.unwrap_or("");
+    let request = format!(
+        "{method} {path} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body_text}",
+        body_text.as_bytes().len()
+    );
+    stream.write_all(request.as_bytes()).expect("write failed");
+    let mut response = String::new();
+    stream.read_to_string(&mut response).expect("read failed");
+    let mut sections = response.splitn(2, "\r\n\r\n");
+    let header_text = sections.next().unwrap_or("");
+    let body = sections.next().unwrap_or("").to_string();
+    let mut lines = header_text.lines();
+    let status_line = lines.next().unwrap_or("");
+    let status = status_line
+        .split_whitespace()
+        .nth(1)
+        .and_then(|s| s.parse::<u16>().ok())
+        .unwrap_or(0);
+    let mut headers = HashMap::new();
+    for line in lines {
+        if let Some((name, value)) = line.split_once(':') {
+            headers.insert(name.trim().to_string(), value.trim().to_string());
+        }
+    }
+    (status, headers, body)
+}
+
 #[given(regex = r#"^a YAML schema file defining a "([^"]*)" table with primary key "([^"]*)"$"#)]
 async fn given_schema_single_table(world: &mut VirtuusWorld, table: String, pk: String) {
     let dir = unique_temp("schema");
@@ -4278,6 +4404,226 @@ async fn then_stdout_json(world: &mut VirtuusWorld) {
 async fn then_exit_zero(world: &mut VirtuusWorld) {
     let status = world.cli_status.unwrap_or(1);
     assert_eq!(status, 0);
+}
+
+// ---------------------------------------------------------------------------
+// CLI server mode
+// ---------------------------------------------------------------------------
+
+#[given("a data directory with a schema")]
+async fn given_server_data_schema(world: &mut VirtuusWorld) {
+    ensure_server_fixture(world);
+}
+
+#[given("a running Virtuus server")]
+async fn given_running_server(world: &mut VirtuusWorld) {
+    let port = pick_free_port();
+    start_server(world, port);
+}
+
+#[given("a running Virtuus server with loaded data")]
+async fn given_running_server_loaded(world: &mut VirtuusWorld) {
+    let port = pick_free_port();
+    start_server(world, port);
+}
+
+#[when("I start virtuus serve --dir ./data --schema schema.yml --port 8080")]
+async fn when_start_server(world: &mut VirtuusWorld) {
+    start_server(world, 8080);
+}
+
+#[when(regex = r#"^I POST a JSON query (\{.*\}) to http://localhost:8080/query$"#)]
+async fn when_post_query(world: &mut VirtuusWorld, query_text: String) {
+    let (status, headers, body) = http_request(8080, "POST", "/query", Some(&query_text));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I POST a query")]
+async fn when_post_default_query(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(
+        port,
+        "POST",
+        "/query",
+        Some(r#"{"users": {"pk": "user-1"}}"#),
+    );
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I POST an invalid JSON body")]
+async fn when_post_invalid_json(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "POST", "/query", Some("{invalid"));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I start the server and send 10 queries")]
+async fn when_start_server_and_query(world: &mut VirtuusWorld) {
+    let port = pick_free_port();
+    start_server(world, port);
+    let port = world.server_port.unwrap_or(port);
+    for _ in 0..10 {
+        let _ = http_request(
+            port,
+            "POST",
+            "/query",
+            Some(r#"{"users": {"pk": "user-1"}}"#),
+        );
+    }
+}
+
+#[when("a file is added to a table's directory")]
+async fn when_file_added(world: &mut VirtuusWorld) {
+    let root = ensure_server_fixture(world);
+    let data_dir = root.join("data").join("users");
+    write_json_file(
+        &data_dir.join("user-2.json"),
+        &json!({
+            "id": "user-2",
+            "name": "Bob"
+        }),
+    );
+}
+
+#[when("I POST a query for that table")]
+async fn when_post_scan(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "POST", "/query", Some(r#"{"users": {}}"#));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I GET /health")]
+async fn when_get_health(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "GET", "/health", None);
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I POST to /describe")]
+async fn when_post_describe(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "POST", "/describe", Some("{}"));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I POST to /validate")]
+async fn when_post_validate(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "POST", "/validate", Some("{}"));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[when("I POST to /warm")]
+async fn when_post_warm(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (status, headers, body) = http_request(port, "POST", "/warm", Some("{}"));
+    world.http_status = Some(status);
+    world.http_headers = Some(headers);
+    world.http_body = Some(body);
+}
+
+#[then("the response should be valid JSON containing the user record")]
+async fn then_response_contains_user(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    assert_eq!(value.get("id").and_then(|v| v.as_str()), Some("user-1"));
+}
+
+#[then("the response Content-Type should be application/json")]
+async fn then_response_content_type(world: &mut VirtuusWorld) {
+    let headers = world.http_headers.as_ref().expect("missing headers");
+    let content_type = headers
+        .iter()
+        .find(|(k, _)| k.to_lowercase() == "content-type")
+        .map(|(_, v)| v.as_str())
+        .unwrap_or("");
+    assert!(content_type.contains("application/json"));
+}
+
+#[then("the response should have a 400 status code")]
+async fn then_response_400(world: &mut VirtuusWorld) {
+    assert_eq!(world.http_status, Some(400));
+}
+
+#[then("the response should include an error message")]
+async fn then_response_error(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    assert!(body.contains("error"));
+}
+
+#[then("data should be loaded from disk only once at startup")]
+async fn then_load_once(world: &mut VirtuusWorld) {
+    let port = world.server_port.unwrap_or(8080);
+    let (_, _, body) = http_request(port, "GET", "/health", None);
+    let value: Value = serde_json::from_str(&body).expect("invalid json body");
+    assert_eq!(value.get("load_count"), Some(&json!(1)));
+}
+
+#[then("the response should include the new record via JIT refresh")]
+async fn then_response_includes_new(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    let items = value
+        .get("items")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    assert!(items
+        .iter()
+        .any(|item| item.get("id") == Some(&json!("user-2"))));
+}
+
+#[then("the response should have a 200 status code")]
+async fn then_response_200(world: &mut VirtuusWorld) {
+    assert_eq!(world.http_status, Some(200));
+}
+
+#[then("the response should be valid JSON with server status")]
+async fn then_response_status(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    assert_eq!(value.get("status"), Some(&json!("ok")));
+}
+
+#[then("the response should be valid JSON with table metadata")]
+async fn then_response_metadata(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    let users = value.get("users").and_then(|v| v.as_object());
+    assert!(users.is_some());
+}
+
+#[then("the response should be valid JSON with validation results")]
+async fn then_response_validation(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    assert!(value.get("violations").is_some());
+}
+
+#[then("all tables should be refreshed")]
+async fn then_tables_refreshed(world: &mut VirtuusWorld) {
+    let body = world.http_body.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(body).expect("invalid json body");
+    let tables = value
+        .get("tables")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    assert!(tables.iter().any(|v| v.as_str() == Some("users")));
 }
 
 // ---------------------------------------------------------------------------
