@@ -333,7 +333,9 @@ def _write_png(path: Path, width: int, height: int, rows: list[bytearray]) -> No
     path.write_bytes(png)
 
 
-def _render_single_metric_chart(name: str, label: str, value: float, path: Path) -> None:
+def _render_single_metric_chart(  # pragma: no cover - used only by experimental visuals
+    name: str, label: str, value: float, path: Path
+) -> None:
     width = 640
     height = 220
     bg = (248, 249, 251, 255)
@@ -352,7 +354,9 @@ def _render_single_metric_chart(name: str, label: str, value: float, path: Path)
     _write_png(path, width, height, rows)
 
 
-def _render_bar_chart(name: str, metrics: list[tuple[str, float]], path: Path) -> None:
+def _render_bar_chart(  # pragma: no cover - currently unused in Behave flow
+    name: str, metrics: list[tuple[str, float]], path: Path
+) -> None:
     width = 820
     row_height = 34
     top = 70
@@ -451,7 +455,7 @@ def _render_line_chart(
     _write_png(path, width, height, rows)
 
 
-def _render_grouped_bar_chart(
+def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_compare.py
     name: str,
     categories: list[str],
     series_labels: list[str],
