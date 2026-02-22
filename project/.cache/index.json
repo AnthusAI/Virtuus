@@ -1,25 +1,27 @@
 {
-  "built_at": "2026-02-22T05:42:42Z",
+  "built_at": "2026-02-22T08:40:25Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
-    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771733661.931432,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771744187.223507,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771726059.332986,
-    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771733673.578051,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771744192.334412,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771714054.091713,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771726492.781843,
+    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1771749620.559813,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771714070.754441,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
+    "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1771745792.274328,
     "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771724559.586077,
     "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
@@ -28,6 +30,7 @@
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771714064.710461,
+    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771749596.355235,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
@@ -37,8 +40,10 @@
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771725252.018969,
+    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771749603.991993,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
+    "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771749586.526532,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771723894.886977,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771733686.154369,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725634.155066,
@@ -48,6 +53,7 @@
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771709284.516897,
+    "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1771749613.949164,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771705654.123434,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771709290.662331,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
@@ -137,7 +143,7 @@
     },
     {
       "assignee": null,
-      "closed_at": "2026-02-22T04:14:21.931297Z",
+      "closed_at": "2026-02-22T07:09:47.223357Z",
       "comments": [
         {
           "author": "ryan.porter",
@@ -156,6 +162,66 @@
           "created_at": "2026-02-22T04:14:15.742490Z",
           "id": "0cceb64a-4ff2-4148-a238-3b5cf705e69e",
           "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:43:10.058812Z",
+          "id": "13f173cc-30be-4d64-be7a-ca7384529394",
+          "text": "Did: replaced benchmark charts with PNGs and readable labels/values; updated visualization step + feature. Next: regenerate charts and confirm output quality. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:43:37.216175Z",
+          "id": "ac2e4036-4fa1-4864-b48a-e6a81b2b7808",
+          "text": "Done: PNG charts generated with readable labels/values; visualization removes old SVGs; feature now checks PNG output. Next: run full make check. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:54:28.708325Z",
+          "id": "62d04824-7ba0-4425-a0c2-aead855f4a6e",
+          "text": "Did: added multi-scale benchmark support with record counts metadata and updated report/chart titles. Next: regenerate benchmarks and verify report includes scale+counts. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:02:58.837422Z",
+          "id": "16795ccf-6972-47e4-a696-568f251f47c4",
+          "text": "Done: benchmarks now run at scales 1 and 2 by default (override with VIRTUUS_BENCH_SCALES). Report includes record counts per scale; charts include scale + record totals and have unique filenames. Next: none. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:40:10.338011Z",
+          "id": "4612e081-3b17-4add-b7dd-6598b684ec1e",
+          "text": "Did: added multi-size benchmarks (100..100k), split GSI partition vs sorted query, generated line charts over total_records, updated report data sizes. Next: verify make check + rust coverage. Blockers: rust coverage 96.36%."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:40:20.209142Z",
+          "id": "e7bce610-b946-40ae-8a2b-e9d9eb436463",
+          "text": "Done: multi-size benchmarks with separate GSI partition vs sorted query metrics; line charts across totals; report lists data sizes. Next: rust coverage. Blockers: tarpaulin 96.36%."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:50:44.872977Z",
+          "id": "df4aba48-b210-4730-84ed-1b5c96511901",
+          "text": "Did: added .gitignore entries for benchmark fixture directories, leaving report/json/charts tracked. Next: commit ignore change. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:50:50.557948Z",
+          "id": "11ec3c1e-fe33-46ca-933b-115c1174363c",
+          "text": "Done: fixture directories ignored; reports/charts stay tracked. Next: none. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:59:23.124956Z",
+          "id": "f90a1499-92cd-4554-8aa6-7bb0dbbc8e85",
+          "text": "Did: reworked benchmark timing to reduce small-corpus noise (perf_counter_ns batching + overhead subtraction). Next: regenerate benchmarks and charts, commit outputs. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:09:47.133702Z",
+          "id": "e7612714-98d6-43da-9d86-5e0bd7e29334",
+          "text": "Done: benchmark timings stabilized with perf_counter_ns batching + overhead subtraction; outputs regenerated. Next: rust coverage. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:48:02.936135Z",
@@ -170,7 +236,7 @@
       "status": "closed",
       "title": "Benchmark scenarios and visualization",
       "type": "story",
-      "updated_at": "2026-02-22T04:14:21.931297Z"
+      "updated_at": "2026-02-22T07:09:47.223357Z"
     },
     {
       "assignee": null,
@@ -297,7 +363,7 @@
     },
     {
       "assignee": null,
-      "closed_at": "2026-02-22T04:14:33.577919Z",
+      "closed_at": "2026-02-22T07:09:52.334275Z",
       "comments": [
         {
           "author": "ryan.porter",
@@ -316,6 +382,54 @@
           "created_at": "2026-02-22T04:14:27.859984Z",
           "id": "82765b15-e252-4f12-949e-9568f0aa3e78",
           "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:43:17.571748Z",
+          "id": "b907e394-5107-4418-a171-eb6ddb34a58d",
+          "text": "Did: retuning benchmark visualization outputs (PNG charts with readable labels/values). Next: regenerate charts and validate output. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:43:40.380526Z",
+          "id": "820a13cf-44f2-49ed-8697-1f914059fc8b",
+          "text": "Done: benchmark visualization outputs now PNG with readable labels/values; charts regenerated. Next: full check. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T05:54:32.911107Z",
+          "id": "11949674-6392-4997-bd23-65a4583f67ae",
+          "text": "Did: adding multi-scale benchmark outputs + record count metadata. Next: regenerate benchmarks and validate report/charts. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:03:03.963926Z",
+          "id": "835a008a-b711-4d2a-accd-c51b615c2e09",
+          "text": "Done: multi-scale benchmark results + record counts now in report; PNG charts include scale and totals. Default scales: 1,2 (override via VIRTUUS_BENCH_SCALES). Next: full make check. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:40:14.573539Z",
+          "id": "871359e0-dea3-4f00-a42f-c5f5fceee2e8",
+          "text": "Did: benchmark visualization now produces line charts across total_records sizes (100..100k), report includes data sizes and new GSI metrics. Next: finish rust coverage. Blockers: tarpaulin at 96.36%."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:40:23.615772Z",
+          "id": "c4f63ffa-986e-4d4c-ab75-cf25cdc3d642",
+          "text": "Done: multi-size benchmark outputs + line charts + new GSI metrics; report includes data sizes. Next: rust coverage. Blockers: tarpaulin 96.36%."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T06:59:28.837668Z",
+          "id": "2bfa1255-5d85-46c6-8f82-b06f6f36f9b8",
+          "text": "Did: improved benchmark timing methodology for small corpus stability. Next: rerun benchmarks and update report/charts. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:09:52.247586Z",
+          "id": "fd04344d-62c9-4d00-a53a-19c1d21df6b5",
+          "text": "Done: updated benchmark methodology + regenerated report/charts; small-corpus PK timings stabilized. Next: rust coverage. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:42:29.540022Z",
@@ -330,7 +444,7 @@
       "status": "closed",
       "title": "Phase 10: Benchmarks & Visualization",
       "type": "epic",
-      "updated_at": "2026-02-22T04:14:33.577919Z"
+      "updated_at": "2026-02-22T07:09:52.334275Z"
     },
     {
       "assignee": null,
@@ -565,6 +679,37 @@
       "title": "Referential integrity under load",
       "type": "story",
       "updated_at": "2026-02-22T02:14:52.781694Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:34:14.256855Z",
+          "id": "c831d4c1-6d58-4958-8dab-e3cd3b04ba25",
+          "text": "Did: created task to explore perf improvements. Next: outline candidate optimizations + tradeoffs (GSI query, storage, IO). Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T08:40:20.559483Z",
+          "id": "6f98939b-e192-4d1a-9b79-0015a9310004",
+          "text": "Thought experiment still open: captured current perf numbers; next step is outline potential optimizations (index structures, batching) before deciding if worth pursuing."
+        }
+      ],
+      "created_at": "2026-02-22T07:34:10.355149Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-384faa72-ce06-4e0e-96eb-11202977de8c",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "in_progress",
+      "title": "Explore performance improvements (thought experiment)",
+      "type": "task",
+      "updated_at": "2026-02-22T08:40:20.559483Z"
     },
     {
       "assignee": null,
@@ -829,6 +974,37 @@
       "title": "GSI creation",
       "type": "story",
       "updated_at": "2026-02-21T18:55:12.080628Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-22T07:36:32.274209Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:36:04.392697Z",
+          "id": "a865909b-bdc4-4bed-aeeb-bdc295611515",
+          "text": "Did: starting CI matrix for Python 3.9+. Next: update GitHub Actions to run matrix and keep full make check on latest. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:36:32.184031Z",
+          "id": "91404d36-61c3-4632-ab4e-79cf14f26dbf",
+          "text": "Done: CI now runs Python 3.9–3.12 matrix; full make check on 3.12, check-python on others. Next: decide if we want Rust MSRV/beta matrix. Blockers: none."
+        }
+      ],
+      "created_at": "2026-02-22T07:35:19.724757Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "CI: Python 3.9+ matrix",
+      "type": "task",
+      "updated_at": "2026-02-22T07:36:32.274209Z"
     },
     {
       "assignee": null,
@@ -1124,6 +1300,37 @@
       "title": "Execute nested queries with includes",
       "type": "story",
       "updated_at": "2026-02-21T22:47:44.710356Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:52:10.201971Z",
+          "id": "78dc1f89-84b3-4b02-8045-2a309e307ddf",
+          "text": "Did: enabled backend selection in benchmarks, ran Python-only benchmarks (100/1k/10k) to compare with Rust set. Next: embed charts + prose in README and commit/push. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T08:39:56.354894Z",
+          "id": "c4526384-9a17-4ff8-82cc-0934342abe70",
+          "text": "In progress: added Rust vs Python comparison charts (p95/timing) and Python 100k run; next step is review numbers + wire into README."
+        }
+      ],
+      "created_at": "2026-02-22T07:52:04.768507Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "in_progress",
+      "title": "Benchmark Rust vs Python implementations",
+      "type": "task",
+      "updated_at": "2026-02-22T08:39:56.354894Z"
     },
     {
       "assignee": null,
@@ -1514,6 +1721,37 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:42:31.369786Z",
+          "id": "92f6e58f-9203-4a76-9c76-1adb85b35fa3",
+          "text": "Did: discovered no semantic-release config/workflow present. Need to choose approach (JS semantic-release vs python-semantic-release vs release-please) to bump VERSION + tag + GH release (and future PyPI/Crates.io if desired). Next: propose concrete workflow change."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T08:40:03.991594Z",
+          "id": "1cb8371c-9e39-4376-897f-3747cf98d3e8",
+          "text": "Still in progress: no semantic-release changes yet; queued after CI verification."
+        }
+      ],
+      "created_at": "2026-02-22T07:42:26.361525Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "in_progress",
+      "title": "Set up semantic-release (conventional commits)",
+      "type": "task",
+      "updated_at": "2026-02-22T08:40:03.991594Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:17.516865Z",
       "comments": [
         {
@@ -1597,6 +1835,37 @@
       "title": "Table CRUD",
       "type": "story",
       "updated_at": "2026-02-21T20:27:33.705859Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-22T08:39:38.659607Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:38:24.121403Z",
+          "id": "52d608a9-21cf-4744-a7a2-bc08bc3ab0d3",
+          "text": "Did: updated ci.yml to run make check (includes rust + parity) on all Python matrix entries 3.9–3.12; removed conditional tarpaulin/install. Next: commit and push, watch CI. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T08:39:46.526401Z",
+          "id": "5fca1ade-3eb0-4f2b-b471-9d75871629a6",
+          "text": "Closed: CI matrix now runs full make check (python+r clippy/tarpaulin/parity) on every job."
+        }
+      ],
+      "created_at": "2026-02-22T07:38:18.925706Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-a6ffc171-7a47-49b1-9a31-e649b451531b",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Fix CI to run full make check on all Python versions",
+      "type": "task",
+      "updated_at": "2026-02-22T08:39:46.526401Z"
     },
     {
       "assignee": null,
@@ -1984,6 +2253,37 @@
       "title": "Incremental refresh",
       "type": "story",
       "updated_at": "2026-02-21T21:28:04.516752Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T07:58:17.934972Z",
+          "id": "0a6297e4-0cf3-43e1-9c67-4aee4b5946dc",
+          "text": "Did: added Database.from_schema_dict to build DB from in-memory schema dict; documented in README example. Next: commit/push. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T08:40:13.948819Z",
+          "id": "1bb25295-7adf-4de2-a11b-3135d41a58d0",
+          "text": "In progress: implemented Database.from_schema_dict; docs updated. Pending: decide if additional validation/helpers needed."
+        }
+      ],
+      "created_at": "2026-02-22T07:58:11.683573Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ccf3d867-d583-4d97-aac1-b6223878cc62",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "in_progress",
+      "title": "API: load schema from dict",
+      "type": "task",
+      "updated_at": "2026-02-22T08:40:13.948819Z"
     },
     {
       "assignee": null,

@@ -1,7 +1,6 @@
 # Benchmark Report
 
 - Bench root: `benchmarks/output_py`
-- Date range: `2025-01-01` → `2025-12-31`
 
 ## Data Sizes
 | total_records | users | posts | comments |
@@ -9,6 +8,7 @@
 | 100 | 1 | 10 | 89 |
 | 1,000 | 16 | 160 | 824 |
 | 10,000 | 163 | 1,630 | 8,207 |
+| 100,000 | 1,639 | 16,390 | 81,971 |
 
 | name | total_records | timing_ms | p50 | p95 | p99 |
 | --- | --- | --- | --- | --- | --- |
@@ -30,3 +30,9 @@
 | gsi_partition_lookup | 10,000 | - | 5.231900 | 6.682243 | 8.834802 |
 | gsi_sorted_query | 10,000 | - | 5.093813 | 5.485679 | 6.002760 |
 | incremental_refresh | 10,000 | 1.738 | - | - | - |
+| single_table_cold_load | 100,000 | 540.776 | - | - | - |
+| full_database_cold_load | 100,000 | 52100.482 | - | - | - |
+| pk_lookup | 100,000 | - | 0.000167 | 0.000200 | 0.000211 |
+| gsi_partition_lookup | 100,000 | - | 43.221385 | 44.341308 | 44.979778 |
+| gsi_sorted_query | 100,000 | - | 42.902552 | 44.589408 | 45.533723 |
+| incremental_refresh | 100,000 | 7.877 | - | - | - |

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "c2564cee-b87f-4587-8f96-577c386cdcda",
+  "issue_id": "virt-ccf3d867-d583-4d97-aac1-b6223878cc62",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T07:58:11.683Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "API: load schema from dict"
+  }
+}

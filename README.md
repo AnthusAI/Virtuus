@@ -242,7 +242,7 @@ The Rust backend represents the “production” path: same API, faster engine, 
 
 ### Results (Python backend, warm cache)
 
-Python-only benchmarks were run at 100, 1k, 10k totals to mirror the small-footprint use case:
+Python-only benchmarks were run at 100, 1k, 10k, and 100k totals to mirror the small-footprint use case:
 
 ![Full database cold load (Python)](benchmarks/output_py/charts/full_database_cold_load.png)
 ![Single table cold load (Python)](benchmarks/output_py/charts/single_table_cold_load.png)
@@ -254,6 +254,18 @@ Python-only benchmarks were run at 100, 1k, 10k totals to mirror the small-footp
 - Cold loads remain comfortably sub-second through 10k totals; Python overhead is visible but still small for these sizes.
 - PK lookups stay effectively free; GSI lookups stay within low-ms ranges at 10k totals.
 - Incremental refresh is still sub-ms to low-ms for small corpora.
+
+### Rust vs Python comparison (p95 or timing_ms)
+
+Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for iterative benchmarks and timing_ms for cold loads.
+
+![Rust vs Python at 1k](benchmarks/output_compare/charts/compare_1000.png)
+![Rust vs Python at 10k](benchmarks/output_compare/charts/compare_10000.png)
+![Rust vs Python at 100k](benchmarks/output_compare/charts/compare_100000.png)
+
+- Gap is smallest on hot-path hash lookups (PK + hash-only GSI) at small sizes; Python stays in low single-digit ms.
+- Sorted GSI queries widen the gap because the Python path spends more time ordering partition results.
+- Cold-load gap is most pronounced because file I/O dominates and Rust streams faster; both stay linear with corpus size.
 
 ### Interpretation
 - Virtuus is an excellent fit for “relatively small” deployments (≈10k total records or less) where you want to ship data + query engine together in a container without external services.
@@ -269,8 +281,11 @@ VIRTUUS_BENCH_DIR=benchmarks/output VIRTUUS_BENCH_TOTALS=100,500,1000,5000,10000
 
 VIRTUUS_BENCH_BACKEND=python \
 VIRTUUS_BENCH_DIR=benchmarks/output_py \
-VIRTUUS_BENCH_TOTALS=100,1000,10000 \
-  python -m behave features/benchmarks/benchmark_scenarios.feature -n "Visualization generates charts"
+VIRTUUS_BENCH_TOTALS=100,1000,10000,100000 \
+  python tools/run_python_benchmarks.py
+
+# Generate cross-backend comparison charts
+python tools/bench_compare.py
 ```
 Outputs land in `benchmarks/output/REPORT.md`, `benchmarks/output/benchmarks.json`, and `benchmarks/output/charts/*.png`.
 ```bash

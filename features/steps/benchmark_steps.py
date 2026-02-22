@@ -353,38 +353,38 @@ def _render_single_metric_chart(name: str, label: str, value: float, path: Path)
 
 
 def _render_bar_chart(name: str, metrics: list[tuple[str, float]], path: Path) -> None:
-    width = 720
-    row_height = 30
-    top = 50
-    height = top + len(metrics) * row_height + 30
+    width = 820
+    row_height = 34
+    top = 70
+    height = top + len(metrics) * row_height + 40
     bg = (248, 249, 251, 255)
     text_color = (28, 32, 38, 255)
     bar_color = (34, 97, 207, 255)
     rows = _new_canvas(width, height, bg)
-    _draw_text(rows, 20, 16, name, text_color, scale=2)
+    _draw_text(rows, 20, 20, name, text_color, scale=2)
     max_val = max(value for _, value in metrics) or 1.0
-    bar_left = 220
-    bar_right = width - 40
+    bar_left = 250
+    bar_right = width - 50
     bar_max = max(bar_right - bar_left, 10)
     for idx, (label, value) in enumerate(metrics):
         y = top + idx * row_height
         _draw_text(rows, 20, y, label, text_color, scale=2)
         bar_width = int(bar_max * (value / max_val))
-        _draw_rect(rows, bar_left, y + 6, bar_width, 14, bar_color)
+        _draw_rect(rows, bar_left, y + 8, bar_width, 16, bar_color)
         value_text = _format_value_ms(value)
-        _draw_text(rows, bar_left + bar_width + 10, y + 4, value_text, text_color, scale=1)
+        _draw_text(rows, bar_left + bar_width + 12, y + 4, value_text, text_color, scale=1)
     _write_png(path, width, height, rows)
 
 
 def _render_line_chart(
     name: str, series: dict[str, list[tuple[int, float]]], path: Path
 ) -> None:
-    width = 820
-    height = 520
-    margin_left = 70
-    margin_right = 30
-    margin_top = 50
-    margin_bottom = 70
+    width = 880
+    height = 560
+    margin_left = 80
+    margin_right = 40
+    margin_top = 90
+    margin_bottom = 80
     bg = (248, 249, 251, 255)
     axis_color = (60, 67, 74, 255)
     text_color = (28, 32, 38, 255)
@@ -395,7 +395,7 @@ def _render_line_chart(
         (143, 84, 178, 255),
     ]
     rows = _new_canvas(width, height, bg)
-    _draw_text(rows, 20, 16, name, text_color, scale=2)
+    _draw_text(rows, 20, 20, name, text_color, scale=2)
     totals = sorted({x for points in series.values() for x, _ in points})
     if not totals:
         _write_png(path, width, height, rows)
@@ -431,7 +431,7 @@ def _render_line_chart(
     _draw_text(rows, plot_left, plot_bottom + 32, "TOTAL RECORDS", text_color, scale=1)
     _draw_text(rows, 20, plot_top + 10, "MS", text_color, scale=1)
     legend_x = plot_left
-    legend_y = plot_top - 18
+    legend_y = plot_top - 32
     for idx, label in enumerate(sorted(series.keys())):
         color = palette[idx % len(palette)]
         _draw_rect(rows, legend_x, legend_y, 14, 8, color)
@@ -448,6 +448,88 @@ def _render_line_chart(
             if prev is not None:
                 _draw_line(rows, prev[0], prev[1], x, y, color)
             prev = (x, y)
+    _write_png(path, width, height, rows)
+
+
+def _render_grouped_bar_chart(
+    name: str,
+    categories: list[str],
+    series_labels: list[str],
+    data: dict[str, dict[str, float]],
+    path: Path,
+) -> None:
+    width = 880
+    margin_left = 120
+    margin_right = 40
+    margin_top = 90
+    margin_bottom = 120
+    bar_width = 26
+    bar_gap = 12
+    group_gap = 36
+    bg = (248, 249, 251, 255)
+    axis_color = (60, 67, 74, 255)
+    text_color = (28, 32, 38, 255)
+    palette = [
+        (34, 97, 207, 255),
+        (242, 140, 40, 255),
+        (46, 134, 68, 255),
+        (143, 84, 178, 255),
+    ]
+    plot_width = width - margin_left - margin_right
+    group_width = len(series_labels) * (bar_width + bar_gap) - bar_gap
+    total_width = len(categories) * (group_width + group_gap) - group_gap
+    if total_width > plot_width:
+        scale = plot_width / total_width
+        bar_width = max(8, int(bar_width * scale))
+        bar_gap = max(4, int(bar_gap * scale))
+        group_gap = max(18, int(group_gap * scale))
+        group_width = len(series_labels) * (bar_width + bar_gap) - bar_gap
+        total_width = len(categories) * (group_width + group_gap) - group_gap
+    width = margin_left + total_width + margin_right
+    height = 560
+    rows = _new_canvas(width, height, bg)
+    _draw_text(rows, 20, 20, name, text_color, scale=2)
+    max_val = max((data.get(cat, {}).get(label, 0.0) for cat in categories for label in series_labels), default=1.0)
+    plot_top = margin_top
+    plot_bottom = height - margin_bottom
+    plot_height = plot_bottom - plot_top
+    _draw_line(rows, margin_left, plot_top, margin_left, plot_bottom, axis_color)
+    _draw_line(rows, margin_left, plot_bottom, width - margin_right, plot_bottom, axis_color)
+    y_ticks = 5
+    for idx in range(y_ticks + 1):
+        val = max_val * idx / y_ticks
+        y = plot_bottom - int(plot_height * idx / y_ticks)
+        _draw_line(rows, margin_left - 4, y, margin_left, y, axis_color)
+        label = _format_value_ms(val).replace(" MS", "")
+        _draw_text(rows, max(margin_left - 8 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
+    cursor_x = margin_left
+    for cat in categories:
+        cat_center = cursor_x + group_width // 2
+        _draw_text(
+            rows,
+            max(cat_center - _text_width(cat, 1) // 2, margin_left),
+            plot_bottom + 12,
+            cat,
+            text_color,
+            scale=1,
+        )
+        for idx, label in enumerate(series_labels):
+            color = palette[idx % len(palette)]
+            value = data.get(cat, {}).get(label, 0.0)
+            bar_h = int((value / max_val) * plot_height) if max_val else 0
+            x0 = cursor_x + idx * (bar_width + bar_gap)
+            y0 = plot_bottom - bar_h
+            _draw_rect(rows, x0, y0, bar_width, bar_h, color)
+            value_text = _format_value_ms(value)
+            _draw_text(rows, x0, y0 - 16, value_text, text_color, scale=1)
+        cursor_x += group_width + group_gap
+    legend_x = margin_left
+    legend_y = height - margin_bottom + 48
+    for idx, label in enumerate(series_labels):
+        color = palette[idx % len(palette)]
+        _draw_rect(rows, legend_x, legend_y, 14, 10, color)
+        _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
+        legend_x += 180
     _write_png(path, width, height, rows)
 
 

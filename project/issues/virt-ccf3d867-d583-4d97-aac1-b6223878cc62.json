@@ -1,0 +1,31 @@
+{
+  "id": "virt-ccf3d867-d583-4d97-aac1-b6223878cc62",
+  "title": "API: load schema from dict",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "0a6297e4-0cf3-43e1-9c67-4aee4b5946dc",
+      "author": "ryan.porter",
+      "text": "Did: added Database.from_schema_dict to build DB from in-memory schema dict; documented in README example. Next: commit/push. Blockers: none.",
+      "created_at": "2026-02-22T07:58:17.934972Z"
+    },
+    {
+      "id": "1bb25295-7adf-4de2-a11b-3135d41a58d0",
+      "author": "ryan.porter",
+      "text": "In progress: implemented Database.from_schema_dict; docs updated. Pending: decide if additional validation/helpers needed.",
+      "created_at": "2026-02-22T08:40:13.948819Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:58:11.683573Z",
+  "updated_at": "2026-02-22T08:40:13.948819Z",
+  "closed_at": null,
+  "custom": {}
+}
