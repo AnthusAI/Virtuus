@@ -14,7 +14,35 @@ from tempfile import TemporaryDirectory
 
 from behave import given, then, when
 
-from virtuus import Database, Sort, Table
+from virtuus import Sort
+from virtuus._python import Database as PyDatabase
+from virtuus._python import Table as PyTable
+
+try:  # pragma: no cover - optional Rust backend
+    from virtuus._rust import Database as RsDatabase
+    from virtuus._rust import Table as RsTable
+    HAS_RUST_BACKEND = True
+except Exception:  # noqa: BLE001
+    HAS_RUST_BACKEND = False
+    RsDatabase = None
+    RsTable = None
+
+
+def _db_table_for_backend(backend: str):
+    if backend == "rust" and HAS_RUST_BACKEND:
+        return RsDatabase, RsTable
+    return PyDatabase, PyTable
+
+
+def _bench_backend(context) -> str:
+    if hasattr(context, "bench_backend"):
+        return context.bench_backend
+    env = os.getenv("VIRTUUS_BENCH_BACKEND") or os.getenv("VIRTUUS_BACKEND")
+    backend = (env or "rust").lower()
+    if backend == "rust" and not HAS_RUST_BACKEND:
+        backend = "python"
+    context.bench_backend = backend
+    return backend
 
 
 def _ensure_bench_root(context) -> Path:
@@ -35,11 +63,12 @@ def _bench_data_root(context) -> Path:
     root = _ensure_bench_root(context)
     profile = getattr(context, "bench_profile", "social_media")
     scale = getattr(context, "bench_scale", 1)
+    backend = _bench_backend(context)
     total_target = getattr(context, "bench_total_records_target", None)
     if total_target is not None:
-        data_root = root / f"{profile}_total_{total_target}"
+        data_root = root / f"{profile}_total_{total_target}_{backend}"
     else:
-        data_root = root / f"{profile}_scale_{scale}"
+        data_root = root / f"{profile}_scale_{scale}_{backend}"
     data_root.mkdir(parents=True, exist_ok=True)
     context.bench_data_root = data_root
     return data_root
@@ -544,6 +573,7 @@ def _generate_complex_hierarchy(context, root: Path, scale: int) -> None:
 def _ensure_fixtures(context) -> None:
     profile = getattr(context, "bench_profile", "social_media")
     scale = getattr(context, "bench_scale", 1)
+    _bench_backend(context)
     root = _bench_data_root(context)
     generated = getattr(context, "bench_generated_scales", set())
     total_target = getattr(context, "bench_total_records_target", None)
@@ -561,17 +591,19 @@ def _ensure_fixtures(context) -> None:
     context.bench_db = None
 
 
-def _load_warm_db(context) -> Database:
+def _load_warm_db(context):
     if getattr(context, "bench_db", None) is not None:
         return context.bench_db
+    backend = _bench_backend(context)
+    DatabaseCls, TableCls = _db_table_for_backend(backend)
     root = _bench_data_root(context)
     users_dir = root / "users"
     posts_dir = root / "posts"
     comments_dir = root / "comments"
-    db = Database()
-    users = Table("users", primary_key="id", directory=str(users_dir))
-    posts = Table("posts", primary_key="id", directory=str(posts_dir))
-    comments = Table("comments", primary_key="id", directory=str(comments_dir))
+    db = DatabaseCls()
+    users = TableCls("users", primary_key="id", directory=str(users_dir))
+    posts = TableCls("posts", primary_key="id", directory=str(posts_dir))
+    comments = TableCls("comments", primary_key="id", directory=str(comments_dir))
     users.load_from_dir()
     posts.load_from_dir()
     comments.load_from_dir()
@@ -706,16 +738,19 @@ def step_warm_db(context):
 @when('I run the "{benchmark}" benchmark')
 def step_run_benchmark(context, benchmark: str):
     _ensure_fixtures(context)
+    backend = _bench_backend(context)
+    _, TableCls = _db_table_for_backend(backend)
     data_root = _bench_data_root(context)
     users_dir = data_root / "users"
     start = time.perf_counter()
     if benchmark == "single_table_cold_load":
-        table = Table("users", primary_key="id", directory=str(users_dir))
+        table = TableCls("users", primary_key="id", directory=str(users_dir))
         table.load_from_dir()
     elif benchmark == "full_database_cold_load":
-        db = Database()
+        DatabaseCls, TableCls = _db_table_for_backend(backend)
+        db = DatabaseCls()
         for name in ("users", "posts", "comments"):
-            table = Table(name, primary_key="id", directory=str(data_root / name))
+            table = TableCls(name, primary_key="id", directory=str(data_root / name))
             table.load_from_dir()
             db.add_table(name, table)
     else:
@@ -835,6 +870,7 @@ def step_timing_measurement(context):
 def step_run_all_benchmarks(context):
     results = []
     for total in _bench_totals():
+        _bench_backend(context)
         context.bench_total_records_target = total
         context.bench_scale = 1
         context.bench_db = None

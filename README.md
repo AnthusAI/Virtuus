@@ -2,7 +2,15 @@
 
 A file-backed in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
+![CI](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/ci.svg)
+![Python Coverage](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/python-coverage.svg)
+![Rust Coverage](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/rust-coverage.svg)
+
 Data lives on disk as one JSON file per record. Virtuus loads it into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
+
+## Why
+
+We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records or less), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
 
 ## Installation
 
@@ -195,22 +203,50 @@ make bench              # run benchmarks + generate visualizations
 - Environment: local filesystem, warm cache, Python runner using Rust backend when available
 - Metrics: cold load (single table and full DB), incremental refresh, PK lookup, GSI hash-only lookup, GSI sorted lookup (range key)
 
-### Results (PNG charts)
-- `benchmarks/output/charts/full_database_cold_load.png` — Full DB cold load scales linearly; up to ~41s at 100k records. Useful for batch ingest; not the hot path for small deployments.
-- `benchmarks/output/charts/single_table_cold_load.png` — Single-table cold load stays sub-second through 10k; ~0.7s at 100k. Great for small tables and targeted reloads.
-- `benchmarks/output/charts/incremental_refresh.png` — Incremental refresh stays low single-digit ms even at 100k (touching only changed files). Confirms the incremental path is the right default.
-- `benchmarks/output/charts/pk_lookup.png` — O(1) lookups stay effectively flat (sub-microsecond medians); timer noise dominates at tiny sizes.
-- `benchmarks/output/charts/gsi_partition_lookup.png` — Partition scans grow with partition size; still under ~50 ms at 100k totals for hash-only GSI access.
-- `benchmarks/output/charts/gsi_sorted_query.png` — Sorted GSI queries add per-partition sort/filter cost; still inside ~50–65 ms at 100k totals.
+### Results (Rust backend, warm cache)
+
+![Full database cold load](benchmarks/output/charts/full_database_cold_load.png)
+![Single table cold load](benchmarks/output/charts/single_table_cold_load.png)
+![Incremental refresh](benchmarks/output/charts/incremental_refresh.png)
+![PK lookup](benchmarks/output/charts/pk_lookup.png)
+![GSI partition lookup](benchmarks/output/charts/gsi_partition_lookup.png)
+![GSI sorted query](benchmarks/output/charts/gsi_sorted_query.png)
+
+- Full DB cold load scales linearly; ~41s at 100k total records. Use for batch ingest, not hot paths.
+- Single-table cold load is sub-second through 10k; ~0.7s at 100k — fine for targeted reloads.
+- Incremental refresh stays low single-digit ms even at 100k when only a file changes.
+- PK lookup is effectively flat (timer noise at tiny sizes); O(1) hash lookups.
+- GSI partition lookup grows with partition size; ~50 ms at 100k totals for hash-only access.
+- GSI sorted query adds per-partition sort/filter; ~50–65 ms at 100k totals.
+
+### Results (Python backend, warm cache)
+
+Python-only benchmarks were run at 100, 1k, 10k totals to mirror the small-footprint use case:
+
+![Full database cold load (Python)](benchmarks/output_py/charts/full_database_cold_load.png)
+![Single table cold load (Python)](benchmarks/output_py/charts/single_table_cold_load.png)
+![Incremental refresh (Python)](benchmarks/output_py/charts/incremental_refresh.png)
+![PK lookup (Python)](benchmarks/output_py/charts/pk_lookup.png)
+![GSI partition lookup (Python)](benchmarks/output_py/charts/gsi_partition_lookup.png)
+![GSI sorted query (Python)](benchmarks/output_py/charts/gsi_sorted_query.png)
+
+- Cold loads remain comfortably sub-second through 10k totals; Python overhead is visible but still small for these sizes.
+- PK lookups stay effectively free; GSI lookups stay within low-ms ranges at 10k totals.
+- Incremental refresh is still sub-ms to low-ms for small corpora.
 
 ### Interpretation
-- For “relatively small” datasets (≤10k total records), everything is comfortably sub-second — cold loads, refresh, and queries. This is the sweet spot for Virtuus as a lightweight file-backed store.
-- PK lookups are essentially free; GSI lookups remain fast until partitions become very large. If range queries dominate, consider keeping partitions small or pre-sorting buckets on write.
-- Incremental refresh is the go-to for keeping data fresh without paying full reload costs; full cold loads are predictable but linear in total records.
+- Virtuus is an excellent fit for “relatively small” deployments (≈10k total records or less) where you want to ship data + query engine together in a container without external services.
+- Use the Rust backend when available for headroom; Python-only remains viable for small tables and still delivers sub-second behavior.
+- If range queries dominate, keep partitions small or pre-sort buckets on write; incremental refresh is the preferred path to keep data fresh without full reloads.
 
 ### How to regenerate
 ```bash
 VIRTUUS_BENCH_DIR=benchmarks/output VIRTUUS_BENCH_TOTALS=100,500,1000,5000,10000,50000,100000 \
+  python -m behave features/benchmarks/benchmark_scenarios.feature -n "Visualization generates charts"
+
+VIRTUUS_BENCH_BACKEND=python \
+VIRTUUS_BENCH_DIR=benchmarks/output_py \
+VIRTUUS_BENCH_TOTALS=100,1000,10000 \
   python -m behave features/benchmarks/benchmark_scenarios.feature -n "Visualization generates charts"
 ```
 Outputs land in `benchmarks/output/REPORT.md`, `benchmarks/output/benchmarks.json`, and `benchmarks/output/charts/*.png`.

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "e537239d-2186-427c-99f9-f3312bed596e",
+  "issue_id": "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T07:42:26.361Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Set up semantic-release (conventional commits)"
+  }
+}

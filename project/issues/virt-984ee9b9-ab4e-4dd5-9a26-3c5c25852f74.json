@@ -1,0 +1,25 @@
+{
+  "id": "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74",
+  "title": "Set up semantic-release (conventional commits)",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "92f6e58f-9203-4a76-9c76-1adb85b35fa3",
+      "author": "ryan.porter",
+      "text": "Did: discovered no semantic-release config/workflow present. Need to choose approach (JS semantic-release vs python-semantic-release vs release-please) to bump VERSION + tag + GH release (and future PyPI/Crates.io if desired). Next: propose concrete workflow change.",
+      "created_at": "2026-02-22T07:42:31.369786Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:42:26.361525Z",
+  "updated_at": "2026-02-22T07:42:31.369786Z",
+  "closed_at": null,
+  "custom": {}
+}

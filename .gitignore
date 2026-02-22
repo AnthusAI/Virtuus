@@ -25,3 +25,8 @@ benchmarks/output/posts/
 benchmarks/output/comments/
 benchmarks/output/social_media_scale_*/
 benchmarks/output/social_media_total_*/
+benchmarks/output_py/users/
+benchmarks/output_py/posts/
+benchmarks/output_py/comments/
+benchmarks/output_py/social_media_scale_*/
+benchmarks/output_py/social_media_total_*/

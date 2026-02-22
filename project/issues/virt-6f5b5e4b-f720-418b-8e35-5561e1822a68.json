@@ -1,0 +1,25 @@
+{
+  "id": "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68",
+  "title": "Benchmark Rust vs Python implementations",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "78dc1f89-84b3-4b02-8045-2a309e307ddf",
+      "author": "ryan.porter",
+      "text": "Did: enabled backend selection in benchmarks, ran Python-only benchmarks (100/1k/10k) to compare with Rust set. Next: embed charts + prose in README and commit/push. Blockers: none.",
+      "created_at": "2026-02-22T07:52:10.201971Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:52:04.768507Z",
+  "updated_at": "2026-02-22T07:52:10.201971Z",
+  "closed_at": null,
+  "custom": {}
+}
