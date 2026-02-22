@@ -3,16 +3,35 @@
   "title": "Concurrent read-write",
   "description": "Given readers and writers operating simultaneously, readers should never see partially-written records and writers should never corrupt the index for concurrent readers. Spec: features/concurrency/concurrent_read_write.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "8e1e6562-bd02-40be-9b58-c8821f78fb17",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: moved to concurrent read-write story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_read_write.feature and wire any concurrency helpers. Blockers: none.",
+      "created_at": "2026-02-22T01:47:54.119869Z"
+    },
+    {
+      "id": "397ac30e-09e0-4232-993d-33ea44976fa1",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: added concurrent read-write steps for Rust+Python with writer/reader loops and validation; cargo test --test cucumber passed; behave concurrent_read_write.feature passed. Next: close story and commit/push changes. Blockers: none.",
+      "created_at": "2026-02-22T01:50:28.584746Z"
+    },
+    {
+      "id": "289c1565-9db1-43bb-9183-bd9f90f6bbad",
+      "author": "ryan.porter",
+      "text": "Status: closed (kbs does not accept 'done'). Done: implemented concurrent_read_write steps in Rust+Python with reader/writer loops and GSI consistency checks. Tests: cargo test --test cucumber passed; behave features/concurrency/concurrent_read_write.feature passed.",
+      "created_at": "2026-02-22T01:50:39.274803Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:01.936420Z",
-  "updated_at": "2026-02-21T16:48:01.936420Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T01:50:39.274803Z",
+  "closed_at": "2026-02-22T01:50:34.130701Z",
   "custom": {}
 }

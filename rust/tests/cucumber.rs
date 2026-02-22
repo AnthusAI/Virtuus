@@ -13,7 +13,7 @@ use std::time::Duration;
 use cucumber::step;
 use cucumber::{given, then, when, World};
 use serde_json::{from_str, json, Map as JsonMap, Value};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use virtuus::database::Database;
 use virtuus::gsi::Gsi;
 use virtuus::sort::SortCondition;
@@ -65,6 +65,11 @@ pub struct VirtuusWorld {
     pub concurrent_counts: Vec<usize>,
     pub concurrent_lookups: Vec<(String, Option<String>)>,
     pub concurrent_errors: Vec<String>,
+    pub concurrent_writer_count: Option<usize>,
+    pub concurrent_reader_count: Option<usize>,
+    pub concurrent_written_ids: Vec<String>,
+    pub concurrent_gsi_missing: Vec<String>,
+    pub concurrent_writer_status: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -4782,6 +4787,199 @@ async fn when_concurrent_scan(world: &mut VirtuusWorld) {
 #[then("all 20 scans should return 500 records each")]
 async fn then_concurrent_scans_count(world: &mut VirtuusWorld) {
     assert!(world.concurrent_counts.iter().all(|c| *c == 500));
+}
+
+// ---------------------------------------------------------------------------
+// Concurrent read-write
+// ---------------------------------------------------------------------------
+
+#[when("10 writer threads continuously put new records")]
+async fn when_concurrent_writers(world: &mut VirtuusWorld) {
+    world.concurrent_writer_count = Some(10);
+    world.concurrent_writer_status = Some("active".to_string());
+    world.concurrent_written_ids.clear();
+    world.concurrent_errors.clear();
+}
+
+#[when("50 reader threads continuously scan the table")]
+async fn when_concurrent_readers_scan(world: &mut VirtuusWorld) {
+    let writer_count = world.concurrent_writer_count.unwrap_or(10);
+    let reader_count = 50;
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let stop = Arc::new(AtomicBool::new(false));
+    let id_counter = Arc::new(AtomicUsize::new(0));
+    let written_ids = Arc::new(Mutex::new(Vec::new()));
+    let errors = Arc::new(Mutex::new(Vec::new()));
+
+    let mut writer_handles = Vec::new();
+    for _ in 0..writer_count {
+        let table = Arc::clone(table);
+        let stop = Arc::clone(&stop);
+        let id_counter = Arc::clone(&id_counter);
+        let written_ids = Arc::clone(&written_ids);
+        writer_handles.push(thread::spawn(move || {
+            while !stop.load(Ordering::SeqCst) {
+                let idx = id_counter.fetch_add(1, Ordering::SeqCst);
+                let record = json!({
+                    "id": format!("user-new-{idx}"),
+                    "status": "active"
+                });
+                let mut table = table.lock().expect("lock table");
+                table.put(record);
+                written_ids
+                    .lock()
+                    .expect("lock ids")
+                    .push(format!("user-new-{idx}"));
+            }
+        }));
+    }
+
+    let mut reader_handles = Vec::new();
+    for _ in 0..reader_count {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        reader_handles.push(thread::spawn(move || {
+            for _ in 0..25 {
+                let mut table = table.lock().expect("lock table");
+                let records = table.scan();
+                if records.iter().any(|r| r.get("id").is_none()) {
+                    errors
+                        .lock()
+                        .expect("lock errors")
+                        .push("missing id".to_string());
+                }
+            }
+        }));
+    }
+
+    for handle in reader_handles {
+        let _ = handle.join();
+    }
+    stop.store(true, Ordering::SeqCst);
+    for handle in writer_handles {
+        let _ = handle.join();
+    }
+
+    world.concurrent_written_ids = written_ids.lock().expect("lock ids").clone();
+    world.concurrent_errors = errors.lock().expect("lock errors").clone();
+}
+
+#[then("readers should never see a partially-indexed record")]
+async fn then_readers_no_partial(world: &mut VirtuusWorld) {
+    assert!(world.concurrent_errors.is_empty());
+}
+
+#[then("all written records should eventually be visible to readers")]
+async fn then_written_records_visible(world: &mut VirtuusWorld) {
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut table = table.lock().expect("lock table");
+    let records = table.scan();
+    let ids: std::collections::HashSet<String> = records
+        .into_iter()
+        .filter_map(|r| r.get("id").and_then(|v| v.as_str()).map(|s| s.to_string()))
+        .collect();
+    for id in &world.concurrent_written_ids {
+        assert!(ids.contains(id));
+    }
+}
+
+#[given("a database with \"users\" table and GSI \"by_status\" on \"status\"")]
+async fn given_users_table_gsi(world: &mut VirtuusWorld) {
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        None,
+        ValidationMode::Silent,
+    );
+    table.add_gsi("by_status", "status", None);
+    world.concurrent_table = Some(Arc::new(Mutex::new(table)));
+    world.concurrent_writer_status = Some("active".to_string());
+    world.concurrent_errors.clear();
+    world.concurrent_gsi_missing.clear();
+}
+
+#[when("writers continuously put records with status \"active\"")]
+async fn when_writers_active(world: &mut VirtuusWorld) {
+    world.concurrent_writer_count = Some(10);
+    world.concurrent_writer_status = Some("active".to_string());
+    world.concurrent_written_ids.clear();
+    world.concurrent_errors.clear();
+}
+
+#[when("readers continuously query the GSI for \"active\"")]
+async fn when_readers_query_gsi(world: &mut VirtuusWorld) {
+    let writer_count = world.concurrent_writer_count.unwrap_or(10);
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let stop = Arc::new(AtomicBool::new(false));
+    let id_counter = Arc::new(AtomicUsize::new(0));
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let missing = Arc::new(Mutex::new(Vec::new()));
+
+    let mut writer_handles = Vec::new();
+    for _ in 0..writer_count {
+        let table = Arc::clone(table);
+        let stop = Arc::clone(&stop);
+        let id_counter = Arc::clone(&id_counter);
+        writer_handles.push(thread::spawn(move || {
+            while !stop.load(Ordering::SeqCst) {
+                let idx = id_counter.fetch_add(1, Ordering::SeqCst);
+                let record = json!({
+                    "id": format!("user-active-{idx}"),
+                    "status": "active"
+                });
+                let mut table = table.lock().expect("lock table");
+                table.put(record);
+            }
+        }));
+    }
+
+    let mut reader_handles = Vec::new();
+    for _ in 0..25 {
+        let table = Arc::clone(table);
+        let errors = Arc::clone(&errors);
+        let missing = Arc::clone(&missing);
+        reader_handles.push(thread::spawn(move || {
+            for _ in 0..20 {
+                let mut table = table.lock().expect("lock table");
+                let records = table.query_gsi("by_status", &json!("active"), None, false);
+                for record in records {
+                    let Some(id) = record.get("id").and_then(|v| v.as_str()) else {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("missing id".to_string());
+                        continue;
+                    };
+                    if table.get(id, None).is_none() {
+                        missing.lock().expect("lock missing").push(id.to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    for handle in reader_handles {
+        let _ = handle.join();
+    }
+    stop.store(true, Ordering::SeqCst);
+    for handle in writer_handles {
+        let _ = handle.join();
+    }
+
+    world.concurrent_errors = errors.lock().expect("lock errors").clone();
+    world.concurrent_gsi_missing = missing.lock().expect("lock missing").clone();
+}
+
+#[then("every record returned by the GSI should exist in the table")]
+async fn then_gsi_records_exist(world: &mut VirtuusWorld) {
+    assert!(world.concurrent_gsi_missing.is_empty());
+}
+
+#[then("no reader should encounter an error")]
+async fn then_no_reader_error(world: &mut VirtuusWorld) {
+    assert!(world.concurrent_errors.is_empty());
 }
 
 // ---------------------------------------------------------------------------

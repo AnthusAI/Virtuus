@@ -136,3 +136,141 @@ def step_concurrent_scan(context):
 @then("all 20 scans should return 500 records each")
 def step_concurrent_scan_count(context):
     assert all(count == 500 for count in context.concurrent_counts)
+
+
+@when("10 writer threads continuously put new records")
+def step_concurrent_writers(context):
+    table = context.concurrent_table
+    lock = context.concurrent_lock
+    context.writer_stop = threading.Event()
+    context.writer_threads = []
+    context.concurrent_written_ids = []
+    context.concurrent_errors = []
+
+    def writer(worker_id: int) -> None:
+        counter = 0
+        while not context.writer_stop.is_set():
+            record_id = f"user-new-{worker_id}-{counter}"
+            record = {"id": record_id, "status": "active"}
+            with lock:
+                table.put(record)
+                context.concurrent_written_ids.append(record_id)
+            counter += 1
+
+    for i in range(10):
+        thread = threading.Thread(target=writer, args=(i,))
+        context.writer_threads.append(thread)
+        thread.start()
+
+
+@when("50 reader threads continuously scan the table")
+def step_concurrent_readers_scan(context):
+    table = context.concurrent_table
+    lock = context.concurrent_lock
+    context.reader_errors = []
+    reader_threads = []
+
+    def reader() -> None:
+        for _ in range(25):
+            with lock:
+                records = table.scan()
+            if any("id" not in record for record in records):
+                context.reader_errors.append("missing id")
+
+    for _ in range(50):
+        thread = threading.Thread(target=reader)
+        reader_threads.append(thread)
+        thread.start()
+    for thread in reader_threads:
+        thread.join()
+
+    context.writer_stop.set()
+    for thread in context.writer_threads:
+        thread.join()
+
+
+@then("readers should never see a partially-indexed record")
+def step_readers_no_partial(context):
+    assert not context.reader_errors
+
+
+@then("all written records should eventually be visible to readers")
+def step_written_records_visible(context):
+    table = context.concurrent_table
+    records = table.scan()
+    ids = {record.get("id") for record in records}
+    assert all(record_id in ids for record_id in context.concurrent_written_ids)
+
+
+@given('a database with "users" table and GSI "by_status" on "status"')
+def step_users_table_gsi(context):
+    table = Table("users", primary_key="id")
+    table.add_gsi("by_status", "status")
+    context.concurrent_table = table
+    context.concurrent_lock = threading.Lock()
+    context.concurrent_errors = []
+    context.concurrent_gsi_missing = []
+
+
+@when('writers continuously put records with status "active"')
+def step_writers_active(context):
+    table = context.concurrent_table
+    lock = context.concurrent_lock
+    context.writer_stop = threading.Event()
+    context.writer_threads = []
+
+    def writer(worker_id: int) -> None:
+        counter = 0
+        while not context.writer_stop.is_set():
+            record_id = f"user-active-{worker_id}-{counter}"
+            record = {"id": record_id, "status": "active"}
+            with lock:
+                table.put(record)
+            counter += 1
+
+    for i in range(10):
+        thread = threading.Thread(target=writer, args=(i,))
+        context.writer_threads.append(thread)
+        thread.start()
+
+
+@when('readers continuously query the GSI for "active"')
+def step_readers_query_gsi(context):
+    table = context.concurrent_table
+    lock = context.concurrent_lock
+    context.reader_errors = []
+    context.concurrent_gsi_missing = []
+    reader_threads = []
+
+    def reader() -> None:
+        for _ in range(20):
+            with lock:
+                records = table.query_gsi("by_status", "active")
+                for record in records:
+                    record_id = record.get("id")
+                    if record_id is None:
+                        context.reader_errors.append("missing id")
+                        continue
+                    if table.get(record_id) is None:
+                        context.concurrent_gsi_missing.append(record_id)
+
+    for _ in range(25):
+        thread = threading.Thread(target=reader)
+        reader_threads.append(thread)
+        thread.start()
+    for thread in reader_threads:
+        thread.join()
+
+    context.writer_stop.set()
+    for thread in context.writer_threads:
+        thread.join()
+
+
+@then("every record returned by the GSI should exist in the table")
+def step_gsi_records_exist(context):
+    assert not context.concurrent_gsi_missing
+
+
+@then("no reader should encounter an error")
+def step_no_reader_error(context):
+    assert not context.reader_errors
