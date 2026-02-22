@@ -270,7 +270,12 @@ We measured server RSS while serving pre-generated JSON datasets, varying corpus
 
 ![Memory RSS](benchmarks/output_memory/memory_rss.png)
 
-See `benchmarks/output_memory/results.csv` for the raw numbers.
+Interpretation:
+- 100–1k users stay in the tens of MB range even with 3 GSIs.
+- At 10k users, RSS remains comfortably under typical small-container budgets; each added GSI bumps memory linearly but gently.
+- Associations (users↔posts) are included here; removing them would reduce RSS further.
+
+See `benchmarks/output_memory/results.csv` for raw numbers.
 
 - Gap is smallest on hot-path hash lookups (PK + hash-only GSI) at small sizes; Python stays in low single-digit ms.
 - Sorted GSI queries widen the gap because the Python path spends more time ordering partition results.
