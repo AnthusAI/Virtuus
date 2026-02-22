@@ -164,7 +164,12 @@ async fn given_python_library(world: &mut VirtuusWorld) {
     let script = format!(
         "import sys; sys.path.insert(0, {src:?}); import virtuus; print(virtuus.__version__)"
     );
-    let output = Command::new("conda")
+    let conda_bin = if std::path::Path::new("/opt/anaconda3/bin/conda").exists() {
+        "/opt/anaconda3/bin/conda"
+    } else {
+        "conda"
+    };
+    let output = Command::new(conda_bin)
         .args(["run", "-n", "virtuus", "python", "-c", &script])
         .output()
         .expect("Failed to run conda python — is Conda available?");
@@ -3509,7 +3514,9 @@ async fn then_list_tables(world: &mut VirtuusWorld) {
     assert_eq!(names.len(), 3);
 }
 
-#[then(regex = r#"^the "users" entry should include primary_key, GSIs, record_count, and staleness$"#)]
+#[then(
+    regex = r#"^the "users" entry should include primary_key, GSIs, record_count, and staleness$"#
+)]
 async fn then_describe_users(world: &mut VirtuusWorld) {
     let users = world
         .db_result
@@ -3672,7 +3679,9 @@ async fn given_schema_missing_field(world: &mut VirtuusWorld) {
     world.data_root = Some(dir);
 }
 
-#[given(regex = r#"^a YAML schema file defining a "users" table with GSIs "by_email" and "by_status"$"#)]
+#[given(
+    regex = r#"^a YAML schema file defining a "users" table with GSIs "by_email" and "by_status"$"#
+)]
 async fn given_schema_with_gsis(world: &mut VirtuusWorld) {
     let dir = unique_temp("schema_gsis");
     fs::create_dir_all(&dir).unwrap();
@@ -3693,7 +3702,9 @@ tables:
     world.data_root = Some(dir);
 }
 
-#[given(regex = r#"^a YAML schema defining a table with partition_key "item_id" and sort_key "name"$"#)]
+#[given(
+    regex = r#"^a YAML schema defining a table with partition_key "item_id" and sort_key "name"$"#
+)]
 async fn given_schema_composite(world: &mut VirtuusWorld) {
     let dir = unique_temp("schema_composite_keys");
     let items_dir = dir.join("items");
@@ -4039,7 +4050,9 @@ async fn then_nested_three(world: &mut VirtuusWorld) {
     assert!(posts.first().unwrap().get("comments").is_some());
 }
 
-#[then(regex = r#"^the result should include the user with a nested "posts" array of (\d+) records$"#)]
+#[then(
+    regex = r#"^the result should include the user with a nested "posts" array of (\d+) records$"#
+)]
 async fn then_nested_posts(world: &mut VirtuusWorld, count: usize) {
     let result = world.db_result.as_ref().expect("missing result");
     let posts = result.get("posts").and_then(|p| p.as_array()).unwrap();
@@ -4049,13 +4062,12 @@ async fn then_nested_posts(world: &mut VirtuusWorld, count: usize) {
 #[then(regex = r#"^the result should include the post with a nested "author" object$"#)]
 async fn then_nested_author(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
-    assert!(result
-        .get("author")
-        .map(|a| a.is_object())
-        .unwrap_or(false));
+    assert!(result.get("author").map(|a| a.is_object()).unwrap_or(false));
 }
 
-#[then(regex = r#"^the result should include the job with a nested "workers" array of (\d+) records$"#)]
+#[then(
+    regex = r#"^the result should include the job with a nested "workers" array of (\d+) records$"#
+)]
 async fn then_nested_workers(world: &mut VirtuusWorld, count: usize) {
     let result = world.db_result.as_ref().expect("missing result");
     let len = result
