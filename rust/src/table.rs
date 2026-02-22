@@ -1897,13 +1897,13 @@ mod tests {
         );
         table.load_from_dir(None);
         assert!(!table.is_stale(false));
+        // bump mtime
         fs::write(
             &path,
             json!({"id": "user-0", "status": "inactive"}).to_string(),
         )
         .unwrap();
-        // Ensure filesystem mtime moves forward (Linux CI has 1s resolution)
-        std::thread::sleep(std::time::Duration::from_millis(1100));
+        filetime::set_file_mtime(&path, filetime::FileTime::now()).unwrap();
         assert!(table.is_stale(false));
     }
 
@@ -1966,7 +1966,7 @@ mod tests {
             json!({"id": "user-0", "status": "inactive"}).to_string(),
         )
         .unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(1100));
+        filetime::set_file_mtime(&path, filetime::FileTime::now()).unwrap();
         let summary = table.refresh();
         assert_eq!(summary.modified, 1);
         assert_eq!(summary.reread, 1);

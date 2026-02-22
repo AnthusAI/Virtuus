@@ -106,6 +106,7 @@ pub struct VirtuusWorld {
     pub bench_total_records: Option<usize>,
     pub bench_date_range: Option<(String, String)>,
     pub bench_db: Option<Database>,
+    pub schema_dict: Option<Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -5103,6 +5104,93 @@ tables:
     world.data_root = Some(dir);
 }
 
+// ---------------------------------------------------------------------------
+// Schema dictionaries (Python parity)
+// ---------------------------------------------------------------------------
+
+#[given("a temporary data root with user fixture files")]
+async fn given_temp_data_root(world: &mut VirtuusWorld) {
+    let dir = unique_temp("data_root");
+    let users_dir = dir.join("users");
+    fs::create_dir_all(&users_dir).unwrap();
+    fs::write(
+        users_dir.join("user-1.json"),
+        r#"{"id":"user-1","status":"active"}"#,
+    )
+    .unwrap();
+    world.data_root = Some(dir);
+}
+
+#[given("a database schema dictionary:")]
+async fn given_schema_dict(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
+    let text = step.docstring.clone().unwrap_or_default();
+    let value: Value = serde_json::from_str(text.trim()).expect("invalid schema dict JSON");
+    world.schema_dict = Some(value);
+}
+
+#[when("I create a database from the schema dictionary")]
+async fn when_create_db_from_schema_dict(world: &mut VirtuusWorld) {
+    let schema = world
+        .schema_dict
+        .clone()
+        .expect("schema dict missing in world");
+    let dir = unique_temp("schema_dict");
+    let schema_path = dir.join("schema.json");
+    fs::write(&schema_path, serde_json::to_string_pretty(&schema).unwrap()).unwrap();
+    let data_root = world.data_root.clone();
+    let db = match data_root {
+        Some(root) => Database::from_schema(schema_path.as_path(), Some(root.as_path())),
+        None => Database::from_schema(schema_path.as_path(), None),
+    };
+    world.schema_path = Some(schema_path);
+    world.database = Some(db);
+}
+
+#[then("the database should have loaded 1 user record from disk")]
+async fn then_schema_dict_loaded_record(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().expect("database not initialized");
+    let users = db.tables().get("users").expect("users table missing");
+    assert_eq!(users.count(None, None), 1);
+    let record = users.get("user-1", None).expect("user-1 missing");
+    assert_eq!(
+        record.get("status").and_then(|v| v.as_str()),
+        Some("active")
+    );
+}
+
+#[then("the database describe output should include stale flag for \"users\"")]
+async fn then_schema_dict_describe(world: &mut VirtuusWorld) {
+    let db = world.database.as_mut().expect("database not initialized");
+    let describe = db.describe();
+    let users = describe.get("users").and_then(|v| v.as_object()).unwrap();
+    assert!(users.contains_key("stale"));
+    assert_eq!(users.get("stale").and_then(|v| v.as_bool()), Some(false));
+}
+
+#[then("the database should have GSIs and associations configured from the schema dict")]
+async fn then_schema_dict_configured(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().expect("database not initialized");
+    let users = db.tables().get("users").expect("users table");
+    let posts = db.tables().get("posts").expect("posts table");
+    let jobs = db.tables().get("jobs").expect("jobs table");
+
+    assert!(users.gsis().contains_key("by_status"));
+    assert!(users.associations().contains(&"posts".to_string()));
+    assert!(posts.gsis().contains_key("by_user"));
+    assert!(posts.associations().contains(&"author".to_string()));
+    assert!(jobs.associations().contains(&"workers".to_string()));
+}
+
+#[then("the database should contain tables \"users\" and \"posts\"")]
+async fn then_schema_dict_tables(world: &mut VirtuusWorld) {
+    let db = world.database.as_ref().expect("database not initialized");
+    let names: std::collections::HashSet<_> = db.tables().keys().cloned().collect();
+    let expected: std::collections::HashSet<_> = ["users".to_string(), "posts".to_string()]
+        .into_iter()
+        .collect();
+    assert_eq!(names, expected);
+}
+
 #[given(
     regex = r#"^a YAML schema defining a table with partition_key "item_id" and sort_key "name"$"#
 )]
@@ -5939,6 +6027,47 @@ async fn given_concurrent_users(world: &mut VirtuusWorld, count: usize) {
     world.concurrent_errors.clear();
 }
 
+#[given("a database with \"users\" table and GSI \"by_status\" on \"status\"")]
+#[given(r#"a database with "users" table and GSI "by_status" on "status""#)]
+async fn given_concurrent_users_with_gsi(world: &mut VirtuusWorld) {
+    given_concurrent_users(world, 0).await;
+    let table = world.concurrent_table.as_ref().expect("missing table");
+    let mut table = table.lock().expect("lock table");
+    table.add_gsi("by_status", "status", None);
+}
+
+#[given("a database with \"users\" table loaded from files")]
+#[given(r#"a database with "users" table loaded from files"#)]
+async fn given_database_users_loaded_from_files(world: &mut VirtuusWorld) {
+    let dir = unique_temp("refresh_users");
+    let users_dir = dir.join("users");
+    fs::create_dir_all(&users_dir).unwrap();
+    for i in 0..200 {
+        let status = if i % 2 == 0 { "active" } else { "inactive" };
+        let path = users_dir.join(format!("user-{i}.json"));
+        fs::write(
+            &path,
+            serde_json::to_string(&json!({"id": format!("user-{i}"), "status": status})).unwrap(),
+        )
+        .unwrap();
+    }
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        Some(users_dir.clone()),
+        ValidationMode::Silent,
+    );
+    table.add_gsi("by_status", "status", None);
+    table.load_from_dir(Some(users_dir));
+    world.refresh_dir = Some(dir);
+    world.refresh_table = Some(Arc::new(Mutex::new(table)));
+    world.refresh_expected = Some((200, 200));
+    world.refresh_counts.clear();
+    world.refresh_reread = None;
+}
+
 #[given(regex = r#"^a GSI "([^"]*)" on "([^"]*)"$"#)]
 async fn given_concurrent_gsi(world: &mut VirtuusWorld, name: String, field: String) {
     let table = world.concurrent_table.as_ref().expect("missing table");
@@ -6158,6 +6287,7 @@ async fn then_written_records_visible(world: &mut VirtuusWorld) {
     }
 }
 
+#[when(regex = r#"writers continuously put records with status "active""#)]
 #[when("writers continuously put records with status \"active\"")]
 async fn when_writers_active(world: &mut VirtuusWorld) {
     world.concurrent_writer_count = Some(10);
@@ -6166,6 +6296,7 @@ async fn when_writers_active(world: &mut VirtuusWorld) {
     world.concurrent_errors.clear();
 }
 
+#[when(regex = r#"readers continuously query the GSI for "active""#)]
 #[when("readers continuously query the GSI for \"active\"")]
 async fn when_readers_query_gsi(world: &mut VirtuusWorld) {
     let writer_count = world.concurrent_writer_count.unwrap_or(10);

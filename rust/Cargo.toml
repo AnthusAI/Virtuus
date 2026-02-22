@@ -30,3 +30,6 @@ python = ["pyo3", "pythonize"]
 [dev-dependencies]
 cucumber = "0.21"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+assert-json-diff = "2.0"
+tempdir = "0.3"
+filetime = "0.2"

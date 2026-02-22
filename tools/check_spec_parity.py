@@ -6,6 +6,7 @@ Rust steps:    rust/tests/**/*.rs
 """
 
 import re
+import ast
 import sys
 from pathlib import Path
 
@@ -29,7 +30,7 @@ RUST_PATTERN_RAW = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 RUST_PATTERN_PLAIN = re.compile(
-    r'#\[\s*(?:given|when|then)\s*\(\s*"([^"]+)"\s*\)\s*\]',
+    r'#\[\s*(?:given|when|then)\s*\(\s*("(?:(?:[^"\\]|\\.)*)")\s*\)\s*\]',
     re.IGNORECASE,
 )
 
@@ -37,7 +38,21 @@ RUST_PATTERN_PLAIN = re.compile(
 def extract_feature_steps() -> list[str]:
     steps: list[str] = []
     for path in sorted(REPO_ROOT.glob("features/**/*.feature")):
-        for line in path.read_text().splitlines():
+        lines = path.read_text().splitlines()
+        # Skip python-only features from parity enforcement.
+        # If a tag line preceding the Feature contains "python-only",
+        # we treat the whole file as out-of-scope for Rust parity.
+        before_feature = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("Feature:"):
+                break
+            if stripped:
+                before_feature.append(stripped)
+        if any("python-only" in tag for tag in before_feature):
+            continue
+
+        for line in lines:
             stripped = line.strip()
             for kw in STEP_KEYWORDS:
                 if stripped.startswith(kw):
@@ -64,7 +79,11 @@ def extract_rust_patterns() -> list[str]:
     for path in sorted(REPO_ROOT.glob("rust/tests/**/*.rs")):
         text = path.read_text()
         patterns.extend(RUST_PATTERN_RAW.findall(text))
-        patterns.extend(RUST_PATTERN_PLAIN.findall(text))
+        for literal in RUST_PATTERN_PLAIN.findall(text):
+            try:
+                patterns.append(ast.literal_eval(literal))
+            except Exception:
+                patterns.append(literal.strip('"'))
     return patterns
 
 
@@ -87,6 +106,7 @@ def _to_regex(pattern: str) -> re.Pattern:
         or re.search(r"\(\.\*", pattern)
     ):
         return re.compile(pattern, re.IGNORECASE)
+    pattern = pattern.replace(r"\"", '"')
     escaped = re.escape(pattern)
     # {param:d} → \d+ (numeric constraints)
     escaped = re.sub(r"\\\{[^}:]+:d\\\}", r"\\d+", escaped)

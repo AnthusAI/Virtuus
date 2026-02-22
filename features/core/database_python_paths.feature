@@ -1,3 +1,4 @@
+@python-only
 Feature: Python database path coverage
   Scenario: Load from YAML with directory, GSI, associations and describe/validate
     Given a temporary python data root with users fixture and schema yaml

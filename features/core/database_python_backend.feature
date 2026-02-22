@@ -1,3 +1,4 @@
+@python-only
 Feature: Python backend coverage
   As a developer
   I want direct Python backend scenarios
