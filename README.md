@@ -12,6 +12,17 @@ Data lives on disk as one JSON file per record. Virtuus loads it into memory, bu
 
 We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records or less), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
 
+## When to Use
+- You want to ship data + query engine inside the same container with no external DB.
+- Your tables are “small” (sweet spot ≤10k records, still reasonable to ~100k with the Rust backend).
+- You need DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
+- You need a drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
+
+## When Not to Use
+- You have multi-million-record tables that demand SSD-backed columnar storage.
+- You need cross-node clustering or distributed consensus.
+- You require ACID transactions or high write concurrency.
+
 ## Installation
 
 Three installation paths, one codebase:
@@ -203,6 +214,8 @@ make bench              # run benchmarks + generate visualizations
 
 ## Benchmarks
 
+Benchmark goal: validate that Virtuus stays snappy for “small” datasets and that a container can carry its own data + engine without external dependencies. Warm-cache results are shown because most workloads in containers keep hot data in memory; cold-load numbers indicate one-time costs.
+
 ### Setup
 - Fixture profile: `social_media` (users/posts/comments with GSIs)
 - Sizes: 100, 500, 1k, 5k, 10k, 50k, 100k total records
@@ -210,6 +223,8 @@ make bench              # run benchmarks + generate visualizations
 - Metrics: cold load (single table and full DB), incremental refresh, PK lookup, GSI hash-only lookup, GSI sorted lookup (range key)
 
 ### Results (Rust backend, warm cache)
+
+The Rust backend represents the “production” path: same API, faster engine, still file-backed.
 
 ![Full database cold load](benchmarks/output/charts/full_database_cold_load.png)
 ![Single table cold load](benchmarks/output/charts/single_table_cold_load.png)
@@ -244,6 +259,8 @@ Python-only benchmarks were run at 100, 1k, 10k totals to mirror the small-footp
 - Virtuus is an excellent fit for “relatively small” deployments (≈10k total records or less) where you want to ship data + query engine together in a container without external services.
 - Use the Rust backend when available for headroom; Python-only remains viable for small tables and still delivers sub-second behavior.
 - If range queries dominate, keep partitions small or pre-sort buckets on write; incremental refresh is the preferred path to keep data fresh without full reloads.
+ - Cold-load costs are linear; for tiny tables (≤10k) they remain sub-second, which is why the model works well for per-pod data snapshots.
+ - The Python/Rust gap is most visible on cold loads; query latencies for small corpora stay close because data fits in memory and hash lookups dominate.
 
 ### How to regenerate
 ```bash
