@@ -183,6 +183,8 @@ Virtuus is implemented identically in both Rust and Python, driven by shared Ghe
 - **Shared specs**: Gherkin feature files in `features/` are the single source of truth
 - **PyO3 bridge**: The Rust implementation compiles as a Python extension module via PyO3 + maturin
 
+Philosophy: start fast in Python, flip to Rust when ready. Development can begin immediately with the pure-Python backend (no toolchain needed). In production, install a Rust toolchain and the same import automatically loads the Rust backend for a drop-in speed bump—no API changes, just a faster engine.
+
 Both implementations maintain 100% test coverage at all times.
 
 ## Development
