@@ -3,7 +3,7 @@
   "title": "CI: Python 3.9+ matrix",
   "description": "",
   "type": "task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,10 +16,16 @@
       "author": "ryan.porter",
       "text": "Did: starting CI matrix for Python 3.9+. Next: update GitHub Actions to run matrix and keep full make check on latest. Blockers: none.",
       "created_at": "2026-02-22T07:36:04.392697Z"
+    },
+    {
+      "id": "91404d36-61c3-4632-ab4e-79cf14f26dbf",
+      "author": "ryan.porter",
+      "text": "Done: CI now runs Python 3.9–3.12 matrix; full make check on 3.12, check-python on others. Next: decide if we want Rust MSRV/beta matrix. Blockers: none.",
+      "created_at": "2026-02-22T07:36:32.184031Z"
     }
   ],
   "created_at": "2026-02-22T07:35:19.724757Z",
-  "updated_at": "2026-02-22T07:36:04.392697Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T07:36:32.274209Z",
+  "closed_at": "2026-02-22T07:36:32.274209Z",
   "custom": {}
 }
