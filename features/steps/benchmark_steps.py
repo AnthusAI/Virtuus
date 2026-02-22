@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import binascii
 import json
 import os
 import random
+import struct
 import time
+import zlib
 from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -14,11 +17,331 @@ from virtuus import Database, Table
 
 
 def _ensure_bench_root(context) -> Path:
+    env_dir = os.getenv("VIRTUUS_BENCH_DIR")
+    if env_dir:
+        root = Path(env_dir)
+        root.mkdir(parents=True, exist_ok=True)
+        context.bench_root = root
+        return root
     if not hasattr(context, "bench_tmp"):
         context.bench_tmp = TemporaryDirectory()
     root = Path(context.bench_tmp.name)
     context.bench_root = root
     return root
+
+
+def _bench_data_root(context) -> Path:
+    root = _ensure_bench_root(context)
+    profile = getattr(context, "bench_profile", "social_media")
+    scale = getattr(context, "bench_scale", 1)
+    data_root = root / f"{profile}_scale_{scale}"
+    data_root.mkdir(parents=True, exist_ok=True)
+    context.bench_data_root = data_root
+    return data_root
+
+
+def _entry_metrics(entry: dict) -> list[tuple[str, float]]:
+    metrics: list[tuple[str, float]] = []
+    if "timing_ms" in entry:
+        metrics.append(("timing_ms", float(entry["timing_ms"])))
+    meta = entry.get("metadata", {}) or {}
+    for key in ("p50", "p95", "p99"):
+        if key in meta:
+            metrics.append((key, float(meta[key])))
+    if not metrics and "timings" in entry:
+        timings = sorted(float(v) for v in entry.get("timings", []))
+        if timings:
+            metrics.extend(
+                [
+                    ("p50", timings[int(0.50 * (len(timings) - 1))]),
+                    ("p95", timings[int(0.95 * (len(timings) - 1))]),
+                    ("p99", timings[int(0.99 * (len(timings) - 1))]),
+                ]
+            )
+    return metrics
+
+
+def _bench_scales() -> list[int]:
+    env = os.getenv("VIRTUUS_BENCH_SCALES")
+    if not env:
+        return [1, 2]
+    scales: list[int] = []
+    for part in env.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            scales.append(int(part))
+        except ValueError:
+            continue
+    return scales or [1]
+
+
+def _format_int(value: int | float | None) -> str:
+    if value is None:
+        return "-"
+    return f"{int(value):,}"
+
+
+def _format_benchmark_name(name: str) -> str:
+    return name.replace("_", " ").strip().title()
+
+
+def _format_metric_label(label: str) -> str:
+    if label == "timing_ms":
+        return "Timing (ms)"
+    if label == "p50":
+        return "P50 (ms)"
+    if label == "p95":
+        return "P95 (ms)"
+    if label == "p99":
+        return "P99 (ms)"
+    return label.replace("_", " ").strip().title()
+
+
+def _format_value_ms(value: float) -> str:
+    if value >= 100:
+        return f"{value:.1f} MS"
+    if value >= 1:
+        return f"{value:.3f} MS"
+    return f"{value:.6f} MS"
+
+
+_FONT_5X7: dict[str, list[str]] = {
+    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+    "C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
+    "D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    "E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+    "F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+    "G": ["01110", "10001", "10000", "10111", "10001", "10001", "01111"],
+    "H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "I": ["01110", "00100", "00100", "00100", "00100", "00100", "01110"],
+    "J": ["00111", "00010", "00010", "00010", "10010", "10010", "01100"],
+    "K": ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+    "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+    "M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+    "O": ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+    "P": ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+    "Q": ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
+    "R": ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+    "S": ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+    "T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+    "U": ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+    "V": ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+    "W": ["10001", "10001", "10001", "10101", "10101", "10101", "01010"],
+    "X": ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+    "Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+    "Z": ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+    "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
+    "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
+    "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
+    "3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
+    "4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
+    "5": ["11111", "10000", "10000", "11110", "00001", "00001", "11110"],
+    "6": ["01110", "10000", "10000", "11110", "10001", "10001", "01110"],
+    "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+    "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
+    "9": ["01110", "10001", "10001", "01111", "00001", "00001", "01110"],
+    " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
+    ".": ["00000", "00000", "00000", "00000", "00000", "00100", "00100"],
+    "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
+    ":": ["00000", "00100", "00100", "00000", "00100", "00100", "00000"],
+    "(": ["00010", "00100", "01000", "01000", "01000", "00100", "00010"],
+    ")": ["01000", "00100", "00010", "00010", "00010", "00100", "01000"],
+    "/": ["00001", "00010", "00100", "01000", "10000", "00000", "00000"],
+}
+
+
+def _text_width(text: str, scale: int = 1) -> int:
+    if not text:
+        return 0
+    return len(text) * (5 + 1) * scale - scale
+
+
+def _new_canvas(width: int, height: int, color: tuple[int, int, int, int]) -> list[bytearray]:
+    r, g, b, a = color
+    row = bytearray([r, g, b, a] * width)
+    return [bytearray(row) for _ in range(height)]
+
+
+def _set_pixel(rows: list[bytearray], x: int, y: int, color: tuple[int, int, int, int]) -> None:
+    if y < 0 or y >= len(rows):
+        return
+    if x < 0 or x * 4 >= len(rows[y]):
+        return
+    idx = x * 4
+    rows[y][idx : idx + 4] = bytes(color)
+
+
+def _draw_rect(
+    rows: list[bytearray],
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    color: tuple[int, int, int, int],
+) -> None:
+    for yy in range(y, y + height):
+        if yy < 0 or yy >= len(rows):
+            continue
+        row = rows[yy]
+        for xx in range(x, x + width):
+            if xx < 0 or xx * 4 >= len(row):
+                continue
+            idx = xx * 4
+            row[idx : idx + 4] = bytes(color)
+
+
+def _draw_text(
+    rows: list[bytearray],
+    x: int,
+    y: int,
+    text: str,
+    color: tuple[int, int, int, int],
+    scale: int = 1,
+) -> None:
+    cursor_x = x
+    for char in text.upper():
+        pattern = _FONT_5X7.get(char, _FONT_5X7[" "])
+        for row_idx, row in enumerate(pattern):
+            for col_idx, bit in enumerate(row):
+                if bit != "1":
+                    continue
+                for dy in range(scale):
+                    for dx in range(scale):
+                        _set_pixel(
+                            rows,
+                            cursor_x + col_idx * scale + dx,
+                            y + row_idx * scale + dy,
+                            color,
+                        )
+        cursor_x += (5 + 1) * scale
+
+
+def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+    length = struct.pack("!I", len(data))
+    crc = struct.pack("!I", binascii.crc32(chunk_type + data) & 0xFFFFFFFF)
+    return length + chunk_type + data + crc
+
+
+def _write_png(path: Path, width: int, height: int, rows: list[bytearray]) -> None:
+    raw = bytearray()
+    for row in rows:
+        raw.append(0)
+        raw.extend(row)
+    compressed = zlib.compress(bytes(raw))
+    ihdr = struct.pack("!IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    png = b"".join(
+        [
+            b"\x89PNG\r\n\x1a\n",
+            _png_chunk(b"IHDR", ihdr),
+            _png_chunk(b"IDAT", compressed),
+            _png_chunk(b"IEND", b""),
+        ]
+    )
+    path.write_bytes(png)
+
+
+def _render_single_metric_chart(name: str, label: str, value: float, path: Path) -> None:
+    width = 640
+    height = 220
+    bg = (248, 249, 251, 255)
+    text_color = (28, 32, 38, 255)
+    accent = (34, 97, 207, 255)
+    rows = _new_canvas(width, height, bg)
+    _draw_text(rows, 20, 18, name, text_color, scale=2)
+    _draw_text(rows, 20, 60, label, text_color, scale=2)
+    value_text = _format_value_ms(value)
+    scale = 4
+    max_width = width - 40
+    while scale > 1 and _text_width(value_text, scale) > max_width:
+        scale -= 1
+    x = max((width - _text_width(value_text, scale)) // 2, 20)
+    _draw_text(rows, x, 120, value_text, accent, scale=scale)
+    _write_png(path, width, height, rows)
+
+
+def _render_bar_chart(name: str, metrics: list[tuple[str, float]], path: Path) -> None:
+    width = 720
+    row_height = 30
+    top = 50
+    height = top + len(metrics) * row_height + 30
+    bg = (248, 249, 251, 255)
+    text_color = (28, 32, 38, 255)
+    bar_color = (34, 97, 207, 255)
+    rows = _new_canvas(width, height, bg)
+    _draw_text(rows, 20, 16, name, text_color, scale=2)
+    max_val = max(value for _, value in metrics) or 1.0
+    bar_left = 220
+    bar_right = width - 40
+    bar_max = max(bar_right - bar_left, 10)
+    for idx, (label, value) in enumerate(metrics):
+        y = top + idx * row_height
+        _draw_text(rows, 20, y, label, text_color, scale=2)
+        bar_width = int(bar_max * (value / max_val))
+        _draw_rect(rows, bar_left, y + 6, bar_width, 14, bar_color)
+        value_text = _format_value_ms(value)
+        _draw_text(rows, bar_left + bar_width + 10, y + 4, value_text, text_color, scale=1)
+    _write_png(path, width, height, rows)
+
+
+def _write_report(context, data: list[dict], report_path: Path) -> None:
+    lines = ["# Benchmark Report", ""]
+    root = _ensure_bench_root(context)
+    lines.append(f"- Bench root: `{root}`")
+    if getattr(context, "bench_date_range", None):
+        start, end = context.bench_date_range
+        lines.append(f"- Date range: `{start}` → `{end}`")
+    scale_counts: dict[int, dict[str, int]] = {}
+    for entry in data:
+        meta = entry.get("metadata", {}) or {}
+        scale = meta.get("scale")
+        counts = meta.get("counts")
+        if isinstance(scale, int) and isinstance(counts, dict):
+            scale_counts[scale] = counts
+    if scale_counts:
+        lines.append("")
+        lines.append("## Data Scales")
+        lines.append("| scale | users | posts | comments | total_records |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for scale in sorted(scale_counts):
+            counts = scale_counts[scale]
+            total = sum(int(v) for v in counts.values())
+            lines.append(
+                "| {scale} | {users} | {posts} | {comments} | {total} |".format(
+                    scale=scale,
+                    users=_format_int(counts.get("users")),
+                    posts=_format_int(counts.get("posts")),
+                    comments=_format_int(counts.get("comments")),
+                    total=_format_int(total),
+                )
+            )
+    lines.append("")
+    lines.append("| name | scale | total_records | timing_ms | p50 | p95 | p99 |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for entry in data:
+        metrics = dict(_entry_metrics(entry))
+        meta = entry.get("metadata", {}) or {}
+        scale = meta.get("scale")
+        total_records = meta.get("total_records")
+        timing = metrics.get("timing_ms")
+        p50 = metrics.get("p50")
+        p95 = metrics.get("p95")
+        p99 = metrics.get("p99")
+        lines.append(
+            "| {name} | {scale} | {total} | {timing} | {p50} | {p95} | {p99} |".format(
+                name=entry.get("name", "benchmark"),
+                scale=scale if scale is not None else "-",
+                total=_format_int(total_records),
+                timing=f"{timing:.3f}" if timing is not None else "-",
+                p50=f"{p50:.6f}" if p50 is not None else "-",
+                p95=f"{p95:.6f}" if p95 is not None else "-",
+                p99=f"{p99:.6f}" if p99 is not None else "-",
+            )
+        )
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -81,8 +404,10 @@ def _generate_complex_hierarchy(context, root: Path, scale: int) -> None:
 def _ensure_fixtures(context) -> None:
     profile = getattr(context, "bench_profile", "social_media")
     scale = getattr(context, "bench_scale", 1)
-    root = _ensure_bench_root(context)
-    if getattr(context, "bench_generated", False):
+    root = _bench_data_root(context)
+    generated = getattr(context, "bench_generated_scales", set())
+    key = (profile, scale)
+    if key in generated:
         return
     if profile == "social_media":
         _generate_social_media(context, root, scale)
@@ -90,13 +415,15 @@ def _ensure_fixtures(context) -> None:
         _generate_complex_hierarchy(context, root, scale)
     else:
         _generate_social_media(context, root, scale)
-    context.bench_generated = True
+    generated.add(key)
+    context.bench_generated_scales = generated
+    context.bench_db = None
 
 
 def _load_warm_db(context) -> Database:
-    if hasattr(context, "bench_db"):
+    if getattr(context, "bench_db", None) is not None:
         return context.bench_db
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     users_dir = root / "users"
     posts_dir = root / "posts"
     comments_dir = root / "comments"
@@ -137,7 +464,7 @@ def step_generate_fixtures(context):
 
 @then('the "{table}" directory should contain {count:d} JSON files')
 def step_dir_count(context, table: str, count: int):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     directory = root / table
     files = [p for p in directory.iterdir() if p.suffix == ".json"]
     assert len(files) == count
@@ -152,7 +479,7 @@ def step_generated_profile(context, profile: str):
 
 @then('every post\'s "user_id" should reference an existing user')
 def step_posts_user_ids(context):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     users = {p.stem for p in (root / "users").iterdir() if p.suffix == ".json"}
     for path in (root / "posts").iterdir():
         if path.suffix != ".json":
@@ -163,7 +490,7 @@ def step_posts_user_ids(context):
 
 @then('every comment\'s "post_id" should reference an existing post')
 def step_comments_post_ids(context):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     posts = {p.stem for p in (root / "posts").iterdir() if p.suffix == ".json"}
     for path in (root / "comments").iterdir():
         if path.suffix != ".json":
@@ -174,7 +501,7 @@ def step_comments_post_ids(context):
 
 @then("at least 10 table directories should be created")
 def step_table_dirs_count(context):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     dirs = [p for p in root.iterdir() if p.is_dir()]
     assert len(dirs) >= 10
 
@@ -186,7 +513,7 @@ def step_total_record_count(context):
 
 @then('user statuses should be distributed across "active", "inactive", "suspended"')
 def step_status_distribution(context):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     statuses = set()
     for path in (root / "users").iterdir():
         if path.suffix != ".json":
@@ -200,7 +527,7 @@ def step_status_distribution(context):
 
 @then("post dates should span the configured date range")
 def step_post_dates_span(context):
-    root = _ensure_bench_root(context)
+    root = _bench_data_root(context)
     dates = []
     for path in (root / "posts").iterdir():
         if path.suffix != ".json":
@@ -237,8 +564,8 @@ def step_warm_db(context):
 @when('I run the "{benchmark}" benchmark')
 def step_run_benchmark(context, benchmark: str):
     _ensure_fixtures(context)
-    root = _ensure_bench_root(context)
-    users_dir = root / "users"
+    data_root = _bench_data_root(context)
+    users_dir = data_root / "users"
     start = time.perf_counter()
     if benchmark == "single_table_cold_load":
         table = Table("users", primary_key="id", directory=str(users_dir))
@@ -246,13 +573,22 @@ def step_run_benchmark(context, benchmark: str):
     elif benchmark == "full_database_cold_load":
         db = Database()
         for name in ("users", "posts", "comments"):
-            table = Table(name, primary_key="id", directory=str(root / name))
+            table = Table(name, primary_key="id", directory=str(data_root / name))
             table.load_from_dir()
             db.add_table(name, table)
     else:
         _load_warm_db(context)
     elapsed_ms = (time.perf_counter() - start) * 1000.0
-    context.last_benchmark = {"name": benchmark, "timing_ms": elapsed_ms, "metadata": {}}
+    counts = getattr(context, "bench_counts", None)
+    metadata = {"scale": getattr(context, "bench_scale", 1)}
+    if isinstance(counts, dict):
+        metadata["counts"] = counts
+        metadata["total_records"] = sum(int(v) for v in counts.values())
+    context.last_benchmark = {
+        "name": benchmark,
+        "timing_ms": elapsed_ms,
+        "metadata": metadata,
+    }
 
 
 @when('I run the "{benchmark}" benchmark for {iterations:d} iterations')
@@ -275,14 +611,20 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
             _ = posts.query_gsi("by_user", user_id)
             timings.append((time.perf_counter() - start) * 1000.0)
     timings_sorted = sorted(timings)
+    counts = getattr(context, "bench_counts", None)
+    metadata = {
+        "p50": _percentile(timings_sorted, 50),
+        "p95": _percentile(timings_sorted, 95),
+        "p99": _percentile(timings_sorted, 99),
+        "scale": getattr(context, "bench_scale", 1),
+    }
+    if isinstance(counts, dict):
+        metadata["counts"] = counts
+        metadata["total_records"] = sum(int(v) for v in counts.values())
     context.last_benchmark = {
         "name": benchmark,
         "timings": timings,
-        "metadata": {
-            "p50": _percentile(timings_sorted, 50),
-            "p95": _percentile(timings_sorted, 95),
-            "p99": _percentile(timings_sorted, 99),
-        },
+        "metadata": metadata,
     }
 
 
@@ -296,7 +638,16 @@ def step_run_incremental_refresh(context, benchmark: str):
     start = time.perf_counter()
     _ = users.refresh()
     elapsed_ms = (time.perf_counter() - start) * 1000.0
-    context.last_benchmark = {"name": benchmark, "timing_ms": elapsed_ms, "metadata": {}}
+    counts = getattr(context, "bench_counts", None)
+    metadata = {"scale": getattr(context, "bench_scale", 1)}
+    if isinstance(counts, dict):
+        metadata["counts"] = counts
+        metadata["total_records"] = sum(int(v) for v in counts.values())
+    context.last_benchmark = {
+        "name": benchmark,
+        "timing_ms": elapsed_ms,
+        "metadata": metadata,
+    }
 
 
 @then("the output should include a timing measurement in milliseconds")
@@ -318,17 +669,20 @@ def step_timing_measurement(context):
 
 @when("I run all benchmark scenarios")
 def step_run_all_benchmarks(context):
-    _ensure_fixtures(context)
     results = []
-    for name in ("single_table_cold_load", "full_database_cold_load"):
-        step_run_benchmark(context, name)
+    for scale in _bench_scales():
+        context.bench_scale = scale
+        context.bench_db = None
+        _ensure_fixtures(context)
+        for name in ("single_table_cold_load", "full_database_cold_load"):
+            step_run_benchmark(context, name)
+            results.append(context.last_benchmark)
+        step_run_benchmark_iterations(context, "pk_lookup", 100)
         results.append(context.last_benchmark)
-    step_run_benchmark_iterations(context, "pk_lookup", 100)
-    results.append(context.last_benchmark)
-    step_run_benchmark_iterations(context, "gsi_query", 100)
-    results.append(context.last_benchmark)
-    step_run_incremental_refresh(context, "incremental_refresh")
-    results.append(context.last_benchmark)
+        step_run_benchmark_iterations(context, "gsi_query", 100)
+        results.append(context.last_benchmark)
+        step_run_incremental_refresh(context, "incremental_refresh")
+        results.append(context.last_benchmark)
     context.benchmark_results = results
     output_path = _ensure_bench_root(context) / "benchmarks.json"
     output_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
@@ -358,28 +712,44 @@ def step_valid_benchmark_output(context):
 
 @when("I run the visualization tool")
 def step_run_visualization(context):
-    output_dir = _ensure_bench_root(context) / "charts"
+    root = _ensure_bench_root(context)
+    output_dir = root / "charts"
     output_dir.mkdir(parents=True, exist_ok=True)
+    for svg in output_dir.glob("*.svg"):
+        svg.unlink()
+    for png in output_dir.glob("*.png"):
+        png.unlink()
     data = json.loads(Path(context.benchmark_output_path).read_text(encoding="utf-8"))
     for entry in data:
-        name = entry.get("name", "benchmark")
-        svg_path = output_dir / f"{name}.svg"
-        svg_path.write_text(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"100\">"
-            "<rect width=\"200\" height=\"100\" fill=\"#f0f0f0\"/>"
-            f"<text x=\"10\" y=\"50\" font-size=\"12\">{name}</text>"
-            "</svg>",
-            encoding="utf-8",
-        )
-    report_path = output_dir / "REPORT.md"
-    report_path.write_text("# Benchmark Report\n", encoding="utf-8")
+        raw_name = entry.get("name", "benchmark")
+        meta = entry.get("metadata", {}) or {}
+        scale = meta.get("scale")
+        total_records = meta.get("total_records")
+        chart_name = _format_benchmark_name(raw_name)
+        if scale is not None:
+            chart_name = f"{chart_name} (Scale {scale})"
+        if total_records:
+            chart_name = f"{chart_name} - {_format_int(total_records)} Records"
+        suffix = f"_scale{scale}" if scale is not None else ""
+        png_path = output_dir / f"{raw_name}{suffix}.png"
+        metrics = _entry_metrics(entry)
+        if not metrics:
+            metrics = [("timing_ms", 0.0)]
+        display_metrics = [(_format_metric_label(label), value) for label, value in metrics]
+        if len(display_metrics) == 1:
+            label, value = display_metrics[0]
+            _render_single_metric_chart(chart_name, label, value, png_path)
+        else:
+            _render_bar_chart(chart_name, display_metrics, png_path)
+    report_path = root / "REPORT.md"
+    _write_report(context, data, report_path)
     context.chart_dir = output_dir
     context.report_path = report_path
 
 
-@then("SVG chart files should be generated")
-def step_svg_generated(context):
-    assert any(p.suffix == ".svg" for p in context.chart_dir.iterdir())
+@then("PNG chart files should be generated")
+def step_png_generated(context):
+    assert any(p.suffix == ".png" for p in context.chart_dir.iterdir())
 
 
 @then("a REPORT.md file should be generated")

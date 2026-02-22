@@ -28,10 +28,34 @@
       "author": "ryan.porter",
       "text": "Closing issue to satisfy Kanbus validation (done -> closed).",
       "created_at": "2026-02-22T04:14:27.859984Z"
+    },
+    {
+      "id": "b907e394-5107-4418-a171-eb6ddb34a58d",
+      "author": "ryan.porter",
+      "text": "Did: retuning benchmark visualization outputs (PNG charts with readable labels/values). Next: regenerate charts and validate output. Blockers: none.",
+      "created_at": "2026-02-22T05:43:17.571748Z"
+    },
+    {
+      "id": "820a13cf-44f2-49ed-8697-1f914059fc8b",
+      "author": "ryan.porter",
+      "text": "Done: benchmark visualization outputs now PNG with readable labels/values; charts regenerated. Next: full check. Blockers: none.",
+      "created_at": "2026-02-22T05:43:40.380526Z"
+    },
+    {
+      "id": "11949674-6392-4997-bd23-65a4583f67ae",
+      "author": "ryan.porter",
+      "text": "Did: adding multi-scale benchmark outputs + record count metadata. Next: regenerate benchmarks and validate report/charts. Blockers: none.",
+      "created_at": "2026-02-22T05:54:32.911107Z"
+    },
+    {
+      "id": "835a008a-b711-4d2a-accd-c51b615c2e09",
+      "author": "ryan.porter",
+      "text": "Done: multi-scale benchmark results + record counts now in report; PNG charts include scale and totals. Default scales: 1,2 (override via VIRTUUS_BENCH_SCALES). Next: full make check. Blockers: none.",
+      "created_at": "2026-02-22T06:03:03.963926Z"
     }
   ],
   "created_at": "2026-02-21T16:42:29.540022Z",
-  "updated_at": "2026-02-22T04:14:33.577919Z",
-  "closed_at": "2026-02-22T04:14:33.577919Z",
+  "updated_at": "2026-02-22T06:03:04.046916Z",
+  "closed_at": "2026-02-22T06:03:04.046916Z",
   "custom": {}
 }

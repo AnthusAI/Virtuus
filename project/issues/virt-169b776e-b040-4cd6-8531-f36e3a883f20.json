@@ -28,10 +28,34 @@
       "author": "ryan.porter",
       "text": "Closing issue to satisfy Kanbus validation (done -> closed).",
       "created_at": "2026-02-22T04:14:15.742490Z"
+    },
+    {
+      "id": "13f173cc-30be-4d64-be7a-ca7384529394",
+      "author": "ryan.porter",
+      "text": "Did: replaced benchmark charts with PNGs and readable labels/values; updated visualization step + feature. Next: regenerate charts and confirm output quality. Blockers: none.",
+      "created_at": "2026-02-22T05:43:10.058812Z"
+    },
+    {
+      "id": "ac2e4036-4fa1-4864-b48a-e6a81b2b7808",
+      "author": "ryan.porter",
+      "text": "Done: PNG charts generated with readable labels/values; visualization removes old SVGs; feature now checks PNG output. Next: run full make check. Blockers: none.",
+      "created_at": "2026-02-22T05:43:37.216175Z"
+    },
+    {
+      "id": "62d04824-7ba0-4425-a0c2-aead855f4a6e",
+      "author": "ryan.porter",
+      "text": "Did: added multi-scale benchmark support with record counts metadata and updated report/chart titles. Next: regenerate benchmarks and verify report includes scale+counts. Blockers: none.",
+      "created_at": "2026-02-22T05:54:28.708325Z"
+    },
+    {
+      "id": "16795ccf-6972-47e4-a696-568f251f47c4",
+      "author": "ryan.porter",
+      "text": "Done: benchmarks now run at scales 1 and 2 by default (override with VIRTUUS_BENCH_SCALES). Report includes record counts per scale; charts include scale + record totals and have unique filenames. Next: none. Blockers: none.",
+      "created_at": "2026-02-22T06:02:58.837422Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.936135Z",
-  "updated_at": "2026-02-22T04:14:21.931297Z",
-  "closed_at": "2026-02-22T04:14:21.931297Z",
+  "updated_at": "2026-02-22T06:02:58.920782Z",
+  "closed_at": "2026-02-22T06:02:58.920782Z",
   "custom": {}
 }

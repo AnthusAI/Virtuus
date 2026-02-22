@@ -37,7 +37,7 @@ Feature: Benchmark scenarios
   Scenario: Visualization generates charts
     Given valid benchmark JSON output
     When I run the visualization tool
-    Then SVG chart files should be generated
+    Then PNG chart files should be generated
     And a REPORT.md file should be generated
 
   Scenario: Regression detection compares against baseline

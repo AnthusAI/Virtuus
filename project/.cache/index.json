@@ -1,13 +1,13 @@
 {
-  "built_at": "2026-02-22T04:13:44Z",
+  "built_at": "2026-02-22T05:42:42Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
-    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771733483.782737,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771733661.931432,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771726059.332986,
-    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771733497.775265,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771733673.578051,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771714054.091713,
@@ -32,7 +32,7 @@
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771727546.19616,
-    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771733469.534283,
+    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771733649.091532,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
@@ -40,7 +40,7 @@
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771723894.886977,
-    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771733575.490416,
+    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771733686.154369,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725634.155066,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
@@ -137,7 +137,7 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-22T04:14:21.931297Z",
       "comments": [
         {
           "author": "ryan.porter",
@@ -150,6 +150,12 @@
           "created_at": "2026-02-22T04:11:17.204628Z",
           "id": "0cbd0c4e-9fe8-4547-bd58-1afdfceae8e9",
           "text": "Done. Implemented benchmark scenarios/visualization steps in Python + Rust, added regression checks, and stabilized temp bench reuse. Ran Rust cucumber fail-fast and Python behave benchmark features. Next: commit + push. Issues: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:14:15.742490Z",
+          "id": "0cceb64a-4ff2-4148-a238-3b5cf705e69e",
+          "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
         }
       ],
       "created_at": "2026-02-21T16:48:02.936135Z",
@@ -161,10 +167,10 @@
       "labels": [],
       "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "priority": 2,
-      "status": "done",
+      "status": "closed",
       "title": "Benchmark scenarios and visualization",
       "type": "story",
-      "updated_at": "2026-02-22T04:11:23.782595Z"
+      "updated_at": "2026-02-22T04:14:21.931297Z"
     },
     {
       "assignee": null,
@@ -291,7 +297,7 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-22T04:14:33.577919Z",
       "comments": [
         {
           "author": "ryan.porter",
@@ -304,6 +310,12 @@
           "created_at": "2026-02-22T04:11:30.585412Z",
           "id": "3f4f8b4e-499b-4f75-9ef6-6bccdc8094f5",
           "text": "Done. Phase 10 benchmarks completed: fixtures + benchmark scenarios + visualization/regression steps (Python/Rust). Tests: Python behave benchmarks and Rust cucumber fail-fast. Next: commit + push. Issues: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:14:27.859984Z",
+          "id": "82765b15-e252-4f12-949e-9568f0aa3e78",
+          "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
         }
       ],
       "created_at": "2026-02-21T16:42:29.540022Z",
@@ -315,10 +327,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "done",
+      "status": "closed",
       "title": "Phase 10: Benchmarks & Visualization",
       "type": "epic",
-      "updated_at": "2026-02-22T04:11:37.775119Z"
+      "updated_at": "2026-02-22T04:14:33.577919Z"
     },
     {
       "assignee": null,
@@ -1275,7 +1287,7 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-22T04:14:09.091398Z",
       "comments": [
         {
           "author": "ryan.porter",
@@ -1288,6 +1300,12 @@
           "created_at": "2026-02-22T04:10:32.765427Z",
           "id": "657ab4bd-6d70-4f8e-8f6f-55acde761563",
           "text": "Done. Implemented fixture generation steps for benchmarks (Python + Rust), added reuse-safe bench roots, and cleaned temp benches; ran Rust cucumber fail-fast (passes) and Python behave benchmarks. Next: commit + push. Issues: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:14:02.775847Z",
+          "id": "28f64401-f864-4fe4-844e-69da305419b8",
+          "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
         }
       ],
       "created_at": "2026-02-21T16:48:02.770959Z",
@@ -1299,10 +1317,10 @@
       "labels": [],
       "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
       "priority": 2,
-      "status": "done",
+      "status": "closed",
       "title": "Benchmark fixture generation",
       "type": "story",
-      "updated_at": "2026-02-22T04:11:09.533958Z"
+      "updated_at": "2026-02-22T04:14:09.091398Z"
     },
     {
       "assignee": null,
@@ -1613,7 +1631,7 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-22T04:14:46.154207Z",
       "comments": [
         {
           "author": "unknown",
@@ -1662,6 +1680,12 @@
           "created_at": "2026-02-22T04:12:48.513894Z",
           "id": "8a129ca3-6515-4b94-93ea-b3bbafa637ad",
           "text": "Done. Phase 6 complete; all execute/schema/describe/validate stories closed and tests green. Next: monitor for regressions. Issues: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T04:14:39.663234Z",
+          "id": "074c8bcd-0ef4-4e67-a5a7-4b09b66b3f5a",
+          "text": "Closing issue to satisfy Kanbus validation (done -> closed)."
         }
       ],
       "created_at": "2026-02-21T16:42:28.963677Z",
@@ -1673,10 +1697,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "done",
+      "status": "closed",
       "title": "Phase 6: Database + execute() + Schema-from-YAML",
       "type": "epic",
-      "updated_at": "2026-02-22T04:12:55.490269Z"
+      "updated_at": "2026-02-22T04:14:46.154207Z"
     },
     {
       "assignee": null,
