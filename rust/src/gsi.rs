@@ -374,4 +374,23 @@ mod tests {
         assert!(old_result.is_empty());
         assert_eq!(new_result, vec!["user-1".to_string()]);
     }
+
+    #[test]
+    fn entries_return_pk_and_sort() {
+        let mut gsi = Gsi::new("by_org", "org_id", Some("created_at"));
+        gsi.put(
+            "user-1",
+            &json!({"org_id": "org-a", "created_at": "2025-01-15"}),
+        );
+        let entries = gsi.entries(&json!("org-a"));
+        assert_eq!(
+            entries,
+            vec![("user-1".to_string(), Some(json!("2025-01-15")))]
+        );
+    }
+
+    #[test]
+    fn get_field_non_object_returns_none() {
+        assert!(get_field(&json!(["array"]), "foo").is_none());
+    }
 }

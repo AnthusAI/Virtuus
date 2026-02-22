@@ -18,6 +18,8 @@ python/.ruff_cache/
 
 # Rust
 rust/target/
+rust/lcov.info
+rust/tarpaulin-report.json
 
 # Benchmarks
 tools/benchmark_results/

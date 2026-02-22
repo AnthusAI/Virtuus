@@ -1463,6 +1463,126 @@ mod tests {
     }
 
     #[test]
+    fn iter_json_files_returns_empty_without_directory() {
+        let table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        assert!(table.iter_json_files().is_empty());
+    }
+
+    #[test]
+    fn dir_mtime_none_when_no_directory() {
+        let table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        assert!(table.dir_mtime().is_none());
+    }
+
+    #[test]
+    fn compute_changes_without_directory_is_empty() {
+        let table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Silent);
+        let (summary, added, modified, deleted) = table.compute_changes();
+        assert_eq!(summary.added, 0);
+        assert_eq!(summary.modified, 0);
+        assert_eq!(summary.deleted, 0);
+        assert!(added.is_empty() && modified.is_empty() && deleted.is_empty());
+    }
+
+    #[test]
+    fn read_record_logs_on_invalid_json() {
+        let dir = temp_dir("read_record_logs");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let path = dir.join("bad.json");
+        fs::write(&path, b"not-json").unwrap();
+        let result = table.read_record(&path);
+        assert!(result.is_none());
+        assert!(table
+            .refresh_errors()
+            .iter()
+            .any(|e| e.contains("bad.json")));
+    }
+
+    #[test]
+    fn read_record_logs_on_missing_file() {
+        let dir = temp_dir("read_record_missing");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let path = dir.join("missing.json");
+        let result = table.read_record(&path);
+        assert!(result.is_none());
+        assert!(table
+            .refresh_errors()
+            .iter()
+            .any(|e| e.contains("missing.json")));
+    }
+
+    #[test]
+    fn accessors_and_flags_cover_misc_branches() {
+        let dir = temp_dir("accessors_flags");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_check_interval(5);
+        table.set_auto_refresh(false);
+        table.mark_checked_now(true);
+        table.add_gsi("by_status", "status", None);
+        assert!(table.gsis().contains_key("by_status"));
+        table.remove_gsi("by_status");
+        assert!(table.gsis().is_empty());
+        table.gsis_mut().insert(
+            "manual".to_string(),
+            Gsi::new("manual", "status", None),
+        );
+        assert_eq!(table.key_field(), Some("id"));
+        assert_eq!(table.directory(), Some(&dir));
+        assert_eq!(table.check(), ChangeSummary::default());
+        // mark_checked_now sets last_is_stale; is_stale(false) should reuse cached value when interval not elapsed
+        assert!(table.is_stale(false));
+    }
+
+    #[test]
+    fn accessors_report_metadata_and_associations() {
+        let mut table = Table::new(
+            "posts",
+            None,
+            Some("user_id"),
+            Some("created_at"),
+            None,
+            ValidationMode::Warn,
+        );
+        table.add_has_many("comments", "by_post", "comments");
+        assert_eq!(table.name(), "posts");
+        assert_eq!(table.primary_key(), None);
+        assert_eq!(table.partition_key(), Some("user_id"));
+        assert_eq!(table.sort_key(), Some("created_at"));
+        assert_eq!(table.validation(), ValidationMode::Warn);
+        assert_eq!(table.records().len(), 0);
+        assert!(!table.last_write_used_atomic());
+        assert_eq!(table.associations().len(), 1);
+        assert_eq!(table.association_defs().len(), 1);
+        assert!(table.association("comments").is_some());
+    }
+
+    #[test]
     fn numeric_primary_key_is_stringified() {
         let mut table = Table::new(
             "users",
