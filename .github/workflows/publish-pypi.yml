@@ -12,6 +12,7 @@ jobs:
     permissions:
       id-token: write   # needed for PyPI trusted publishing
       contents: read
+    environment: pypi
     defaults:
       run:
         working-directory: python
