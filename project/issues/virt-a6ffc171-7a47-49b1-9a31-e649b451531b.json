@@ -1,0 +1,25 @@
+{
+  "id": "virt-a6ffc171-7a47-49b1-9a31-e649b451531b",
+  "title": "Fix CI to run full make check on all Python versions",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "52d608a9-21cf-4744-a7a2-bc08bc3ab0d3",
+      "author": "ryan.porter",
+      "text": "Did: updated ci.yml to run make check (includes rust + parity) on all Python matrix entries 3.9–3.12; removed conditional tarpaulin/install. Next: commit and push, watch CI. Blockers: none.",
+      "created_at": "2026-02-22T07:38:24.121403Z"
+    }
+  ],
+  "created_at": "2026-02-22T07:38:18.925706Z",
+  "updated_at": "2026-02-22T07:38:24.121403Z",
+  "closed_at": null,
+  "custom": {}
+}

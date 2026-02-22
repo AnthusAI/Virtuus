@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "96a51d0b-f790-4a6e-97a8-11cb3b9b4ce9",
+  "issue_id": "virt-a6ffc171-7a47-49b1-9a31-e649b451531b",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T07:38:18.925Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Fix CI to run full make check on all Python versions"
+  }
+}

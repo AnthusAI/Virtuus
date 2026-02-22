@@ -189,15 +189,31 @@ make bench              # run benchmarks + generate visualizations
 
 ## Benchmarks
 
-Virtuus includes a pluggable benchmark framework with fixture generation, timing measurement, and chart visualization:
+### Setup
+- Fixture profile: `social_media` (users/posts/comments with GSIs)
+- Sizes: 100, 500, 1k, 5k, 10k, 50k, 100k total records
+- Environment: local filesystem, warm cache, Python runner using Rust backend when available
+- Metrics: cold load (single table and full DB), incremental refresh, PK lookup, GSI hash-only lookup, GSI sorted lookup (range key)
 
-- **Fixture profiles**: `social_media`, `ecommerce`, `complex_hierarchy` — generating up to 900K+ linked records
-- **Load-time benchmarks**: cold load, incremental refresh, scale curves
-- **Query-time benchmarks**: PK lookup, GSI query, nested includes, pagination
-- **Concurrency benchmarks**: throughput scaling with thread count, reads during refresh
-- **Memory benchmarks**: per-record overhead, GSI overhead, refresh leak detection
-- **Visualization**: SVG charts comparing Python vs Rust, scaling behavior, latency distributions
+### Results (PNG charts)
+- `benchmarks/output/charts/full_database_cold_load.png` — Full DB cold load scales linearly; up to ~41s at 100k records. Useful for batch ingest; not the hot path for small deployments.
+- `benchmarks/output/charts/single_table_cold_load.png` — Single-table cold load stays sub-second through 10k; ~0.7s at 100k. Great for small tables and targeted reloads.
+- `benchmarks/output/charts/incremental_refresh.png` — Incremental refresh stays low single-digit ms even at 100k (touching only changed files). Confirms the incremental path is the right default.
+- `benchmarks/output/charts/pk_lookup.png` — O(1) lookups stay effectively flat (sub-microsecond medians); timer noise dominates at tiny sizes.
+- `benchmarks/output/charts/gsi_partition_lookup.png` — Partition scans grow with partition size; still under ~50 ms at 100k totals for hash-only GSI access.
+- `benchmarks/output/charts/gsi_sorted_query.png` — Sorted GSI queries add per-partition sort/filter cost; still inside ~50–65 ms at 100k totals.
 
+### Interpretation
+- For “relatively small” datasets (≤10k total records), everything is comfortably sub-second — cold loads, refresh, and queries. This is the sweet spot for Virtuus as a lightweight file-backed store.
+- PK lookups are essentially free; GSI lookups remain fast until partitions become very large. If range queries dominate, consider keeping partitions small or pre-sorting buckets on write.
+- Incremental refresh is the go-to for keeping data fresh without paying full reload costs; full cold loads are predictable but linear in total records.
+
+### How to regenerate
+```bash
+VIRTUUS_BENCH_DIR=benchmarks/output VIRTUUS_BENCH_TOTALS=100,500,1000,5000,10000,50000,100000 \
+  python -m behave features/benchmarks/benchmark_scenarios.feature -n "Visualization generates charts"
+```
+Outputs land in `benchmarks/output/REPORT.md`, `benchmarks/output/benchmarks.json`, and `benchmarks/output/charts/*.png`.
 ```bash
 make bench PROFILE=social_media SCALE=2
 make bench-scale    # run at 1x, 2x, 5x, 10x for scaling charts
