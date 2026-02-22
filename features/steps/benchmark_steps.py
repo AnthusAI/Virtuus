@@ -412,11 +412,10 @@ def _render_line_chart(
     bg = (248, 249, 251, 255)
     axis_color = (60, 67, 74, 255)
     text_color = (28, 32, 38, 255)
+    # Palette: magenta + light blue alternation for clarity
     palette = [
-        (34, 97, 207, 255),
-        (242, 140, 40, 255),
-        (46, 134, 68, 255),
-        (143, 84, 178, 255),
+        (204, 0, 153, 255),   # magenta
+        (102, 204, 255, 255), # light blue
     ]
     rows = _new_canvas(width, height, bg)
     _draw_text(rows, 20, 20, name, text_color, scale=2)
