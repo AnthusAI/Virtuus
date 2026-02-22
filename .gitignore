@@ -20,3 +20,8 @@ rust/target/
 # Benchmarks
 tools/benchmark_results/
 /tmp/bench_data*/
+benchmarks/output/users/
+benchmarks/output/posts/
+benchmarks/output/comments/
+benchmarks/output/social_media_scale_*/
+benchmarks/output/social_media_total_*/
