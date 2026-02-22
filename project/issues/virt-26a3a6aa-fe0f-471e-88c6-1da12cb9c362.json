@@ -3,7 +3,7 @@
   "title": "Phase 10: Benchmarks & Visualization",
   "description": "Primary deliverable. Pluggable fixture generation (social_media, ecommerce, complex_hierarchy profiles), load-time/query-time/cache/concurrency/memory benchmarks, SVG chart visualization, regression detection. See Vision.md for full details.",
   "type": "epic",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -70,10 +70,16 @@
       "author": "ryan.porter",
       "text": "Did: improved benchmark timing methodology for small corpus stability. Next: rerun benchmarks and update report/charts. Blockers: none.",
       "created_at": "2026-02-22T06:59:28.837668Z"
+    },
+    {
+      "id": "fd04344d-62c9-4d00-a53a-19c1d21df6b5",
+      "author": "ryan.porter",
+      "text": "Done: updated benchmark methodology + regenerated report/charts; small-corpus PK timings stabilized. Next: rust coverage. Blockers: none.",
+      "created_at": "2026-02-22T07:09:52.247586Z"
     }
   ],
   "created_at": "2026-02-21T16:42:29.540022Z",
-  "updated_at": "2026-02-22T06:59:28.837668Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T07:09:52.334275Z",
+  "closed_at": "2026-02-22T07:09:52.334275Z",
   "custom": {}
 }
