@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 
 from behave import given, then, when
 
-from virtuus import Database, Table
+from virtuus import Database, Sort, Table
 
 
 def _ensure_bench_root(context) -> Path:
@@ -34,7 +34,11 @@ def _bench_data_root(context) -> Path:
     root = _ensure_bench_root(context)
     profile = getattr(context, "bench_profile", "social_media")
     scale = getattr(context, "bench_scale", 1)
-    data_root = root / f"{profile}_scale_{scale}"
+    total_target = getattr(context, "bench_total_records_target", None)
+    if total_target is not None:
+        data_root = root / f"{profile}_total_{total_target}"
+    else:
+        data_root = root / f"{profile}_scale_{scale}"
     data_root.mkdir(parents=True, exist_ok=True)
     context.bench_data_root = data_root
     return data_root
@@ -61,20 +65,20 @@ def _entry_metrics(entry: dict) -> list[tuple[str, float]]:
     return metrics
 
 
-def _bench_scales() -> list[int]:
-    env = os.getenv("VIRTUUS_BENCH_SCALES")
+def _bench_totals() -> list[int]:
+    env = os.getenv("VIRTUUS_BENCH_TOTALS")
     if not env:
-        return [1, 2]
-    scales: list[int] = []
+        return [100, 500, 1000, 5000, 10000, 50000, 100000]
+    totals: list[int] = []
     for part in env.split(","):
         part = part.strip()
         if not part:
             continue
         try:
-            scales.append(int(part))
+            totals.append(int(part))
         except ValueError:
             continue
-    return scales or [1]
+    return totals or [1000]
 
 
 def _format_int(value: int | float | None) -> str:
@@ -220,6 +224,32 @@ def _draw_text(
         cursor_x += (5 + 1) * scale
 
 
+def _draw_line(
+    rows: list[bytearray],
+    x0: int,
+    y0: int,
+    x1: int,
+    y1: int,
+    color: tuple[int, int, int, int],
+) -> None:
+    dx = abs(x1 - x0)
+    dy = -abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx + dy
+    while True:
+        _set_pixel(rows, x0, y0, color)
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x0 += sx
+        if e2 <= dx:
+            err += dx
+            y0 += sy
+
+
 def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
     length = struct.pack("!I", len(data))
     crc = struct.pack("!I", binascii.crc32(chunk_type + data) & 0xFFFFFFFF)
@@ -287,6 +317,81 @@ def _render_bar_chart(name: str, metrics: list[tuple[str, float]], path: Path) -
     _write_png(path, width, height, rows)
 
 
+def _render_line_chart(
+    name: str, series: dict[str, list[tuple[int, float]]], path: Path
+) -> None:
+    width = 820
+    height = 520
+    margin_left = 70
+    margin_right = 30
+    margin_top = 50
+    margin_bottom = 70
+    bg = (248, 249, 251, 255)
+    axis_color = (60, 67, 74, 255)
+    text_color = (28, 32, 38, 255)
+    palette = [
+        (34, 97, 207, 255),
+        (242, 140, 40, 255),
+        (46, 134, 68, 255),
+        (143, 84, 178, 255),
+    ]
+    rows = _new_canvas(width, height, bg)
+    _draw_text(rows, 20, 16, name, text_color, scale=2)
+    totals = sorted({x for points in series.values() for x, _ in points})
+    if not totals:
+        _write_png(path, width, height, rows)
+        return
+    x_positions = {}
+    if len(totals) == 1:
+        x_positions[totals[0]] = margin_left + (width - margin_left - margin_right) // 2
+    else:
+        span = width - margin_left - margin_right
+        for idx, total in enumerate(totals):
+            x_positions[total] = margin_left + int(span * idx / (len(totals) - 1))
+    max_y = max(value for points in series.values() for _, value in points)
+    max_y = max(max_y, 0.001)
+    plot_top = margin_top
+    plot_bottom = height - margin_bottom
+    plot_height = plot_bottom - plot_top
+    plot_left = margin_left
+    plot_right = width - margin_right
+    _draw_line(rows, plot_left, plot_top, plot_left, plot_bottom, axis_color)
+    _draw_line(rows, plot_left, plot_bottom, plot_right, plot_bottom, axis_color)
+    for total in totals:
+        x = x_positions[total]
+        _draw_line(rows, x, plot_bottom, x, plot_bottom + 4, axis_color)
+        label = _format_int(total)
+        _draw_text(rows, max(x - _text_width(label, 1) // 2, 0), plot_bottom + 8, label, text_color, scale=1)
+    y_ticks = 4
+    for idx in range(y_ticks + 1):
+        y_value = max_y * idx / y_ticks
+        y = plot_bottom - int(plot_height * idx / y_ticks)
+        _draw_line(rows, plot_left - 4, y, plot_left, y, axis_color)
+        label = _format_value_ms(y_value).replace(" MS", "")
+        _draw_text(rows, max(plot_left - 6 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
+    _draw_text(rows, plot_left, plot_bottom + 32, "TOTAL RECORDS", text_color, scale=1)
+    _draw_text(rows, 20, plot_top + 10, "MS", text_color, scale=1)
+    legend_x = plot_left
+    legend_y = plot_top - 18
+    for idx, label in enumerate(sorted(series.keys())):
+        color = palette[idx % len(palette)]
+        _draw_rect(rows, legend_x, legend_y, 14, 8, color)
+        _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
+        legend_x += 160
+    for idx, label in enumerate(sorted(series.keys())):
+        color = palette[idx % len(palette)]
+        points = sorted(series[label], key=lambda pair: pair[0])
+        prev = None
+        for total, value in points:
+            x = x_positions[total]
+            y = plot_bottom - int((value / max_y) * plot_height)
+            _draw_rect(rows, x - 2, y - 2, 5, 5, color)
+            if prev is not None:
+                _draw_line(rows, prev[0], prev[1], x, y, color)
+            prev = (x, y)
+    _write_png(path, width, height, rows)
+
+
 def _write_report(context, data: list[dict], report_path: Path) -> None:
     lines = ["# Benchmark Report", ""]
     root = _ensure_bench_root(context)
@@ -294,46 +399,42 @@ def _write_report(context, data: list[dict], report_path: Path) -> None:
     if getattr(context, "bench_date_range", None):
         start, end = context.bench_date_range
         lines.append(f"- Date range: `{start}` → `{end}`")
-    scale_counts: dict[int, dict[str, int]] = {}
+    totals_map: dict[int, dict[str, int]] = {}
     for entry in data:
         meta = entry.get("metadata", {}) or {}
-        scale = meta.get("scale")
+        total_records = meta.get("total_records")
         counts = meta.get("counts")
-        if isinstance(scale, int) and isinstance(counts, dict):
-            scale_counts[scale] = counts
-    if scale_counts:
+        if isinstance(total_records, int) and isinstance(counts, dict):
+            totals_map[total_records] = counts
+    if totals_map:
         lines.append("")
-        lines.append("## Data Scales")
-        lines.append("| scale | users | posts | comments | total_records |")
+        lines.append("## Data Sizes")
+        lines.append("| total_records | users | posts | comments |")
         lines.append("| --- | --- | --- | --- | --- |")
-        for scale in sorted(scale_counts):
-            counts = scale_counts[scale]
-            total = sum(int(v) for v in counts.values())
+        for total_records in sorted(totals_map):
+            counts = totals_map[total_records]
             lines.append(
-                "| {scale} | {users} | {posts} | {comments} | {total} |".format(
-                    scale=scale,
+                "| {total} | {users} | {posts} | {comments} |".format(
+                    total=_format_int(total_records),
                     users=_format_int(counts.get("users")),
                     posts=_format_int(counts.get("posts")),
                     comments=_format_int(counts.get("comments")),
-                    total=_format_int(total),
                 )
             )
     lines.append("")
-    lines.append("| name | scale | total_records | timing_ms | p50 | p95 | p99 |")
-    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    lines.append("| name | total_records | timing_ms | p50 | p95 | p99 |")
+    lines.append("| --- | --- | --- | --- | --- | --- |")
     for entry in data:
         metrics = dict(_entry_metrics(entry))
         meta = entry.get("metadata", {}) or {}
-        scale = meta.get("scale")
         total_records = meta.get("total_records")
         timing = metrics.get("timing_ms")
         p50 = metrics.get("p50")
         p95 = metrics.get("p95")
         p99 = metrics.get("p99")
         lines.append(
-            "| {name} | {scale} | {total} | {timing} | {p50} | {p95} | {p99} |".format(
+            "| {name} | {total} | {timing} | {p50} | {p95} | {p99} |".format(
                 name=entry.get("name", "benchmark"),
-                scale=scale if scale is not None else "-",
                 total=_format_int(total_records),
                 timing=f"{timing:.3f}" if timing is not None else "-",
                 p50=f"{p50:.6f}" if p50 is not None else "-",
@@ -356,9 +457,18 @@ def _generate_social_media(context, root: Path, scale: int) -> None:
     posts_dir.mkdir(parents=True, exist_ok=True)
     comments_dir.mkdir(parents=True, exist_ok=True)
 
-    user_count = 1000 * scale
-    post_count = 10000 * scale
-    comment_count = 50000 * scale
+    target_total = getattr(context, "bench_total_records_target", None)
+    if target_total is not None:
+        users = max(1, int(target_total // 61))
+        post_count = users * 10
+        comment_count = users * 50
+        remainder = max(int(target_total) - (users + post_count + comment_count), 0)
+        comment_count += remainder
+        user_count = users
+    else:
+        user_count = 1000 * scale
+        post_count = 10000 * scale
+        comment_count = 50000 * scale
     statuses = ["active", "inactive", "suspended"]
 
     start_date = date(2025, 1, 1)
@@ -406,7 +516,8 @@ def _ensure_fixtures(context) -> None:
     scale = getattr(context, "bench_scale", 1)
     root = _bench_data_root(context)
     generated = getattr(context, "bench_generated_scales", set())
-    key = (profile, scale)
+    total_target = getattr(context, "bench_total_records_target", None)
+    key = (profile, scale, total_target)
     if key in generated:
         return
     if profile == "social_media":
@@ -435,6 +546,7 @@ def _load_warm_db(context) -> Database:
     posts.load_from_dir()
     comments.load_from_dir()
     posts.add_gsi("by_user", "user_id")
+    posts.add_gsi("by_user_created", "user_id", "created_at")
     for record in posts.scan():
         posts.put(record)
     db.add_table("users", users)
@@ -604,11 +716,18 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
             start = time.perf_counter()
             _ = users.get(pk)
             timings.append((time.perf_counter() - start) * 1000.0)
-    elif benchmark == "gsi_query":
+    elif benchmark == "gsi_partition_lookup":
         for i in range(iterations):
             user_id = user_ids[i % len(user_ids)]
             start = time.perf_counter()
             _ = posts.query_gsi("by_user", user_id)
+            timings.append((time.perf_counter() - start) * 1000.0)
+    elif benchmark == "gsi_sorted_query":
+        predicate = Sort.gte("2025-06-01")
+        for i in range(iterations):
+            user_id = user_ids[i % len(user_ids)]
+            start = time.perf_counter()
+            _ = posts.query_gsi("by_user_created", user_id, predicate, False)
             timings.append((time.perf_counter() - start) * 1000.0)
     timings_sorted = sorted(timings)
     counts = getattr(context, "bench_counts", None)
@@ -670,8 +789,9 @@ def step_timing_measurement(context):
 @when("I run all benchmark scenarios")
 def step_run_all_benchmarks(context):
     results = []
-    for scale in _bench_scales():
-        context.bench_scale = scale
+    for total in _bench_totals():
+        context.bench_total_records_target = total
+        context.bench_scale = 1
         context.bench_db = None
         _ensure_fixtures(context)
         for name in ("single_table_cold_load", "full_database_cold_load"):
@@ -679,7 +799,9 @@ def step_run_all_benchmarks(context):
             results.append(context.last_benchmark)
         step_run_benchmark_iterations(context, "pk_lookup", 100)
         results.append(context.last_benchmark)
-        step_run_benchmark_iterations(context, "gsi_query", 100)
+        step_run_benchmark_iterations(context, "gsi_partition_lookup", 100)
+        results.append(context.last_benchmark)
+        step_run_benchmark_iterations(context, "gsi_sorted_query", 100)
         results.append(context.last_benchmark)
         step_run_incremental_refresh(context, "incremental_refresh")
         results.append(context.last_benchmark)
@@ -720,27 +842,24 @@ def step_run_visualization(context):
     for png in output_dir.glob("*.png"):
         png.unlink()
     data = json.loads(Path(context.benchmark_output_path).read_text(encoding="utf-8"))
+    grouped: dict[str, list[dict]] = {}
     for entry in data:
-        raw_name = entry.get("name", "benchmark")
-        meta = entry.get("metadata", {}) or {}
-        scale = meta.get("scale")
-        total_records = meta.get("total_records")
+        grouped.setdefault(entry.get("name", "benchmark"), []).append(entry)
+    for raw_name, entries in grouped.items():
         chart_name = _format_benchmark_name(raw_name)
-        if scale is not None:
-            chart_name = f"{chart_name} (Scale {scale})"
-        if total_records:
-            chart_name = f"{chart_name} - {_format_int(total_records)} Records"
-        suffix = f"_scale{scale}" if scale is not None else ""
-        png_path = output_dir / f"{raw_name}{suffix}.png"
-        metrics = _entry_metrics(entry)
-        if not metrics:
-            metrics = [("timing_ms", 0.0)]
-        display_metrics = [(_format_metric_label(label), value) for label, value in metrics]
-        if len(display_metrics) == 1:
-            label, value = display_metrics[0]
-            _render_single_metric_chart(chart_name, label, value, png_path)
-        else:
-            _render_bar_chart(chart_name, display_metrics, png_path)
+        series: dict[str, list[tuple[int, float]]] = {}
+        for entry in entries:
+            meta = entry.get("metadata", {}) or {}
+            total_records = meta.get("total_records")
+            if not isinstance(total_records, int):
+                continue
+            for label, value in _entry_metrics(entry):
+                display_label = _format_metric_label(label)
+                series.setdefault(display_label, []).append((total_records, value))
+        if not series:
+            continue
+        png_path = output_dir / f"{raw_name}.png"
+        _render_line_chart(chart_name, series, png_path)
     report_path = root / "REPORT.md"
     _write_report(context, data, report_path)
     context.chart_dir = output_dir

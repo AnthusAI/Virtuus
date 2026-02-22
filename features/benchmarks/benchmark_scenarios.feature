@@ -18,9 +18,14 @@ Feature: Benchmark scenarios
     When I run the "pk_lookup" benchmark for 1000 iterations
     Then the output should include p50, p95, and p99 latency values
 
-  Scenario: GSI query benchmark runs
+  Scenario: GSI partition lookup benchmark runs
     Given a warm database loaded from fixture data
-    When I run the "gsi_query" benchmark for 1000 iterations
+    When I run the "gsi_partition_lookup" benchmark for 1000 iterations
+    Then the output should include p50, p95, and p99 latency values
+
+  Scenario: GSI sorted query benchmark runs
+    Given a warm database loaded from fixture data
+    When I run the "gsi_sorted_query" benchmark for 1000 iterations
     Then the output should include p50, p95, and p99 latency values
 
   Scenario: Incremental refresh benchmark runs
