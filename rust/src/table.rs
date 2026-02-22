@@ -1902,6 +1902,8 @@ mod tests {
             json!({"id": "user-0", "status": "inactive"}).to_string(),
         )
         .unwrap();
+        // Ensure filesystem mtime moves forward (Linux CI has 1s resolution)
+        std::thread::sleep(std::time::Duration::from_secs(1));
         assert!(table.is_stale(false));
     }
 
@@ -1964,6 +1966,7 @@ mod tests {
             json!({"id": "user-0", "status": "inactive"}).to_string(),
         )
         .unwrap();
+        std::thread::sleep(std::time::Duration::from_secs(1));
         let summary = table.refresh();
         assert_eq!(summary.modified, 1);
         assert_eq!(summary.reread, 1);
