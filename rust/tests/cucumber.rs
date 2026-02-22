@@ -46,6 +46,10 @@ pub struct VirtuusWorld {
     pub schema_path: Option<PathBuf>,
     pub data_root: Option<PathBuf>,
     pub pages: Vec<Vec<Value>>,
+    pub cli_root: Option<PathBuf>,
+    pub cli_stdout: Option<String>,
+    pub cli_stderr: Option<String>,
+    pub cli_status: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
@@ -3618,6 +3622,21 @@ fn unique_temp(subdir: &str) -> PathBuf {
     path
 }
 
+fn ensure_cli_root(world: &mut VirtuusWorld, tag: &str) -> PathBuf {
+    if let Some(root) = world.cli_root.clone() {
+        return root;
+    }
+    let root = unique_temp(tag);
+    fs::create_dir_all(&root).unwrap();
+    world.cli_root = Some(root.clone());
+    root
+}
+
+fn write_json_file(path: &PathBuf, value: &Value) {
+    let text = serde_json::to_string_pretty(value).unwrap();
+    fs::write(path, text).unwrap();
+}
+
 #[given(regex = r#"^a YAML schema file defining a "([^"]*)" table with primary key "([^"]*)"$"#)]
 async fn given_schema_single_table(world: &mut VirtuusWorld, table: String, pk: String) {
     let dir = unique_temp("schema");
@@ -4100,6 +4119,165 @@ async fn then_nested_posts_empty(world: &mut VirtuusWorld) {
             .map(|a| a.len()),
         Some(0)
     );
+}
+
+// ---------------------------------------------------------------------------
+// CLI query mode
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a data directory with a "users" folder containing JSON files$"#)]
+async fn given_cli_users_data(world: &mut VirtuusWorld) {
+    let root = ensure_cli_root(world, "cli_users");
+    let data_dir = root.join("data").join("users");
+    fs::create_dir_all(&data_dir).unwrap();
+    write_json_file(
+        &data_dir.join("alice.json"),
+        &json!({
+            "id": "user-1",
+            "name": "Alice",
+            "email": "alice@example.com"
+        }),
+    );
+    write_json_file(
+        &data_dir.join("bob.json"),
+        &json!({
+            "id": "user-2",
+            "name": "Bob",
+            "email": "bob@example.com"
+        }),
+    );
+}
+
+#[given("a data directory and a schema.yml file")]
+async fn given_cli_schema(world: &mut VirtuusWorld) {
+    let root = ensure_cli_root(world, "cli_schema");
+    let data_dir = root.join("data").join("users");
+    fs::create_dir_all(&data_dir).unwrap();
+    write_json_file(
+        &data_dir.join("user-1.json"),
+        &json!({
+            "id": "user-1",
+            "name": "Alice"
+        }),
+    );
+    let schema = r#"
+tables:
+  users:
+    primary_key: id
+    directory: users
+"#;
+    fs::write(root.join("schema.yml"), schema).unwrap();
+}
+
+#[given(regex = r#"^a data directory with a "users" folder$"#)]
+async fn given_cli_users_empty(world: &mut VirtuusWorld) {
+    let root = ensure_cli_root(world, "cli_users_empty");
+    let data_dir = root.join("data").join("users");
+    fs::create_dir_all(&data_dir).unwrap();
+    write_json_file(
+        &data_dir.join("bob.json"),
+        &json!({
+            "id": "user-2",
+            "name": "Bob",
+            "email": "bob@example.com"
+        }),
+    );
+}
+
+#[given("a data directory with records")]
+async fn given_cli_records(world: &mut VirtuusWorld) {
+    let root = ensure_cli_root(world, "cli_records");
+    let data_dir = root.join("data").join("users");
+    fs::create_dir_all(&data_dir).unwrap();
+    write_json_file(
+        &data_dir.join("user-1.json"),
+        &json!({
+            "id": "user-1",
+            "name": "Alice",
+            "email": "alice@example.com"
+        }),
+    );
+}
+
+#[when(regex = r#"^I run virtuus query (--.+)$"#)]
+async fn when_run_virtuus_query(world: &mut VirtuusWorld, args: String) {
+    let bin = env!("CARGO_BIN_EXE_virtuus");
+    let mut cmd = Command::new(bin);
+    cmd.arg("query");
+    for arg in args.split_whitespace() {
+        cmd.arg(arg);
+    }
+    if let Some(root) = world.cli_root.as_ref() {
+        cmd.current_dir(root);
+    }
+    let output = cmd.output().expect("failed to run virtuus");
+    world.cli_stdout = Some(String::from_utf8_lossy(&output.stdout).to_string());
+    world.cli_stderr = Some(String::from_utf8_lossy(&output.stderr).to_string());
+    world.cli_status = Some(output.status.code().unwrap_or(-1));
+}
+
+#[when("I run virtuus query with valid parameters")]
+async fn when_run_virtuus_query_valid(world: &mut VirtuusWorld) {
+    when_run_virtuus_query(world, "--dir ./data --table users --pk user-1".to_string()).await;
+}
+
+#[then("the output should be valid JSON")]
+async fn then_output_valid_json(world: &mut VirtuusWorld) {
+    let stdout = world.cli_stdout.as_deref().unwrap_or("");
+    let _value: Value = serde_json::from_str(stdout).expect("invalid json output");
+}
+
+#[then("the output should contain the matching user record")]
+async fn then_output_contains_user(world: &mut VirtuusWorld) {
+    let stdout = world.cli_stdout.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(stdout).expect("invalid json output");
+    let items = value.as_array().expect("expected array output");
+    assert!(items.iter().any(|item| {
+        item.get("email")
+            .and_then(|v| v.as_str())
+            .map(|v| v == "alice@example.com")
+            .unwrap_or(false)
+    }));
+}
+
+#[then(regex = r#"^the output should be the user record for "([^"]*)"$"#)]
+async fn then_output_user_record(world: &mut VirtuusWorld, user_id: String) {
+    let stdout = world.cli_stdout.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(stdout).expect("invalid json output");
+    assert_eq!(
+        value.get("id").and_then(|v| v.as_str()),
+        Some(user_id.as_str())
+    );
+}
+
+#[then("the output should be an empty JSON array")]
+async fn then_output_empty_array(world: &mut VirtuusWorld) {
+    let stdout = world.cli_stdout.as_deref().unwrap_or("");
+    let value: Value = serde_json::from_str(stdout).expect("invalid json output");
+    assert_eq!(value.as_array().map(|a| a.len()), Some(0));
+}
+
+#[then("the command should exit with a non-zero status")]
+async fn then_nonzero_exit(world: &mut VirtuusWorld) {
+    let status = world.cli_status.unwrap_or(0);
+    assert_ne!(status, 0);
+}
+
+#[then("the error message should indicate the table was not found")]
+async fn then_error_table_not_found(world: &mut VirtuusWorld) {
+    let stderr = world.cli_stderr.as_deref().unwrap_or("");
+    assert!(stderr.to_lowercase().contains("not found"));
+}
+
+#[then("results should be printed to stdout as JSON")]
+async fn then_stdout_json(world: &mut VirtuusWorld) {
+    then_output_valid_json(world).await;
+}
+
+#[then("the process should exit with status 0")]
+async fn then_exit_zero(world: &mut VirtuusWorld) {
+    let status = world.cli_status.unwrap_or(1);
+    assert_eq!(status, 0);
 }
 
 // ---------------------------------------------------------------------------

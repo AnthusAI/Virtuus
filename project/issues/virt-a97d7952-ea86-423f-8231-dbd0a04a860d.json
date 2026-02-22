@@ -3,16 +3,29 @@
   "title": "CLI query mode",
   "description": "Given a data directory and query parameters, when I run virtuus query, it should load data, execute the query, print JSON results, and exit. Spec: features/cli/query_mode.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "0a05e2ee-a9b7-4de3-9373-56ca4d2e3666",
+      "author": "ryan.porter",
+      "text": "Started CLI query mode. Next: review feature spec and implement CLI path + tests. Blockers: none.",
+      "created_at": "2026-02-22T01:24:32.843183Z"
+    },
+    {
+      "id": "43876f91-fc38-4727-95ad-7bd3478f1897",
+      "author": "ryan.porter",
+      "text": "Closed: implemented CLI query mode (Rust bin + cucumber steps), added Python parity steps; make check green. Next: pick up CLI server mode or other Phase 7 tasks.",
+      "created_at": "2026-02-22T01:31:34.886805Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:01.283237Z",
-  "updated_at": "2026-02-21T16:48:01.283237Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T01:31:34.886805Z",
+  "closed_at": "2026-02-22T01:31:28.645784Z",
   "custom": {}
 }
