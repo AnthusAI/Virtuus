@@ -486,7 +486,7 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     margin_left = 120
     margin_right = 40
     margin_top = 90
-    margin_bottom = 120
+    margin_bottom = 150  # extra room for wrapped x labels
     bar_width = 26
     bar_gap = 12
     group_gap = 36
@@ -541,14 +541,30 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     cursor_x = margin_left
     for cat in categories:
         cat_center = cursor_x + group_width // 2
+        parts = cat.split(" ")
+        line1 = cat
+        line2 = ""
+        if len(cat) > 14 and len(parts) > 1:
+            mid = len(parts) // 2
+            line1 = " ".join(parts[:mid])
+            line2 = " ".join(parts[mid:])
         _draw_text(
             rows,
-            max(cat_center - _text_width(cat, 1) // 2, margin_left),
+            max(cat_center - _text_width(line1, 1) // 2, margin_left),
             plot_bottom + 12,
-            cat,
+            line1,
             text_color,
             scale=1,
         )
+        if line2:
+            _draw_text(
+                rows,
+                max(cat_center - _text_width(line2, 1) // 2, margin_left),
+                plot_bottom + 28,
+                line2,
+                text_color,
+                scale=1,
+            )
         for idx, label in enumerate(series_labels):
             color = palette[idx % len(palette)]
             value = data.get(cat, {}).get(label, 0.0)
