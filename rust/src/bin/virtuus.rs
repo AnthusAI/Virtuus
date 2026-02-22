@@ -9,10 +9,10 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use virtuus::table::ValidationMode;
-use virtuus::{Database, Table};
+use virtuus::{Database, Table, VERSION};
 
 #[derive(Parser)]
-#[command(name = "virtuus", version)]
+#[command(name = "virtuus", version = VERSION)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

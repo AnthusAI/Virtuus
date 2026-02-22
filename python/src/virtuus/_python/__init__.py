@@ -20,3 +20,8 @@ def _read_version() -> str:
 
 
 __version__: str = _read_version()
+
+
+def cli_version() -> str:
+    """Return the library version for CLI display."""
+    return __version__
