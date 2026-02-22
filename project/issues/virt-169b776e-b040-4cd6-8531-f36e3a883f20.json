@@ -64,10 +64,22 @@
       "author": "ryan.porter",
       "text": "Done: multi-size benchmarks with separate GSI partition vs sorted query metrics; line charts across totals; report lists data sizes. Next: rust coverage. Blockers: tarpaulin 96.36%.",
       "created_at": "2026-02-22T06:40:20.209142Z"
+    },
+    {
+      "id": "df4aba48-b210-4730-84ed-1b5c96511901",
+      "author": "ryan.porter",
+      "text": "Did: added .gitignore entries for benchmark fixture directories, leaving report/json/charts tracked. Next: commit ignore change. Blockers: none.",
+      "created_at": "2026-02-22T06:50:44.872977Z"
+    },
+    {
+      "id": "11ec3c1e-fe33-46ca-933b-115c1174363c",
+      "author": "ryan.porter",
+      "text": "Done: fixture directories ignored; reports/charts stay tracked. Next: none. Blockers: none.",
+      "created_at": "2026-02-22T06:50:50.557948Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.936135Z",
-  "updated_at": "2026-02-22T06:40:20.287550Z",
-  "closed_at": "2026-02-22T06:40:20.287550Z",
+  "updated_at": "2026-02-22T06:50:50.654344Z",
+  "closed_at": "2026-02-22T06:50:50.654344Z",
   "custom": {}
 }
