@@ -82,7 +82,7 @@ def main() -> None:
         categories = []
         data = {}
         for name in sorted(benchmarks.keys()):
-            categories.append(viz._format_benchmark_name(name))
+            categories.append(viz._compact_benchmark_name(name))
             data[categories[-1]] = {}
             for backend in ("rust", "python"):
                 value = benchmarks[name].get(backend)

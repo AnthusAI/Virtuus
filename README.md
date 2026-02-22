@@ -2,9 +2,9 @@
 
 A file-backed in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
-![CI](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/ci.svg)
-![Python Coverage](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/python-coverage.svg)
-![Rust Coverage](https://raw.githubusercontent.com/AnthusAI/Virtuus/badges/rust-coverage.svg)
+![CI](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml/badge.svg?branch=main)
+![Python Coverage](https://img.shields.io/badge/python%20coverage-100%25-brightgreen)
+![Rust Coverage](https://img.shields.io/badge/rust%20coverage-100%25-brightgreen)
 
 Data lives on disk as one JSON file per record. Virtuus loads it into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
 
