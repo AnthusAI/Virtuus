@@ -98,7 +98,8 @@ def _entry_metrics(entry: dict) -> list[tuple[str, float]]:
 def _bench_totals() -> list[int]:
     env = os.getenv("VIRTUUS_BENCH_TOTALS")
     if not env:
-        return [100, 500, 1000, 5000, 10000, 50000, 100000]
+        # Keep defaults light so CI and local runs are fast; heavier totals can be set via env.
+        return [100, 1000]
     totals: list[int] = []
     for part in env.split(","):
         part = part.strip()
