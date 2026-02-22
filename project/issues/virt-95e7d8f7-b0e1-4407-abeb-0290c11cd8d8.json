@@ -3,16 +3,23 @@
   "title": "Concurrent refresh",
   "description": "Given files changing on disk while queries are in flight, readers should get either the old state or the new state, never a mix. JIT refresh + concurrent reads must be safe. Spec: features/concurrency/concurrent_refresh.feature",
   "type": "story",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "3be85496-8f63-48ee-a1c3-78ca9b451428",
+      "author": "ryan.porter",
+      "text": "Status: in_progress. Done: moved to concurrent refresh story and reviewing feature spec. Next: implement Rust/Python steps for concurrent_refresh.feature and validate refresh consistency. Blockers: none.",
+      "created_at": "2026-02-22T01:51:13.689388Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:02.107568Z",
-  "updated_at": "2026-02-21T16:48:02.107568Z",
+  "updated_at": "2026-02-22T01:51:13.689388Z",
   "closed_at": null,
   "custom": {}
 }
