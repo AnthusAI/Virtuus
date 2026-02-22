@@ -3,7 +3,7 @@
   "title": "Referential integrity under load",
   "description": "Given concurrent deletes and association resolution, the system should return either a valid result or clean null/empty, never a dangling reference or crash. Spec: features/concurrency/referential_integrity_under_load.feature",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,10 +16,16 @@
       "author": "ryan.porter",
       "text": "Starting: review referential integrity under load scenarios and add missing steps. Next: implement Python/Rust steps + tests. Blockers: none.",
       "created_at": "2026-02-22T02:07:46.660076Z"
+    },
+    {
+      "id": "a51ca8ab-ef80-48b7-a57d-1c770c8a3012",
+      "author": "ryan.porter",
+      "text": "Done: added Python/Rust steps for referential integrity under load and validated with behave + rust cucumber. Next: proceed to Phase 9 or other remaining issues. Blockers: none.",
+      "created_at": "2026-02-22T02:14:49.347058Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.442228Z",
-  "updated_at": "2026-02-22T02:07:46.660076Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T02:14:52.781694Z",
+  "closed_at": "2026-02-22T02:14:52.781694Z",
   "custom": {}
 }

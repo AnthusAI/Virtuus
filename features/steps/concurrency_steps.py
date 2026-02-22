@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import threading
 import time
 from pathlib import Path
@@ -9,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 from behave import given, then, when
 
-from virtuus import Table
+from virtuus import Database, Table
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -677,3 +678,225 @@ def step_empty_file_reported(context):
 def step_other_records_accessible(context):
     table = _current_table(context)
     assert table.get("user-1") is not None
+
+
+@given('a database with "posts" belonging to "users"')
+def step_posts_belong_to_users(context):
+    if not hasattr(context, "db"):
+        context.db = Database()
+    if not hasattr(context, "tables"):
+        context.tables = {}
+    if "users" not in context.tables:
+        users = Table("users", primary_key="id")
+        context.db.add_table("users", users)
+        context.tables["users"] = users
+    if "posts" not in context.tables:
+        posts = Table("posts", primary_key="id")
+        context.db.add_table("posts", posts)
+        context.tables["posts"] = posts
+    posts = context.tables["posts"]
+    posts.add_belongs_to("author", "users", "user_id")
+
+
+@given("100 users each with 10 posts")
+def step_users_with_posts(context):
+    users = context.tables["users"]
+    posts = context.tables["posts"]
+    if "by_user" not in posts.gsis:
+        posts.add_gsi("by_user", "user_id")
+    context.ri_user_ids = []
+    for i in range(100):
+        user_id = f"user-{i}"
+        users.put({"id": user_id, "name": f"User {i}"})
+        context.ri_user_ids.append(user_id)
+        for j in range(10):
+            post_id = f"post-{i}-{j}"
+            posts.put({"id": post_id, "user_id": user_id, "title": f"Post {j}"})
+
+
+@given("100 posts referencing 50 users")
+def step_posts_referencing_users(context):
+    users = context.tables["users"]
+    posts = context.tables["posts"]
+    context.ri_user_ids = []
+    context.ri_post_ids = []
+    for i in range(50):
+        user_id = f"user-{i}"
+        users.put({"id": user_id, "name": f"User {i}"})
+        context.ri_user_ids.append(user_id)
+    for i in range(100):
+        user_id = random.choice(context.ri_user_ids)
+        post_id = f"post-{i}"
+        posts.put({"id": post_id, "user_id": user_id, "title": f"Post {i}"})
+        context.ri_post_ids.append(post_id)
+
+
+@when("5 threads continuously delete random users")
+def step_delete_random_users(context):
+    users = context.tables["users"]
+    context.ri_lock = threading.Lock()
+    context.ri_stop = threading.Event()
+    context.ri_errors = []
+    context.ri_delete_threads = []
+    user_ids = getattr(context, "ri_user_ids", [record.get("id") for record in users.scan()])
+
+    def worker() -> None:
+        while not context.ri_stop.is_set():
+            user_id = random.choice(user_ids)
+            try:
+                with context.ri_lock:
+                    users.delete(user_id)
+            except Exception as exc:  # pragma: no cover - error path
+                context.ri_errors.append(str(exc))
+
+    for _ in range(5):
+        thread = threading.Thread(target=worker)
+        context.ri_delete_threads.append(thread)
+        thread.start()
+
+
+@when("20 threads continuously resolve user posts associations")
+def step_resolve_user_posts(context):
+    users = context.tables["users"]
+    context.ri_invalid = []
+    threads = []
+
+    def reader() -> None:
+        for _ in range(50):
+            user_id = random.choice(context.ri_user_ids)
+            try:
+                with context.ri_lock:
+                    result = users.resolve_association("posts", user_id, context.tables)
+                if result is None:
+                    continue
+                if not isinstance(result, list):
+                    context.ri_invalid.append("non-list")
+                    continue
+                for record in result:
+                    if not isinstance(record, dict):
+                        context.ri_invalid.append("non-dict")
+                        break
+                    if record.get("user_id") != user_id:
+                        context.ri_invalid.append("wrong user")
+                        break
+            except Exception as exc:  # pragma: no cover - error path
+                context.ri_errors.append(str(exc))
+
+    for _ in range(20):
+        thread = threading.Thread(target=reader)
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.ri_stop.set()
+    for thread in context.ri_delete_threads:
+        thread.join()
+
+
+@then("association results should be either a valid list or empty")
+def step_association_results_valid(context):
+    assert not context.ri_invalid
+
+
+@then("no thread should encounter an unhandled error")
+def step_no_thread_error(context):
+    assert not context.ri_errors
+
+
+@when("20 threads continuously resolve post author associations")
+def step_resolve_post_authors(context):
+    posts = context.tables["posts"]
+    context.ri_invalid = []
+    threads = []
+
+    def reader() -> None:
+        for _ in range(50):
+            post_id = random.choice(context.ri_post_ids)
+            try:
+                with context.ri_lock:
+                    result = posts.resolve_association("author", post_id, context.tables)
+                if result is None:
+                    continue
+                if not isinstance(result, dict):
+                    context.ri_invalid.append("non-dict")
+                    continue
+                if result.get("id") is None:
+                    context.ri_invalid.append("missing id")
+            except Exception as exc:  # pragma: no cover - error path
+                context.ri_errors.append(str(exc))
+
+    for _ in range(20):
+        thread = threading.Thread(target=reader)
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    context.ri_stop.set()
+    for thread in context.ri_delete_threads:
+        thread.join()
+
+
+@then("author results should be either a valid user or null")
+def step_author_results_valid(context):
+    assert not context.ri_invalid
+
+
+@then("no thread should crash")
+def step_no_thread_crash(context):
+    assert not context.ri_errors
+
+
+@when("writers continuously delete users")
+def step_writers_delete_users(context):
+    users = context.tables["users"]
+    posts = context.tables["posts"]
+    if "author" not in posts.associations:
+        posts.add_belongs_to("author", "users", "user_id")
+    if not getattr(context, "ri_user_ids", None):
+        context.ri_user_ids = []
+        for i in range(50):
+            user_id = f"user-{i}"
+            users.put({"id": user_id})
+            context.ri_user_ids.append(user_id)
+        for i in range(100):
+            posts.put({"id": f"post-{i}", "user_id": random.choice(context.ri_user_ids)})
+    step_delete_random_users(context)
+
+
+@when("a thread calls db.validate()")
+def step_thread_validate(context):
+    context.ri_validate_error = None
+    context.ri_violations = []
+
+    def worker() -> None:
+        try:
+            with context.ri_lock:
+                context.ri_violations = context.db.validate()
+        except Exception as exc:  # pragma: no cover - error path
+            context.ri_validate_error = str(exc)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+    thread.join()
+
+    context.ri_stop.set()
+    for thread in context.ri_delete_threads:
+        thread.join()
+
+
+@then("validate should return a list of violations without crashing")
+def step_validate_returns(context):
+    assert context.ri_validate_error is None
+    assert isinstance(context.ri_violations, list)
+
+
+@then("each violation should reference a real missing target")
+def step_violation_targets_missing(context):
+    users = context.tables["users"]
+    for violation in context.ri_violations:
+        target = violation.get("missing_target")
+        if target is None:
+            raise AssertionError("missing_target not set")
+        assert users.get(str(target)) is None

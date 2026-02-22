@@ -86,6 +86,14 @@ pub struct VirtuusWorld {
     pub race_expected_count: Option<usize>,
     pub race_written: Option<Arc<AtomicBool>>,
     pub file_deleted: Option<Arc<AtomicBool>>,
+    pub ri_db: Option<Arc<Mutex<Database>>>,
+    pub ri_user_ids: Vec<String>,
+    pub ri_post_ids: Vec<String>,
+    pub ri_errors: Vec<String>,
+    pub ri_invalid: Vec<String>,
+    pub ri_delete_threads: Option<usize>,
+    pub ri_validate_error: Option<String>,
+    pub ri_violations: Vec<Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +121,14 @@ fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
         world.database = Some(DbDatabase::new());
     }
     world.database.as_mut().unwrap()
+}
+
+fn ensure_ri_db(world: &mut VirtuusWorld) -> Arc<Mutex<Database>> {
+    if world.ri_db.is_none() {
+        let db = world.database.take().unwrap_or_else(Database::new);
+        world.ri_db = Some(Arc::new(Mutex::new(db)));
+    }
+    Arc::clone(world.ri_db.as_ref().unwrap())
 }
 
 fn ensure_db_table<'a>(world: &'a mut VirtuusWorld, name: &str, pk: &str) -> &'a mut DbTable {
@@ -3053,6 +3069,417 @@ async fn then_empty_file_reported(world: &mut VirtuusWorld) {
 async fn then_other_records_accessible(world: &mut VirtuusWorld) {
     let table = current_table(world);
     assert!(table.get("user-1", None).is_some());
+}
+
+// ---------------------------------------------------------------------------
+// Referential integrity under load
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a database with "posts" belonging to "users"$"#)]
+async fn given_posts_belong_to_users(world: &mut VirtuusWorld) {
+    {
+        let posts = ensure_db_table(world, "posts", "id");
+        posts.add_belongs_to("author", "users", "user_id");
+    }
+    ensure_db_table(world, "users", "id");
+}
+
+#[given(regex = r#"^100 users each with 10 posts$"#)]
+async fn given_users_with_posts(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let mut user_ids = Vec::new();
+    {
+        let mut db = db.lock().expect("lock db");
+        for i in 0..100 {
+            let user_id = format!("user-{i}");
+            user_ids.push(user_id.clone());
+            if let Some(users) = db.table_mut("users") {
+                users.put(json!({"id": user_id, "name": format!("User {i}")}));
+            }
+            for j in 0..10 {
+                if let Some(posts) = db.table_mut("posts") {
+                    posts.put(json!({
+                        "id": format!("post-{i}-{j}"),
+                        "user_id": format!("user-{i}"),
+                        "title": format!("Post {j}")
+                    }));
+                }
+            }
+        }
+    }
+    world.ri_user_ids = user_ids;
+}
+
+#[given(regex = r#"^100 posts referencing 50 users$"#)]
+async fn given_posts_referencing_users(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let mut user_ids = Vec::new();
+    let mut post_ids = Vec::new();
+    {
+        let mut db = db.lock().expect("lock db");
+        for i in 0..50 {
+            let user_id = format!("user-{i}");
+            user_ids.push(user_id.clone());
+            if let Some(users) = db.table_mut("users") {
+                users.put(json!({"id": user_id, "name": format!("User {i}")}));
+            }
+        }
+        for i in 0..100 {
+            let user_id = user_ids[i % user_ids.len()].clone();
+            let post_id = format!("post-{i}");
+            post_ids.push(post_id.clone());
+            if let Some(posts) = db.table_mut("posts") {
+                posts.put(json!({
+                    "id": post_id,
+                    "user_id": user_id,
+                    "title": format!("Post {i}")
+                }));
+            }
+        }
+    }
+    world.ri_user_ids = user_ids;
+    world.ri_post_ids = post_ids;
+}
+
+#[when("5 threads continuously delete random users")]
+async fn when_delete_random_users(world: &mut VirtuusWorld) {
+    world.ri_delete_threads = Some(5);
+}
+
+#[when("20 threads continuously resolve user posts associations")]
+async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let user_ids = world.ri_user_ids.clone();
+    let delete_threads = world.ri_delete_threads.unwrap_or(5);
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let invalid = Arc::new(Mutex::new(Vec::new()));
+    let stop = Arc::new(AtomicBool::new(false));
+    let mut delete_handles = Vec::new();
+    let mut resolve_handles = Vec::new();
+
+    for worker in 0..delete_threads {
+        let db = Arc::clone(&db);
+        let user_ids = user_ids.clone();
+        let stop = Arc::clone(&stop);
+        let errors = Arc::clone(&errors);
+        delete_handles.push(thread::spawn(move || {
+            for i in 0..200 {
+                if stop.load(Ordering::SeqCst) {
+                    break;
+                }
+                let idx = (worker + i) % user_ids.len();
+                let user_id = &user_ids[idx];
+                let mut db = db.lock().expect("lock db");
+                if let Some(users) = db.table_mut("users") {
+                    if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        users.delete(user_id, None);
+                    }))
+                    .is_err()
+                    {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("delete panic".to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    for worker in 0..20 {
+        let db = Arc::clone(&db);
+        let user_ids = user_ids.clone();
+        let errors = Arc::clone(&errors);
+        let invalid = Arc::clone(&invalid);
+        resolve_handles.push(thread::spawn(move || {
+            for i in 0..50 {
+                let idx = (worker + i) % user_ids.len();
+                let user_id = &user_ids[idx];
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut db = db.lock().expect("lock db");
+                    db.resolve_association("users", "posts", user_id)
+                }));
+                match result {
+                    Ok(Value::Null) => {}
+                    Ok(Value::Array(items)) => {
+                        for item in items {
+                            if let Some(obj) = item.as_object() {
+                                if obj
+                                    .get("user_id")
+                                    .and_then(|v| v.as_str())
+                                    != Some(user_id)
+                                {
+                                    invalid
+                                        .lock()
+                                        .expect("lock invalid")
+                                        .push("wrong user".to_string());
+                                    break;
+                                }
+                            } else {
+                                invalid
+                                    .lock()
+                                    .expect("lock invalid")
+                                    .push("non-object".to_string());
+                                break;
+                            }
+                        }
+                    }
+                    Ok(_) => {
+                        invalid
+                            .lock()
+                            .expect("lock invalid")
+                            .push("non-array".to_string());
+                    }
+                    Err(_) => {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("resolve panic".to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    for handle in resolve_handles {
+        let _ = handle.join();
+    }
+    stop.store(true, Ordering::SeqCst);
+    for handle in delete_handles {
+        let _ = handle.join();
+    }
+
+    world.ri_errors = errors.lock().expect("lock errors").clone();
+    world.ri_invalid = invalid.lock().expect("lock invalid").clone();
+}
+
+#[then("association results should be either a valid list or empty")]
+async fn then_assoc_results_valid(world: &mut VirtuusWorld) {
+    assert!(world.ri_invalid.is_empty());
+}
+
+#[then("no thread should encounter an unhandled error")]
+async fn then_no_thread_error(world: &mut VirtuusWorld) {
+    assert!(world.ri_errors.is_empty());
+}
+
+#[when("20 threads continuously resolve post author associations")]
+async fn when_resolve_post_authors(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let post_ids = world.ri_post_ids.clone();
+    let delete_threads = world.ri_delete_threads.unwrap_or(5);
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let invalid = Arc::new(Mutex::new(Vec::new()));
+    let stop = Arc::new(AtomicBool::new(false));
+    let mut delete_handles = Vec::new();
+    let mut resolve_handles = Vec::new();
+
+    for worker in 0..delete_threads {
+        let db = Arc::clone(&db);
+        let user_ids = world.ri_user_ids.clone();
+        let stop = Arc::clone(&stop);
+        let errors = Arc::clone(&errors);
+        delete_handles.push(thread::spawn(move || {
+            for i in 0..200 {
+                if stop.load(Ordering::SeqCst) {
+                    break;
+                }
+                let idx = (worker + i) % user_ids.len();
+                let user_id = &user_ids[idx];
+                let mut db = db.lock().expect("lock db");
+                if let Some(users) = db.table_mut("users") {
+                    if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        users.delete(user_id, None);
+                    }))
+                    .is_err()
+                    {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("delete panic".to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    for worker in 0..20 {
+        let db = Arc::clone(&db);
+        let post_ids = post_ids.clone();
+        let errors = Arc::clone(&errors);
+        let invalid = Arc::clone(&invalid);
+        resolve_handles.push(thread::spawn(move || {
+            for i in 0..50 {
+                let idx = (worker + i) % post_ids.len();
+                let post_id = &post_ids[idx];
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut db = db.lock().expect("lock db");
+                    db.resolve_association("posts", "author", post_id)
+                }));
+                match result {
+                    Ok(Value::Null) => {}
+                    Ok(Value::Object(obj)) => {
+                        if obj.get("id").is_none() {
+                            invalid
+                                .lock()
+                                .expect("lock invalid")
+                                .push("missing id".to_string());
+                        }
+                    }
+                    Ok(_) => {
+                        invalid
+                            .lock()
+                            .expect("lock invalid")
+                            .push("non-object".to_string());
+                    }
+                    Err(_) => {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("resolve panic".to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    for handle in resolve_handles {
+        let _ = handle.join();
+    }
+    stop.store(true, Ordering::SeqCst);
+    for handle in delete_handles {
+        let _ = handle.join();
+    }
+
+    world.ri_errors = errors.lock().expect("lock errors").clone();
+    world.ri_invalid = invalid.lock().expect("lock invalid").clone();
+}
+
+#[then("author results should be either a valid user or null")]
+async fn then_author_results_valid(world: &mut VirtuusWorld) {
+    assert!(world.ri_invalid.is_empty());
+}
+
+#[then("no thread should crash")]
+async fn then_no_thread_crash(world: &mut VirtuusWorld) {
+    assert!(world.ri_errors.is_empty());
+}
+
+#[when("writers continuously delete users")]
+async fn when_writers_delete_users(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    if world.ri_user_ids.is_empty() {
+        let mut user_ids = Vec::new();
+        let mut post_ids = Vec::new();
+        {
+            let mut db = db.lock().expect("lock db");
+            if let Some(posts) = db.table_mut("posts") {
+                if !posts.associations().contains(&"author".to_string()) {
+                    posts.add_belongs_to("author", "users", "user_id");
+                }
+            }
+            for i in 0..50 {
+                let user_id = format!("user-{i}");
+                user_ids.push(user_id.clone());
+                if let Some(users) = db.table_mut("users") {
+                    users.put(json!({"id": user_id}));
+                }
+            }
+            for i in 0..100 {
+                let user_id = user_ids[i % user_ids.len()].clone();
+                let post_id = format!("post-{i}");
+                post_ids.push(post_id.clone());
+                if let Some(posts) = db.table_mut("posts") {
+                    posts.put(json!({"id": post_id, "user_id": user_id}));
+                }
+            }
+        }
+        world.ri_user_ids = user_ids;
+        world.ri_post_ids = post_ids;
+    }
+    world.ri_delete_threads = Some(5);
+}
+
+#[when("a thread calls db.validate()")]
+async fn when_thread_calls_validate(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let user_ids = world.ri_user_ids.clone();
+    let delete_threads = world.ri_delete_threads.unwrap_or(5);
+    let errors = Arc::new(Mutex::new(Vec::new()));
+    let stop = Arc::new(AtomicBool::new(false));
+    let mut delete_handles = Vec::new();
+
+    for worker in 0..delete_threads {
+        let db = Arc::clone(&db);
+        let user_ids = user_ids.clone();
+        let stop = Arc::clone(&stop);
+        let errors = Arc::clone(&errors);
+        delete_handles.push(thread::spawn(move || {
+            for i in 0..200 {
+                if stop.load(Ordering::SeqCst) {
+                    break;
+                }
+                let idx = (worker + i) % user_ids.len();
+                let user_id = &user_ids[idx];
+                let mut db = db.lock().expect("lock db");
+                if let Some(users) = db.table_mut("users") {
+                    if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        users.delete(user_id, None);
+                    }))
+                    .is_err()
+                    {
+                        errors
+                            .lock()
+                            .expect("lock errors")
+                            .push("delete panic".to_string());
+                    }
+                }
+            }
+        }));
+    }
+
+    let db_for_validate = Arc::clone(&db);
+    let validate_handle = thread::spawn(move || {
+        let mut db = db_for_validate.lock().expect("lock db");
+        db.validate()
+    });
+
+    let (violations, validate_error) = match validate_handle.join() {
+        Ok(items) => (items, None),
+        Err(_) => (Vec::new(), Some("validate panic".to_string())),
+    };
+    stop.store(true, Ordering::SeqCst);
+    for handle in delete_handles {
+        let _ = handle.join();
+    }
+
+    world.ri_errors = errors.lock().expect("lock errors").clone();
+    world.ri_validate_error = validate_error;
+    world.ri_violations = violations;
+}
+
+#[then("validate should return a list of violations without crashing")]
+async fn then_validate_returns(world: &mut VirtuusWorld) {
+    assert!(world.ri_validate_error.is_none());
+}
+
+#[then("each violation should reference a real missing target")]
+async fn then_violation_targets_missing(world: &mut VirtuusWorld) {
+    let db = ensure_ri_db(world);
+    let mut db = db.lock().expect("lock db");
+    for violation in &world.ri_violations {
+        if let Some(missing) = violation.get("missing_target") {
+            let missing_id = missing
+                .as_str()
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| missing.to_string());
+            let exists = db
+                .table_mut("users")
+                .and_then(|users| users.get(&missing_id, None))
+                .is_some();
+            assert!(!exists);
+        }
+    }
 }
 
 #[then("all GSIs should include the 2 new records")]
