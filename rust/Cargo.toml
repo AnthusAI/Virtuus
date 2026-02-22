@@ -3,6 +3,12 @@ name = "virtuus"
 version = "0.1.0"
 edition = "2021"
 description = "File-backed in-memory indexed table engine"
+license = "MIT"
+repository = "https://github.com/AnthusAI/Virtuus"
+homepage = "https://github.com/AnthusAI/Virtuus"
+readme = "README.md"
+keywords = ["database", "gsi", "in-memory", "json", "table"]
+categories = ["database", "command-line-utilities"]
 
 [lib]
 name = "virtuus"
