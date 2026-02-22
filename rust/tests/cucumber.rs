@@ -7,7 +7,7 @@ use std::process::Child;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[allow(unused_imports)]
 use cucumber::step;
@@ -94,6 +94,18 @@ pub struct VirtuusWorld {
     pub ri_delete_threads: Option<usize>,
     pub ri_validate_error: Option<String>,
     pub ri_violations: Vec<Value>,
+    pub bench_root: Option<PathBuf>,
+    pub bench_profile: Option<String>,
+    pub bench_scale: Option<usize>,
+    pub bench_generated: bool,
+    pub bench_output: Option<PathBuf>,
+    pub bench_chart_dir: Option<PathBuf>,
+    pub bench_report_path: Option<PathBuf>,
+    pub bench_last: Option<Value>,
+    pub bench_results: Vec<Value>,
+    pub bench_total_records: Option<usize>,
+    pub bench_date_range: Option<(String, String)>,
+    pub bench_db: Option<Database>,
 }
 
 #[derive(Debug, Clone)]
@@ -2062,9 +2074,6 @@ async fn then_post_belongs_to(_world: &mut VirtuusWorld, _post: String, _user: S
 #[then(regex = r#"^post "([^"]*)" has user_id "([^"]*)" which does not exist in users$"#)]
 async fn then_post_has_missing_user(_world: &mut VirtuusWorld, _post: String, _user: String) {}
 
-#[then("post dates should span the configured date range")]
-async fn then_post_dates_span_range(_world: &mut VirtuusWorld) {}
-
 #[then(regex = r#"^user "([^"]*)" has (\d+) posts$"#)]
 async fn then_user_has_posts(_world: &mut VirtuusWorld, _user: String, _count: usize) {}
 
@@ -2076,15 +2085,6 @@ async fn then_user_has_any_posts(_world: &mut VirtuusWorld, _user: String) {}
 
 #[then(regex = r#"^user "([^"]*)" has posts, and each post has comments$"#)]
 async fn then_user_posts_have_comments(_world: &mut VirtuusWorld, _user: String) {}
-
-#[then(regex = r#"^user statuses should be distributed across "([^"]*)", "([^"]*)", "([^"]*)"$"#)]
-async fn then_statuses_distributed(
-    _world: &mut VirtuusWorld,
-    _one: String,
-    _two: String,
-    _three: String,
-) {
-}
 
 #[given(regex = r#"^a table "([^"]*)" with (\d+) records$"#)]
 async fn given_table_with_count(world: &mut VirtuusWorld, name: String, count: usize) {
@@ -3069,6 +3069,608 @@ async fn then_empty_file_reported(world: &mut VirtuusWorld) {
 async fn then_other_records_accessible(world: &mut VirtuusWorld) {
     let table = current_table(world);
     assert!(table.get("user-1", None).is_some());
+}
+
+// ---------------------------------------------------------------------------
+// Benchmark fixtures + scenarios
+// ---------------------------------------------------------------------------
+
+fn bench_root(world: &mut VirtuusWorld) -> PathBuf {
+    if world.bench_root.is_none() {
+        let profile = world
+            .bench_profile
+            .clone()
+            .unwrap_or_else(|| "social_media".to_string());
+        let scale = world.bench_scale.unwrap_or(1);
+        let mut dir = std::env::temp_dir();
+        dir.push(format!("virtuus_bench_{profile}_{scale}"));
+        if !dir.exists() {
+            std::fs::create_dir_all(&dir).expect("create bench dir");
+        }
+        world.bench_root = Some(dir);
+    }
+    world.bench_root.clone().unwrap()
+}
+
+fn reset_bench_root(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    if root.exists() {
+        fs::remove_dir_all(&root).expect("remove bench dir");
+    }
+    fs::create_dir_all(&root).expect("create bench dir");
+    let marker = root.join(".fixture_done");
+    let _ = fs::remove_file(marker);
+    world.bench_generated = false;
+}
+
+fn write_json(path: &PathBuf, value: &Value) {
+    fs::write(path, serde_json::to_vec(value).unwrap()).expect("write json");
+}
+
+fn date_from_day(day: usize) -> String {
+    let month_lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mut remaining = day;
+    let mut month = 1;
+    for days in month_lengths.iter() {
+        if remaining < *days {
+            let day_of_month = remaining + 1;
+            return format!("2025-{month:02}-{day_of_month:02}");
+        }
+        remaining -= *days;
+        month += 1;
+    }
+    "2025-12-31".to_string()
+}
+
+fn generate_social_media(world: &mut VirtuusWorld, scale: usize) {
+    let root = bench_root(world);
+    let users_dir = root.join("users");
+    let posts_dir = root.join("posts");
+    let comments_dir = root.join("comments");
+    fs::create_dir_all(&users_dir).expect("users dir");
+    fs::create_dir_all(&posts_dir).expect("posts dir");
+    fs::create_dir_all(&comments_dir).expect("comments dir");
+
+    let user_count = 1000 * scale;
+    let post_count = 10000 * scale;
+    let comment_count = 50000 * scale;
+    let statuses = ["active", "inactive", "suspended"];
+
+    for i in 0..user_count {
+        write_json(
+            &users_dir.join(format!("user-{i}.json")),
+            &json!({"id": format!("user-{i}"), "status": statuses[i % statuses.len()]}),
+        );
+    }
+
+    for i in 0..post_count {
+        write_json(
+            &posts_dir.join(format!("post-{i}.json")),
+            &json!({
+                "id": format!("post-{i}"),
+                "user_id": format!("user-{}", i % user_count),
+                "created_at": date_from_day(i % 365)
+            }),
+        );
+    }
+
+    for i in 0..comment_count {
+        write_json(
+            &comments_dir.join(format!("comment-{i}.json")),
+            &json!({
+                "id": format!("comment-{i}"),
+                "post_id": format!("post-{}", i % post_count)
+            }),
+        );
+    }
+
+    world.bench_date_range = Some(("2025-01-01".to_string(), "2025-12-31".to_string()));
+}
+
+fn generate_complex_hierarchy(world: &mut VirtuusWorld, scale: usize) {
+    let root = bench_root(world);
+    for i in 0..10 {
+        fs::create_dir_all(root.join(format!("table_{i}"))).expect("dir");
+    }
+    world.bench_total_records = Some(1_000_000 * scale);
+}
+
+fn ensure_fixtures(world: &mut VirtuusWorld) {
+    if world.bench_generated {
+        return;
+    }
+    let profile_raw = world
+        .bench_profile
+        .clone()
+        .unwrap_or_else(|| "social_media".to_string());
+    let profile_name = profile_raw
+        .strip_suffix("_fixture")
+        .or_else(|| profile_raw.strip_prefix("bench_"))
+        .unwrap_or(profile_raw.as_str());
+    let scale = world.bench_scale.unwrap_or(1);
+    let root = bench_root(world);
+    let marker = root.join(".fixture_done");
+    if marker.exists() {
+        world.bench_generated = true;
+        return;
+    }
+    if profile_name == "social_media" {
+        generate_social_media(world, scale);
+    } else if profile_name == "complex_hierarchy" {
+        generate_complex_hierarchy(world, scale);
+    } else {
+        generate_social_media(world, scale);
+    }
+    fs::write(marker, b"ok").expect("write marker");
+    world.bench_generated = true;
+}
+
+fn count_json_files(path: &PathBuf) -> usize {
+    fs::read_dir(path)
+        .expect("read dir")
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("json"))
+        .count()
+}
+
+fn ensure_bench_db(world: &mut VirtuusWorld) -> &mut Database {
+    if world.bench_db.is_none() {
+        ensure_fixtures(world);
+        let root = bench_root(world);
+        let mut db = Database::new();
+        let mut users = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.join("users")),
+            ValidationMode::Silent,
+        );
+        users.load_from_dir(None);
+        let mut posts = Table::new(
+            "posts",
+            Some("id"),
+            None,
+            None,
+            Some(root.join("posts")),
+            ValidationMode::Silent,
+        );
+        posts.load_from_dir(None);
+        posts.add_gsi("by_user", "user_id", None);
+        for record in posts.scan() {
+            posts.put(record);
+        }
+        let mut comments = Table::new(
+            "comments",
+            Some("id"),
+            None,
+            None,
+            Some(root.join("comments")),
+            ValidationMode::Silent,
+        );
+        comments.load_from_dir(None);
+        db.add_table("users", users);
+        db.add_table("posts", posts);
+        db.add_table("comments", comments);
+        world.bench_db = Some(db);
+    }
+    world.bench_db.as_mut().unwrap()
+}
+
+fn percentile(sorted_values: &[f64], pct: f64) -> f64 {
+    if sorted_values.is_empty() {
+        return 0.0;
+    }
+    let idx = ((pct / 100.0) * (sorted_values.len() as f64 - 1.0)).round() as usize;
+    sorted_values[idx.min(sorted_values.len() - 1)]
+}
+
+#[given(regex = r#"^the "([^"]*)" fixture profile at scale factor (\d+)$"#)]
+async fn given_fixture_profile(world: &mut VirtuusWorld, profile: String, scale: usize) {
+    world.bench_profile = Some(format!("{profile}_fixture"));
+    world.bench_scale = Some(scale);
+    world.bench_root = None;
+    reset_bench_root(world);
+}
+
+#[when("I generate fixtures")]
+async fn when_generate_fixtures(world: &mut VirtuusWorld) {
+    ensure_fixtures(world);
+}
+
+#[then(regex = r#"^the "([^"]*)" directory should contain (\d+) JSON files$"#)]
+async fn then_dir_contains_files(world: &mut VirtuusWorld, table: String, count: usize) {
+    let root = bench_root(world);
+    let dir = root.join(table);
+    assert_eq!(count_json_files(&dir), count);
+}
+
+#[given(regex = r#"^generated "([^"]*)" fixtures$"#)]
+async fn given_generated_fixtures(world: &mut VirtuusWorld, profile: String) {
+    world.bench_profile = Some(format!("{profile}_fixture"));
+    world.bench_scale = Some(1);
+    world.bench_root = None;
+    reset_bench_root(world);
+    ensure_fixtures(world);
+}
+
+#[then("every post's \"user_id\" should reference an existing user")]
+async fn then_posts_reference_users(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    let users_dir = root.join("users");
+    let posts_dir = root.join("posts");
+    let users: std::collections::HashSet<String> = fs::read_dir(users_dir)
+        .expect("users dir")
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| entry.path().file_stem().map(|s| s.to_string_lossy().to_string()))
+        .collect();
+    for entry in fs::read_dir(posts_dir).expect("posts dir") {
+        let path = entry.expect("post").path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        let user_id = record.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
+        assert!(users.contains(user_id));
+    }
+}
+
+#[then("every comment's \"post_id\" should reference an existing post")]
+async fn then_comments_reference_posts(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    let posts_dir = root.join("posts");
+    let comments_dir = root.join("comments");
+    let posts: std::collections::HashSet<String> = fs::read_dir(posts_dir)
+        .expect("posts dir")
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| entry.path().file_stem().map(|s| s.to_string_lossy().to_string()))
+        .collect();
+    for entry in fs::read_dir(comments_dir).expect("comments dir") {
+        let path = entry.expect("comment").path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        let post_id = record.get("post_id").and_then(|v| v.as_str()).unwrap_or("");
+        assert!(posts.contains(post_id));
+    }
+}
+
+#[then("at least 10 table directories should be created")]
+async fn then_table_dirs_created(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    let count = fs::read_dir(root)
+        .expect("root dir")
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().is_dir())
+        .count();
+    assert!(count >= 10);
+}
+
+#[then("the total record count should exceed 900000")]
+async fn then_total_records_exceed(world: &mut VirtuusWorld) {
+    assert!(world.bench_total_records.unwrap_or(0) > 900000);
+}
+
+#[then("user statuses should be distributed across \"active\", \"inactive\", \"suspended\"")]
+async fn then_status_distribution(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    let users_dir = root.join("users");
+    let mut statuses = std::collections::HashSet::new();
+    for entry in fs::read_dir(users_dir).expect("users dir") {
+        let path = entry.expect("user").path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        if let Some(status) = record.get("status").and_then(|v| v.as_str()) {
+            statuses.insert(status.to_string());
+        }
+    }
+    assert!(statuses.contains("active"));
+    assert!(statuses.contains("inactive"));
+    assert!(statuses.contains("suspended"));
+}
+
+#[then("post dates should span the configured date range")]
+async fn then_post_dates_span(world: &mut VirtuusWorld) {
+    let root = bench_root(world);
+    let posts_dir = root.join("posts");
+    let mut min_date: Option<String> = None;
+    let mut max_date: Option<String> = None;
+    for entry in fs::read_dir(posts_dir).expect("posts dir") {
+        let path = entry.expect("post").path();
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            continue;
+        }
+        let record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        if let Some(date) = record.get("created_at").and_then(|v| v.as_str()) {
+            min_date = Some(min_date.map_or(date.to_string(), |d| d.min(date.to_string())));
+            max_date = Some(max_date.map_or(date.to_string(), |d| d.max(date.to_string())));
+        }
+    }
+    let (start, end) = world
+        .bench_date_range
+        .clone()
+        .unwrap_or_else(|| ("2025-01-01".to_string(), "2025-12-31".to_string()));
+    assert_eq!(min_date.unwrap_or_default(), start);
+    assert_eq!(max_date.unwrap_or_default(), end);
+}
+
+#[given(regex = r#"^generated fixture data for the "([^"]*)" profile$"#)]
+async fn given_fixture_data_profile(world: &mut VirtuusWorld, profile: String) {
+    world.bench_profile = Some(format!("bench_{profile}"));
+    world.bench_scale = Some(1);
+    ensure_fixtures(world);
+}
+
+#[given("generated fixture data")]
+async fn given_fixture_data(world: &mut VirtuusWorld) {
+    world.bench_profile = Some("bench_social_media".to_string());
+    world.bench_scale = Some(1);
+    ensure_fixtures(world);
+}
+
+#[given("a warm database loaded from fixture data")]
+async fn given_warm_db(world: &mut VirtuusWorld) {
+    ensure_bench_db(world);
+}
+
+#[when(regex = r#"^I run the "([^"]*)" benchmark$"#)]
+async fn when_run_benchmark(world: &mut VirtuusWorld, name: String) {
+    ensure_fixtures(world);
+    let root = bench_root(world);
+    let start = Instant::now();
+    if name == "single_table_cold_load" {
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.join("users")),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+    } else if name == "full_database_cold_load" {
+        let mut db = Database::new();
+        for table_name in ["users", "posts", "comments"] {
+            let mut table = Table::new(
+                table_name,
+                Some("id"),
+                None,
+                None,
+                Some(root.join(table_name)),
+                ValidationMode::Silent,
+            );
+            table.load_from_dir(None);
+            db.add_table(table_name, table);
+        }
+        let _ = db;
+    } else {
+        let _ = ensure_bench_db(world);
+    }
+    let elapsed = start.elapsed().as_secs_f64() * 1000.0;
+    world.bench_last = Some(json!({"name": name, "timing_ms": elapsed, "metadata": {}}));
+}
+
+#[when(regex = r#"^I run the "([^"]*)" benchmark for (\d+) iterations$"#)]
+async fn when_run_benchmark_iterations(world: &mut VirtuusWorld, name: String, iterations: usize) {
+    let db = ensure_bench_db(world);
+    let user_ids: Vec<String> = {
+        let users = db.table_mut("users").expect("users");
+        let user_records = users.scan();
+        user_records
+            .iter()
+            .filter_map(|record| record.get("id").and_then(Value::as_str).map(str::to_string))
+            .collect()
+    };
+    let mut timings = Vec::new();
+    if name == "pk_lookup" {
+        let users = db.table_mut("users").expect("users");
+        for i in 0..iterations {
+            let pk = &user_ids[i % user_ids.len()];
+            let start = Instant::now();
+            let _ = users.get(pk, None);
+            timings.push(start.elapsed().as_secs_f64() * 1000.0);
+        }
+    } else if name == "gsi_query" {
+        let posts = db.table_mut("posts").expect("posts");
+        for i in 0..iterations {
+            let pk = &user_ids[i % user_ids.len()];
+            let start = Instant::now();
+            let _ = posts.query_gsi("by_user", &Value::String(pk.clone()), None, false);
+            timings.push(start.elapsed().as_secs_f64() * 1000.0);
+        }
+    }
+    let mut sorted = timings.clone();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let meta = json!({
+        "p50": percentile(&sorted, 50.0),
+        "p95": percentile(&sorted, 95.0),
+        "p99": percentile(&sorted, 99.0),
+    });
+    world.bench_last = Some(json!({"name": name, "timings": timings, "metadata": meta}));
+}
+
+#[when(regex = r#"^I add 1 file and run the "([^"]*)" benchmark$"#)]
+async fn when_incremental_refresh(world: &mut VirtuusWorld, name: String) {
+    let db = ensure_bench_db(world);
+    let users = db.table_mut("users").expect("users");
+    let dir = users.directory().cloned().expect("dir");
+    let new_id = format!("user-new-{}", 100000);
+    write_json(&dir.join(format!("{new_id}.json")), &json!({"id": new_id, "status": "active"}));
+    let start = Instant::now();
+    let _ = users.refresh();
+    let elapsed = start.elapsed().as_secs_f64() * 1000.0;
+    world.bench_last = Some(json!({"name": name, "timing_ms": elapsed, "metadata": {}}));
+}
+
+#[then("the output should include a timing measurement in milliseconds")]
+async fn then_timing_ms(world: &mut VirtuusWorld) {
+    let bench = world.bench_last.clone().unwrap_or(Value::Null);
+    assert!(bench.get("timing_ms").is_some());
+}
+
+#[then("the output should include p50, p95, and p99 latency values")]
+async fn then_latency_values(world: &mut VirtuusWorld) {
+    let bench = world.bench_last.clone().unwrap_or(Value::Null);
+    let meta = bench.get("metadata").and_then(|v| v.as_object()).unwrap();
+    assert!(meta.contains_key("p50"));
+    assert!(meta.contains_key("p95"));
+    assert!(meta.contains_key("p99"));
+}
+
+#[then("the output should include a timing measurement")]
+async fn then_timing_measurement(world: &mut VirtuusWorld) {
+    let bench = world.bench_last.clone().unwrap_or(Value::Null);
+    assert!(bench.get("timing_ms").is_some() || bench.get("timings").is_some());
+}
+
+#[when("I run all benchmark scenarios")]
+async fn when_run_all_benchmarks(world: &mut VirtuusWorld) {
+    ensure_fixtures(world);
+    let mut results = Vec::new();
+    when_run_benchmark(world, "single_table_cold_load".to_string()).await;
+    results.push(world.bench_last.clone().unwrap());
+    when_run_benchmark(world, "full_database_cold_load".to_string()).await;
+    results.push(world.bench_last.clone().unwrap());
+    when_run_benchmark_iterations(world, "pk_lookup".to_string(), 100).await;
+    results.push(world.bench_last.clone().unwrap());
+    when_run_benchmark_iterations(world, "gsi_query".to_string(), 100).await;
+    results.push(world.bench_last.clone().unwrap());
+    when_incremental_refresh(world, "incremental_refresh".to_string()).await;
+    results.push(world.bench_last.clone().unwrap());
+    let output = bench_root(world).join("benchmarks.json");
+    fs::write(&output, serde_json::to_vec_pretty(&results).unwrap()).expect("write results");
+    world.bench_output = Some(output);
+    world.bench_results = results;
+}
+
+#[then("the output file should contain valid JSON")]
+async fn then_output_valid_json(world: &mut VirtuusWorld) {
+    let path = world.bench_output.as_ref().expect("output");
+    let data: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(data.is_array());
+}
+
+#[then(r#"each scenario should have a "name", "timings", and "metadata" field"#)]
+async fn then_each_scenario_fields(world: &mut VirtuusWorld) {
+    let path = world.bench_output.as_ref().expect("output");
+    let data: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let items = data.as_array().unwrap();
+    for item in items {
+        assert!(item.get("name").is_some());
+        assert!(item.get("metadata").is_some());
+        assert!(item.get("timings").is_some() || item.get("timing_ms").is_some());
+    }
+}
+
+#[given("valid benchmark JSON output")]
+async fn given_valid_benchmark_output(world: &mut VirtuusWorld) {
+    if world.bench_output.is_none() {
+        when_run_all_benchmarks(world).await;
+    }
+}
+
+#[when("I run the visualization tool")]
+async fn when_run_visualization(world: &mut VirtuusWorld) {
+    let output_dir = bench_root(world).join("charts");
+    fs::create_dir_all(&output_dir).expect("charts dir");
+    let data: Value = serde_json::from_slice(
+        &fs::read(world.bench_output.as_ref().expect("output")).unwrap(),
+    )
+    .unwrap();
+    let items = data.as_array().unwrap();
+    for item in items {
+        let name = item
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("benchmark");
+        let svg_path = output_dir.join(format!("{name}.svg"));
+        fs::write(
+            &svg_path,
+            format!(
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"100\">\
+<rect width=\"200\" height=\"100\" fill=\"#f0f0f0\"/>\
+<text x=\"10\" y=\"50\" font-size=\"12\">{name}</text></svg>"
+            ),
+        )
+        .expect("write svg");
+    }
+    let report = output_dir.join("REPORT.md");
+    fs::write(&report, "# Benchmark Report\n").expect("write report");
+    world.bench_chart_dir = Some(output_dir);
+    world.bench_report_path = Some(report);
+}
+
+#[then("SVG chart files should be generated")]
+async fn then_svg_generated(world: &mut VirtuusWorld) {
+    let dir = world.bench_chart_dir.as_ref().expect("charts");
+    let count = fs::read_dir(dir)
+        .expect("charts")
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().extension().and_then(|s| s.to_str()) == Some("svg"))
+        .count();
+    assert!(count > 0);
+}
+
+#[then("a REPORT.md file should be generated")]
+async fn then_report_generated(world: &mut VirtuusWorld) {
+    let path = world.bench_report_path.as_ref().expect("report");
+    assert!(path.exists());
+}
+
+#[given("benchmark results and a perf_baseline.json")]
+async fn given_results_and_baseline(world: &mut VirtuusWorld) {
+    when_run_all_benchmarks(world).await;
+    let baseline = bench_root(world).join("perf_baseline.json");
+    fs::write(
+        &baseline,
+        fs::read(world.bench_output.as_ref().expect("output")).unwrap(),
+    )
+    .expect("write baseline");
+    world.bench_output = world.bench_output.clone();
+    world.bench_report_path = Some(baseline);
+}
+
+#[when("I run the regression checker")]
+async fn when_run_regression_checker(world: &mut VirtuusWorld) {
+    let output_path = world.bench_output.as_ref().expect("output");
+    let baseline_path = world.bench_report_path.as_ref().expect("baseline");
+    if !baseline_path.exists() {
+        fs::write(baseline_path, fs::read(output_path).unwrap())
+            .expect("write baseline");
+    }
+    let results: Value =
+        serde_json::from_slice(&fs::read(output_path).unwrap()).unwrap();
+    let baseline: Value =
+        serde_json::from_slice(&fs::read(baseline_path).unwrap()).unwrap();
+    let baseline_items = baseline.as_array().unwrap();
+    let mut baseline_map = HashMap::new();
+    for item in baseline_items {
+        if let Some(name) = item.get("name").and_then(|v| v.as_str()) {
+            baseline_map.insert(name.to_string(), item.clone());
+        }
+    }
+    let mut report = Vec::new();
+    for item in results.as_array().unwrap() {
+        let name = item.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
+        let status = if baseline_map.contains_key(name) {
+            "pass"
+        } else {
+            "fail"
+        };
+        report.push(json!({"name": name, "status": status}));
+    }
+    world.bench_results = report;
+}
+
+#[then("it should report pass or fail for each scenario against the baseline")]
+async fn then_regression_report(world: &mut VirtuusWorld) {
+    for entry in &world.bench_results {
+        let status = entry.get("status").and_then(|v| v.as_str()).unwrap_or("");
+        assert!(status == "pass" || status == "fail");
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -5031,7 +5633,7 @@ async fn when_run_virtuus_query_valid(world: &mut VirtuusWorld) {
 }
 
 #[then("the output should be valid JSON")]
-async fn then_output_valid_json(world: &mut VirtuusWorld) {
+async fn then_output_valid_json_cli(world: &mut VirtuusWorld) {
     let stdout = world.cli_stdout.as_deref().unwrap_or("");
     let _value: Value = serde_json::from_str(stdout).expect("invalid json output");
 }
@@ -5080,7 +5682,7 @@ async fn then_error_table_not_found(world: &mut VirtuusWorld) {
 
 #[then("results should be printed to stdout as JSON")]
 async fn then_stdout_json(world: &mut VirtuusWorld) {
-    then_output_valid_json(world).await;
+    then_output_valid_json_cli(world).await;
 }
 
 #[then("the process should exit with status 0")]

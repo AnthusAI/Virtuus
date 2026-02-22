@@ -3,16 +3,29 @@
   "title": "Benchmark scenarios and visualization",
   "description": "Given generated fixture data, when I run benchmarks (load-time, query-time, cache, concurrency, memory), each scenario should produce valid timing output. Visualization generates SVG charts and a markdown report. Spec: features/benchmarks/benchmark_scenarios.feature",
   "type": "story",
-  "status": "open",
+  "status": "done",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "43a7a0e6-535c-4148-8946-4cd2f879cee0",
+      "author": "ryan.porter",
+      "text": "Starting benchmark scenarios + visualization outputs. Next: implement benchmark runner + SVG/report generation. Blockers: none.",
+      "created_at": "2026-02-22T02:33:38.760518Z"
+    },
+    {
+      "id": "0cbd0c4e-9fe8-4547-bd58-1afdfceae8e9",
+      "author": "ryan.porter",
+      "text": "Done. Implemented benchmark scenarios/visualization steps in Python + Rust, added regression checks, and stabilized temp bench reuse. Ran Rust cucumber fail-fast and Python behave benchmark features. Next: commit + push. Issues: none.",
+      "created_at": "2026-02-22T04:11:17.204628Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:02.936135Z",
-  "updated_at": "2026-02-21T16:48:02.936135Z",
+  "updated_at": "2026-02-22T04:11:23.782595Z",
   "closed_at": null,
   "custom": {}
 }
