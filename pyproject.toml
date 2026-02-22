@@ -1,0 +1,13 @@
+[tool.semantic_release]
+version_source = "tag"
+branch = "main"
+tag_format = "v{version}"
+changelog_file = "CHANGELOG.md"
+version_toml = [
+  "python/pyproject.toml:project.version",
+  "rust/Cargo.toml:package.version",
+]
+version_files = ["VERSION"]
+upload_to_repository = false
+upload_to_release = true
+build_command = ""
