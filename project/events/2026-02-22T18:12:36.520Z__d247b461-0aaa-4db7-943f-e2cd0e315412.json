@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "d247b461-0aaa-4db7-943f-e2cd0e315412",
+  "issue_id": "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T18:12:36.520Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "virt-3faa018e-273f-49fc-b3c9-269039d9873e",
+    "priority": 2,
+    "status": "open",
+    "title": "Enforce Sphinx docstrings in Python (lint)"
+  }
+}

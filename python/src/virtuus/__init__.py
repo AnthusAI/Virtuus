@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import os
 
-from virtuus._python import GSI, Database, Table, __version__
+from virtuus._python import (
+    GSI,
+    Database,
+    Table,
+    __version__,
+)
+from virtuus._python import (
+    cli_version as _py_cli_version,
+)
 from virtuus._python.sort import Sort
 
 _backend = os.getenv("VIRTUUS_BACKEND", "auto").lower()
@@ -17,4 +25,15 @@ elif _backend != "python":  # pragma: no cover - env-specific
     except Exception:  # noqa: BLE001  # pragma: no cover
         pass
 
-__all__ = ["__version__", "Database", "GSI", "Sort", "Table"]
+
+def cli_version() -> str:
+    """
+    Return the library version string for CLI display.
+
+    :return: Current Virtuus version.
+    :rtype: str
+    """
+    return _py_cli_version()
+
+
+__all__ = ["__version__", "Database", "GSI", "Sort", "Table", "cli_version"]

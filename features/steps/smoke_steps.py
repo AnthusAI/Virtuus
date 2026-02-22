@@ -19,6 +19,14 @@ def step_then_valid_version(context):
     ), f"Expected non-empty version string, got {version!r}"
 
 
+@then("the CLI helper should report the same version string")
+def step_then_cli_version_matches(context):
+    cli_version = context.virtuus.cli_version()
+    assert (
+        cli_version == context.virtuus.__version__
+    ), f"cli_version {cli_version!r} != __version__ {context.virtuus.__version__!r}"
+
+
 @given("a VERSION file at the repository root")
 def step_given_version_file(context):
     repo_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))

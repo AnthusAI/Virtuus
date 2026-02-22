@@ -29,5 +29,4 @@ def cli_version() -> str:
     :return: Current Virtuus version.
     :rtype: str
     """
-
     return __version__

@@ -1,0 +1,18 @@
+{
+  "id": "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161",
+  "title": "Enforce Sphinx docstrings in Python (lint)",
+  "description": "",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-3faa018e-273f-49fc-b3c9-269039d9873e",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-22T18:12:36.520358Z",
+  "updated_at": "2026-02-22T18:12:36.520358Z",
+  "closed_at": null,
+  "custom": {}
+}

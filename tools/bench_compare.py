@@ -92,7 +92,7 @@ def main() -> None:
             continue
         title = f"Rust vs Python (p95 unless timing_ms) — {total:,} records"
         path = OUT_DIR / f"compare_{total}.png"
-        viz._render_grouped_bar_chart(title, categories, ["rust", "python"], data, path)
+        viz._render_horizontal_bar_chart(title, categories, ["rust", "python"], data, path)
 
 
 if __name__ == "__main__":

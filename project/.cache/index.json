@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-22T08:40:25Z",
+  "built_at": "2026-02-22T18:22:28Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
@@ -11,12 +11,14 @@
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771714054.091713,
+    "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1771784292.565696,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
     "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
     "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771726492.781843,
-    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1771749620.559813,
+    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1771766633.560711,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
+    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771783948.571306,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771714070.754441,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
@@ -26,11 +28,13 @@
     "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771724559.586077,
     "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
     "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771714061.194019,
+    "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1771784285.755966,
     "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771710549.805551,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771714064.710461,
-    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771749596.355235,
+    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771783929.224291,
+    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771784184.962006,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
@@ -49,6 +53,7 @@
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725634.155066,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
     "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
+    "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161.json": 1771783956.520486,
     "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771727537.486045,
     "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
@@ -58,6 +63,7 @@
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771709290.662331,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771726504.254243,
+    "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1771784300.001996,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771717340.88181
   },
   "issues": [
@@ -583,6 +589,24 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:18:12.565578Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "open",
+      "title": "Parallelize Rust file ingestion (rayon, buffered IO)",
+      "type": "story",
+      "updated_at": "2026-02-22T18:18:12.565578Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:05.711339Z",
       "comments": [
         {
@@ -695,6 +719,12 @@
           "created_at": "2026-02-22T08:40:20.559483Z",
           "id": "6f98939b-e192-4d1a-9b79-0015a9310004",
           "text": "Thought experiment still open: captured current perf numbers; next step is outline potential optimizations (index structures, batching) before deciding if worth pursuing."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-22T13:23:48.205735Z",
+          "id": "37534377-fc60-45fb-8fce-77d967ba48fe",
+          "text": "## Perf improvement options\n- **Profile hot paths (Rust):** perf/flamegraph on GSI query + PK lookup; focus on clones/allocs in `table.rs` (Vec sorting, serde_json Value handling).\n- **Index structures:** use `BTreeMap` per GSI partition to keep sorted order without per-query sort; consider `FxHashMap` for PK map to reduce hashing cost.\n- **Serde overhead:** try typed structs or borrowing `Value`/`Cow` to avoid clones on hot paths.\n- **I/O batching:** reuse buffers and `BufWriter` for export/persistence; reduce syscalls.\n- **Parallel load:** rayon-based directory load + GSI build per partition to speed cold load.\n- **Query caching:** optional per-GSI partition cache of last sorted slice for repeated scans.\n- **Instrumentation:** add tracing spans around load/query to split time between sort vs deserialization.\n\nNext: run perf on 100k corpus, prototype BTreeMap GSI, measure vs baseline.\n"
         }
       ],
       "created_at": "2026-02-22T07:34:10.355149Z",
@@ -709,7 +739,7 @@
       "status": "in_progress",
       "title": "Explore performance improvements (thought experiment)",
       "type": "task",
-      "updated_at": "2026-02-22T08:40:20.559483Z"
+      "updated_at": "2026-02-22T13:23:53.560572Z"
     },
     {
       "assignee": null,
@@ -796,6 +826,24 @@
       "title": "Phase 4: Cache & Incremental Invalidation",
       "type": "epic",
       "updated_at": "2026-02-21T21:27:45.184649Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:12:28.570870Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-3faa018e-273f-49fc-b3c9-269039d9873e",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "open",
+      "title": "Set up public packages",
+      "type": "epic",
+      "updated_at": "2026-02-22T18:12:28.570870Z"
     },
     {
       "assignee": null,
@@ -1156,6 +1204,24 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:18:05.755775Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "open",
+      "title": "Profile Rust JSON load/GSI build path",
+      "type": "story",
+      "updated_at": "2026-02-22T18:18:05.755775Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:09.805404Z",
       "comments": [
         {
@@ -1327,10 +1393,28 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "done",
       "title": "Benchmark Rust vs Python implementations",
       "type": "task",
-      "updated_at": "2026-02-22T08:39:56.354894Z"
+      "updated_at": "2026-02-22T18:12:09.220870Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:16:24.961819Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "open",
+      "title": "Rust performance investigation --status in_progress",
+      "type": "epic",
+      "updated_at": "2026-02-22T18:16:24.961819Z"
     },
     {
       "assignee": null,
@@ -2090,6 +2174,24 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:12:36.520358Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161",
+      "labels": [],
+      "parent": "virt-3faa018e-273f-49fc-b3c9-269039d9873e",
+      "priority": 2,
+      "status": "open",
+      "title": "Enforce Sphinx docstrings in Python (lint)",
+      "type": "story",
+      "updated_at": "2026-02-22T18:12:36.520358Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T02:32:17.485887Z",
       "comments": [
         {
@@ -2468,6 +2570,24 @@
       "title": "Phase 8: Concurrency & Integration Testing",
       "type": "epic",
       "updated_at": "2026-02-22T02:15:04.254123Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-22T18:18:20.001884Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-faae6397-875a-4e66-bcb7-0d34d10480fb",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "open",
+      "title": "Optimize Rust deserialization (serde features, prealloc, simd-json experiment)",
+      "type": "story",
+      "updated_at": "2026-02-22T18:18:20.001884Z"
     },
     {
       "assignee": null,

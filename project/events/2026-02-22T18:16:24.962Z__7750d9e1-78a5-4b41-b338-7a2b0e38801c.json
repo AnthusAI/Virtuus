@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "7750d9e1-78a5-4b41-b338-7a2b0e38801c",
+  "issue_id": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T18:16:24.962Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Rust performance investigation --status in_progress"
+  }
+}

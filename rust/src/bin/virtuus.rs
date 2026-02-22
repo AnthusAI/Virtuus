@@ -11,6 +11,31 @@ use std::time::Duration;
 use virtuus::table::ValidationMode;
 use virtuus::{Database, Table, VERSION};
 
+#[cfg(unix)]
+fn current_rss_bytes() -> u64 {
+    unsafe {
+        let mut usage: libc::rusage = std::mem::zeroed();
+        if libc::getrusage(libc::RUSAGE_SELF, &mut usage) == 0 {
+            // On Linux ru_maxrss is kilobytes; on macOS it's bytes.
+            #[cfg(target_os = "macos")]
+            {
+                usage.ru_maxrss as u64
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                (usage.ru_maxrss as u64) * 1024
+            }
+        } else {
+            0
+        }
+    }
+}
+
+#[cfg(not(unix))]
+fn current_rss_bytes() -> u64 {
+    0
+}
+
 #[derive(Parser)]
 #[command(name = "virtuus", version = VERSION)]
 struct Cli {
@@ -53,6 +78,12 @@ enum Commands {
         #[arg(long, default_value = "8080")]
         port: u16,
     },
+    /// Query a running server for its current memory usage.
+    Memory {
+        /// Port where the server is listening.
+        #[arg(long, default_value = "8080")]
+        port: u16,
+    },
 }
 
 fn main() {
@@ -74,6 +105,7 @@ fn run(cli: Cli) -> Result<(), String> {
             r#where,
         } => run_query(dir, schema, table, index, pk, r#where),
         Commands::Serve { dir, schema, port } => run_serve(dir, schema, port),
+        Commands::Memory { port } => run_memory(port),
     }
 }
 
@@ -247,6 +279,13 @@ fn handle_connection(
                 "tables": tables
             })
         }
+        ("GET", "/memory") => {
+            let rss = current_rss_bytes();
+            json!({
+                "rss_bytes": rss,
+                "rss_kb": rss / 1024
+            })
+        }
         _ => {
             status = 404;
             json!({ "error": "not found" })
@@ -254,6 +293,26 @@ fn handle_connection(
     };
     let body = serde_json::to_string(&response).unwrap_or_else(|_| "{}".to_string());
     write_response(&mut stream, status, &body)
+}
+
+fn run_memory(port: u16) -> Result<(), String> {
+    let addr = format!("127.0.0.1:{port}");
+    let mut stream = TcpStream::connect(addr).map_err(|e| format!("connect: {e}"))?;
+    let request =
+        "GET /memory HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n".to_string();
+    stream
+        .write_all(request.as_bytes())
+        .map_err(|e| format!("write: {e}"))?;
+    let mut buf = String::new();
+    stream
+        .read_to_string(&mut buf)
+        .map_err(|e| format!("read: {e}"))?;
+    if let Some(body) = buf.split("\r\n\r\n").nth(1) {
+        println!("{body}");
+    } else {
+        println!("{buf}");
+    }
+    Ok(())
 }
 
 fn read_request(stream: &mut TcpStream) -> std::io::Result<HttpRequest> {

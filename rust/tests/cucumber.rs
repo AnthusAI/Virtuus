@@ -272,6 +272,18 @@ async fn then_same_version(world: &mut VirtuusWorld) {
     assert_eq!(py, rs, "Python version {py:?} != Rust version {rs:?}");
 }
 
+#[then("the CLI helper should report the same version string")]
+async fn then_cli_helper_matches(world: &mut VirtuusWorld) {
+    // Rust exposes VERSION; mirror the Python CLI helper expectation.
+    let cli_version = virtuus::VERSION;
+    let rs = world.rust_version.as_deref().unwrap_or(cli_version);
+    assert_eq!(
+        cli_version, rs,
+        "Rust CLI helper version {cli_version:?} != recorded rust_version {rs:?}"
+    );
+    world.rust_version = Some(rs.to_string());
+}
+
 // ---------------------------------------------------------------------------
 // Sort condition helpers
 // ---------------------------------------------------------------------------

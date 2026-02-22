@@ -598,6 +598,113 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     _write_png(path, width, height, rows)
 
 
+def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/bench_compare.py
+    name: str,
+    categories: list[str],
+    series_labels: list[str],
+    data: dict[str, dict[str, float]],
+    path: Path,
+) -> None:
+    margin_left = 190
+    margin_right = 120
+    margin_top = 90
+    margin_bottom = 110
+    bar_height = 18
+    series_gap = 8
+    group_gap = 20
+    palette = [
+        (217, 70, 239, 255),  # magenta
+        (80, 186, 255, 255),  # light blue
+        (120, 120, 120, 255),
+    ]
+    bg = (248, 249, 251, 255)
+    axis_color = (60, 67, 74, 255)
+    text_color = (28, 32, 38, 255)
+
+    group_height = len(series_labels) * (bar_height + series_gap) - series_gap
+    total_height = len(categories) * (group_height + group_gap) - group_gap
+    height = margin_top + total_height + margin_bottom
+    width = 980
+    rows = _new_canvas(width, height, bg)
+    _draw_text(rows, 20, 20, name, text_color, scale=2)
+
+    values = [
+        data.get(cat, {}).get(label, 0.0)
+        for cat in categories
+        for label in series_labels
+        if data.get(cat, {}).get(label) is not None
+    ]
+    max_val = max(values) if values else 1.0
+    min_val = min(v for v in values if v is not None) if values else max_val
+    use_log = values and max_val / max(min_val, 1e-9) > 20
+
+    plot_left = margin_left
+    plot_right = width - margin_right
+    plot_width = plot_right - plot_left
+    plot_top = margin_top
+
+    # x-axis ticks
+    x_ticks = 5
+    for idx in range(x_ticks + 1):
+        if use_log:
+            import math
+
+            val = min_val * (max_val / min_val) ** (idx / x_ticks)
+            x = plot_left + int(plot_width * idx / x_ticks)
+        else:
+            val = max_val * idx / x_ticks
+            x = plot_left + int(plot_width * idx / x_ticks)
+        _draw_line(rows, x, plot_top - 4, x, height - margin_bottom + 6, axis_color)
+        label = _format_value_ms(val).replace(" MS", "")
+        _draw_text(rows, x - _text_width(label, 1) // 2, height - margin_bottom + 24, label, text_color, scale=1)
+
+    cursor_y = plot_top
+    for cat in categories:
+        # category label
+        _draw_text(
+            rows,
+            max(plot_left - _text_width(cat, 1) - 12, 6),
+            cursor_y + (group_height // 2) - 6,
+            cat,
+            text_color,
+            scale=1,
+        )
+        for idx, label in enumerate(series_labels):
+            color = palette[idx % len(palette)]
+            value = data.get(cat, {}).get(label, 0.0)
+            if use_log:
+                if value <= 0 or min_val <= 0 or max_val <= min_val:
+                    bar_w = 0
+                else:
+                    import math
+
+                    bar_w = int(
+                        (math.log(value) - math.log(min_val))
+                        / (math.log(max_val) - math.log(min_val))
+                        * plot_width
+                    )
+            else:
+                bar_w = int((value / max_val) * plot_width) if max_val else 0
+            y0 = cursor_y + idx * (bar_height + series_gap)
+            _draw_rect(rows, plot_left, y0, bar_w, bar_height, color)
+            value_text = _format_value_ms(value)
+            text_x = plot_left + bar_w + 8
+            _draw_text(rows, text_x, y0 + 2, value_text, text_color, scale=1)
+        cursor_y += group_height + group_gap
+
+    # legend
+    legend_x = plot_left
+    legend_y = height - margin_bottom + 48
+    for idx, label in enumerate(series_labels):
+        color = palette[idx % len(palette)]
+        _draw_rect(rows, legend_x, legend_y, 16, 12, color)
+        _draw_text(rows, legend_x + 24, legend_y - 2, label.upper(), text_color, scale=1)
+        legend_x += 200
+    if use_log:
+        _draw_text(rows, width - 160, margin_top - 20, "log scale", axis_color, scale=1)
+    _write_png(path, width, height, rows)
+
+
 def _write_report(context, data: list[dict], report_path: Path) -> None:
     lines = ["# Benchmark Report", ""]
     root = _ensure_bench_root(context)

@@ -6,6 +6,7 @@ Feature: Library availability
   Scenario: Library loads and reports version
     Given the virtuus library is available
     Then it should report a valid version string
+    And the CLI helper should report the same version string
 
   Scenario: Version is read from the shared VERSION file
     Given a VERSION file at the repository root

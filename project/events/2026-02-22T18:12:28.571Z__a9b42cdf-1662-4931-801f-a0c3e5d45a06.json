@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a9b42cdf-1662-4931-801f-a0c3e5d45a06",
+  "issue_id": "virt-3faa018e-273f-49fc-b3c9-269039d9873e",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T18:12:28.571Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Set up public packages"
+  }
+}

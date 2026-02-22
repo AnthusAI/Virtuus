@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "bd7196f8-dd1e-4842-b57c-86ad30e02191",
+  "issue_id": "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T18:18:12.565Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Parallelize Rust file ingestion (rayon, buffered IO)"
+  }
+}

@@ -23,6 +23,7 @@ pyo3 = { version = "0.21", features = ["extension-module", "serde"], optional = 
 pythonize = { version = "0.21", optional = true }
 serde_json = "1"
 serde_yaml = "0.9"
+libc = "0.2"
 
 [features]
 python = ["pyo3", "pythonize"]

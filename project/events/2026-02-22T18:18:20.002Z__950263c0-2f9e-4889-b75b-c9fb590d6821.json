@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "950263c0-2f9e-4889-b75b-c9fb590d6821",
+  "issue_id": "virt-faae6397-875a-4e66-bcb7-0d34d10480fb",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-22T18:18:20.002Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "story",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Optimize Rust deserialization (serde features, prealloc, simd-json experiment)"
+  }
+}

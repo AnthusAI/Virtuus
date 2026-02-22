@@ -34,3 +34,4 @@ benchmarks/output_py/posts/
 benchmarks/output_py/comments/
 benchmarks/output_py/social_media_scale_*/
 benchmarks/output_py/social_media_total_*/
+project-local/

@@ -1,0 +1,18 @@
+{
+  "id": "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba",
+  "title": "Parallelize Rust file ingestion (rayon, buffered IO)",
+  "description": "",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-22T18:18:12.565578Z",
+  "updated_at": "2026-02-22T18:18:12.565578Z",
+  "closed_at": null,
+  "custom": {}
+}

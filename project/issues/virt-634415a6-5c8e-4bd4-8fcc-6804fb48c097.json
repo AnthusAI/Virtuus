@@ -1,0 +1,18 @@
+{
+  "id": "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097",
+  "title": "Profile Rust JSON load/GSI build path",
+  "description": "",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-22T18:18:05.755775Z",
+  "updated_at": "2026-02-22T18:18:05.755775Z",
+  "closed_at": null,
+  "custom": {}
+}
