@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -12,6 +14,10 @@ from virtuus import Table
 
 def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _current_table(context) -> Table:
+    return context.tables[context.current_table]
 
 
 @given('a database with "users" table containing {count:d} records')
@@ -555,3 +561,119 @@ def step_record_matches_version(context):
 @then("no error should have occurred")
 def step_no_error(context):
     assert not context.write_errors
+
+
+@when("a JSON file in the directory is replaced with truncated content")
+def step_truncate_json_file(context):
+    table = _current_table(context)
+    directory = context.directory
+    path = os.path.join(directory, "user-0.json")
+    context.corrupted_path = path
+    context.expected_count = table.count()
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write('{ "id": "user-0", "name": ')
+
+
+@then("the refresh should report the corrupted file as an error")
+def step_refresh_reports_corruption(context):
+    table = _current_table(context)
+    assert context.corrupted_path in table.refresh_errors
+
+
+@then("the table should still contain all other valid records")
+def step_table_keeps_records(context):
+    table = _current_table(context)
+    assert table.count() == context.expected_count
+
+
+@then("queries should continue to work")
+def step_queries_continue(context):
+    table = _current_table(context)
+    records = table.scan()
+    assert records
+
+
+@when("a file is detected during the directory scan but deleted before it can be read")
+def step_delete_during_refresh(context):
+    table = _current_table(context)
+    directory = context.directory
+    path = os.path.join(directory, "user-0.json")
+    context.deleted_path = path
+    os.utime(path, None)
+    original_read = table._read_record_file
+
+    def wrapped_read(record_path: str):
+        if record_path == path and not getattr(context, "deleted_once", False):
+            context.deleted_once = True
+            if os.path.exists(path):
+                os.remove(path)
+        return original_read(record_path)
+
+    table._read_record_file = wrapped_read
+
+
+@then("the refresh should handle the missing file gracefully")
+def step_refresh_missing_file(context):
+    table = _current_table(context)
+    assert context.deleted_path in table.refresh_errors
+
+
+@then("no unhandled error should occur")
+def step_no_unhandled_error(context):
+    assert context.last_summary is not None
+
+
+@when("a new file is created while a refresh scan is in progress")
+def step_new_file_during_scan(context):
+    table = _current_table(context)
+    directory = context.directory
+    context.race_expected_count = table.count()
+    context.race_record = {"id": "user-race", "name": "Race User", "status": "active"}
+    path = os.path.join(directory, "user-race.json")
+    context.race_path = path
+
+    def writer() -> None:
+        time.sleep(0.01)
+        _write_json(Path(path), context.race_record)
+
+    context.race_thread = threading.Thread(target=writer)
+    context.race_thread.start()
+
+
+@then("the table should be in a consistent state")
+def step_table_consistent_race(context):
+    table = _current_table(context)
+    count = table.count()
+    assert count in (context.race_expected_count, context.race_expected_count + 1)
+
+
+@then("the new file should be picked up in this or the next refresh")
+def step_new_file_picked_up(context):
+    table = _current_table(context)
+    context.race_thread.join()
+    record = table.get("user-race")
+    if record is None:
+        table.refresh()
+        record = table.get("user-race")
+    assert record is not None
+
+
+@when("an empty file (0 bytes) exists in the directory")
+def step_empty_file_exists(context):
+    directory = context.directory
+    path = os.path.join(directory, "empty.json")
+    context.empty_path = path
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("")
+
+
+@then("the empty file should be reported as an error")
+def step_empty_file_reported(context):
+    table = _current_table(context)
+    assert context.empty_path in table.refresh_errors
+
+
+@then("other records should remain accessible")
+def step_other_records_accessible(context):
+    table = _current_table(context)
+    assert table.get("user-1") is not None

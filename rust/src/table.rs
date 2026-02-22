@@ -65,6 +65,7 @@ pub struct Table {
     last_check_time: Option<SystemTime>,
     last_is_stale: bool,
     pub last_change_summary: ChangeSummary,
+    refresh_errors: Vec<String>,
 }
 
 /// Summary of changes detected during refresh or check.
@@ -150,6 +151,7 @@ impl Table {
             last_check_time: None,
             last_is_stale: false,
             last_change_summary: ChangeSummary::default(),
+            refresh_errors: Vec::new(),
         }
     }
 
@@ -441,6 +443,7 @@ impl Table {
         if self.directory.is_none() {
             return ChangeSummary::default();
         }
+        self.refresh_errors.clear();
         let (mut summary, added, modified, deleted) = self.compute_changes();
         let mut reread = 0;
         for path in added.iter().chain(modified.iter()) {
@@ -493,6 +496,11 @@ impl Table {
             return;
         }
         self.refresh();
+    }
+
+    /// Errors encountered during the last refresh.
+    pub fn refresh_errors(&self) -> &[String] {
+        &self.refresh_errors
     }
 
     /// Load records from directory.
@@ -792,10 +800,20 @@ impl Table {
         (summary, added, modified, deleted)
     }
 
-    fn read_record(&self, path: &PathBuf) -> Option<Value> {
-        fs::read_to_string(path)
-            .ok()
-            .and_then(|data| serde_json::from_str(&data).ok())
+    fn read_record(&mut self, path: &PathBuf) -> Option<Value> {
+        match fs::read_to_string(path) {
+            Ok(data) => match serde_json::from_str(&data) {
+                Ok(value) => Some(value),
+                Err(_) => {
+                    self.refresh_errors.push(path.display().to_string());
+                    None
+                }
+            },
+            Err(_) => {
+                self.refresh_errors.push(path.display().to_string());
+                None
+            }
+        }
     }
 }
 

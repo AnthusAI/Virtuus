@@ -84,6 +84,7 @@ class Table:
         self.gsis: dict[str, GSI] = {}
         self.warnings: list[str] = []
         self.hook_errors: list[str] = []
+        self.refresh_errors: list[str] = []
         self.on_put: list[Callable[[dict[str, Any]], None]] = []
         self.on_delete: list[Callable[[dict[str, Any]], None]] = []
         self.on_refresh: list[Callable[[dict[str, int]], None]] = []
@@ -443,6 +444,7 @@ class Table:
         :return: Change summary including reread count.
         :rtype: dict[str, int]
         """
+        self.refresh_errors = []
         summary, added, modified, deleted = self._compute_changes()
         reread = 0
         for path in added | modified:
@@ -677,6 +679,7 @@ class Table:
             with open(path, "r", encoding="utf-8") as handle:
                 return json.load(handle)
         except (OSError, json.JSONDecodeError):
+            self.refresh_errors.append(path)
             return None
 
     def _maybe_refresh_before_query(self) -> None:

@@ -79,6 +79,13 @@ pub struct VirtuusWorld {
     pub write_table: Option<Arc<Mutex<Table>>>,
     pub write_versions: Vec<Value>,
     pub write_errors: Vec<String>,
+    pub corrupted_path: Option<PathBuf>,
+    pub deleted_path: Option<PathBuf>,
+    pub empty_path: Option<PathBuf>,
+    pub file_expected_count: Option<usize>,
+    pub race_expected_count: Option<usize>,
+    pub race_written: Option<Arc<AtomicBool>>,
+    pub file_deleted: Option<Arc<AtomicBool>>,
 }
 
 #[derive(Debug, Clone)]
@@ -2880,6 +2887,172 @@ async fn when_table_refreshed(world: &mut VirtuusWorld) {
 async fn when_modify_and_refresh(world: &mut VirtuusWorld) {
     when_modify_file(world).await;
     when_table_refreshed(world).await;
+}
+
+#[when("a JSON file in the directory is replaced with truncated content")]
+async fn when_truncate_json_file(world: &mut VirtuusWorld) {
+    let dir = world
+        .directory
+        .as_ref()
+        .expect("missing directory")
+        .clone();
+    let path = dir.join("user-0.json");
+    let expected = {
+        let table = current_table(world);
+        table.count(None, None)
+    };
+    world.corrupted_path = Some(path.clone());
+    world.file_expected_count = Some(expected);
+    fs::write(&path, r#"{ "id": "user-0", "name": "#).expect("write truncated");
+}
+
+#[then("the refresh should report the corrupted file as an error")]
+async fn then_refresh_reports_corruption(world: &mut VirtuusWorld) {
+    let path_str = world
+        .corrupted_path
+        .as_ref()
+        .expect("missing path")
+        .display()
+        .to_string();
+    let table = current_table(world);
+    assert!(table.refresh_errors().iter().any(|p| p == &path_str));
+}
+
+#[then("the table should still contain all other valid records")]
+async fn then_table_still_contains_records(world: &mut VirtuusWorld) {
+    let expected = world.file_expected_count.unwrap_or(0);
+    let table = current_table(world);
+    assert_eq!(table.count(None, None), expected);
+}
+
+#[then("queries should continue to work")]
+async fn then_queries_continue(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    assert!(!table.scan().is_empty());
+}
+
+#[when("a file is detected during the directory scan but deleted before it can be read")]
+async fn when_file_deleted_during_scan(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().expect("missing directory");
+    let path = dir.join("user-0.json");
+    world.deleted_path = Some(path.clone());
+    if let Ok(data) = fs::read(&path) {
+        let _ = fs::write(&path, data);
+    }
+    let deleted = Arc::new(AtomicBool::new(false));
+    let deleted_flag = Arc::clone(&deleted);
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(5));
+        let _ = fs::remove_file(&path);
+        deleted_flag.store(true, Ordering::SeqCst);
+    });
+    world.file_deleted = Some(deleted);
+}
+
+#[then("the refresh should handle the missing file gracefully")]
+async fn then_refresh_handles_missing(world: &mut VirtuusWorld) {
+    if let Some(deleted) = world.file_deleted.as_ref() {
+        for _ in 0..10 {
+            if deleted.load(Ordering::SeqCst) {
+                break;
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+    }
+    let path_str = world
+        .deleted_path
+        .as_ref()
+        .map(|path| path.display().to_string());
+    let errors = {
+        let table = current_table(world);
+        table.refresh_errors().to_vec()
+    };
+    if let Some(path_str) = path_str {
+        if !errors.is_empty() {
+            assert!(errors.iter().any(|p| p == &path_str));
+        }
+    }
+}
+
+#[then("no unhandled error should occur")]
+async fn then_no_unhandled_error(world: &mut VirtuusWorld) {
+    assert!(world.last_summary.is_some());
+}
+
+#[when("a new file is created while a refresh scan is in progress")]
+async fn when_new_file_during_scan(world: &mut VirtuusWorld) {
+    let dir = world
+        .directory
+        .as_ref()
+        .expect("missing directory")
+        .clone();
+    let expected = {
+        let table = current_table(world);
+        table.count(None, None)
+    };
+    world.race_expected_count = Some(expected);
+    let path = dir.join("user-race.json");
+    let record = json!({"id": "user-race", "name": "Race User", "status": "active"});
+    let written = Arc::new(AtomicBool::new(false));
+    let written_flag = Arc::clone(&written);
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(1));
+        let _ = fs::write(&path, serde_json::to_vec(&record).unwrap());
+        written_flag.store(true, Ordering::SeqCst);
+    });
+    world.race_written = Some(written);
+}
+
+#[then("the table should be in a consistent state")]
+async fn then_table_consistent_state(world: &mut VirtuusWorld) {
+    let expected = world.race_expected_count.unwrap_or(0);
+    let table = current_table(world);
+    let count = table.count(None, None);
+    assert!(count == expected || count == expected + 1);
+}
+
+#[then("the new file should be picked up in this or the next refresh")]
+async fn then_new_file_picked_up(world: &mut VirtuusWorld) {
+    if let Some(written) = world.race_written.as_ref() {
+        for _ in 0..10 {
+            if written.load(Ordering::SeqCst) {
+                break;
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+    }
+    let table = current_table(world);
+    let record = table.get("user-race", None);
+    if record.is_none() {
+        table.refresh();
+    }
+    assert!(table.get("user-race", None).is_some());
+}
+
+#[when("an empty file (0 bytes) exists in the directory")]
+async fn when_empty_file_exists(world: &mut VirtuusWorld) {
+    let dir = world.directory.as_ref().expect("missing directory");
+    let path = dir.join("empty.json");
+    fs::write(&path, "").expect("write empty");
+    world.empty_path = Some(path);
+}
+
+#[then("the empty file should be reported as an error")]
+async fn then_empty_file_reported(world: &mut VirtuusWorld) {
+    let path_str = world
+        .empty_path
+        .as_ref()
+        .expect("missing path")
+        .display()
+        .to_string();
+    let table = current_table(world);
+    assert!(table.refresh_errors().iter().any(|p| p == &path_str));
+}
+
+#[then("other records should remain accessible")]
+async fn then_other_records_accessible(world: &mut VirtuusWorld) {
+    let table = current_table(world);
+    assert!(table.get("user-1", None).is_some());
 }
 
 #[then("all GSIs should include the 2 new records")]

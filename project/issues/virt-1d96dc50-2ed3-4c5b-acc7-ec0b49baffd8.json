@@ -3,16 +3,29 @@
   "title": "File race conditions",
   "description": "Given filesystem edge cases (file appears/disappears during scan, truncated JSON), Virtuus should handle all gracefully without crashing. Corrupted files are reported as errors, valid records remain accessible. Spec: features/concurrency/file_race_conditions.feature",
   "type": "story",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "8aabb8ee-d7cb-4b33-ba1d-19fc1df5260c",
+      "author": "ryan.porter",
+      "text": "Starting: review feature scenarios and existing step coverage; plan implementation for Rust/Python steps. Next: add steps + tests. Blockers: none.",
+      "created_at": "2026-02-22T02:01:02.443360Z"
+    },
+    {
+      "id": "337c4f61-a0a9-4020-9791-6882bb531c68",
+      "author": "ryan.porter",
+      "text": "Done: added refresh error tracking, Python/Rust steps for file race conditions, and verified behave + rust cucumber. Next: referential integrity under load. Blockers: none.",
+      "created_at": "2026-02-22T02:07:37.071630Z"
+    }
+  ],
   "created_at": "2026-02-21T16:48:02.267826Z",
-  "updated_at": "2026-02-21T16:48:02.267826Z",
-  "closed_at": null,
+  "updated_at": "2026-02-22T02:07:39.332838Z",
+  "closed_at": "2026-02-22T02:07:39.332838Z",
   "custom": {}
 }
