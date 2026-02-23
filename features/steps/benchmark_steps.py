@@ -95,6 +95,21 @@ def _entry_metrics(entry: dict) -> list[tuple[str, float]]:
     return metrics
 
 
+def _entry_primary_value(entry: dict) -> float | None:
+    if "timing_ms" in entry:
+        return float(entry["timing_ms"])
+    meta = entry.get("metadata", {}) or {}
+    if "p95" in meta:
+        return float(meta["p95"])
+    timings = entry.get("timings")
+    if timings:
+        vals = sorted(float(v) for v in timings)
+        if vals:
+            idx = int(0.95 * (len(vals) - 1))
+            return vals[idx]
+    return None
+
+
 def _bench_totals() -> list[int]:
     env = os.getenv("VIRTUUS_BENCH_TOTALS")
     if not env:
@@ -329,6 +344,24 @@ def _draw_line(
             y0 += sy
 
 
+def _draw_line_thick(
+    rows: list[bytearray],
+    x0: int,
+    y0: int,
+    x1: int,
+    y1: int,
+    color: tuple[int, int, int, int],
+    thickness: int = 2,
+) -> None:
+    if thickness <= 1:
+        _draw_line(rows, x0, y0, x1, y1, color)
+        return
+    radius = thickness // 2
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            _draw_line(rows, x0 + dx, y0 + dy, x1 + dx, y1 + dy, color)
+
+
 def _png_chunk(chunk_type: bytes, data: bytes) -> bytes:
     length = struct.pack("!I", len(data))
     crc = struct.pack("!I", binascii.crc32(chunk_type + data) & 0xFFFFFFFF)
@@ -401,7 +434,11 @@ def _render_bar_chart(  # pragma: no cover - currently unused in Behave flow
 
 
 def _render_line_chart(
-    name: str, series: dict[str, list[tuple[int, float]]], path: Path
+    name: str,
+    series: dict[str, list[tuple[int, float]]],
+    path: Path,
+    series_order: list[str] | None = None,
+    annotations: list[dict] | None = None,
 ) -> None:
     width = 880
     height = 560
@@ -412,6 +449,7 @@ def _render_line_chart(
     bg = (248, 249, 251, 255)
     axis_color = (60, 67, 74, 255)
     text_color = (28, 32, 38, 255)
+    grid_color = (210, 214, 220, 255)
     # Palette: magenta + light blue alternation for clarity
     palette = [
         (204, 0, 153, 255),   # magenta
@@ -448,29 +486,53 @@ def _render_line_chart(
     for idx in range(y_ticks + 1):
         y_value = max_y * idx / y_ticks
         y = plot_bottom - int(plot_height * idx / y_ticks)
+        _draw_line(rows, plot_left, y, plot_right, y, grid_color)
         _draw_line(rows, plot_left - 4, y, plot_left, y, axis_color)
         label = _format_value_ms(y_value).replace(" MS", "")
         _draw_text(rows, max(plot_left - 6 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
     _draw_text(rows, plot_left, plot_bottom + 32, "TOTAL RECORDS", text_color, scale=1)
     _draw_text(rows, 20, plot_top + 10, "MS", text_color, scale=1)
+    ordered_labels = series_order or list(series.keys())
+    label_colors = {
+        label: palette[idx % len(palette)] for idx, label in enumerate(ordered_labels)
+    }
     legend_x = plot_left
     legend_y = plot_top - 32
-    for idx, label in enumerate(sorted(series.keys())):
-        color = palette[idx % len(palette)]
+    for idx, label in enumerate(ordered_labels):
+        color = label_colors[label]
         _draw_rect(rows, legend_x, legend_y, 14, 8, color)
         _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
         legend_x += 160
-    for idx, label in enumerate(sorted(series.keys())):
-        color = palette[idx % len(palette)]
+    for idx, label in enumerate(ordered_labels):
+        color = label_colors[label]
         points = sorted(series[label], key=lambda pair: pair[0])
         prev = None
         for total, value in points:
             x = x_positions[total]
             y = plot_bottom - int((value / max_y) * plot_height)
-            _draw_rect(rows, x - 2, y - 2, 5, 5, color)
+            _draw_rect(rows, x - 3, y - 3, 7, 7, color)
             if prev is not None:
-                _draw_line(rows, prev[0], prev[1], x, y, color)
+                _draw_line_thick(rows, prev[0], prev[1], x, y, color, thickness=3)
             prev = (x, y)
+    if annotations:
+        for ann in annotations:
+            label = ann.get("series")
+            total = ann.get("total")
+            value = ann.get("value")
+            text = ann.get("text")
+            if not isinstance(label, str) or not isinstance(total, int):
+                continue
+            if not isinstance(value, (int, float)) or not isinstance(text, str):
+                continue
+            if total not in x_positions:
+                continue
+            x = x_positions[total]
+            y = plot_bottom - int((value / max_y) * plot_height)
+            dx = int(ann.get("dx", 0))
+            dy = int(ann.get("dy", -14))
+            color = label_colors.get(label, text_color)
+            text_x = max(x + dx - _text_width(text, 1) // 2, 0)
+            _draw_text(rows, text_x, y + dy, text, color, scale=1)
     _write_png(path, width, height, rows)
 
 
@@ -1137,25 +1199,126 @@ def step_run_visualization(context):
         svg.unlink()
     for png in output_dir.glob("*.png"):
         png.unlink()
-    data = json.loads(Path(context.benchmark_output_path).read_text(encoding="utf-8"))
-    grouped: dict[str, list[dict]] = {}
-    for entry in data:
-        grouped.setdefault(entry.get("name", "benchmark"), []).append(entry)
-    for raw_name, entries in grouped.items():
-        chart_name = _format_benchmark_name(raw_name)
-        series: dict[str, list[tuple[int, float]]] = {}
+    primary_path = Path(context.benchmark_output_path)
+    data = json.loads(primary_path.read_text(encoding="utf-8"))
+
+    def infer_label(path: Path) -> str:
+        parts = {part.lower() for part in path.parts}
+        if "output_py" in parts:
+            return "Python"
+        return "Rust"
+
+    primary_label = infer_label(primary_path)
+    primary_totals = {
+        entry.get("metadata", {}).get("total_records")
+        for entry in data
+        if isinstance(entry.get("metadata", {}).get("total_records"), int)
+    }
+
+    def add_entries(
+        series_map: dict[str, dict[str, list[tuple[int, float]]]],
+        entries: list[dict],
+        label: str,
+        allowed_totals: set[int] | None = None,
+    ) -> None:
         for entry in entries:
+            name = entry.get("name", "benchmark")
             meta = entry.get("metadata", {}) or {}
             total_records = meta.get("total_records")
             if not isinstance(total_records, int):
                 continue
-            for label, value in _entry_metrics(entry):
-                display_label = _format_metric_label(label)
-                series.setdefault(display_label, []).append((total_records, value))
+            if allowed_totals is not None and total_records not in allowed_totals:
+                continue
+            value = _entry_primary_value(entry)
+            if value is None:
+                continue
+            series_map.setdefault(name, {}).setdefault(label, []).append(
+                (total_records, value)
+            )
+
+    grouped: dict[str, dict[str, list[tuple[int, float]]]] = {}
+    add_entries(grouped, data, primary_label)
+    if primary_label == "Python":
+        rust_path = Path("benchmarks/output/benchmarks.json")
+        if rust_path.exists():
+            rust_data = json.loads(rust_path.read_text(encoding="utf-8"))
+            add_entries(grouped, rust_data, "Rust", primary_totals or None)
+    elif primary_label == "Rust":
+        python_path = Path("benchmarks/output_py/benchmarks.json")
+        if python_path.exists():
+            python_data = json.loads(python_path.read_text(encoding="utf-8"))
+            add_entries(grouped, python_data, "Python", primary_totals or None)
+
+    for raw_name, series in grouped.items():
         if not series:
             continue
+        chart_name = _format_benchmark_name(raw_name)
         png_path = output_dir / f"{raw_name}.png"
-        _render_line_chart(chart_name, series, png_path)
+        series_order = None
+        if "Rust" in series and "Python" in series:
+            series_order = ["Rust", "Python"]
+        annotations = None
+        if raw_name in (
+            "full_database_cold_load",
+            "single_table_cold_load",
+            "gsi_partition_lookup",
+            "gsi_sorted_query",
+        ) and series_order:
+            series_map: dict[str, dict[int, float]] = {}
+            for label, points in series.items():
+                series_map[label] = {total: value for total, value in points}
+
+            def add_ann(label: str, total: int, dx: int = 0, dy: int = -14) -> None:
+                value = series_map.get(label, {}).get(total)
+                if value is None:
+                    return
+                if annotations is None:
+                    return
+
+                annotations.append(
+                    {
+                        "series": label,
+                        "total": total,
+                        "value": value,
+                        "text": _format_value_ms(value).replace(" MS", " ms"),
+                        "dx": dx,
+                        "dy": dy,
+                    }
+                )
+
+            annotations = []
+            if raw_name == "full_database_cold_load":
+                # Rust callouts at key sizes
+                for total in (5000, 10000, 50000, 100000):
+                    add_ann("Rust", total)
+                # 1k labels for both backends with horizontal offsets
+                add_ann("Rust", 1000, dx=-28, dy=-18)
+                add_ann("Python", 1000, dx=28, dy=-6)
+            elif raw_name == "single_table_cold_load":
+                # single table cold load callouts
+                add_ann("Python", 1000)
+                add_ann("Rust", 10000, dx=-24, dy=-18)
+                add_ann("Python", 10000, dx=24, dy=-6)
+                for total in (50000, 100000):
+                    add_ann("Rust", total)
+            elif raw_name == "gsi_partition_lookup":
+                # gsi partition lookup callouts
+                add_ann("Rust", 5000)
+                add_ann("Rust", 10000, dx=-24, dy=-18)
+                add_ann("Python", 10000, dx=24, dy=-6)
+                for total in (50000, 100000):
+                    add_ann("Rust", total)
+            else:
+                # gsi sorted query callouts
+                add_ann("Rust", 5000)
+                add_ann("Rust", 10000, dx=-24, dy=-18)
+                add_ann("Python", 10000, dx=24, dy=-6)
+                for total in (50000, 100000):
+                    add_ann("Rust", total)
+
+        _render_line_chart(
+            chart_name, series, png_path, series_order=series_order, annotations=annotations
+        )
     report_path = root / "REPORT.md"
     _write_report(context, data, report_path)
     context.chart_dir = output_dir
