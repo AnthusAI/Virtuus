@@ -605,22 +605,25 @@ def step_delete_during_refresh(context):
     path = os.path.join(directory, "user-0.json")
     context.deleted_path = path
     os.utime(path, None)
-    original_read = table._read_record_file
+    original_signature = table._file_signature
 
-    def wrapped_read(record_path: str):
+    def wrapped_signature(record_path: str):
         if record_path == path and not getattr(context, "deleted_once", False):
             context.deleted_once = True
             if os.path.exists(path):
                 os.remove(path)
-        return original_read(record_path)
+        return original_signature(record_path)
 
-    table._read_record_file = wrapped_read
+    table._file_signature = wrapped_signature
 
 
 @then("the refresh should handle the missing file gracefully")
 def step_refresh_missing_file(context):
+    from virtuus._python.table import Table as PyTable
+
     table = _current_table(context)
     assert context.deleted_path in table.refresh_errors
+    assert PyTable._file_signature(table, context.deleted_path) == (0, 0)
 
 
 @then("no unhandled error should occur")

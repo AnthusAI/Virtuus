@@ -1,0 +1,25 @@
+{
+  "id": "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17",
+  "title": "Rust PyO3 extension build fails (maturin develop)",
+  "description": "",
+  "type": "bug",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "0719b11c-7dfd-49bc-82fd-968ea82079f1",
+      "author": "ryan.porter",
+      "text": "## Repro\nFrom repo root:\n- `cd rust`\n- `/opt/anaconda3/bin/conda run -n virtuus maturin develop --release`\n\n## Result\nBuild fails with multiple compile errors in `rust/src/python.rs` (PyO3 0.21 API changes / borrow issues). Examples:\n- E0282 type annotations needed (depythonize on `junction.as_ref(py)`)\n- E0599 `borrow` not found for `&Py<PyList>` (should use bound/as_ref)\n- E0596 cannot borrow `table` as mutable (missing `mut`)\n- E0716 temporary value dropped while borrowed (`fk_value.to_string()` inline)\n- E0502 mutable/immutable borrow conflict in `table.association_defs()` + `table.scan()`\n\n## Impact\nBlocks Rust backend import (`virtuus._rust`) and therefore Rust-side benchmarks via Python harness.",
+      "created_at": "2026-02-23T03:06:03.691631Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:05:39.960614Z",
+  "updated_at": "2026-02-23T03:06:03.691631Z",
+  "closed_at": null,
+  "custom": {}
+}

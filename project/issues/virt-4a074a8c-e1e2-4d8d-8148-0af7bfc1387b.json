@@ -1,0 +1,25 @@
+{
+  "id": "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b",
+  "title": "Establish 10k load baseline benchmarks (Python + Rust)",
+  "description": "",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "f89b6df6-8dea-48fe-95a8-2defb90fa79a",
+      "author": "ryan.porter",
+      "text": "## Yardstick\nUse `full_database_cold_load` at `total_records=10,000` (social_media profile).\n\n## Python baseline (fresh run, 2026-02-23)\n- counts: users=163, posts=1,630, comments=8,207\n- full_database_cold_load: **3354.440 ms**\n- single_table_cold_load (context only): 51.253 ms\n\n## Rust baseline\nBlocked: Rust backend not importable via PyO3 (no `virtuus._rust`). `maturin develop --release` fails with compile errors in `rust/src/python.rs` (PyO3 API changes / borrow issues). Tracking fix in bug: virt-1abdce.",
+      "created_at": "2026-02-23T03:05:46.600514Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:05:37.267225Z",
+  "updated_at": "2026-02-23T03:05:55.123232Z",
+  "closed_at": null,
+  "custom": {}
+}

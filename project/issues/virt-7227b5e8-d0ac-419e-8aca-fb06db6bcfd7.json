@@ -1,18 +1,25 @@
 {
   "id": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
   "title": "Rust performance investigation --status in_progress",
-  "description": "",
+  "description": "## Goal\nMake Rust cold-load meaningfully faster than Python for record loading; target up to ~10x if feasible.\n\n## Context\nRust version currently performs similar to Python, which is unexpected. We need to leverage Rust for speed (e.g., parallel load) and empirically validate improvements.\n\n## Approach\nFor each performance idea: implement, ensure specs pass, benchmark vs Rust baseline and Python, and keep only if gains justify complexity. If not, revert to baseline and record what was tried/learned.\n\n## Tracking\nCreate one story per idea with separate notes; work may use Git worktrees for isolation.",
   "type": "epic",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "0240f0ed-4445-45a3-bf37-35ea9c5b9f2b",
+      "author": "ryan.porter",
+      "text": "Context from user (2026-02-23): Surprised Rust perf matches Python. Expect up to ~10x faster for this task. Explore multiple Rust performance ideas (e.g., parallel loading), implement each, verify specs/tests, benchmark vs Rust baseline and Python. Keep/merge only if empirical gains justify added complexity; otherwise revert to baseline and note failed idea + learnings. Create a new story per idea and track notes separately. Git worktrees ok for isolation.",
+      "created_at": "2026-02-23T02:53:25.210778Z"
+    }
+  ],
   "created_at": "2026-02-22T18:16:24.961819Z",
-  "updated_at": "2026-02-22T18:16:24.961819Z",
+  "updated_at": "2026-02-23T02:53:47.262604Z",
   "closed_at": null,
   "custom": {}
 }

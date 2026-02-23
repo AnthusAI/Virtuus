@@ -22,10 +22,16 @@
       "author": "ryan.porter",
       "text": "Done: added refresh error tracking, Python/Rust steps for file race conditions, and verified behave + rust cucumber. Next: referential integrity under load. Blockers: none.",
       "created_at": "2026-02-22T02:07:37.071630Z"
+    },
+    {
+      "id": "92d3eb09-3e73-4c31-afb8-527f89cd7637",
+      "author": "ryan.porter",
+      "text": "Done: ensured file-race scenario executes in Python suite (added concurrency path to behave.ini), exercised missing-file signature branch to satisfy coverage. Next: commit/push and run CI. Blockers: none.",
+      "created_at": "2026-02-23T03:08:43.230736Z"
     }
   ],
   "created_at": "2026-02-21T16:48:02.267826Z",
-  "updated_at": "2026-02-22T02:07:39.332838Z",
+  "updated_at": "2026-02-23T03:08:43.230736Z",
   "closed_at": "2026-02-22T02:07:39.332838Z",
   "custom": {}
 }

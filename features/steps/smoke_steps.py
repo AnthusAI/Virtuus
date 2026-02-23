@@ -59,10 +59,10 @@ def step_given_rust_binary(context):
     repo_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
     release_bin = os.path.join(repo_root, "rust", "target", "release", "virtuus")
     debug_bin = os.path.join(repo_root, "rust", "target", "debug", "virtuus")
-    if os.path.exists(release_bin):
-        context.rust_binary = release_bin
-    elif os.path.exists(debug_bin):
+    if os.path.exists(debug_bin):
         context.rust_binary = debug_bin
+    elif os.path.exists(release_bin):
+        context.rust_binary = release_bin
     else:
         raise AssertionError("Rust binary not found — run 'cargo build' in rust/ first")
 

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "f8c06dd6-926a-4099-a93e-d4fc66b33c8a",
+  "issue_id": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-23T02:53:47.262Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "changes": {
+      "description": {
+        "from": "",
+        "to": "## Goal\nMake Rust cold-load meaningfully faster than Python for record loading; target up to ~10x if feasible.\n\n## Context\nRust version currently performs similar to Python, which is unexpected. We need to leverage Rust for speed (e.g., parallel load) and empirically validate improvements.\n\n## Approach\nFor each performance idea: implement, ensure specs pass, benchmark vs Rust baseline and Python, and keep only if gains justify complexity. If not, revert to baseline and record what was tried/learned.\n\n## Tracking\nCreate one story per idea with separate notes; work may use Git worktrees for isolation."
+      }
+    }
+  }
+}

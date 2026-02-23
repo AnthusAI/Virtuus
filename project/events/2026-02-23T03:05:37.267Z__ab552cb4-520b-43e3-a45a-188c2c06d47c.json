@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "ab552cb4-520b-43e3-a45a-188c2c06d47c",
+  "issue_id": "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:05:37.267Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Establish 10k load baseline benchmarks (Python + Rust)"
+  }
+}
