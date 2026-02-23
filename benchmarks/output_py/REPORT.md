@@ -30,9 +30,9 @@
 | gsi_partition_lookup | 10,000 | - | 5.231900 | 6.682243 | 8.834802 |
 | gsi_sorted_query | 10,000 | - | 5.093813 | 5.485679 | 6.002760 |
 | incremental_refresh | 10,000 | 1.738 | - | - | - |
-| single_table_cold_load | 100,000 | 540.776 | - | - | - |
-| full_database_cold_load | 100,000 | 52100.482 | - | - | - |
-| pk_lookup | 100,000 | - | 0.000167 | 0.000200 | 0.000211 |
-| gsi_partition_lookup | 100,000 | - | 43.221385 | 44.341308 | 44.979778 |
-| gsi_sorted_query | 100,000 | - | 42.902552 | 44.589408 | 45.533723 |
-| incremental_refresh | 100,000 | 7.877 | - | - | - |
+| single_table_cold_load | 100,000 | 208.155 | - | - | - |
+| full_database_cold_load | 100,000 | 14349.566 | - | - | - |
+| pk_lookup | 100,000 | - | 0.000201 | 0.000244 | 0.000461 |
+| gsi_partition_lookup | 100,000 | - | 46.551836 | 48.054928 | 49.034103 |
+| gsi_sorted_query | 100,000 | - | 46.393092 | 47.299708 | 47.776983 |
+| incremental_refresh | 100,000 | 9.229 | - | - | - |
