@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "virtuus"
-version = "1.0.0"
+version = "1.0.1"
 description = "File-backed in-memory indexed table engine"
 requires-python = ">=3.9"
 dependencies = ["pyyaml>=6.0"]
