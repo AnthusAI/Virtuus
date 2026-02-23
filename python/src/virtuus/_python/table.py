@@ -91,7 +91,7 @@ class Table:
         self.associations: list[str] = []
         self.association_defs: dict[str, AssociationDef] = {}
         self.last_write_used_atomic: bool = False
-        self._manifest: dict[str, float] = {}
+        self._manifest: dict[str, tuple[int, int]] = {}
         self._last_dir_mtime: Optional[float] = None
         self._last_check_time: Optional[float] = None
         self._last_is_stale: bool = False
@@ -461,7 +461,7 @@ class Table:
                 else:
                     self.delete(pk)
         self._manifest = {
-            os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()
+            os.path.basename(p): self._file_signature(p) for p in self._iter_json_files()
         }
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()
@@ -497,7 +497,7 @@ class Table:
             with open(path, "r", encoding="utf-8") as handle:
                 record = json.load(handle)
             self.put(record)
-            self._manifest[name] = os.path.getmtime(path)
+            self._manifest[name] = self._file_signature(path)
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()
         self._last_is_stale = False
@@ -574,7 +574,7 @@ class Table:
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         self._write_json_atomic(path, record)
-        self._manifest[filename] = os.path.getmtime(path)
+        self._manifest[filename] = self._file_signature(path)
         self._last_dir_mtime = self._dir_mtime()
 
     def _delete_record_from_disk(self, pk: Any) -> None:
@@ -628,6 +628,10 @@ class Table:
         except FileNotFoundError:
             return 0.0
 
+    def _file_signature(self, path: str) -> tuple[int, int]:
+        stat = os.stat(path)
+        return stat.st_mtime_ns, stat.st_size
+
     def _pk_from_filename(self, filename: str) -> Optional[Any]:
         name = filename.replace(".json", "")
         if "__" in name:
@@ -646,7 +650,7 @@ class Table:
                 set(),
             )  # pragma: no cover
         current_files = {
-            os.path.basename(p): os.path.getmtime(p) for p in self._iter_json_files()
+            os.path.basename(p): self._file_signature(p) for p in self._iter_json_files()
         }
         previous = self._manifest
         added = {
