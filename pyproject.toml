@@ -1,5 +1,7 @@
 [tool.semantic_release]
 version_source = "file"
+major_on_zero = false
+allow_zero_version = true
 branch = "main"
 tag_format = "v{version}"
 changelog_file = "CHANGELOG.md"
