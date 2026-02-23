@@ -11,6 +11,13 @@ A file-backed in-memory indexed table engine. Virtuus treats folders of JSON fil
 
 Data lives on disk as one JSON file per record. Virtuus loads it into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
 
+## Guiding Values
+- Eliminate before you solve. Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
+- Behavior-driven design as source code. The Gherkin spec is the single source of truth; Rust and Python implementations are generated artifacts. Classic BDD, now accelerated by AI assistants.
+- Use AI to raise the bar, not just ship faster. We enforce Ruff, Black, docstring rules, and 100% spec coverage—standards that are hard to meet manually.
+- The filesystem is the database. JSON files back both Kanbus project management and the core table engine, keeping humans, code, and AIs aligned on a simple source of truth.
+- You can’t optimize what you don’t measure. Benchmarks are first-class so we can improve performance with evidence.
+
 ## Why
 
 We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records or less), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
