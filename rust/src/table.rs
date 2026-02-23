@@ -1320,6 +1320,35 @@ mod tests {
     }
 
     #[test]
+    fn load_replaces_existing_record_and_reindexes_gsi() {
+        let dir = temp_dir("load_reindex");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.add_gsi("by_status", "status", None);
+        table.put(json!({"id": "user-1", "status": "active"}));
+        fs::write(
+            dir.join("user-1.json"),
+            json!({"id": "user-1", "status": "inactive"}).to_string(),
+        )
+        .unwrap();
+
+        table.load_from_dir(None);
+
+        let active = table.query_gsi("by_status", &json!("active"), None, false);
+        let inactive = table.query_gsi("by_status", &json!("inactive"), None, false);
+        assert!(active.is_empty());
+        assert_eq!(inactive.len(), 1);
+        assert_eq!(inactive[0]["status"], "inactive");
+    }
+
+    #[test]
     fn delete_removes_persisted_file() {
         let dir = temp_dir("delete_file");
         let mut table = Table::new(
