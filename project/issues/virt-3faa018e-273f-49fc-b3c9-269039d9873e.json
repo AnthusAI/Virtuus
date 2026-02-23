@@ -3,7 +3,7 @@
   "title": "Set up public packages",
   "description": "",
   "type": "epic",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,10 +16,16 @@
       "author": "ryan.porter",
       "text": "Starting: set up public packages epic. Next: ensure PyPI/crates automation is fully documented and verify badges/README references. Blockers: none.",
       "created_at": "2026-02-23T02:43:13.526935Z"
+    },
+    {
+      "id": "133356a8-569b-49e0-aa5e-ab383b846e60",
+      "author": "ryan.porter",
+      "text": "Done: public packages setup completed; semantic-release publishing works. Next: close epic. Blockers: none.",
+      "created_at": "2026-02-23T03:20:44.125489Z"
     }
   ],
   "created_at": "2026-02-22T18:12:28.570870Z",
-  "updated_at": "2026-02-23T02:43:13.526935Z",
-  "closed_at": null,
+  "updated_at": "2026-02-23T03:20:46.955252Z",
+  "closed_at": "2026-02-23T03:20:46.955252Z",
   "custom": {}
 }
