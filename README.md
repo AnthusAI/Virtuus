@@ -286,21 +286,6 @@ For cold-load charts, “full database” means loading every table (users, post
 - Warm PK lookups are effectively constant; GSI queries stay low-latency.
 - See charts for exact values.
 
-### Results (Python backend, warm cache — Rust overlay)
-
-We ran Python backend benchmarks at 100, 1k, 10k, and 100k totals to mirror the small-footprint use case. The charts overlay Rust for comparison (p95 for iterative benchmarks, timing_ms for cold loads):
-
-![Full database cold load (Python + Rust)](benchmarks/output_py/charts/full_database_cold_load.png)
-![Single table cold load (Python + Rust)](benchmarks/output_py/charts/single_table_cold_load.png)
-![Incremental refresh (Python + Rust)](benchmarks/output_py/charts/incremental_refresh.png)
-![PK lookup (Python + Rust)](benchmarks/output_py/charts/pk_lookup.png)
-![GSI partition lookup (Python + Rust)](benchmarks/output_py/charts/gsi_partition_lookup.png)
-![GSI sorted query (Python + Rust)](benchmarks/output_py/charts/gsi_sorted_query.png)
-
-- Python remains solid for smaller deployments; charts show the headroom gap at larger sizes.
-- Warm lookups stay fast; cold loads are the main differentiator.
-- See charts for exact values.
-
 ### Rust vs Python comparison (p95 or timing_ms)
 
 Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for iterative benchmarks and timing_ms for cold loads. Cold loads are charted separately so all charts can share a zero-based scale.
