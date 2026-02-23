@@ -3,6 +3,8 @@ AGENTS.override.md
 AGENTS.override
 .DS_Store
 benchmarks/.DS_Store
+.coverage
+.env
 
 # Python
 __pycache__/
