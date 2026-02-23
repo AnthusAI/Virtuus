@@ -54,6 +54,10 @@ The Python package transparently uses the Rust backend when available, falling b
 from virtuus import Database, Table, GSI, Sort
 ```
 
+## Release Automation
+
+Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems.
+
 ## Quick Start
 
 ### As a Library
