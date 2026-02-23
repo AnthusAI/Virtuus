@@ -281,13 +281,14 @@ Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for 
 
 ### Memory footprint (RSS) snapshots
 
-We measured server RSS while serving pre-generated JSON datasets, varying corpus size and GSI count (with `posts` associations enabled). Lower data sizes stay lightweight; adding multiple GSIs raises steady-state memory modestly.
+RSS (Resident Set Size) is the portion of a process's memory that is actually resident in RAM. We measure it after the server loads pre-generated JSON datasets, varying corpus size and GSI count (with `posts` associations enabled), then query the `memory` endpoint for a steady-state snapshot.
 
 ![Memory RSS](benchmarks/output_memory/memory_rss.png)
 
 Interpretation:
 - 100–1k users stay in the tens of MB range even with 3 GSIs.
-- At 10k users, RSS remains comfortably under typical small-container budgets; each added GSI bumps memory linearly but gently.
+- At 10k users, RSS remains comfortably under typical small-container budgets.
+- Adding GSIs has a modest cost in RSS in this range; the deltas are small relative to total footprint.
 - Associations (users↔posts) are included here; removing them would reduce RSS further.
 
 See `benchmarks/output_memory/results.csv` for raw numbers.

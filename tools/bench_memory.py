@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import random
 import shutil
 import signal
 import subprocess
@@ -144,6 +143,25 @@ def wait_for_port(host: str, port: int, timeout: float = 10.0) -> bool:
     return False
 
 
+def _port_available(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(("127.0.0.1", port))
+        except OSError:
+            return False
+    return True
+
+
+def _pick_port(start_port: int, attempts: int = 50) -> int:
+    for port in range(start_port, start_port + attempts):
+        if _port_available(port):
+            return port
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
 def query_memory(bin_path: Path, port: int, retries: int = 20, delay: float = 0.25) -> dict:
     for attempt in range(retries):
         try:
@@ -180,6 +198,18 @@ def parse_list(value: str) -> list[int]:
     return out
 
 
+def _format_kb(value: float) -> str:
+    if value >= 1024 * 1024:
+        return f"{value / 1024 / 1024:.2f} GB"
+    if value >= 1024:
+        return f"{value / 1024:.1f} MB"
+    return f"{value:.0f} KB"
+
+
+def _gsi_label(count: int) -> str:
+    return f"{count} GSI" if count == 1 else f"{count} GSIs"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Measure Virtuus server RSS across dataset shapes.")
     parser.add_argument("--totals", default="100,500,1000,5000,10000", type=str)
@@ -197,7 +227,6 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
-    port = args.port
 
     for total in totals:
         for gsi_count in gsi_counts:
@@ -208,9 +237,10 @@ def main() -> None:
                     schema_path = data_root / "schema.yml"
                     write_yaml_schema(schema_path, include_posts, gsi_count)
 
+                    port = _pick_port(args.port)
                     proc = start_server(bin_path, data_root, schema_path, port)
                     try:
-                        if not wait_for_port("127.0.0.1", port, timeout=10.0):
+                        if not wait_for_port("127.0.0.1", port, timeout=20.0):
                             raise RuntimeError(f"server did not open port {port}")
                         if proc.poll() is not None:
                             raise RuntimeError(f"server exited early with code {proc.returncode}")
@@ -228,9 +258,6 @@ def main() -> None:
                             "rss_bytes": mem.get("rss_bytes"),
                         }
                     )
-                    # bump port to reduce reuse collisions
-                    port = port + 1 + random.randint(0, 5)
-
     results_path = out_dir / "results.json"
     results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
@@ -243,29 +270,31 @@ def main() -> None:
 
     # render chart
     categories = sorted({r["total_users"] for r in results})
-    series_labels = [str(g) for g in sorted({r["gsi_count"] for r in results})]
+    series_labels = [_gsi_label(g) for g in sorted({r["gsi_count"] for r in results})]
     data: dict[str, dict[str, float]] = {}
     for total in categories:
         label = f"{total:,} users"
         data[label] = {}
-        for g in series_labels:
+        for g in sorted({r["gsi_count"] for r in results}):
+            g_label = _gsi_label(g)
             match = next(
                 (
                     r
                     for r in results
-                    if r["total_users"] == total and str(r["gsi_count"]) == g and r["include_posts"]
+                    if r["total_users"] == total and r["gsi_count"] == g and r["include_posts"]
                 ),
                 None,
             )
             if match:
-                data[label][g] = float(match.get("rss_kb") or 0)
+                data[label][g_label] = float(match.get("rss_kb") or 0)
     chart_path = out_dir / "memory_rss.png"
     viz._render_horizontal_bar_chart(
         "RSS by corpus size and GSI count (includes posts associations)",
         [f"{c:,} users" for c in categories],
-        [f"{g} GSIs" for g in series_labels],
+        series_labels,
         data,
         chart_path,
+        value_formatter=_format_kb,
     )
 
     print(f"Wrote {len(results)} samples to {results_path}")

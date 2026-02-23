@@ -604,6 +604,7 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
     series_labels: list[str],
     data: dict[str, dict[str, float]],
     path: Path,
+    value_formatter: Callable[[float], str] | None = None,
 ) -> None:
     margin_left = 190
     margin_right = 120
@@ -627,6 +628,8 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
     width = 980
     rows = _new_canvas(width, height, bg)
     _draw_text(rows, 20, 20, name, text_color, scale=2)
+    if value_formatter is None:
+        value_formatter = _format_value_ms
 
     values = [
         data.get(cat, {}).get(label, 0.0)
@@ -655,7 +658,7 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
             val = max_val * idx / x_ticks
             x = plot_left + int(plot_width * idx / x_ticks)
         _draw_line(rows, x, plot_top - 4, x, height - margin_bottom + 6, axis_color)
-        label = _format_value_ms(val).replace(" MS", "")
+        label = value_formatter(val).replace(" MS", "")
         _draw_text(rows, x - _text_width(label, 1) // 2, height - margin_bottom + 24, label, text_color, scale=1)
 
     cursor_y = plot_top
@@ -687,7 +690,7 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
                 bar_w = int((value / max_val) * plot_width) if max_val else 0
             y0 = cursor_y + idx * (bar_height + series_gap)
             _draw_rect(rows, plot_left, y0, bar_w, bar_height, color)
-            value_text = _format_value_ms(value)
+            value_text = value_formatter(value)
             text_x = plot_left + bar_w + 8
             _draw_text(rows, text_x, y0 + 2, value_text, text_color, scale=1)
         cursor_y += group_height + group_gap
