@@ -139,6 +139,19 @@ class Table:
             self._write_record_to_disk(pk, record)
         self._fire_hooks(self.on_put, record)
 
+    def _insert_record_from_load(self, record: dict[str, Any]) -> None:
+        """Insert a record during load without writing to disk."""
+        pk = self._extract_pk(record)
+        if pk is None:
+            return
+        self._validate_gsi_fields(record)
+        existing = self.records.get(pk)
+        if existing is not None:
+            self._remove_from_gsis(pk, existing)
+        self.records[pk] = record
+        self._index_in_gsis(pk, record)
+        self._fire_hooks(self.on_put, record)
+
     def add_belongs_to(self, name: str, target_table: str, foreign_key: str) -> None:
         """
         Register a belongs_to association.
@@ -497,7 +510,7 @@ class Table:
             path = os.path.join(target, name)
             with open(path, "r", encoding="utf-8") as handle:
                 record = json.load(handle)
-            self.put(record)
+            self._insert_record_from_load(record)
             self._manifest[name] = self._file_signature(path)
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()

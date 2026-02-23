@@ -186,6 +186,22 @@ impl Table {
         Self::fire_hooks(hooks, hook_errors, &record);
     }
 
+    fn insert_record_from_load(&mut self, record: Value) {
+        let key = match self.extract_key(&record) {
+            Some(key) => key,
+            None => return,
+        };
+        self.validate_gsi_fields(&record);
+        if let Some(existing) = self.records.get(&key).cloned() {
+            self.remove_from_gsis(&key, &existing);
+        }
+        self.records.insert(key.clone(), record.clone());
+        self.index_in_gsis(&key, &record);
+        let hooks = self.on_put.as_slice();
+        let hook_errors = &mut self.hook_errors;
+        Self::fire_hooks(hooks, hook_errors, &record);
+    }
+
     /// Get a record by primary key.
     pub fn get(&self, pk: &str, sort: Option<&str>) -> Option<Value> {
         let key = self.compose_key(pk, sort);
@@ -561,7 +577,7 @@ impl Table {
             }
             let data = fs::read_to_string(&path).expect("read file");
             let record: Value = serde_json::from_str(&data).expect("parse json");
-            self.put(record);
+            self.insert_record_from_load(record);
             if let Ok(meta) = fs::metadata(&path) {
                 if let Ok(mtime) = meta.modified() {
                     if let Some(name) = path.file_name() {
@@ -1203,6 +1219,24 @@ mod tests {
         table.load_from_dir(Some(dir.clone()));
         assert_eq!(table.count(None, None), 1);
         assert!(txt_path.exists());
+    }
+
+    #[test]
+    fn load_skips_missing_primary_key() {
+        let dir = temp_dir("load_missing_pk");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("missing.json");
+        fs::write(&path, json!({"name": "Missing"}).to_string()).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(Some(dir));
+        assert_eq!(table.count(None, None), 0);
     }
 
     #[test]

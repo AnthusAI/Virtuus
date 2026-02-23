@@ -1481,6 +1481,25 @@ async fn given_directory_with_json(world: &mut VirtuusWorld) {
     }
 }
 
+#[given(regex = r#"^a JSON file missing the "([^"]*)" field$"#)]
+async fn given_json_missing_field(world: &mut VirtuusWorld, field: String) {
+    let directory = temp_dir(world);
+    let mut record = json!({"id": "missing-field", "name": "Missing Field"});
+    if let Value::Object(ref mut map) = record {
+        map.remove(&field);
+    }
+    let path = directory.join("missing-field.json");
+    fs::write(path, serde_json::to_vec(&record).unwrap()).unwrap();
+}
+
+#[given(regex = r#"^a JSON file with duplicate id "([^"]*)" and name "([^"]*)"$"#)]
+async fn given_json_duplicate_id(world: &mut VirtuusWorld, pk: String, name: String) {
+    let directory = temp_dir(world);
+    let record = json!({"id": pk, "name": name});
+    let path = directory.join(format!("{pk}-dup.json"));
+    fs::write(path, serde_json::to_vec(&record).unwrap()).unwrap();
+}
+
 #[when(regex = r#"^I create a table "([^"]*)" and load from that directory$"#)]
 async fn when_create_table_load_dir(world: &mut VirtuusWorld, name: String) {
     let directory = temp_dir(world);

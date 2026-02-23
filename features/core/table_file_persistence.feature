@@ -21,6 +21,14 @@ Feature: Table file persistence
     Then the table should contain 5 records
     And each record should match its source file
 
+  Scenario: Load ignores missing primary key files and handles duplicates
+    Given a directory with 5 JSON files representing user records
+    And a JSON file missing the "id" field
+    And a JSON file with duplicate id "user-0" and name "Updated"
+    When I create a table "users" and load from that directory
+    And I load the table from that directory
+    Then the table should contain 5 records
+
   Scenario: File writes are atomic (temp + rename)
     Given a table "users" backed by a directory
     When I put a record

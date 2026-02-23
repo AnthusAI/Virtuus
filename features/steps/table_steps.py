@@ -431,6 +431,27 @@ def step_dir_with_json_files(context):
             json.dump(record, handle)
 
 
+@given('a JSON file missing the "{field}" field')
+def step_dir_with_missing_field(context, field):
+    directory = getattr(context, "directory", None) or _temp_dir(context)
+    context.directory = directory
+    record = {"id": "missing-field", "name": "Missing Field"}
+    record.pop(field, None)
+    path = os.path.join(directory, "missing-field.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(record, handle)
+
+
+@given('a JSON file with duplicate id "{pk}" and name "{name}"')
+def step_dir_with_duplicate_id(context, pk, name):
+    directory = getattr(context, "directory", None) or _temp_dir(context)
+    context.directory = directory
+    record = {"id": pk, "name": name}
+    path = os.path.join(directory, f"{pk}-dup.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(record, handle)
+
+
 @when('I create a table "{name}" and load from that directory')
 def step_create_table_load_dir(context, name):
     table = _create_table(context, name, primary_key="id", directory=context.directory)
