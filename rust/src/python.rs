@@ -6,7 +6,7 @@ use pyo3::exceptions::{PyKeyError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList, PyType};
 use pyo3::PyCell;
-use pythonize::{depythonize, pythonize};
+use pythonize::{depythonize, depythonize_bound, pythonize};
 use serde_json::Value;
 
 use crate::gsi::Gsi;
@@ -573,7 +573,11 @@ impl PyTable {
     fn scan(&self, py: Python<'_>) -> PyResult<Vec<PyObject>> {
         let mut table = self.inner.lock().expect("lock table");
         let records = table.scan();
-        records.iter().map(|record| pythonize(py, record)).collect()
+        let mut results = Vec::with_capacity(records.len());
+        for record in &records {
+            results.push(pythonize(py, record)?);
+        }
+        Ok(results)
     }
 
     fn bulk_load(&self, records: &PyAny) -> PyResult<()> {
@@ -646,7 +650,7 @@ impl PyTable {
     }
 
     fn export(&self, directory: String) -> PyResult<()> {
-        let table = self.inner.lock().expect("lock table");
+        let mut table = self.inner.lock().expect("lock table");
         table.export(PathBuf::from(directory));
         Ok(())
     }
@@ -818,7 +822,7 @@ impl PyDatabase {
         let tables = self.tables.lock().expect("lock tables");
         let map = PyDict::new(py);
         for (name, table) in tables.iter() {
-            let table = table.lock().expect("lock table");
+            let mut table = table.lock().expect("lock table");
             let mut description = table.describe();
             description
                 .as_object_mut()
@@ -833,27 +837,38 @@ impl PyDatabase {
         let mut violations: Vec<Value> = Vec::new();
         let tables = self.tables.lock().expect("lock tables");
         for (table_name, table_ref) in tables.iter() {
-            let mut table = table_ref.lock().expect("lock table");
-            for (assoc_name, definition) in table.association_defs() {
+            let (association_defs, key_field, records) = {
+                let mut table = table_ref.lock().expect("lock table");
+                (
+                    table.association_defs().clone(),
+                    table.key_field().unwrap_or("id").to_string(),
+                    table.scan(),
+                )
+            };
+            for (assoc_name, definition) in association_defs {
                 if let Association::BelongsTo {
                     target_table,
                     foreign_key,
                 } = definition
                 {
-                    for record in table.scan() {
-                        let fk_value = match record.get(foreign_key) {
+                    for record in &records {
+                        let fk_value = match record.get(&foreign_key) {
                             Some(value) => value.clone(),
                             None => continue,
                         };
-                        let target = tables.get(target_table).and_then(|target| {
-                            let target = target.lock().expect("lock table");
-                            let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
-                            target.get(fk_str, None)
-                        });
-                        if target.is_none() {
+                        let fk_owned = fk_value.to_string();
+                        let fk_str = fk_value.as_str().unwrap_or(&fk_owned);
+                        let target_missing = tables
+                            .get(&target_table)
+                            .and_then(|target| {
+                                let target = target.lock().expect("lock table");
+                                target.get(fk_str, None)
+                            })
+                            .is_none();
+                        if target_missing {
                             violations.push(serde_json::json!({
                                 "table": table_name,
-                                "record_pk": record.get(table.key_field().unwrap_or("id")).cloned().unwrap_or(Value::Null),
+                                "record_pk": record.get(&key_field).cloned().unwrap_or(Value::Null),
                                 "association": assoc_name,
                                 "foreign_key": foreign_key,
                                 "missing_target": fk_value,
@@ -1214,10 +1229,11 @@ fn resolve_association_py(
                 return Ok(py.None());
             }
             let table_obj = tables_dict
-                .get_item(target_table)
+                .get_item(target_table)?
                 .ok_or_else(|| PyKeyError::new_err("target table not found"))?;
             let table = table_obj.downcast::<PyCell<PyTable>>()?;
-            let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
+            let fk_owned = fk_value.to_string();
+            let fk_str = fk_value.as_str().unwrap_or(&fk_owned);
             table.borrow().get(py, fk_str.to_string(), None)
         }
         Association::HasMany {
@@ -1230,7 +1246,7 @@ fn resolve_association_py(
                 .map(|s| s.to_string())
                 .unwrap_or_default();
             let table_obj = tables_dict
-                .get_item(target_table)
+                .get_item(target_table)?
                 .ok_or_else(|| PyKeyError::new_err("target table not found"))?;
             let table = table_obj.downcast::<PyCell<PyTable>>()?;
             let key_obj = pythonize(py, &Value::String(key_field))?;
@@ -1251,7 +1267,7 @@ fn resolve_association_py(
                 .map(|s| s.to_string())
                 .unwrap_or_default();
             let through_obj = tables_dict
-                .get_item(through_table)
+                .get_item(through_table)?
                 .ok_or_else(|| PyKeyError::new_err("through table not found"))?;
             let through = through_obj.downcast::<PyCell<PyTable>>()?;
             let key_obj = pythonize(py, &Value::String(key_value))?;
@@ -1260,17 +1276,15 @@ fn resolve_association_py(
                     .borrow()
                     .query_gsi(py, through_index, key_obj.as_ref(py), None, false)?;
             let target_obj = tables_dict
-                .get_item(target_table)
+                .get_item(target_table)?
                 .ok_or_else(|| PyKeyError::new_err("target table not found"))?;
             let target = target_obj.downcast::<PyCell<PyTable>>()?;
             let mut results = Vec::new();
             for junction in junctions {
-                let junction_value = depythonize::<Value>(junction.as_ref(py))?;
+                let junction_value = depythonize_bound::<Value>(junction.into_bound(py))?;
                 if let Some(fk_value) = junction_value.get(&target_foreign_key) {
-                    let fk_str = fk_value
-                        .as_str()
-                        .unwrap_or(&fk_value.to_string())
-                        .to_string();
+                    let fk_owned = fk_value.to_string();
+                    let fk_str = fk_value.as_str().unwrap_or(&fk_owned).to_string();
                     let record = target.borrow().get(py, fk_str, None)?;
                     if !record.is_none(py) {
                         results.push(record);
@@ -1381,7 +1395,8 @@ fn resolve_association_value(
             let target = tables.get(&target_table);
             if let Some(target) = target {
                 let target = target.lock().expect("lock table");
-                let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
+                let fk_owned = fk_value.to_string();
+                let fk_str = fk_value.as_str().unwrap_or(&fk_owned);
                 target.get(fk_str, None).unwrap_or(Value::Null)
             } else {
                 Value::Null
@@ -1428,7 +1443,8 @@ fn resolve_association_value(
             let mut results = Vec::new();
             for junction in junctions {
                 if let Some(fk_value) = junction.get(&target_foreign_key) {
-                    let fk_str = fk_value.as_str().unwrap_or(&fk_value.to_string());
+                    let fk_owned = fk_value.to_string();
+                    let fk_str = fk_value.as_str().unwrap_or(&fk_owned);
                     if let Some(record) = target.get(fk_str, None) {
                         results.push(record);
                     }
@@ -1441,7 +1457,7 @@ fn resolve_association_value(
 
 impl PyTable {
     fn fire_hooks(&self, py: Python<'_>, hooks: &Py<PyList>, payload: &Value) {
-        let list = hooks.borrow(py);
+        let list = hooks.bind(py);
         for hook in list.iter() {
             let record = pythonize(py, payload).expect("pythonize");
             if hook.call1((record,)).is_err() {

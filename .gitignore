@@ -17,6 +17,8 @@ python/.coverage
 python/htmlcov/
 python/.ruff_cache/
 *.pyc
+python/src/virtuus/_rust*.so
+python/src/virtuus/_rust*.pyd
 
 # Rust
 rust/target/
