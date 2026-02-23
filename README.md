@@ -1,6 +1,6 @@
 # Virtuus 善
 
-A file-backed in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
+A **file-backed, in-memory indexed table engine**. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
 [![CI](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml)
 ![Python Coverage](https://img.shields.io/badge/python%20coverage-100%25-brightgreen)
@@ -9,7 +9,7 @@ A file-backed in-memory indexed table engine. Virtuus treats folders of JSON fil
 [![Crates.io](https://img.shields.io/crates/v/virtuus.svg)](https://crates.io/crates/virtuus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Data lives on disk as one JSON file per record. Virtuus loads it into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
+Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus loads data into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
 
 ## Motivation / Operating Context
 
@@ -17,15 +17,15 @@ Virtuus was built to take [Plexus](https://github.com/AnthusAI/Plexus) — one o
 
 ## Guiding Values
 
-- It's better to eliminate a problem than to solve it. Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
-- Behavior-driven design as source code. The Gherkin spec is the single source of truth; Rust and Python implementations are generated artifacts.
-- Use AI to raise the bar, not just ship faster. We enforce Ruff, Black, docstring rules, and full spec coverage.
-- The filesystem is the database. JSON files back both Kanbus project management and the core table engine.
-- You can’t optimize what you don’t measure. Benchmarks are first-class so we can improve performance with evidence.
+- **It's better to eliminate a problem than to solve it.** Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
+- **Gherkin behavior specifications are the source code.** The Gherkin spec is the single source of truth; Rust and Python implementations are generated artifacts.
+- **Raise the bar.** Use AI to raise the bar, not to just create more AI slop faster.
+- **The filesystem is the database.** JSON files back both Kanbus project management and the core table engine.
+- **You can’t optimize what you don’t measure.** Benchmarks are first-class.
 
 ## Load-First Runtime Pattern
 
-We increasingly run systems that are load-first: large ML models and multi-GB datasets are loaded before any work can begin. If multi-second or multi-minute loads are already normal for model startup, the same time-shifted assumption can simplify data querying problems: load once, index in memory, and operate fast. You don’t need traditional ETL (extract-transform-load) to get indexed access if you can load a folder and build the indexes directly in memory.
+We increasingly run systems that are **load-first**: large ML models and multi-GB datasets are loaded before any work can begin. If multi-second or multi-minute loads are already normal for model startup, the same time-shifted assumption can simplify data querying problems: load once, index in memory, and operate fast. You don’t need traditional ETL (extract-transform-load) to get indexed access if you can load a folder and build the indexes directly in memory.
 
 ## Performance Highlights
 
@@ -49,10 +49,10 @@ See the Kanbus architecture notes for the exact benchmark tables and raw measure
 
 ## When to Use
 
-- You want to ship data + query engine inside the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
-- You can time-shift a one-time cold load to unlock extremely fast PK lookups and low-latency GSI queries.
-- You need DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
-- You need a drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
+- Ship data + query engine in the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
+- Time-shift a one-time cold load to unlock extremely fast PK lookups and low-latency GSI queries.
+- DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
+- A drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
 
 ## When Not to Use
 
