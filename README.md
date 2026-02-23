@@ -5,7 +5,7 @@ A **virtual-table database system** — a file-backed, in-memory indexed table e
 [![CI](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml)
 ![Python Coverage](https://img.shields.io/badge/python%20coverage-100%25-brightgreen)
 ![Rust Coverage](https://img.shields.io/badge/rust%20coverage-100%25-brightgreen)
-[![PyPI](https://img.shields.io/pypi/v/virtuus.svg)](https://pypi.org/project/virtuus/)
+[![PyPI](https://img.shields.io/pypi/v/virtuus.svg?cacheSeconds=300)](https://pypi.org/project/virtuus/)
 [![Crates.io](https://img.shields.io/crates/v/virtuus.svg)](https://crates.io/crates/virtuus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
