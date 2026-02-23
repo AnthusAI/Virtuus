@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-22T18:22:28Z",
+  "built_at": "2026-02-23T02:42:13Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
@@ -44,7 +44,7 @@
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771725252.018969,
-    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771749603.991993,
+    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771806916.165466,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
     "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771749586.526532,
@@ -1818,6 +1818,18 @@
           "created_at": "2026-02-22T08:40:03.991594Z",
           "id": "1cb8371c-9e39-4376-897f-3747cf98d3e8",
           "text": "Still in progress: no semantic-release changes yet; queued after CI verification."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T00:31:04.983247Z",
+          "id": "f6fc5050-2765-4428-8843-de0530c58ff1",
+          "text": "Updated release workflow to run semantic-release version then publish so tags/releases are created automatically; will trigger next push to confirm."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T00:35:16.152864Z",
+          "id": "0dc8a6a2-a8db-420e-aac6-06dd721eed45",
+          "text": "Release pipeline fixed: semantic-release now runs version then publish with file version source; tag v1.0.0 recreated and VERSION synced to 1.0.0. Next steps: confirm PyPI trusted publisher run succeeds."
         }
       ],
       "created_at": "2026-02-22T07:42:26.361525Z",
@@ -1832,7 +1844,7 @@
       "status": "in_progress",
       "title": "Set up semantic-release (conventional commits)",
       "type": "task",
-      "updated_at": "2026-02-22T08:40:03.991594Z"
+      "updated_at": "2026-02-23T00:35:16.152864Z"
     },
     {
       "assignee": null,
