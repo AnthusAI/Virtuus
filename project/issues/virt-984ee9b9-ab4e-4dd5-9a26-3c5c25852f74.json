@@ -28,10 +28,16 @@
       "author": "ryan.porter",
       "text": "Updated release workflow to run semantic-release version then publish so tags/releases are created automatically; will trigger next push to confirm.",
       "created_at": "2026-02-23T00:31:04.983247Z"
+    },
+    {
+      "id": "0dc8a6a2-a8db-420e-aac6-06dd721eed45",
+      "author": "ryan.porter",
+      "text": "Release pipeline fixed: semantic-release now runs version then publish with file version source; tag v1.0.0 recreated and VERSION synced to 1.0.0. Next steps: confirm PyPI trusted publisher run succeeds.",
+      "created_at": "2026-02-23T00:35:16.152864Z"
     }
   ],
   "created_at": "2026-02-22T07:42:26.361525Z",
-  "updated_at": "2026-02-23T00:31:04.983247Z",
+  "updated_at": "2026-02-23T00:35:16.152864Z",
   "closed_at": null,
   "custom": {}
 }
