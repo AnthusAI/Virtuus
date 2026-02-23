@@ -22,10 +22,16 @@
       "author": "ryan.porter",
       "text": "Still in progress: no semantic-release changes yet; queued after CI verification.",
       "created_at": "2026-02-22T08:40:03.991594Z"
+    },
+    {
+      "id": "f6fc5050-2765-4428-8843-de0530c58ff1",
+      "author": "ryan.porter",
+      "text": "Updated release workflow to run semantic-release version then publish so tags/releases are created automatically; will trigger next push to confirm.",
+      "created_at": "2026-02-23T00:31:04.983247Z"
     }
   ],
   "created_at": "2026-02-22T07:42:26.361525Z",
-  "updated_at": "2026-02-22T08:40:03.991594Z",
+  "updated_at": "2026-02-23T00:31:04.983247Z",
   "closed_at": null,
   "custom": {}
 }
