@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
+use rayon::prelude::*;
 use serde_json::Value;
 
 use crate::gsi::Gsi;
@@ -569,22 +570,36 @@ impl Table {
         if !dir.exists() {
             return;
         }
-        for entry in fs::read_dir(&dir).expect("read_dir failed") {
-            let entry = entry.expect("dir entry");
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) != Some("json") {
-                continue;
-            }
-            let data = fs::read_to_string(&path).expect("read file");
-            let record: Value = serde_json::from_str(&data).expect("parse json");
-            self.insert_record_from_load(record);
-            if let Ok(meta) = fs::metadata(&path) {
-                if let Ok(mtime) = meta.modified() {
-                    if let Some(name) = path.file_name() {
-                        self.manifest
-                            .insert(name.to_string_lossy().to_string(), mtime);
-                    }
+        let paths: Vec<PathBuf> = fs::read_dir(&dir)
+            .expect("read_dir failed")
+            .filter_map(|entry| {
+                let entry = entry.expect("dir entry");
+                let path = entry.path();
+                if path.extension().and_then(|s| s.to_str()) != Some("json") {
+                    return None;
                 }
+                Some(path)
+            })
+            .collect();
+        self.records.reserve(paths.len());
+        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = paths
+            .par_iter()
+            .map(|path| {
+                let data = fs::read_to_string(path).expect("read file");
+                let record: Value = serde_json::from_str(&data).expect("parse json");
+                let mtime = fs::metadata(path)
+                    .ok()
+                    .and_then(|meta| meta.modified().ok());
+                let name = path
+                    .file_name()
+                    .map(|value| value.to_string_lossy().to_string());
+                (record, name, mtime)
+            })
+            .collect();
+        for (record, name, mtime) in parsed {
+            self.insert_record_from_load(record);
+            if let (Some(name), Some(mtime)) = (name, mtime) {
+                self.manifest.insert(name, mtime);
             }
         }
         self.last_dir_mtime = self.dir_mtime();
