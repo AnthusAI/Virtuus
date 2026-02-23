@@ -1,4 +1,4 @@
-# Virtuus
+# Virtuus 善
 
 A file-backed in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
