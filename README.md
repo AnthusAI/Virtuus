@@ -13,7 +13,18 @@ Data lives on disk as one JSON file per record. Virtuus loads it into memory, bu
 
 ## Why
 
-We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records or less), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
+We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records sweet spot, still reasonable to ~100k with Rust), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
+
+Virtuus was built inside a mission-critical production system with a GraphQL control plane. Worker pods are dispatched into Kubernetes across isolated environments, and strict information-security and regulatory requirements prevent them from directly reaching the central control plane. Shipping the data and query engine into the worker removes that dependency while keeping the API shape consistent.
+
+Our runtime pattern is load-first: large ML models and multi-GB datasets are loaded before any work can begin. Virtuus treats JSON folders the same way — load once, index in memory, then operate fast. You don’t need traditional ETL to get indexed access; load a folder, build indexes in memory, and serve low-latency lookups.
+
+## Performance Highlights
+- Rust cold-load headroom: full-DB cold load ~0.43s at 10k and ~4.76s at 100k; Python ~3.66s and ~14.35s.
+- Warm PK lookups are sub-microsecond p95 in both backends at 100k (Rust ~0.000655 ms, Python ~0.000244 ms).
+- Warm GSI queries remain low-ms: Rust p95 ~3 ms at 10k and ~34–36 ms at 100k; Python p95 ~5–7 ms at 10k and ~47–48 ms at 100k.
+- Incremental refresh is cheap: Rust ~1.37 ms at 10k and ~5.89 ms at 100k; Python ~1.74 ms and ~9.23 ms.
+- Memory example: 10k users + posts + 3 GSIs ≈ 64 MB RSS.
 
 ## Guiding Values
 - It's better to eliminate a problem than to solve it.  Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
@@ -23,12 +34,13 @@ We built Virtuus to decouple data logic from a GraphQL control plane so it can r
 - You can’t optimize what you don’t measure.  Benchmarks are first-class so we can improve performance with evidence.
 
 ## When to Use
-- You want to ship data + query engine inside the same container with no external DB.
-- Your tables are “small” (sweet spot ≤10k records, still reasonable to ~100k with the Rust backend).
+- You want to ship data + query engine inside the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
+- You can time-shift a one-time cold load (Rust full-DB ~0.43s at 10k and ~4.76s at 100k) to unlock sub-microsecond PK lookups and low-ms GSI queries.
 - You need DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
 - You need a drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
 
 ## When Not to Use
+- You cannot tolerate multi-second cold loads at 100k totals or your memory budget is tight (e.g., 10k users + posts + 3 GSIs ≈ 64 MB RSS).
 - You have multi-million-record tables that demand SSD-backed columnar storage.
 - You need cross-node clustering or distributed consensus.
 - You require ACID transactions or high write concurrency.
@@ -265,12 +277,12 @@ The Rust backend represents the “production” path: same API, faster engine, 
 ![GSI partition lookup](benchmarks/output/charts/gsi_partition_lookup.png)
 ![GSI sorted query](benchmarks/output/charts/gsi_sorted_query.png)
 
-- Full DB cold load scales linearly; ~41s at 100k total records. Use for batch ingest, not hot paths.
-- Single-table cold load is sub-second through 10k; ~0.7s at 100k — fine for targeted reloads.
-- Incremental refresh stays low single-digit ms even at 100k when only a file changes.
-- PK lookup is effectively flat (timer noise at tiny sizes); O(1) hash lookups.
-- GSI partition lookup grows with partition size; ~50 ms at 100k totals for hash-only access.
-- GSI sorted query adds per-partition sort/filter; ~50–65 ms at 100k totals.
+- Full DB cold load scales linearly; ~0.43s at 10k and ~4.76s at 100k total records.
+- Single-table cold load is ~2.2 ms at 10k and ~65 ms at 100k — useful for targeted reloads.
+- Incremental refresh stays low-ms even at 100k when only a file changes (~1.37 ms at 10k, ~5.89 ms at 100k).
+- PK lookup p95 remains sub-microsecond through 100k (Rust p95 ~0.000655 ms).
+- GSI partition lookup p95 grows with partition size; ~3.15 ms at 10k and ~36.07 ms at 100k.
+- GSI sorted query p95 is similar; ~3.04 ms at 10k and ~34.46 ms at 100k.
 
 ### Results (Python backend, warm cache)
 
@@ -283,9 +295,10 @@ Python-only benchmarks were run at 100, 1k, 10k, and 100k totals to mirror the s
 ![GSI partition lookup (Python)](benchmarks/output_py/charts/gsi_partition_lookup.png)
 ![GSI sorted query (Python)](benchmarks/output_py/charts/gsi_sorted_query.png)
 
-- Cold loads remain comfortably sub-second through 10k totals; Python overhead is visible but still small for these sizes.
-- PK lookups stay effectively free; GSI lookups stay within low-ms ranges at 10k totals.
-- Incremental refresh is still sub-ms to low-ms for small corpora.
+- Full DB cold load ~3.66s at 10k and ~14.35s at 100k; single-table cold load ~62.6 ms at 10k and ~208 ms at 100k.
+- PK lookup p95 remains sub-microsecond through 100k (Python p95 ~0.000244 ms).
+- GSI partition lookup p95 ~6.68 ms at 10k and ~48.05 ms at 100k; sorted query p95 ~5.49 ms at 10k and ~47.30 ms at 100k.
+- Incremental refresh ~1.74 ms at 10k and ~9.23 ms at 100k.
 
 ### Rust vs Python comparison (p95 or timing_ms)
 
@@ -305,23 +318,24 @@ RSS (Resident Set Size) is the portion of a process's memory that is actually re
 ![Memory RSS](benchmarks/output_memory/memory_rss.png)
 
 Interpretation:
-- 100–1k users stay in the tens of MB range even with 3 GSIs.
-- At 10k users, RSS remains comfortably under typical small-container budgets.
-- Adding GSIs has a modest cost in RSS in this range; the deltas are small relative to total footprint.
-- Associations (users↔posts) are included here; removing them would reduce RSS further.
+- 100–1k users with posts and 3 GSIs stay around ~4–10 MB RSS.
+- At 10k users, RSS is ~64 MB with posts and 3 GSIs.
+- Adding GSIs has a modest cost in RSS at this scale; associations are included.
 
 See `benchmarks/output_memory/results.csv` for raw numbers.
 
-- Gap is smallest on hot-path hash lookups (PK + hash-only GSI) at small sizes; Python stays in low single-digit ms.
-- Sorted GSI queries widen the gap because the Python path spends more time ordering partition results.
-- Cold-load gap is most pronounced because file I/O dominates and Rust streams faster; both stay linear with corpus size.
+### Practical takeaways
+- Load-first then operate: cold-load is the tradeoff; warm PK lookups are sub-microsecond p95 even at 100k.
+- Rust vs Python gap is most pronounced in cold loads; warm lookups remain fast in both.
+- GSI costs grow with partition size; p95 at 10k is ~3–7 ms and at 100k is ~34–48 ms depending on backend and query type.
+- Incremental refresh is the preferred path to keep data fresh without full reloads (low-ms even at 100k).
+- Memory footprint example: 10k users + posts + 3 GSIs ≈ 64 MB RSS.
 
 ### Interpretation
-- Virtuus is an excellent fit for “relatively small” deployments (≈10k total records or less) where you want to ship data + query engine together in a container without external services.
-- Use the Rust backend when available for headroom; Python-only remains viable for small tables and still delivers sub-second behavior.
-- If range queries dominate, keep partitions small or pre-sort buckets on write; incremental refresh is the preferred path to keep data fresh without full reloads.
- - Cold-load costs are linear; for tiny tables (≤10k) they remain sub-second, which is why the model works well for per-pod data snapshots.
- - The Python/Rust gap is most visible on cold loads; query latencies for small corpora stay close because data fits in memory and hash lookups dominate.
+- Virtuus fits “small to mid” deployments where you can pay a one-time load (Rust full-DB ~0.43s at 10k and ~4.76s at 100k) and then serve low-latency lookups.
+- Use the Rust backend when available for headroom in cold-load heavy workflows; Python remains viable for smaller tables.
+- If range queries dominate, keep partitions small or pre-sort buckets on write; incremental refresh is preferred to full reloads.
+- The time-shifted model aligns with isolated environments where you want data + engine co-located.
 
 ### How to regenerate
 ```bash
