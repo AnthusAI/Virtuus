@@ -1,0 +1,65 @@
+tables:
+  customers:
+    primary_key: customer_id
+    directory: data/customers
+    gsis:
+      by_email: { partition_key: email }
+    associations:
+      rentals: { type: has_many, table: rentals, index: by_customer }
+      payments: { type: has_many, table: payments, index: by_customer }
+  rentals:
+    primary_key: rental_id
+    directory: data/rentals
+    gsis:
+      by_customer: { partition_key: customer_id, sort_key: rental_date }
+      by_inventory: { partition_key: inventory_id, sort_key: rental_date }
+    associations:
+      customer: { type: belongs_to, table: customers, foreign_key: customer_id }
+      inventory: { type: belongs_to, table: inventory, foreign_key: inventory_id }
+      payments: { type: has_many, table: payments, index: by_rental }
+  payments:
+    primary_key: payment_id
+    directory: data/payments
+    gsis:
+      by_customer: { partition_key: customer_id, sort_key: payment_date }
+      by_rental: { partition_key: rental_id, sort_key: payment_date }
+    associations:
+      customer: { type: belongs_to, table: customers, foreign_key: customer_id }
+      rental: { type: belongs_to, table: rentals, foreign_key: rental_id }
+  inventory:
+    primary_key: inventory_id
+    directory: data/inventory
+    gsis:
+      by_film: { partition_key: film_id }
+    associations:
+      film: { type: belongs_to, table: films, foreign_key: film_id }
+      rentals: { type: has_many, table: rentals, index: by_inventory }
+  films:
+    primary_key: film_id
+    directory: data/films
+    gsis:
+      by_rating: { partition_key: rating }
+    associations:
+      inventory: { type: has_many, table: inventory, index: by_film }
+      actors:
+        type: has_many_through
+        through: film_actor
+        index: by_film
+        table: actors
+        foreign_key: actor_id
+  actors:
+    primary_key: actor_id
+    directory: data/actors
+    associations:
+      films:
+        type: has_many_through
+        through: film_actor
+        index: by_actor
+        table: films
+        foreign_key: film_id
+  film_actor:
+    primary_key: id
+    directory: data/film_actor
+    gsis:
+      by_film: { partition_key: film_id }
+      by_actor: { partition_key: actor_id }

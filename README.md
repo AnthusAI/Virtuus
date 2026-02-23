@@ -113,6 +113,22 @@ virtuus serve --dir ./data --schema schema.yml --port 8080
 
 The server accepts POST requests with JSON query dicts and returns JSON results.
 
+## Examples (Sakila)
+
+Examples live under `examples/sakila/` and use a small Sakila-derived dataset. Generate the JSON data with:
+
+```bash
+conda run -n virtuus python examples/sakila/build_sakila.py
+```
+
+Lessons and runnable examples (Python + Rust):
+
+- [Lesson 01: Load a Table](examples/sakila/01_load_table.md) — shows how to load the schema and fetch a single record by primary key, which is the simplest and fastest query path. Code: [python](examples/sakila/python/01_load_table.py), [rust](examples/sakila/rust/src/bin/01_load_table.rs).
+- [Lesson 02: GSI Query](examples/sakila/02_gsi_query.md) — demonstrates querying by a non-primary key using a Global Secondary Index and explains the required partition key constraint. Code: [python](examples/sakila/python/02_gsi_query.py), [rust](examples/sakila/rust/src/bin/02_gsi_query.rs).
+- [Lesson 03: Associations](examples/sakila/03_associations.md) — uses `include` to resolve `belongs_to` and `has_many` relationships in a single query response, showing how Virtuus emulates joins through indexes. Code: [python](examples/sakila/python/03_associations.py), [rust](examples/sakila/rust/src/bin/03_associations.rs).
+- [Lesson 04: has_many_through](examples/sakila/04_has_many_through.md) — walks a many-to-many association through a junction table, illustrating how to model cross-table relationships without SQL joins. Code: [python](examples/sakila/python/04_has_many_through.py), [rust](examples/sakila/rust/src/bin/04_has_many_through.rs).
+- [Lesson 05: Pagination](examples/sakila/05_pagination.md) — demonstrates cursor-style pagination with `limit` and `next_token`, plus field projection to keep payloads lean. Code: [python](examples/sakila/python/05_pagination.py), [rust](examples/sakila/rust/src/bin/05_pagination.rs).
+
 ## Storage Model
 
 One directory per table, one JSON file per record:

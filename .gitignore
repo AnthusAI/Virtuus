@@ -24,6 +24,7 @@ python/src/virtuus/_rust*.pyd
 rust/target/
 rust/lcov.info
 rust/tarpaulin-report.json
+examples/sakila/rust/target/
 
 # Benchmarks
 tools/benchmark_results/
@@ -39,3 +40,6 @@ benchmarks/output_py/comments/
 benchmarks/output_py/social_media_scale_*/
 benchmarks/output_py/social_media_total_*/
 project-local/
+
+# Examples
+examples/sakila/.cache/
