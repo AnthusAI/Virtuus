@@ -57,6 +57,7 @@ from virtuus import Database, Table, GSI, Sort
 ## Release Automation
 
 Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases.
+Releases are gated on CI success to avoid partial publishes.
 
 ## Quick Start
 
