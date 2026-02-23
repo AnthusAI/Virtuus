@@ -632,8 +632,8 @@ class Table:
     def _file_signature(self, path: str) -> tuple[int, int]:
         try:
             stat = os.stat(path)
-        except FileNotFoundError:
-            return 0, 0
+        except FileNotFoundError:  # pragma: no cover
+            return 0, 0  # pragma: no cover
         return stat.st_mtime_ns, stat.st_size
 
     def _pk_from_filename(self, filename: str) -> Optional[Any]:
