@@ -3,7 +3,6 @@ version_source = "file"
 branch = "main"
 tag_format = "v{version}"
 changelog_file = "CHANGELOG.md"
-initial_version = "0.1.0"
 version_toml = [
   "python/pyproject.toml:project.version",
   "rust/Cargo.toml:package.version",
