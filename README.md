@@ -11,39 +11,154 @@ A file-backed in-memory indexed table engine. Virtuus treats folders of JSON fil
 
 Data lives on disk as one JSON file per record. Virtuus loads it into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
 
-## Why
+## Motivation / Operating Context
 
-We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records sweet spot, still reasonable to ~100k with Rust), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
+We built Virtuus inside our mission-critical production system, [Plexus](https://github.com/AnthusAI/Plexus), which uses a GraphQL control plane. It serves high-availability, high-throughput, high-volume workloads under strict regulatory and information-security constraints. Our motivation is to support isolated, tightly regulated environments where workers cannot directly reach the central control plane. Shipping the data and query engine into the worker removes that dependency while keeping the API shape consistent.
 
-Virtuus was built inside our mission-critical production system, Plexus (`AnthusAI/Plexus`), which uses a GraphQL control plane. The motivation is to support workloads running in isolated, tightly regulated environments where workers cannot directly reach the central control plane. Shipping the data and query engine into the worker removes that dependency while keeping the API shape consistent.
+## Load-First Runtime Pattern
 
-Our runtime pattern is load-first: large ML models and multi-GB datasets are loaded before any work can begin. Virtuus treats JSON folders the same way — load once, index in memory, then operate fast. You don’t need traditional ETL to get indexed access; load a folder, build indexes in memory, and serve low-latency lookups.
+We increasingly run systems that are load-first: large ML models and multi-GB datasets are loaded before any work can begin. If multi-second or multi-minute loads are already normal for model startup, the same time-shifted assumption can simplify data querying problems: load once, index in memory, and operate fast. You don’t need traditional ETL to get indexed access if you can load a folder and build the indexes directly in memory.
 
 ## Performance Highlights
+
 - Rust cold-load headroom: full-DB cold load ~0.43s at 10k and ~4.76s at 100k; Python ~3.66s and ~14.35s.
 - Warm PK lookups are sub-microsecond p95 in both backends at 100k (Rust ~0.000655 ms, Python ~0.000244 ms).
 - Warm GSI queries remain low-ms: Rust p95 ~3 ms at 10k and ~34–36 ms at 100k; Python p95 ~5–7 ms at 10k and ~47–48 ms at 100k.
 - Incremental refresh is cheap: Rust ~1.37 ms at 10k and ~5.89 ms at 100k; Python ~1.74 ms and ~9.23 ms.
 - Memory example: 10k users + posts + 3 GSIs ≈ 64 MB RSS.
 
-## Guiding Values
-- It's better to eliminate a problem than to solve it.  Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
-- Behavior-driven design as source code.  The Gherkin spec is the single source of truth; Rust and Python implementations are generated artifacts.  Classic BDD, now accelerated by AI assistants.
-- Use AI to raise the bar, not just ship faster.  We enforce Ruff, Black, docstring rules, and 100% spec coverage—standards that are hard to meet manually.
-- The filesystem is the database.  JSON files back both Kanbus project management and the core table engine, keeping humans, code, and AIs aligned on a simple source of truth.
-- You can’t optimize what you don’t measure.  Benchmarks are first-class so we can improve performance with evidence.
+## Eliminate the Database, Don’t Optimize It
+
+This pattern showed up in [Kanbus](https://github.com/AnthusAI/Kanbus), inspired by [Beads](https://github.com/steveyegge/beads). Beads uses a SQLite sidecar to index a JSONL file. Kanbus asked: what if we just load the JSONL and scan it directly?
+
+The benchmark results were decisive. Warm-start median listing times (ms): Go/Beads SQLite 5277.6, Python/Beads JSONL 538.7, Rust/Beads JSONL 9.9, Rust/Project JSON 54.6. Cold/Warm medians (ms): Go/Beads 197.6 / 5277.6, Rust/Beads 11.9 / 9.9, Rust/JSON 92.4 / 54.6. In this case, scanning JSON directly beat the SQLite index while eliminating a daemon and synchronization layer. It’s often better to eliminate a problem than to solve it.
 
 ## When to Use
+
 - You want to ship data + query engine inside the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
 - You can time-shift a one-time cold load (Rust full-DB ~0.43s at 10k and ~4.76s at 100k) to unlock sub-microsecond PK lookups and low-ms GSI queries.
 - You need DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
 - You need a drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
 
 ## When Not to Use
+
 - You cannot tolerate multi-second cold loads at 100k totals or your memory budget is tight (e.g., 10k users + posts + 3 GSIs ≈ 64 MB RSS).
 - You have multi-million-record tables that demand SSD-backed columnar storage.
 - You need cross-node clustering or distributed consensus.
 - You require ACID transactions or high write concurrency.
+
+## Core Concepts & Features
+
+### Storage Model
+
+One directory per table, one JSON file per record:
+
+```
+data/
+  users/
+    user-abc-123.json
+    user-def-456.json
+  posts/
+    post-001.json
+    post-002.json
+```
+
+On startup, Virtuus scans each directory, loads all JSON files into memory, and builds GSI indexes. On write (`put`/`delete`), changes go to memory and to disk via atomic temp-file + rename.
+
+### Schema Definition
+
+Define tables, GSIs, and associations in a declarative YAML file:
+
+```yaml
+tables:
+  users:
+    primary_key: id
+    directory: users
+    gsis:
+      by_email: { partition_key: email }
+      by_org: { partition_key: org_id }
+    associations:
+      posts: { type: has_many, table: posts, index: by_user }
+  posts:
+    primary_key: id
+    directory: posts
+    gsis:
+      by_user: { partition_key: user_id, sort_key: created_at }
+    associations:
+      author: { type: belongs_to, table: users, foreign_key: user_id }
+```
+
+### Global Secondary Indexes (GSIs)
+
+GSIs provide fast lookups by non-primary-key fields. Each GSI has a hash partition key and an optional sorted range key.
+
+Sort conditions on range keys support: `eq`, `ne`, `lt`, `lte`, `gt`, `gte`, `between`, `begins_with`, `contains`.
+
+### Query Interface
+
+`db.execute(query_dict)` accepts a nested dict and returns nested results:
+
+| Directive | Purpose |
+|-----------|---------|
+| `where` | Filter by field values |
+| `index` | GSI name for indexed lookup |
+| `pk` | Direct primary key lookup |
+| `fields` | Field projection |
+| `limit` | Max records returned |
+| `sort` | Sort condition on range key |
+| `sort_direction` | `asc` or `desc` (default: `asc`) |
+| `next_token` | Cursor for pagination |
+| `include` | Nested association resolution |
+
+### Associations
+
+| Type | Resolution |
+|------|-----------|
+| `has_many` | GSI query on foreign table |
+| `belongs_to` | PK lookup on foreign table |
+| `has_many_through` | GSI query on junction table, then PK lookups on target |
+
+Self-referential associations (parent/child trees) are supported.
+
+### Cache & Freshness
+
+Virtuus tracks file modification times and detects when data on disk has changed:
+
+- **JIT refresh**: Stale tables are automatically refreshed before query results are returned.
+- **Warm reindex**: Proactively refresh all tables with `db.warm()` before queries need it.
+- **Incremental refresh**: Only added, modified, and deleted files are reloaded — not the entire table.
+- **Two-tier detection**: Cheap O(1) directory mtime check first; full O(N) file scan only when the directory has changed.
+
+### Diagnostics & Quality-of-Life
+
+- `table.describe()` / `db.describe()` — metadata overview: name, PK, GSIs, associations, record count, staleness
+- `table.count()` / `table.count(index, value)` — record counts without materializing results
+- `table.check()` — dry-run refresh showing what would change without actually refreshing
+- `db.validate()` — referential integrity check across all `belongs_to` associations
+- `table.export(directory)` — write all in-memory records back to JSON files
+- Event hooks: `on_put`, `on_delete`, `on_refresh` callback lists for logging, metrics, or reactive patterns
+- Opt-in put validation: warn or error when records are missing PK or GSI-indexed fields
+
+### Dual Implementation
+
+Virtuus is implemented identically in both Rust and Python, driven by shared Gherkin behavior specifications:
+
+- **Python**: Pure Python implementation in `python/src/virtuus/_python/`
+- **Rust**: Native implementation in `rust/src/`
+- **Shared specs**: Gherkin feature files in `features/` are the single source of truth
+- **PyO3 bridge**: The Rust implementation compiles as a Python extension module via PyO3 + maturin
+
+Philosophy: start fast in Python, flip to Rust when ready. Development can begin immediately with the pure-Python backend (no toolchain needed). In production, install a Rust toolchain and the same import automatically loads the Rust backend for a drop-in speed bump—no API changes, just a faster engine.
+
+Both implementations maintain 100% test coverage at all times.
+
+## Guiding Values
+
+- It's better to eliminate a problem than to solve it. Ask whether you truly need a database and the lifetime cost it adds; the filesystem may already be enough.
+- Behavior-driven design as source code. The Gherkin spec is the single source of truth; Rust and Python implementations are generated artifacts.
+- Use AI to raise the bar, not just ship faster. We enforce Ruff, Black, docstring rules, and 100% spec coverage.
+- The filesystem is the database. JSON files back both Kanbus project management and the core table engine.
+- You can’t optimize what you don’t measure. Benchmarks are first-class so we can improve performance with evidence.
 
 ## Installation
 
@@ -65,12 +180,6 @@ The Python package transparently uses the Rust backend when available, falling b
 ```python
 from virtuus import Database, Table, GSI, Sort
 ```
-
-## Release Automation
-
-Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases.
-Releases are gated on CI success to avoid partial publishes.
-Conventional commits are the single switch for automated releases.
 
 ## Quick Start
 
@@ -141,126 +250,12 @@ Lessons and runnable examples (Python + Rust):
 - [Lesson 04: has_many_through](examples/sakila/04_has_many_through.md) — walks a many-to-many association through a junction table, illustrating how to model cross-table relationships without SQL joins. Code: [python](examples/sakila/python/04_has_many_through.py), [rust](examples/sakila/rust/src/bin/04_has_many_through.rs).
 - [Lesson 05: Pagination](examples/sakila/05_pagination.md) — demonstrates cursor-style pagination with `limit` and `next_token`, plus field projection to keep payloads lean. Code: [python](examples/sakila/python/05_pagination.py), [rust](examples/sakila/rust/src/bin/05_pagination.rs).
 
-## Storage Model
-
-One directory per table, one JSON file per record:
-
-```
-data/
-  users/
-    user-abc-123.json
-    user-def-456.json
-  posts/
-    post-001.json
-    post-002.json
-```
-
-On startup, Virtuus scans each directory, loads all JSON files into memory, and builds GSI indexes. On write (`put`/`delete`), changes go to memory and to disk via atomic temp-file + rename.
-
-## Schema Definition
-
-Define tables, GSIs, and associations in a declarative YAML file:
-
-```yaml
-tables:
-  users:
-    primary_key: id
-    directory: users
-    gsis:
-      by_email: { partition_key: email }
-      by_org: { partition_key: org_id }
-    associations:
-      posts: { type: has_many, table: posts, index: by_user }
-  posts:
-    primary_key: id
-    directory: posts
-    gsis:
-      by_user: { partition_key: user_id, sort_key: created_at }
-    associations:
-      author: { type: belongs_to, table: users, foreign_key: user_id }
-```
-
-## Core Concepts
-
-### Global Secondary Indexes (GSIs)
-
-GSIs provide fast lookups by non-primary-key fields. Each GSI has a hash partition key and an optional sorted range key.
-
-Sort conditions on range keys support: `eq`, `ne`, `lt`, `lte`, `gt`, `gte`, `between`, `begins_with`, `contains`.
-
-### Query Interface
-
-`db.execute(query_dict)` accepts a nested dict and returns nested results:
-
-| Directive | Purpose |
-|-----------|---------|
-| `where` | Filter by field values |
-| `index` | GSI name for indexed lookup |
-| `pk` | Direct primary key lookup |
-| `fields` | Field projection |
-| `limit` | Max records returned |
-| `sort` | Sort condition on range key |
-| `sort_direction` | `asc` or `desc` (default: `asc`) |
-| `next_token` | Cursor for pagination |
-| `include` | Nested association resolution |
-
-### Associations
-
-| Type | Resolution |
-|------|-----------|
-| `has_many` | GSI query on foreign table |
-| `belongs_to` | PK lookup on foreign table |
-| `has_many_through` | GSI query on junction table, then PK lookups on target |
-
-Self-referential associations (parent/child trees) are supported.
-
-### Cache & Freshness
-
-Virtuus tracks file modification times and detects when data on disk has changed:
-
-- **JIT refresh**: Stale tables are automatically refreshed before query results are returned.
-- **Warm reindex**: Proactively refresh all tables with `db.warm()` before queries need it.
-- **Incremental refresh**: Only added, modified, and deleted files are reloaded — not the entire table.
-- **Two-tier detection**: Cheap O(1) directory mtime check first; full O(N) file scan only when the directory has changed.
-
-### Diagnostics & Quality-of-Life
-
-- `table.describe()` / `db.describe()` — metadata overview: name, PK, GSIs, associations, record count, staleness
-- `table.count()` / `table.count(index, value)` — record counts without materializing results
-- `table.check()` — dry-run refresh showing what would change without actually refreshing
-- `db.validate()` — referential integrity check across all `belongs_to` associations
-- `table.export(directory)` — write all in-memory records back to JSON files
-- Event hooks: `on_put`, `on_delete`, `on_refresh` callback lists for logging, metrics, or reactive patterns
-- Opt-in put validation: warn or error when records are missing PK or GSI-indexed fields
-
-## Dual Implementation
-
-Virtuus is implemented identically in both Rust and Python, driven by shared Gherkin behavior specifications:
-
-- **Python**: Pure Python implementation in `python/src/virtuus/_python/`
-- **Rust**: Native implementation in `rust/src/`
-- **Shared specs**: Gherkin feature files in `features/` are the single source of truth
-- **PyO3 bridge**: The Rust implementation compiles as a Python extension module via PyO3 + maturin
-
-Philosophy: start fast in Python, flip to Rust when ready. Development can begin immediately with the pure-Python backend (no toolchain needed). In production, install a Rust toolchain and the same import automatically loads the Rust backend for a drop-in speed bump—no API changes, just a faster engine.
-
-Both implementations maintain 100% test coverage at all times.
-
-## Development
-
-```bash
-make check              # lint + specs + coverage + parity — the one command
-make coverage-python    # behave + coverage report --fail-under=100
-make coverage-rust      # cargo tarpaulin --fail-under 100
-make check-parity       # verify Python and Rust step definitions cover all Gherkin steps
-make bench              # run benchmarks + generate visualizations
-```
-
 ## Benchmarks
 
 Benchmark goal: validate that Virtuus stays snappy for “small” datasets and that a container can carry its own data + engine without external dependencies. Warm-cache results are shown because most workloads in containers keep hot data in memory; cold-load numbers indicate one-time costs.
 
 ### Setup
+
 - Fixture profile: `social_media` (users/posts/comments with GSIs)
 - Sizes: 100, 500, 1k, 5k, 10k, 50k, 100k total records
 - Environment: local filesystem, warm cache, Python runner using Rust backend when available
@@ -318,6 +313,7 @@ RSS (Resident Set Size) is the portion of a process's memory that is actually re
 ![Memory RSS](benchmarks/output_memory/memory_rss.png)
 
 Interpretation:
+
 - 100–1k users with posts and 3 GSIs stay around ~4–10 MB RSS.
 - At 10k users, RSS is ~64 MB with posts and 3 GSIs.
 - Adding GSIs has a modest cost in RSS at this scale; associations are included.
@@ -325,6 +321,7 @@ Interpretation:
 See `benchmarks/output_memory/results.csv` for raw numbers.
 
 ### Practical takeaways
+
 - Load-first then operate: cold-load is the tradeoff; warm PK lookups are sub-microsecond p95 even at 100k.
 - Rust vs Python gap is most pronounced in cold loads; warm lookups remain fast in both.
 - GSI costs grow with partition size; p95 at 10k is ~3–7 ms and at 100k is ~34–48 ms depending on backend and query type.
@@ -332,12 +329,14 @@ See `benchmarks/output_memory/results.csv` for raw numbers.
 - Memory footprint example: 10k users + posts + 3 GSIs ≈ 64 MB RSS.
 
 ### Interpretation
+
 - Virtuus fits “small to mid” deployments where you can pay a one-time load (Rust full-DB ~0.43s at 10k and ~4.76s at 100k) and then serve low-latency lookups.
 - Use the Rust backend when available for headroom in cold-load heavy workflows; Python remains viable for smaller tables.
 - If range queries dominate, keep partitions small or pre-sort buckets on write; incremental refresh is preferred to full reloads.
 - The time-shifted model aligns with isolated environments where you want data + engine co-located.
 
 ### How to regenerate
+
 ```bash
 VIRTUUS_BENCH_DIR=benchmarks/output VIRTUUS_BENCH_TOTALS=100,500,1000,5000,10000,50000,100000 \
   python -m behave features/benchmarks/benchmark_scenarios.feature -n "Visualization generates charts"
@@ -351,10 +350,25 @@ VIRTUUS_BENCH_TOTALS=100,1000,10000,100000 \
 python tools/bench_compare.py
 ```
 Outputs land in `benchmarks/output/REPORT.md`, `benchmarks/output/benchmarks.json`, and `benchmarks/output/charts/*.png`.
+
 ```bash
 make bench PROFILE=social_media SCALE=2
 make bench-scale    # run at 1x, 2x, 5x, 10x for scaling charts
 ```
+
+## Development
+
+```bash
+make check              # lint + specs + coverage + parity — the one command
+make coverage-python    # behave + coverage report --fail-under=100
+make coverage-rust      # cargo tarpaulin --fail-under 100
+make check-parity       # verify Python and Rust step definitions cover all Gherkin steps
+make bench              # run benchmarks + generate visualizations
+```
+
+## Release Automation
+
+Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases. Releases are gated on CI success to avoid partial publishes. Conventional commits are the single switch for automated releases.
 
 ## License
 
