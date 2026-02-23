@@ -461,7 +461,8 @@ class Table:
                 else:
                     self.delete(pk)
         self._manifest = {
-            os.path.basename(p): self._file_signature(p) for p in self._iter_json_files()
+            os.path.basename(p): self._file_signature(p)
+            for p in self._iter_json_files()
         }
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()
@@ -650,7 +651,8 @@ class Table:
                 set(),
             )  # pragma: no cover
         current_files = {
-            os.path.basename(p): self._file_signature(p) for p in self._iter_json_files()
+            os.path.basename(p): self._file_signature(p)
+            for p in self._iter_json_files()
         }
         previous = self._manifest
         added = {
