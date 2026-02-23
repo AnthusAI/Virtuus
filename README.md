@@ -15,7 +15,7 @@ Data lives on disk as one JSON file per record. Virtuus loads it into memory, bu
 
 We built Virtuus to decouple data logic from a GraphQL control plane so it can run independently in a containerized processing farm (Kubernetes). The goal: stand up a GraphQL-equivalent API inside a container, driven only by exported JSON files, with no external services or heavy dependencies. For workloads that fit in “small” tables (≈10k records sweet spot, still reasonable to ~100k with Rust), this file-backed architecture is the simplest way to ship the whole data + query engine with the container.
 
-Virtuus was built inside a mission-critical production system with a GraphQL control plane. Worker pods are dispatched into Kubernetes across isolated environments, and strict information-security and regulatory requirements prevent them from directly reaching the central control plane. Shipping the data and query engine into the worker removes that dependency while keeping the API shape consistent.
+Virtuus was built inside our mission-critical production system, Plexus (`AnthusAI/Plexus`), which uses a GraphQL control plane. The motivation is to support workloads running in isolated, tightly regulated environments where workers cannot directly reach the central control plane. Shipping the data and query engine into the worker removes that dependency while keeping the API shape consistent.
 
 Our runtime pattern is load-first: large ML models and multi-GB datasets are loaded before any work can begin. Virtuus treats JSON folders the same way — load once, index in memory, then operate fast. You don’t need traditional ETL to get indexed access; load a folder, build indexes in memory, and serve low-latency lookups.
 
