@@ -43,23 +43,25 @@ This pattern showed up in [Kanbus](https://github.com/AnthusAI/Kanbus), inspired
 
 The traditional answer here is “run a local database” (Mongo, Redis, SQLite, etc.), then do ETL, orchestrate it in a container, keep it synchronized, and build repair tooling for drift and corruption. Virtuus changes the game by cutting that whole layer out.
 
-The benchmark results were decisive. In that case, scanning JSON directly beat the SQLite index by a wide margin while eliminating a daemon and synchronization layer. It’s often better to eliminate a problem than to solve it.
-
-See the Kanbus architecture notes for the exact benchmark tables and raw measurements.
+The benchmark results were decisive. In that case, scanning JSON directly beat the SQLite index by a wide margin while eliminating a daemon and synchronization layer. In this case, the database is a problem that's better eliminated than solved.
 
 ## When to Use
 
-- Ship data + query engine in the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
-- Time-shift a one-time cold load to unlock extremely fast PK lookups and low-latency GSI queries.
+Are you using a database to look up records quickly out of a big pile of JSON files?  Maybe you don't need to do that.  You might want to think about just loading the files directly, for things like:
+
 - DynamoDB-style GSIs, associations, pagination, and nested queries without bringing in DynamoDB.
+- Time-shift a one-time cold load to unlock extremely fast PK lookups and low-latency GSI queries.
+- Ship data + query engine in the same container with no external DB, including isolated or regulated environments where the control plane cannot be reached.
 - A drop-in GraphQL replacement for batch or edge processing, driven by JSON exports.
 
 ## When Not to Use
 
-- You cannot tolerate noticeable cold-start latency or your memory budget is tight for in-memory indexing.
-- You have multi-million-record tables that demand SSD-backed columnar storage.
-- You need cross-node clustering or distributed consensus.
+It's not a real database!  Don't use it if:
+
 - You require ACID transactions or high write concurrency.
+- You need cross-node clustering or distributed consensus.
+- You have multi-million-record tables that demand SSD-backed columnar storage.
+- You cannot tolerate noticeable cold-start latency or your memory budget is tight for in-memory indexing.
 
 ## Core Concepts & Features
 
