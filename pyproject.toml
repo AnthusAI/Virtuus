@@ -8,6 +8,7 @@ version_toml = [
   "rust/Cargo.toml:package.version",
 ]
 version_files = ["VERSION"]
+version_pattern = "(?P<current_version>\\d+\\.\\d+\\.\\d+)"
 upload_to_repository = false
 upload_to_release = true
 build_command = ""
