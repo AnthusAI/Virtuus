@@ -519,8 +519,6 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
         if data.get(cat, {}).get(label, 0.0) > 0
     ]
     max_val = max(values) if values else 1.0
-    min_val = min(values) if values else max_val
-    use_log = values and max_val / max(min_val, 1e-9) > 20
     plot_top = margin_top
     plot_bottom = height - margin_bottom
     plot_height = plot_bottom - plot_top
@@ -528,12 +526,8 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     _draw_line(rows, margin_left, plot_bottom, width - margin_right, plot_bottom, axis_color)
     y_ticks = 5
     for idx in range(y_ticks + 1):
-        if use_log:
-            val = min_val * (max_val / min_val) ** (idx / y_ticks)
-            y = plot_bottom - int(plot_height * idx / y_ticks)
-        else:
-            val = max_val * idx / y_ticks
-            y = plot_bottom - int(plot_height * idx / y_ticks)
+        val = max_val * idx / y_ticks
+        y = plot_bottom - int(plot_height * idx / y_ticks)
         _draw_line(rows, margin_left - 4, y, margin_left, y, axis_color)
         label = _format_value_ms(val).replace(" MS", "")
         _draw_text(rows, max(margin_left - 8 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
@@ -567,19 +561,7 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
         for idx, label in enumerate(series_labels):
             color = palette[idx % len(palette)]
             value = data.get(cat, {}).get(label, 0.0)
-            if use_log:
-                if value <= 0 or min_val <= 0 or max_val <= min_val:
-                    bar_h = 0
-                else:
-                    import math
-
-                    bar_h = int(
-                        (math.log(value) - math.log(min_val))
-                        / (math.log(max_val) - math.log(min_val))
-                        * plot_height
-                    )
-            else:
-                bar_h = int((value / max_val) * plot_height) if max_val else 0
+            bar_h = int((value / max_val) * plot_height) if max_val else 0
             x0 = cursor_x + idx * (bar_width + bar_gap)
             y0 = plot_bottom - bar_h
             _draw_rect(rows, x0, y0, bar_width, bar_h, color)
@@ -593,8 +575,6 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
         _draw_rect(rows, legend_x, legend_y, 14, 10, color)
         _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
         legend_x += 180
-    if use_log:
-        _draw_text(rows, width - 140, margin_top - 20, "log scale", axis_color, scale=1)
     _write_png(path, width, height, rows)
 
 
@@ -638,8 +618,6 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
         if data.get(cat, {}).get(label) is not None
     ]
     max_val = max(values) if values else 1.0
-    min_val = min(v for v in values if v is not None) if values else max_val
-    use_log = values and max_val / max(min_val, 1e-9) > 20
 
     plot_left = margin_left
     plot_right = width - margin_right
@@ -649,14 +627,8 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
     # x-axis ticks
     x_ticks = 5
     for idx in range(x_ticks + 1):
-        if use_log:
-            import math
-
-            val = min_val * (max_val / min_val) ** (idx / x_ticks)
-            x = plot_left + int(plot_width * idx / x_ticks)
-        else:
-            val = max_val * idx / x_ticks
-            x = plot_left + int(plot_width * idx / x_ticks)
+        val = max_val * idx / x_ticks
+        x = plot_left + int(plot_width * idx / x_ticks)
         _draw_line(rows, x, plot_top - 4, x, height - margin_bottom + 6, axis_color)
         label = value_formatter(val).replace(" MS", "")
         _draw_text(rows, x - _text_width(label, 1) // 2, height - margin_bottom + 24, label, text_color, scale=1)
@@ -675,19 +647,7 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
         for idx, label in enumerate(series_labels):
             color = palette[idx % len(palette)]
             value = data.get(cat, {}).get(label, 0.0)
-            if use_log:
-                if value <= 0 or min_val <= 0 or max_val <= min_val:
-                    bar_w = 0
-                else:
-                    import math
-
-                    bar_w = int(
-                        (math.log(value) - math.log(min_val))
-                        / (math.log(max_val) - math.log(min_val))
-                        * plot_width
-                    )
-            else:
-                bar_w = int((value / max_val) * plot_width) if max_val else 0
+            bar_w = int((value / max_val) * plot_width) if max_val else 0
             y0 = cursor_y + idx * (bar_height + series_gap)
             _draw_rect(rows, plot_left, y0, bar_w, bar_height, color)
             value_text = value_formatter(value)
@@ -703,8 +663,6 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
         _draw_rect(rows, legend_x, legend_y, 16, 12, color)
         _draw_text(rows, legend_x + 24, legend_y - 2, label.upper(), text_color, scale=1)
         legend_x += 200
-    if use_log:
-        _draw_text(rows, width - 160, margin_top - 20, "log scale", axis_color, scale=1)
     _write_png(path, width, height, rows)
 
 

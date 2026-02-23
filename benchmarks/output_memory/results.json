@@ -10,98 +10,98 @@
     "total_users": 100,
     "gsi_count": 1,
     "include_posts": true,
-    "rss_kb": 3920,
-    "rss_bytes": 4014080
+    "rss_kb": 3968,
+    "rss_bytes": 4063232
   },
   {
     "total_users": 100,
     "gsi_count": 3,
     "include_posts": true,
-    "rss_kb": 4032,
-    "rss_bytes": 4128768
+    "rss_kb": 3984,
+    "rss_bytes": 4079616
   },
   {
     "total_users": 500,
     "gsi_count": 0,
     "include_posts": true,
-    "rss_kb": 6624,
-    "rss_bytes": 6782976
+    "rss_kb": 6672,
+    "rss_bytes": 6832128
   },
   {
     "total_users": 500,
     "gsi_count": 1,
     "include_posts": true,
-    "rss_kb": 6704,
-    "rss_bytes": 6864896
+    "rss_kb": 6912,
+    "rss_bytes": 7077888
   },
   {
     "total_users": 500,
     "gsi_count": 3,
     "include_posts": true,
-    "rss_kb": 7040,
-    "rss_bytes": 7208960
+    "rss_kb": 7024,
+    "rss_bytes": 7192576
   },
   {
     "total_users": 1000,
     "gsi_count": 0,
     "include_posts": true,
-    "rss_kb": 9792,
-    "rss_bytes": 10027008
+    "rss_kb": 9552,
+    "rss_bytes": 9781248
   },
   {
     "total_users": 1000,
     "gsi_count": 1,
     "include_posts": true,
-    "rss_kb": 9984,
-    "rss_bytes": 10223616
+    "rss_kb": 10016,
+    "rss_bytes": 10256384
   },
   {
     "total_users": 1000,
     "gsi_count": 3,
     "include_posts": true,
-    "rss_kb": 10224,
-    "rss_bytes": 10469376
+    "rss_kb": 10128,
+    "rss_bytes": 10371072
   },
   {
     "total_users": 5000,
     "gsi_count": 0,
     "include_posts": true,
-    "rss_kb": 31952,
-    "rss_bytes": 32718848
+    "rss_kb": 31872,
+    "rss_bytes": 32636928
   },
   {
     "total_users": 5000,
     "gsi_count": 1,
     "include_posts": true,
-    "rss_kb": 33088,
-    "rss_bytes": 33882112
+    "rss_kb": 33328,
+    "rss_bytes": 34127872
   },
   {
     "total_users": 5000,
     "gsi_count": 3,
     "include_posts": true,
-    "rss_kb": 33872,
-    "rss_bytes": 34684928
+    "rss_kb": 33120,
+    "rss_bytes": 33914880
   },
   {
     "total_users": 10000,
     "gsi_count": 0,
     "include_posts": true,
-    "rss_kb": 59888,
-    "rss_bytes": 61325312
+    "rss_kb": 60304,
+    "rss_bytes": 61751296
   },
   {
     "total_users": 10000,
     "gsi_count": 1,
     "include_posts": true,
-    "rss_kb": 59712,
-    "rss_bytes": 61145088
+    "rss_kb": 63072,
+    "rss_bytes": 64585728
   },
   {
     "total_users": 10000,
     "gsi_count": 3,
     "include_posts": true,
-    "rss_kb": 61968,
-    "rss_bytes": 63455232
+    "rss_kb": 65920,
+    "rss_bytes": 67502080
   }
 ]

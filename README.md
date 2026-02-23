@@ -289,11 +289,14 @@ Python-only benchmarks were run at 100, 1k, 10k, and 100k totals to mirror the s
 
 ### Rust vs Python comparison (p95 or timing_ms)
 
-Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for iterative benchmarks and timing_ms for cold loads.
+Side-by-side bars for each benchmark at common corpus sizes. Values are p95 for iterative benchmarks and timing_ms for cold loads. Cold loads are charted separately so all charts can share a zero-based scale.
 
-![Rust vs Python at 1k](benchmarks/output_compare/charts/compare_1000.png)
-![Rust vs Python at 10k](benchmarks/output_compare/charts/compare_10000.png)
-![Rust vs Python at 100k](benchmarks/output_compare/charts/compare_100000.png)
+![Rust vs Python at 1k (queries)](benchmarks/output_compare/charts/compare_1000.png)
+![Rust vs Python at 10k (queries)](benchmarks/output_compare/charts/compare_10000.png)
+![Rust vs Python at 100k (queries)](benchmarks/output_compare/charts/compare_100000.png)
+![Rust vs Python at 1k (cold load)](benchmarks/output_compare/charts/compare_1000_cold_load.png)
+![Rust vs Python at 10k (cold load)](benchmarks/output_compare/charts/compare_10000_cold_load.png)
+![Rust vs Python at 100k (cold load)](benchmarks/output_compare/charts/compare_100000_cold_load.png)
 
 ### Memory footprint (RSS) snapshots
 

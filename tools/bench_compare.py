@@ -27,6 +27,7 @@ BACKENDS = {
 }
 
 OUT_DIR = Path("benchmarks/output_compare/charts")
+COLD_LOAD_BENCHMARKS = {"single_table_cold_load", "full_database_cold_load"}
 
 
 def _pick_value(entry: dict) -> float | None:
@@ -79,20 +80,36 @@ def main() -> None:
 
     for total in totals:
         benchmarks = combined[total]
-        categories = []
-        data = {}
-        for name in sorted(benchmarks.keys()):
-            categories.append(viz._compact_benchmark_name(name))
-            data[categories[-1]] = {}
-            for backend in ("rust", "python"):
-                value = benchmarks[name].get(backend)
-                if value is not None:
-                    data[categories[-1]][backend] = float(value)
-        if not categories:
-            continue
-        title = f"Rust vs Python (p95 unless timing_ms) — {total:,} records"
-        path = OUT_DIR / f"compare_{total}.png"
-        viz._render_horizontal_bar_chart(title, categories, ["rust", "python"], data, path)
+        cold_order = [
+            name
+            for name in ("full_database_cold_load", "single_table_cold_load")
+            if name in benchmarks
+        ]
+        other_order = [
+            name for name in sorted(benchmarks.keys()) if name not in COLD_LOAD_BENCHMARKS
+        ]
+        for suffix, names in (("cold_load", cold_order), ("", other_order)):
+            categories = []
+            data = {}
+            for name in names:
+                categories.append(viz._compact_benchmark_name(name))
+                data[categories[-1]] = {}
+                for backend in ("rust", "python"):
+                    value = benchmarks[name].get(backend)
+                    if value is not None:
+                        data[categories[-1]][backend] = float(value)
+            if not categories:
+                continue
+            title = f"Rust vs Python (p95 unless timing_ms) — {total:,} records"
+            filename = f"compare_{total}.png" if not suffix else f"compare_{total}_{suffix}.png"
+            path = OUT_DIR / filename
+            viz._render_horizontal_bar_chart(
+                title,
+                categories,
+                ["rust", "python"],
+                data,
+                path,
+            )
 
 
 if __name__ == "__main__":
