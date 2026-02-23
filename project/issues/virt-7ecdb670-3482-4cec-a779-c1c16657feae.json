@@ -1,0 +1,31 @@
+{
+  "id": "virt-7ecdb670-3482-4cec-a779-c1c16657feae",
+  "title": "Load from disk is read-only",
+  "description": "",
+  "type": "story",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "d2ac7ab2-0c98-4c83-a8ea-84cb87e17ec5",
+      "author": "ryan.porter",
+      "text": "Feature: Load from disk does not rewrite files\n  Scenario: Cold load reads records without writing\n    Given a data directory with JSON records for users, posts, and comments\n    When I load the database from the schema\n    Then the record counts match the fixture sizes\n    And primary key lookups return the expected records\n\nNotes:\n- Aligns with README: load should scan files and build indexes; only `put`/`delete` write.\n- Performance evaluated via 10k `full_database_cold_load` yardstick.",
+      "created_at": "2026-02-23T03:46:30.765280Z"
+    },
+    {
+      "id": "9b74441c-102a-48c2-abd9-32981dc3502e",
+      "author": "ryan.porter",
+      "text": "Load is now read-only in Python + Rust; benchmarked at ~0.48s for 10k full_database_cold_load. Keeping change.",
+      "created_at": "2026-02-23T03:48:05.398443Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:46:26.180324Z",
+  "updated_at": "2026-02-23T03:48:09.250508Z",
+  "closed_at": "2026-02-23T03:48:09.250508Z",
+  "custom": {}
+}

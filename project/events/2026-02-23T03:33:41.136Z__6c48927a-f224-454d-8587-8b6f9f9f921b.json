@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "6c48927a-f224-454d-8587-8b6f9f9f921b",
+  "issue_id": "virt-cd3e464d-55ed-4fec-9873-febee80de138",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:33:41.136Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Select Sakila tables/associations for examples; design schema.yml and write a transformation script to export JSON tables.",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+    "priority": 2,
+    "status": "open",
+    "title": "Define Sakila subset schema + transform"
+  }
+}

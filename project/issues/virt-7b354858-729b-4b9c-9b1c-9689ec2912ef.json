@@ -1,0 +1,31 @@
+{
+  "id": "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef",
+  "title": "Implement byte-read + preallocation in Rust load",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "a2fd3d33-a405-483b-9bbb-97468085182c",
+      "author": "ryan.porter",
+      "text": "Linked story: virt-46d4a8\nGoal: switch `Table::load_from_dir` to `fs::read` + `serde_json::from_slice` and pre-allocate record/manifest capacity based on file count.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms).",
+      "created_at": "2026-02-23T03:41:34.768085Z"
+    },
+    {
+      "id": "c709429e-8664-4355-9246-382b51f3b138",
+      "author": "ryan.porter",
+      "text": "## Experiment: byte reads + preallocation\nChange: `fs::read` + `serde_json::from_slice`, pre-allocate `records`/`manifest` based on file count.\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust (attempt): runs [3023.481, 2674.395, 2884.114, 2766.328, 4762.610]\n- mean **3222.186 ms**, median **2884.114 ms**\n- Python runs [2983.267, 3069.394, 2945.505, 3091.563, 2992.783]\n- mean **3016.502 ms**, median **2992.783 ms**\n\n### Decision\nNo clear improvement over Rust baseline (median roughly unchanged; mean worse due outlier). Reverted the change.",
+      "created_at": "2026-02-23T03:43:13.299307Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:41:31.048895Z",
+  "updated_at": "2026-02-23T03:43:17.715780Z",
+  "closed_at": "2026-02-23T03:43:17.715780Z",
+  "custom": {}
+}

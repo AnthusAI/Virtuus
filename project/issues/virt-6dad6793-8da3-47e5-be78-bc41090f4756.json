@@ -1,0 +1,37 @@
+{
+  "id": "virt-6dad6793-8da3-47e5-be78-bc41090f4756",
+  "title": "Create Python/Rust example programs",
+  "description": "Write runnable Python and Rust example files for each lesson (load, GSI, associations, pagination).",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "73317dd1-4921-4dfe-9b41-c49b1893423f",
+      "author": "ryan.porter",
+      "text": "Starting example program work: will add runnable Python + Rust examples under examples/ and rust/examples for each lesson.",
+      "created_at": "2026-02-23T03:44:51.164949Z"
+    },
+    {
+      "id": "eb081064-32fd-41a6-a3c7-04353d109490",
+      "author": "ryan.porter",
+      "text": "Added example programs under examples/sakila/python (01-05) and examples/sakila/rust (Cargo.toml + src/lib.rs + src/bin/01-05). Python run checks: 01_load_table.py and 05_pagination.py succeeded. Rust: cargo check --manifest-path examples/sakila/rust/Cargo.toml succeeded.",
+      "created_at": "2026-02-23T03:49:00.434912Z"
+    },
+    {
+      "id": "67f7dc8e-fb56-4bad-a361-c21c0d81f3f5",
+      "author": "ryan.porter",
+      "text": "Follow-up: forced Python examples to use python backend (examples/sakila/python/common.py) to avoid Rust-PyO3 include deadlock; updated associations example fields list to retain nested customer include; reran all Python + Rust examples successfully.",
+      "created_at": "2026-02-23T04:02:07.132804Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:33:46.951108Z",
+  "updated_at": "2026-02-23T04:02:07.132804Z",
+  "closed_at": "2026-02-23T03:49:02.822769Z",
+  "custom": {}
+}

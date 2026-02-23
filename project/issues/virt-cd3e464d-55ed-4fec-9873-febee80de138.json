@@ -1,0 +1,31 @@
+{
+  "id": "virt-cd3e464d-55ed-4fec-9873-febee80de138",
+  "title": "Define Sakila subset schema + transform",
+  "description": "Select Sakila tables/associations for examples; design schema.yml and write a transformation script to export JSON tables.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "c41525e9-3430-4aa4-9e4e-d7d42139fa1b",
+      "author": "ryan.porter",
+      "text": "Starting work: assess repo structure, plan Sakila subset tables/associations, decide data source and transform approach.",
+      "created_at": "2026-02-23T03:33:55.263559Z"
+    },
+    {
+      "id": "c29b0e0c-0d85-4a36-840a-cb24fd0224ad",
+      "author": "ryan.porter",
+      "text": "Completed: added examples/sakila/build_sakila.py (download + transform), examples/sakila/schema.yml with tables/GSIs/associations. Data subset selection: top N customers by rental count; include rentals, payments, inventory, films, film_actor, actors. Source DB URL: https://sq.io/testdata/sakila.db (SQLite Sakila).",
+      "created_at": "2026-02-23T03:44:04.091812Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:33:41.136235Z",
+  "updated_at": "2026-02-23T03:44:06.475785Z",
+  "closed_at": "2026-02-23T03:44:06.475785Z",
+  "custom": {}
+}

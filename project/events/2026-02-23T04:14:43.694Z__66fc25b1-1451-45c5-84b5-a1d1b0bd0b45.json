@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "66fc25b1-1451-45c5-84b5-a1d1b0bd0b45",
+  "issue_id": "virt-ba7b74a7-70e3-455a-b2dc-88d67ff0cac0",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T04:14:43.694Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Ensure examples/sakila/python scripts can import common when run from repo root per README command.",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+    "priority": 2,
+    "status": "open",
+    "title": "Fix python example imports"
+  }
+}

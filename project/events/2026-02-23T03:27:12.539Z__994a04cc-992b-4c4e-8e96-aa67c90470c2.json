@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "994a04cc-992b-4c4e-8e96-aa67c90470c2",
+  "issue_id": "virt-577307e8-6670-49ce-b3cd-61a7d46a0991",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:27:12.539Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Implement parallel file load in Rust"
+  }
+}

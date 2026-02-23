@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "99ab5f3d-c9fb-4ef9-9370-4041a04fe8b0",
+  "issue_id": "virt-18b9c259-430b-46ac-8306-49bab32d2db0",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:33:49.841Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Draft the how-to lessons using the Sakila dataset, with short code snippets from the example programs and notes on DynamoDB-style limitations.",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+    "priority": 2,
+    "status": "open",
+    "title": "Write lesson markdown + snippets"
+  }
+}

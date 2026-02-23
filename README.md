@@ -1,6 +1,6 @@
 # Virtuus 善
 
-A **file-backed, in-memory indexed table engine**. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
+A **virtual-table database system** — a file-backed, in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
 [![CI](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AnthusAI/Virtuus/actions/workflows/ci.yml)
 ![Python Coverage](https://img.shields.io/badge/python%20coverage-100%25-brightgreen)
@@ -9,7 +9,7 @@ A **file-backed, in-memory indexed table engine**. Virtuus treats folders of JSO
 [![Crates.io](https://img.shields.io/crates/v/virtuus.svg)](https://crates.io/crates/virtuus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus loads data into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface. Writes persist back to disk atomically.
+Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus loads data into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface — a **virtual-table** experience backed by the filesystem. Writes persist back to disk atomically.
 
 ## Motivation / Operating Context
 
@@ -25,7 +25,7 @@ Virtuus was built to take [Plexus](https://github.com/AnthusAI/Plexus) — one o
 
 ## Load-First Runtime Pattern
 
-We increasingly run systems that are **load-first**: large ML models and multi-GB datasets are loaded before any work can begin. If multi-second or multi-minute loads are already normal for model startup, the same time-shifted assumption can simplify data querying problems: load once, index in memory, and operate fast. You don’t need traditional ETL (extract-transform-load) to get indexed access if you can load a folder and build the indexes directly in memory.
+We increasingly run systems that are **load-first**: large ML models and multi-GB datasets are loaded before any work can begin. If multi-second or multi-minute loads are already normal for model startup, the same time-shifted assumption can simplify data querying problems: load once, index in memory, and operate fast. You don’t need traditional ETL (extract-transform-load) to get indexed access if you can load a folder and build the indexes directly in memory. That’s the core **virtual-table** mindset.
 
 ## Performance Highlights
 

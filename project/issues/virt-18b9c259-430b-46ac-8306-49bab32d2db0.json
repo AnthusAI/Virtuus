@@ -1,0 +1,37 @@
+{
+  "id": "virt-18b9c259-430b-46ac-8306-49bab32d2db0",
+  "title": "Write lesson markdown + snippets",
+  "description": "Draft the how-to lessons using the Sakila dataset, with short code snippets from the example programs and notes on DynamoDB-style limitations.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "ec804a77-9948-404f-a1f9-ea170ebd066f",
+      "author": "ryan.porter",
+      "text": "Starting lesson markdown: will add examples/ lessons with short snippets from the Python/Rust files and note DynamoDB-style limitations.",
+      "created_at": "2026-02-23T03:49:08.035741Z"
+    },
+    {
+      "id": "178fc4bf-be3f-4a8f-8666-24a73525677c",
+      "author": "ryan.porter",
+      "text": "Added examples/sakila/README.md + lessons 01-05 markdown (load, GSI, associations, has_many_through, pagination) with short Python/Rust snippets and DynamoDB-style limits section.",
+      "created_at": "2026-02-23T03:50:35.753879Z"
+    },
+    {
+      "id": "af57a3ef-b649-4d7f-8cb4-c686acd8d57b",
+      "author": "ryan.porter",
+      "text": "Follow-up: updated lesson 03 snippets to keep nested customer include (added customer to fields list).",
+      "created_at": "2026-02-23T04:02:10.279151Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:33:49.841425Z",
+  "updated_at": "2026-02-23T04:02:10.279151Z",
+  "closed_at": "2026-02-23T03:50:39.311451Z",
+  "custom": {}
+}

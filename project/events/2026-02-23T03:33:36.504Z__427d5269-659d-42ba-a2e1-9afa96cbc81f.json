@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "427d5269-659d-42ba-a2e1-9afa96cbc81f",
+  "issue_id": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:33:36.504Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Create a Sakila-derived example dataset plus Python/Rust example code and lesson markdown to teach Virtuus basics (load, GSI, associations, pagination).",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Sakila-based examples & how-to docs"
+  }
+}

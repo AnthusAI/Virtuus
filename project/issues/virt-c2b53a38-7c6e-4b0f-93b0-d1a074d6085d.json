@@ -1,0 +1,37 @@
+{
+  "id": "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d",
+  "title": "Generate Sakila JSON example data",
+  "description": "Run the Sakila transform to produce a small, committed JSON dataset for docs and examples.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "40640d3c-5208-42f9-a2f3-9860773e7e86",
+      "author": "ryan.porter",
+      "text": "Starting data generation task: will run examples/sakila/build_sakila.py to produce JSON dataset for docs.",
+      "created_at": "2026-02-23T03:44:11.315736Z"
+    },
+    {
+      "id": "85c0aa61-31df-4833-aec7-bc2816e1674a",
+      "author": "ryan.porter",
+      "text": "Ran /opt/anaconda3/bin/conda run -n virtuus python examples/sakila/build_sakila.py. Generated examples/sakila/data with counts: customers=3, rentals=133, payments=133, inventory=131, films=123, film_actor=708, actors=196 (total 1427).",
+      "created_at": "2026-02-23T03:44:36.876980Z"
+    },
+    {
+      "id": "b3e23d34-6cad-47c1-89be-db73ae658616",
+      "author": "ryan.porter",
+      "text": "Follow-up: updated builder to stringify IDs and inject an id field mirroring the primary key for each record, then regenerated examples/sakila/data with --force.",
+      "created_at": "2026-02-23T04:02:04.110917Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:33:44.827835Z",
+  "updated_at": "2026-02-23T04:02:04.110917Z",
+  "closed_at": "2026-02-23T03:44:39.407852Z",
+  "custom": {}
+}

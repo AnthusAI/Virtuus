@@ -28,10 +28,16 @@
       "author": "ryan.porter",
       "text": "Done: captured 10k Rust baseline and recorded alongside Python. Next: close task. Blockers: none.",
       "created_at": "2026-02-23T03:19:00.659394Z"
+    },
+    {
+      "id": "b545eb0a-968c-4b56-ae35-633c2bb05b4d",
+      "author": "ryan.porter",
+      "text": "## Rust direct (CLI) benchmark — no Python harness (2026-02-23)\nMethod: `cargo run --release --bin virtuus -- query` with schema loading all tables, timed externally (Python `time.perf_counter`), 3 runs. Data dir: `/tmp/virtuus_bench_direct/social_media_total_10000_rust` (users=163, posts=1,630, comments=8,207). Schema: `/tmp/virtuus_bench_direct/schema.yml`.\n\nResults (full DB cold load + query):\n- runs_ms: [2758.239, 2853.011, 2810.492]\n- mean_ms: **2807.248**\n- min_ms: 2758.239\n\nNote: this includes CLI startup + one query execution; still useful as a Rust-native load benchmark.",
+      "created_at": "2026-02-23T03:23:44.807797Z"
     }
   ],
   "created_at": "2026-02-23T03:05:37.267225Z",
-  "updated_at": "2026-02-23T03:19:05.706246Z",
+  "updated_at": "2026-02-23T03:23:44.807797Z",
   "closed_at": "2026-02-23T03:19:05.706246Z",
   "custom": {}
 }

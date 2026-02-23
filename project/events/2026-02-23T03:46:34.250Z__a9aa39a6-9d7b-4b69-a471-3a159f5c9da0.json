@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a9aa39a6-9d7b-4b69-a471-3a159f5c9da0",
+  "issue_id": "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:46:34.250Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Skip disk writes during load (Python + Rust)"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553",
+  "title": "Skip disk writes during load (Python + Rust)",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "202fffa4-51bd-40f0-8dcc-f34b45f4310e",
+      "author": "ryan.porter",
+      "text": "Linked story: virt-7ecdb6\nGoal: make `load_from_dir` read-only by bypassing disk writes during load in both Python and Rust while preserving indexing + hooks.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms).",
+      "created_at": "2026-02-23T03:46:39.562163Z"
+    },
+    {
+      "id": "3fa1a4b0-874f-4e75-9987-c00414536d26",
+      "author": "ryan.porter",
+      "text": "## Results: skip disk writes during load\nChange: `load_from_dir` now inserts into memory + indexes + hooks without rewriting files (Python + Rust).\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust runs: [449.211, 427.741, 448.473, 576.032, 492.336]\n- mean **478.758 ms**, median **449.211 ms**\n- Python runs: [479.577, 464.932, 478.768, 487.738, 553.343]\n- mean **492.872 ms**, median **479.577 ms**\n\n### Decision\nSignificant improvement (~6x faster vs prior ~2.9–3.3s). Keep change.",
+      "created_at": "2026-02-23T03:47:56.901814Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:46:34.250006Z",
+  "updated_at": "2026-02-23T03:48:00.677322Z",
+  "closed_at": "2026-02-23T03:48:00.677322Z",
+  "custom": {}
+}

@@ -40,10 +40,40 @@
       "author": "ryan.porter",
       "text": "Correction: reopened; this epic is still in progress. Next: continue Rust perf investigations. Blockers: none.",
       "created_at": "2026-02-23T03:20:40.788449Z"
+    },
+    {
+      "id": "a19bf75a-ea88-46bf-bd36-398f2e60765f",
+      "author": "ryan.porter",
+      "text": "## Rust-native benchmark update (2026-02-23)\nRan Rust directly via CLI (no Python harness). `cargo run --release --bin virtuus -- query` with schema loading all tables, 10k dataset. Mean load+query time: **2807.248 ms** (3 runs). Details logged on task virt-4a074a.",
+      "created_at": "2026-02-23T03:23:48.998399Z"
+    },
+    {
+      "id": "6549dd32-0b60-4a66-837f-8ca73f777e17",
+      "author": "ryan.porter",
+      "text": "## Experiment result: Parallel IO (Rayon)\nTried parallelizing `Table::load_from_dir` with Rayon (read+parse in parallel, sequential put). Benchmarks at 10k `full_database_cold_load` showed **no meaningful improvement** (mean ~2934 ms vs prior ~2930 ms). Changes were reverted and dependency removed.",
+      "created_at": "2026-02-23T03:36:07.014248Z"
+    },
+    {
+      "id": "298c46c5-9516-4499-a716-ae6c8570d6a8",
+      "author": "ryan.porter",
+      "text": "## Experiment result: byte reads + preallocation\nTried `fs::read` + `serde_json::from_slice` with pre-allocation in `Table::load_from_dir`. 10k `full_database_cold_load` showed no meaningful improvement (median ~2884 ms, mean worse due outlier). Reverted change.",
+      "created_at": "2026-02-23T03:43:33.035689Z"
+    },
+    {
+      "id": "5cdea39a-7737-491c-b69f-bedd2fab315c",
+      "author": "ryan.porter",
+      "text": "## Win: Load is now read-only\nChanged `load_from_dir` to skip disk writes during load (Python + Rust), aligning with README (only `put`/`delete` write). 10k `full_database_cold_load` improved from ~2.9–3.3s to ~0.48s (mean Rust 478.758 ms, Python 492.872 ms). Keeping change.",
+      "created_at": "2026-02-23T03:48:13.802742Z"
+    },
+    {
+      "id": "2a0a5381-e08e-443b-9f80-7c0e0b4775c0",
+      "author": "ryan.porter",
+      "text": "New experiment: parallel JSON parsing in Rust load_from_dir (Rayon). Bench (10k full_database_cold_load): baseline mean 478.758 ms -> new mean 388.146 ms (~19% faster). CI passed; change committed in repo.",
+      "created_at": "2026-02-23T04:09:27.010719Z"
     }
   ],
   "created_at": "2026-02-22T18:16:24.961819Z",
-  "updated_at": "2026-02-23T03:20:40.788449Z",
+  "updated_at": "2026-02-23T04:09:27.010719Z",
   "closed_at": null,
   "custom": {}
 }

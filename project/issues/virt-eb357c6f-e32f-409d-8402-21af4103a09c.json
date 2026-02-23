@@ -1,0 +1,43 @@
+{
+  "id": "virt-eb357c6f-e32f-409d-8402-21af4103a09c",
+  "title": "Document Sakila examples in README",
+  "description": "Add a README section that lists each Sakila example with a brief explanation of what it demonstrates.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "02e1dfaf-2c97-456a-b4a9-d8356e355351",
+      "author": "ryan.porter",
+      "text": "Adding README section listing Sakila examples with brief explanations.",
+      "created_at": "2026-02-23T04:02:46.983475Z"
+    },
+    {
+      "id": "ab587c39-6d66-4be6-bc03-972cac7862b0",
+      "author": "ryan.porter",
+      "text": "Updated README with a Sakila examples section listing each Python/Rust example and what it demonstrates, plus data build command.",
+      "created_at": "2026-02-23T04:03:06.146196Z"
+    },
+    {
+      "id": "9ad079e0-b264-4f4a-a485-64f64557b447",
+      "author": "ryan.porter",
+      "text": "Updating README examples section to link to lesson pages with fuller explanations.",
+      "created_at": "2026-02-23T04:09:53.575051Z"
+    },
+    {
+      "id": "f53d82f5-d68b-4dcc-9c3b-2d88c0702994",
+      "author": "ryan.porter",
+      "text": "Updated README Examples (Sakila) section to link to lesson pages with fuller explanations and direct links to Python/Rust code for each lesson.",
+      "created_at": "2026-02-23T04:10:13.252004Z"
+    }
+  ],
+  "created_at": "2026-02-23T04:02:41.439901Z",
+  "updated_at": "2026-02-23T04:10:16.043899Z",
+  "closed_at": "2026-02-23T04:10:16.043899Z",
+  "custom": {}
+}

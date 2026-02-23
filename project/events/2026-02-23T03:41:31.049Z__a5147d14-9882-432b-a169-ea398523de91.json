@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a5147d14-9882-432b-a169-ea398523de91",
+  "issue_id": "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:41:31.049Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+    "priority": 2,
+    "status": "open",
+    "title": "Implement byte-read + preallocation in Rust load"
+  }
+}

@@ -1,13 +1,13 @@
 {
-  "built_at": "2026-02-23T03:08:04Z",
+  "built_at": "2026-02-23T03:33:15Z",
   "file_mtimes": {
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771744187.223507,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
-    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1771815963.691766,
+    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1771816772.031498,
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
-    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771726059.332986,
+    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771816123.231262,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771744192.334412,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
@@ -19,10 +19,11 @@
     "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1771766633.560711,
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
-    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771814593.5271,
+    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771816846.955416,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
-    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1771815955.123361,
+    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1771817024.80805,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771714070.754441,
+    "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1771817253.099732,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
     "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1771745792.274328,
@@ -31,12 +32,13 @@
     "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
     "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771714061.194019,
     "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1771784285.755966,
+    "virt-689472bc-703f-40a2-8c8b-18ff570f046a.json": 1771817230.037107,
     "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771710549.805551,
     "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771714064.710461,
     "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771783929.224291,
-    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771815227.262823,
+    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771817028.998514,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
@@ -285,13 +287,25 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-23T03:18:57.379280Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-23T03:06:03.691631Z",
           "id": "0719b11c-7dfd-49bc-82fd-968ea82079f1",
           "text": "## Repro\nFrom repo root:\n- `cd rust`\n- `/opt/anaconda3/bin/conda run -n virtuus maturin develop --release`\n\n## Result\nBuild fails with multiple compile errors in `rust/src/python.rs` (PyO3 0.21 API changes / borrow issues). Examples:\n- E0282 type annotations needed (depythonize on `junction.as_ref(py)`)\n- E0599 `borrow` not found for `&Py<PyList>` (should use bound/as_ref)\n- E0596 cannot borrow `table` as mutable (missing `mut`)\n- E0716 temporary value dropped while borrowed (`fk_value.to_string()` inline)\n- E0502 mutable/immutable borrow conflict in `table.association_defs()` + `table.scan()`\n\n## Impact\nBlocks Rust backend import (`virtuus._rust`) and therefore Rust-side benchmarks via Python harness."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:15:49.682928Z",
+          "id": "36532dfe-fdd1-4738-8c87-18915f6941c8",
+          "text": "## Progress (2026-02-23)\nImplemented fixes in `rust/src/python.rs` to restore PyO3 build compatibility:\n- fixed mutable borrows (`export`, `describe`, `validate`)\n- resolved borrow conflicts in `validate` by cloning defs and scanning once\n- avoided temporary borrow issues for FK strings\n- updated PyDict `get_item` handling to account for PyResult\n- fixed `scan` to collect pythonized results without type mismatch\n- switched junction depythonize to `depythonize_bound` using `into_bound`\n- updated hook iteration to use `bind`\n\n`cargo check --features python` now passes (warnings only), and `maturin develop --release` succeeds. `virtuus._rust` import verified."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:18:50.970308Z",
+          "id": "01ad7ad3-510c-4373-8f55-6a99e5a33273",
+          "text": "Done: PyO3 build fixed; maturin develop --release succeeds and virtuus._rust imports. Next: close issue. Blockers: none."
         }
       ],
       "created_at": "2026-02-23T03:05:39.960614Z",
@@ -303,10 +317,10 @@
       "labels": [],
       "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Rust PyO3 extension build fails (maturin develop)",
       "type": "bug",
-      "updated_at": "2026-02-23T03:06:03.691631Z"
+      "updated_at": "2026-02-23T03:18:57.379280Z"
     },
     {
       "assignee": null,
@@ -378,6 +392,12 @@
           "created_at": "2026-02-22T02:07:37.071630Z",
           "id": "337c4f61-a0a9-4020-9791-6882bb531c68",
           "text": "Done: added refresh error tracking, Python/Rust steps for file race conditions, and verified behave + rust cucumber. Next: referential integrity under load. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:08:43.230736Z",
+          "id": "92d3eb09-3e73-4c31-afb8-527f89cd7637",
+          "text": "Done: ensured file-race scenario executes in Python suite (added concurrency path to behave.ini), exercised missing-file signature branch to satisfy coverage. Next: commit/push and run CI. Blockers: none."
         }
       ],
       "created_at": "2026-02-21T16:48:02.267826Z",
@@ -392,7 +412,7 @@
       "status": "closed",
       "title": "File race conditions",
       "type": "story",
-      "updated_at": "2026-02-22T02:07:39.332838Z"
+      "updated_at": "2026-02-23T03:08:43.230736Z"
     },
     {
       "assignee": null,
@@ -856,13 +876,19 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-23T03:20:46.955252Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-23T02:43:13.526935Z",
           "id": "303c9d33-3285-40af-87fa-abf312b9ca1c",
           "text": "Starting: set up public packages epic. Next: ensure PyPI/crates automation is fully documented and verify badges/README references. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:20:44.125489Z",
+          "id": "133356a8-569b-49e0-aa5e-ab383b846e60",
+          "text": "Done: public packages setup completed; semantic-release publishing works. Next: close epic. Blockers: none."
         }
       ],
       "created_at": "2026-02-22T18:12:28.570870Z",
@@ -874,10 +900,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Set up public packages",
       "type": "epic",
-      "updated_at": "2026-02-23T02:43:13.526935Z"
+      "updated_at": "2026-02-23T03:20:46.955252Z"
     },
     {
       "assignee": null,
@@ -936,13 +962,31 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-23T03:19:05.706246Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-23T03:05:46.600514Z",
           "id": "f89b6df6-8dea-48fe-95a8-2defb90fa79a",
           "text": "## Yardstick\nUse `full_database_cold_load` at `total_records=10,000` (social_media profile).\n\n## Python baseline (fresh run, 2026-02-23)\n- counts: users=163, posts=1,630, comments=8,207\n- full_database_cold_load: **3354.440 ms**\n- single_table_cold_load (context only): 51.253 ms\n\n## Rust baseline\nBlocked: Rust backend not importable via PyO3 (no `virtuus._rust`). `maturin develop --release` fails with compile errors in `rust/src/python.rs` (PyO3 API changes / borrow issues). Tracking fix in bug: virt-1abdce."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:15:43.004292Z",
+          "id": "1341943c-93d5-4bcf-b5fc-f7ca96caad32",
+          "text": "## Rust baseline (fresh run, 2026-02-23)\n- counts: users=163, posts=1,630, comments=8,207\n- full_database_cold_load: **2929.900 ms**\n- single_table_cold_load (context only): 42.069 ms"
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:19:00.659394Z",
+          "id": "f69a073b-4fd1-4c91-b244-1477efa80884",
+          "text": "Done: captured 10k Rust baseline and recorded alongside Python. Next: close task. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:23:44.807797Z",
+          "id": "b545eb0a-968c-4b56-ae35-633c2bb05b4d",
+          "text": "## Rust direct (CLI) benchmark — no Python harness (2026-02-23)\nMethod: `cargo run --release --bin virtuus -- query` with schema loading all tables, timed externally (Python `time.perf_counter`), 3 runs. Data dir: `/tmp/virtuus_bench_direct/social_media_total_10000_rust` (users=163, posts=1,630, comments=8,207). Schema: `/tmp/virtuus_bench_direct/schema.yml`.\n\nResults (full DB cold load + query):\n- runs_ms: [2758.239, 2853.011, 2810.492]\n- mean_ms: **2807.248**\n- min_ms: 2758.239\n\nNote: this includes CLI startup + one query execution; still useful as a Rust-native load benchmark."
         }
       ],
       "created_at": "2026-02-23T03:05:37.267225Z",
@@ -954,10 +998,10 @@
       "labels": [],
       "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Establish 10k load baseline benchmarks (Python + Rust)",
       "type": "task",
-      "updated_at": "2026-02-23T03:05:55.123232Z"
+      "updated_at": "2026-02-23T03:23:44.807797Z"
     },
     {
       "assignee": null,
@@ -995,6 +1039,31 @@
       "title": "Database validate (referential integrity)",
       "type": "story",
       "updated_at": "2026-02-21T22:47:50.754298Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:27:15.608791Z",
+          "id": "0b554ef1-f6f2-4492-bd8f-1496b66a93e4",
+          "text": "Linked story: virt-689472\nGoal: parallelize Rust `Table::load_from_dir` (and/or `Database::from_schema`) without changing behavior.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms). Keep only if improvement justifies complexity."
+        }
+      ],
+      "created_at": "2026-02-23T03:27:12.539107Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-577307e8-6670-49ce-b3cd-61a7d46a0991",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "in_progress",
+      "title": "Implement parallel file load in Rust",
+      "type": "task",
+      "updated_at": "2026-02-23T03:27:33.099545Z"
     },
     {
       "assignee": null,
@@ -1281,6 +1350,31 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:27:10.036968Z",
+          "id": "5e7670a6-f39f-462a-bfe7-174337fa90d9",
+          "text": "Feature: Parallel load preserves correctness\n  Scenario: Cold load reads all records\n    Given a data directory with JSON records for users, posts, and comments\n    When I load the database from the schema\n    Then the record counts match the fixture sizes\n    And primary key lookups return the expected records\n\nNotes:\n- This story exists to ensure correctness is unchanged when load is parallelized.\n- Performance outcomes will be evaluated via the 10k `full_database_cold_load` yardstick and recorded separately."
+        }
+      ],
+      "created_at": "2026-02-23T03:27:04.013571Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-689472bc-703f-40a2-8c8b-18ff570f046a",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "open",
+      "title": "Parallel Rust load preserves correctness",
+      "type": "story",
+      "updated_at": "2026-02-23T03:27:10.036968Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:09.805404Z",
       "comments": [
         {
@@ -1466,6 +1560,36 @@
           "created_at": "2026-02-23T02:53:25.210778Z",
           "id": "0240f0ed-4445-45a3-bf37-35ea9c5b9f2b",
           "text": "Context from user (2026-02-23): Surprised Rust perf matches Python. Expect up to ~10x faster for this task. Explore multiple Rust performance ideas (e.g., parallel loading), implement each, verify specs/tests, benchmark vs Rust baseline and Python. Keep/merge only if empirical gains justify added complexity; otherwise revert to baseline and note failed idea + learnings. Create a new story per idea and track notes separately. Git worktrees ok for isolation."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:10:07.134586Z",
+          "id": "a57d0fa5-786a-477d-b809-d189c07073d6",
+          "text": "## Conclusion (2026-02-23)\nThe benchmark harness is Python-based. When `VIRTUUS_BENCH_BACKEND=rust`, it tries to import `virtuus._rust`; if that import fails it silently falls back to the Python backend.\n\nOn this machine, the Rust PyO3 extension currently **does not build**, so `virtuus._rust` is not importable. As a result, attempts to run “Rust” benchmarks are actually exercising the Python backend. This explains why historical results show Rust and Python with equivalent performance.\n\nEvidence:\n- `maturin develop --release` fails with compile errors in `rust/src/python.rs` (PyO3 API/borrow issues) → `virtuus._rust` missing.\n- Benchmark JSON does not record backend; Python harness defaults to Python when Rust import fails."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:16:14.202726Z",
+          "id": "50e26675-4ca5-48a0-90e7-25b62931fc8f",
+          "text": "## Progress (2026-02-23)\n- Fixed PyO3 build issues in `rust/src/python.rs`; `maturin develop --release` now succeeds and `virtuus._rust` imports.\n- Captured 10k yardstick baselines:\n  - Python full_database_cold_load: 3354.440 ms\n  - Rust full_database_cold_load: 2929.900 ms"
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:19:10.059942Z",
+          "id": "40e46499-01f8-4359-94fa-799569a920bd",
+          "text": "Done: CI green and semantic-release published 0.2.1; PyO3 build fixed and 10k baselines recorded. Next: close epic. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:20:40.788449Z",
+          "id": "47861174-0008-49f4-b9f5-635e8deda113",
+          "text": "Correction: reopened; this epic is still in progress. Next: continue Rust perf investigations. Blockers: none."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:23:48.998399Z",
+          "id": "a19bf75a-ea88-46bf-bd36-398f2e60765f",
+          "text": "## Rust-native benchmark update (2026-02-23)\nRan Rust directly via CLI (no Python harness). `cargo run --release --bin virtuus -- query` with schema loading all tables, 10k dataset. Mean load+query time: **2807.248 ms** (3 runs). Details logged on task virt-4a074a."
         }
       ],
       "created_at": "2026-02-22T18:16:24.961819Z",
@@ -1480,7 +1604,7 @@
       "status": "in_progress",
       "title": "Rust performance investigation --status in_progress",
       "type": "epic",
-      "updated_at": "2026-02-23T02:53:47.262604Z"
+      "updated_at": "2026-02-23T03:23:48.998399Z"
     },
     {
       "assignee": null,

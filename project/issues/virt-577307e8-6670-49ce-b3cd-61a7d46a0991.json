@@ -1,0 +1,31 @@
+{
+  "id": "virt-577307e8-6670-49ce-b3cd-61a7d46a0991",
+  "title": "Implement parallel file load in Rust",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "0b554ef1-f6f2-4492-bd8f-1496b66a93e4",
+      "author": "ryan.porter",
+      "text": "Linked story: virt-689472\nGoal: parallelize Rust `Table::load_from_dir` (and/or `Database::from_schema`) without changing behavior.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms). Keep only if improvement justifies complexity.",
+      "created_at": "2026-02-23T03:27:15.608791Z"
+    },
+    {
+      "id": "6657b223-0ad2-48b2-8d7a-490278d90aee",
+      "author": "ryan.porter",
+      "text": "## Experiment: Parallel file IO (Rayon) in `Table::load_from_dir`\nApproach: gather JSON paths, read+parse in parallel, then sequentially `put` + manifest updates.\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust (parallel attempt): mean **2934.240 ms**, median 2869.528\n- Rust baseline (pre-change): 2929.900 ms (single run) → no meaningful improvement\n- Python baseline: mean **3301.024 ms**, median 3126.695\n\n### Decision\nNo measurable improvement vs Rust baseline; change adds dependency + complexity. **Reverted** the parallel load changes and removed Rayon.",
+      "created_at": "2026-02-23T03:35:51.703338Z"
+    }
+  ],
+  "created_at": "2026-02-23T03:27:12.539107Z",
+  "updated_at": "2026-02-23T03:35:54.412532Z",
+  "closed_at": "2026-02-23T03:35:54.412532Z",
+  "custom": {}
+}

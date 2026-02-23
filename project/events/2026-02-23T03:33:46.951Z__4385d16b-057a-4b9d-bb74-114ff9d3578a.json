@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "4385d16b-057a-4b9d-bb74-114ff9d3578a",
+  "issue_id": "virt-6dad6793-8da3-47e5-be78-bc41090f4756",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-23T03:33:46.951Z",
+  "actor_id": "ryan.porter",
+  "payload": {
+    "assignee": null,
+    "description": "Write runnable Python and Rust example files for each lesson (load, GSI, associations, pagination).",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+    "priority": 2,
+    "status": "open",
+    "title": "Create Python/Rust example programs"
+  }
+}

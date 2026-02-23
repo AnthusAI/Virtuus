@@ -1,0 +1,25 @@
+{
+  "id": "virt-44f07bbb-2770-4244-a296-dde40425b68f",
+  "title": "Experiment: parallel JSON parsing for load_from_dir",
+  "description": "",
+  "type": "story",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "cfc271f8-39e5-4d3b-a7e1-9fa2867d904c",
+      "author": "ryan.porter",
+      "text": "Experiment: parallel JSON parsing in load_from_dir (Rayon) with sequential insert. Bench: /tmp/bench_repeat.py (10k full_database_cold_load). Baseline Rust mean 478.758 ms (median 449.211). New Rust runs [385.523, 384.113, 390.311, 390.056, 390.726], mean 388.146 ms, median 390.056 (~19% faster). Python unchanged (mean 536.593, median 501.1 on same run). Decision: keep change; adds rayon dependency but meaningful speedup.",
+      "created_at": "2026-02-23T04:07:29.687624Z"
+    }
+  ],
+  "created_at": "2026-02-23T04:04:23.303459Z",
+  "updated_at": "2026-02-23T04:09:23.521949Z",
+  "closed_at": "2026-02-23T04:09:23.521949Z",
+  "custom": {}
+}
