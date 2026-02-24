@@ -328,6 +328,31 @@ python3 tools/sync_bench_results.py \
 
 EC2 charts are generated under `benchmarks/output_storage/charts/` and embedded below once EC2 data is synced. If you don’t see charts here, the EC2 runs are still in progress.
 
+### EC2 charts (current snapshot)
+
+Search (single term), total 1k and 10k:
+![EC2 search single term @1k](benchmarks/output_storage/charts/latency_rust_single_table_search_single_term_total_1000_instance_local.png)
+![EC2 search single term @10k](benchmarks/output_storage/charts/latency_rust_single_table_search_single_term_total_10000_instance_local.png)
+
+Primary key lookups (10k):
+![EC2 pk lookup @10k](benchmarks/output_storage/charts/latency_rust_single_table_pk_lookup_total_10000_instance_local.png)
+
+GSI partition lookup (10k):
+![EC2 gsi partition lookup @10k](benchmarks/output_storage/charts/latency_rust_single_table_gsi_partition_lookup_total_10000_instance_local.png)
+
+GSI sorted query (10k):
+![EC2 gsi sorted query @10k](benchmarks/output_storage/charts/latency_rust_single_table_gsi_sorted_query_total_10000_instance_local.png)
+
+Scan (10k):
+![EC2 scan @10k](benchmarks/output_storage/charts/latency_rust_single_table_scan_total_10000_instance_local.png)
+
+Incremental refresh (10k):
+![EC2 incremental refresh @10k](benchmarks/output_storage/charts/latency_rust_single_table_incremental_refresh_total_10000_instance_local.png)
+
+Notes:
+- These charts are generated from EC2 runs only.
+- Instance-type labels will appear once the ongoing EC2 runs finish publishing instance metadata.
+
 ### Choosing a Storage Mode (EC2 Results)
 
 Virtuus supports two storage modes per table:
