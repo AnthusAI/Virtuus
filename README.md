@@ -1,4 +1,4 @@
-# Virtuus 善
+# Virtuus \ ˈvər-tyü-əs \
 
 A **virtual-table database system** — a file-backed, in-memory indexed table engine. Virtuus treats folders of JSON files as indexed tables — like DynamoDB tables backed by the filesystem.
 
@@ -8,6 +8,8 @@ A **virtual-table database system** — a file-backed, in-memory indexed table e
 [![PyPI](https://img.shields.io/pypi/v/virtuus.svg?cacheSeconds=300)](https://pypi.org/project/virtuus/)
 [![Crates.io](https://img.shields.io/crates/v/virtuus.svg)](https://crates.io/crates/virtuus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+The normal paradigm with database servers is "warm queries"—the database has already been loaded, the query engine is running, and everything is ready to go. Virtuus is different. It is built for the use case where you have structured data on disk that you need to query *fast* from a **cold start**. Virtuus makes that happen by being as simple as possible. This use case is particularly relevant for **durable computing**, where long-running processes like **AI agents** need to periodically stop, suspend, and then resume again later as quickly as possible.
 
 Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus builds indexes in memory and, for file-backed tables, defaults to an **index-only** mode where records stay on disk while indexes remain hot. You can opt into full in-memory records when needed. Writes persist back to disk atomically.
 
