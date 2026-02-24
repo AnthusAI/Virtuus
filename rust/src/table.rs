@@ -222,7 +222,7 @@ impl Table {
             None => return,
         };
         self.validate_gsi_fields(&record);
-        if let Some(existing) = self.records.get(&key).cloned() {
+        if let Some(existing) = self.lookup_existing_record_from_load(&key) {
             self.remove_from_gsis(&key, &existing);
             self.remove_from_search(&key, &existing);
         }
@@ -285,10 +285,7 @@ impl Table {
     /// Count records in table or GSI partition.
     pub fn count(&self, index: Option<&str>, value: Option<&Value>) -> usize {
         match index {
-            None => match self.storage_mode {
-                StorageMode::Memory => self.records.len(),
-                StorageMode::IndexOnly => self.manifest.len(),
-            },
+            None => self.record_count(),
             Some(name) => match self.gsis.get(name) {
                 Some(gsi) => gsi.query(value.unwrap_or(&Value::Null), None, false).len(),
                 None => 0,
@@ -877,6 +874,30 @@ impl Table {
         match self.storage_mode {
             StorageMode::Memory => self.records.get(key).cloned(),
             StorageMode::IndexOnly => self.read_record_by_key(key),
+        }
+    }
+
+    fn lookup_existing_record_from_load(&self, key: &TableKey) -> Option<Value> {
+        match self.storage_mode {
+            StorageMode::Memory => self.records.get(key).cloned(),
+            StorageMode::IndexOnly => {
+                let dir = self.directory.as_ref()?;
+                let key_str = key_to_string(key);
+                let filename = self
+                    .record_keys
+                    .iter()
+                    .find_map(|(name, existing)| {
+                        if existing == &key_str {
+                            Some(name)
+                        } else {
+                            None
+                        }
+                    })?;
+                let path = dir.join(filename);
+                fs::read_to_string(&path)
+                    .ok()
+                    .and_then(|data| serde_json::from_str(&data).ok())
+            }
         }
     }
 

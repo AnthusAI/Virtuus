@@ -1175,25 +1175,12 @@ def _load_warm_db(context):
             storage=storage_mode,
             search_fields=search_fields,
         )
+        docs.add_gsi("by_category", "category")
+        docs.add_gsi("by_category_created", "category", "created_at")
         print(f"[load_db] documents load_from_dir start path={docs_dir}")
         docs.load_from_dir()
         print(
             f"[load_db] documents load_from_dir done in {time.time()-start_load:.2f}s"
-        )
-        docs.add_gsi("by_category", "category")
-        docs.add_gsi("by_category_created", "category", "created_at")
-        start_reindex = time.time()
-        dir_backup = getattr(docs, "directory", None)
-        docs.directory = None
-        for idx, record in enumerate(docs.scan(), 1):
-            docs.put(record)
-            if idx % 2000 == 0:
-                print(
-                    f"[load_db] documents reindex progress {idx}/{len(docs._record_keys)}"
-                )
-        docs.directory = dir_backup
-        print(
-            f"[load_db] documents reindex pass done in {time.time()-start_reindex:.2f}s"
         )
         db.add_table("documents", docs)
         context.bench_db = db

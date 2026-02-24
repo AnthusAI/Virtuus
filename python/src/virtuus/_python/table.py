@@ -169,7 +169,7 @@ class Table:
         if pk is None:
             return
         self._validate_gsi_fields(record)
-        existing = self.records.get(pk)
+        existing = self._lookup_existing_record_from_load(pk)
         if existing is not None:
             self._remove_from_gsis(pk, existing)
             self._remove_from_search(pk, existing)
@@ -337,6 +337,21 @@ class Table:
         if self.storage_mode == "memory":
             return self.records.get(key)
         return self._read_record_by_key(key)
+
+    def _lookup_existing_record_from_load(
+        self, key: Any
+    ) -> Optional[dict[str, Any]]:
+        if self.storage_mode == "memory":
+            return self.records.get(key)
+        if not self._record_keys or self.directory is None:
+            return None
+        key_str = self._key_to_string(key)
+        for filename, existing_key in self._record_keys.items():
+            if existing_key != key_str:
+                continue
+            path = os.path.join(self.directory, filename)
+            return self._read_record_file(path)
+        return None
 
     def delete(self, pk: str, sort: Optional[str] = None) -> None:
         """Delete a record by primary key.

@@ -45,7 +45,11 @@ benchmarks/output_storage/**
 # Other benchmark dataset dumps
 benchmarks/output_memory_*/
 benchmarks/output_search_*/
+benchmarks/output_cold_start/**
 project-local/
+infra/ec2_bench/.venv/
+infra/ec2_bench/cdk.context.json
+infra/ec2_bench/cdk.out/
 
 # Examples
 examples/sakila/.cache/

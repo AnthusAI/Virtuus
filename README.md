@@ -65,6 +65,24 @@ It's not a real database!  Don't use it if:
 - You have multi-million-record tables that demand SSD-backed columnar storage.
 - You cannot tolerate noticeable cold-start latency or your memory budget is tight for in-memory indexing.
 
+## How Virtuus Compares
+
+Two tools come up often when people discover Virtuus: TinyDB and DuckDB. All three work with structured data outside a traditional server database, but they are built for different problems.
+
+### vs. TinyDB
+
+TinyDB stores every document in a single JSON file and queries by scanning the entire file on every read. There are no secondary indexes, sorting, pagination, or associations — by design. TinyDB is built for truly tiny datasets where simplicity matters more than performance, and it does that job well.
+
+Virtuus stores one JSON file per record, builds DynamoDB-style GSIs on load, and supports indexed lookups, associations, cursor-based pagination, and sort conditions on range keys. If your dataset is a few hundred records and you want the simplest possible embedded store, TinyDB is a great fit. If you need indexed queries, relationships between tables, or cold-start performance at thousands of records, Virtuus is designed for that.
+
+TinyDB is Python-only and in maintenance mode (stable, not adding features). Virtuus has dual Rust/Python implementations, so you can start in pure Python and switch to the Rust backend for production speed with no API changes.
+
+### vs. DuckDB
+
+DuckDB is an embedded analytical (OLAP) SQL database — columnar storage, vectorized execution, parallel processing. It excels at aggregations, joins, and filters across large datasets. Virtuus is an operational engine for record-level access: primary-key lookups, GSI queries, association traversal, and paginated results. If you think in SQL and need to answer questions like "average order value by region," DuckDB is the right tool. If you think in access patterns and need to answer questions like "get user X and their 10 most recent posts with comments," Virtuus is the right tool.
+
+DuckDB can query JSON files via SQL, but it is optimized for bulk columnar scans over large flat files or Parquet datasets, not for serving as an indexed document store over directories of per-record JSON files. Virtuus treats that directory-of-JSON-files layout as a first-class storage model, builds GSIs from it on cold start, and defaults to index-only mode where records stay on disk. The two tools solve different problems with different data models; in some architectures you might even use both — DuckDB for analytics and Virtuus for operational lookups.
+
 ## Core Concepts & Features
 
 ### Storage Model
@@ -441,6 +459,25 @@ python tools/check_ec2_params.py --params tools/ec2_params.example.json
 
 Charts gallery:
 - Use `python tools/render_storage_gallery.py` to build a local HTML gallery (not committed).
+
+### Cold-start benchmarks (SQLite, DuckDB, TinyDB, Virtuus)
+
+Cold-start benchmarks measure “time to first query” in a fresh process. This compares Virtuus against SQLite, DuckDB, and TinyDB for a PK lookup and a simple full‑text‑like search.
+
+Run locally (outputs are generated under `benchmarks/output_cold_start/`, which is git‑ignored):
+```bash
+PYTHONPATH=python/src python tools/bench_cold_start.py
+PYTHONPATH=python/src python tools/bench_cold_start_charts.py
+```
+
+Configuration knobs:
+- `VIRTUUS_COLD_TOTALS` (e.g., `10000,100000`)
+- `VIRTUUS_COLD_RECORD_SIZES_KB` (e.g., `0.5,2`)
+- `VIRTUUS_COLD_ITERATIONS` (e.g., `5`)
+- `VIRTUUS_COLD_ENGINES` (e.g., `sqlite,duckdb,tinydb,virtuus`)
+- `VIRTUUS_COLD_STORAGE_MODES` (e.g., `index_only,memory`)
+
+The EC2 CDK stack runs these cold‑start benchmarks automatically alongside the storage‑mode suite.
 
 
 ## Release Automation

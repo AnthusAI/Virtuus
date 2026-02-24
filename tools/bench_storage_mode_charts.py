@@ -136,6 +136,77 @@ def _generate_latency_charts(
                     )
 
 
+def _generate_instance_latency_charts(
+    results: list[tuple[str, str, list[dict]]], charts_dir: Path
+) -> None:
+    operations = {
+        "search_single_term",
+        "search_multi_term",
+        "pk_lookup",
+        "gsi_partition_lookup",
+        "gsi_sorted_query",
+        "scan",
+        "incremental_refresh",
+    }
+    # backend -> shape fixed in this loop
+    # group by op -> total -> storage_mode -> instance -> list[(record_size, value)]
+    for backend, shape, entries in results:
+        grouped: dict[
+            str, dict[int, dict[str, dict[str, list[tuple[int, float]]]]]
+        ] = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        )
+        for entry in entries:
+            name = entry.get("name")
+            if name not in operations:
+                continue
+            meta = entry.get("metadata", {}) or {}
+            total = meta.get("total_records")
+            record_size = meta.get("record_size_kb")
+            storage_mode = meta.get("storage_mode")
+            if (
+                total is None
+                or record_size is None
+                or storage_mode is None
+                or not isinstance(total, int)
+            ):
+                continue
+            instance_key = _instance_key(meta)
+            value = _metric_value(entry)
+            if value is None:
+                continue
+            x_val = int(float(record_size) * 1000)
+            grouped[name][total][storage_mode][instance_key].append(
+                (x_val, float(value))
+            )
+
+        for op_name, totals_map in grouped.items():
+            for total, storage_map in totals_map.items():
+                for storage_mode, inst_map in storage_map.items():
+                    series = {
+                        inst: sorted(points, key=lambda pair: pair[0])
+                        for inst, points in inst_map.items()
+                    }
+                    if not series:
+                        continue
+                    chart_path = (
+                        charts_dir
+                        / f"latency_{backend}_{shape}_{op_name}_total_{total}_storage_{storage_mode}_instances.png"
+                    )
+                    title = (
+                        f"{viz._format_benchmark_name(op_name)} – {backend} / {shape} / total {total:,} / {storage_mode}"
+                    )
+                    viz._render_line_chart(
+                        title,
+                        series,
+                        chart_path,
+                        x_label="Record Size (KB)",
+                        x_formatter=_x_formatter_size,
+                        y_label="P95 Latency (ms)",
+                        y_formatter=lambda v: f"{v:.2f}",
+                    )
+
+
 def _generate_memory_charts(
     results: list[tuple[str, str, list[dict]]], charts_dir: Path
 ) -> None:
@@ -192,6 +263,58 @@ def _generate_memory_charts(
                 )
 
 
+def _generate_instance_memory_charts(
+    results: list[tuple[str, str, list[dict]]], charts_dir: Path
+) -> None:
+    for backend, shape, entries in results:
+        memory_entries = [e for e in entries if e.get("name") == "memory_rss"]
+        if not memory_entries:
+            continue
+        # record_size -> storage_mode -> instance -> list[(total_records, rss_mb)]
+        grouped: dict[
+            float, dict[str, dict[str, list[tuple[int, float]]]]
+        ] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        for entry in memory_entries:
+            meta = entry.get("metadata", {}) or {}
+            total = meta.get("total_records")
+            record_size = meta.get("record_size_kb")
+            storage_mode = meta.get("storage_mode")
+            rss_kb = meta.get("rss_kb")
+            if (
+                total is None
+                or record_size is None
+                or storage_mode is None
+                or rss_kb is None
+                or not isinstance(total, int)
+            ):
+                continue
+            instance_key = _instance_key(meta)
+            grouped[float(record_size)][storage_mode][instance_key].append(
+                (total, float(rss_kb) / 1024.0)
+            )
+
+        for record_size, storage_map in grouped.items():
+            for storage_mode, inst_map in storage_map.items():
+                series = {
+                    inst: sorted(points, key=lambda pair: pair[0])
+                    for inst, points in inst_map.items()
+                }
+                if not series:
+                    continue
+                chart_path = (
+                    charts_dir
+                    / f"memory_rss_{backend}_{shape}_record_{record_size:g}kb_storage_{storage_mode}_instances.png"
+                )
+                viz._render_line_chart(
+                    f"RSS vs dataset size ({backend}, {shape}, record {record_size:g} KB, {storage_mode})",
+                    series,
+                    chart_path,
+                    x_label="Total Records",
+                    x_formatter=lambda v: f"{v:,}",
+                    y_label="RSS (MB)",
+                    y_formatter=_y_formatter_mb,
+                )
+
 def main() -> None:
     out_root = Path("benchmarks") / "output_storage"
     charts_dir = out_root / "charts"
@@ -202,6 +325,8 @@ def main() -> None:
         return
     _generate_latency_charts(results, charts_dir)
     _generate_memory_charts(results, charts_dir)
+    _generate_instance_latency_charts(results, charts_dir)
+    _generate_instance_memory_charts(results, charts_dir)
     print(f"Wrote charts to {charts_dir}")
 
 
