@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 import sys
@@ -19,17 +20,31 @@ def _y_formatter_mb(value: float) -> str:
     return f"{value:.1f}"
 
 
+def _chart_roots(default_root: Path) -> list[Path]:
+    override = os.getenv("VIRTUUS_BENCH_CHART_ROOTS")
+    if not override:
+        return [default_root]
+    roots = []
+    for part in override.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        roots.append(Path(part))
+    return roots or [default_root]
+
+
 def _load_results(out_root: Path) -> list[dict]:
     entries: list[dict] = []
-    if not out_root.exists():
-        return entries
-    for path in out_root.rglob("results.json"):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+    for root in _chart_roots(out_root):
+        if not root.exists():
             continue
-        if isinstance(data, list):
-            entries.extend(data)
+        for path in root.rglob("results.json"):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if isinstance(data, list):
+                entries.extend(data)
     return entries
 
 

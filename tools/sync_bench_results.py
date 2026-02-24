@@ -43,6 +43,11 @@ def main() -> None:
         help="Destination directory for cold-start artifacts",
     )
     parser.add_argument("--profile", help="AWS profile")
+    parser.add_argument(
+        "--include-local",
+        action="store_true",
+        help="Include local benchmark outputs when aggregating/charts",
+    )
     args = parser.parse_args()
 
     if args.bucket:
@@ -77,15 +82,32 @@ def main() -> None:
 
     env_with_path = os.environ.copy()
     env_with_path.setdefault("PYTHONPATH", str(ROOT / "python" / "src"))
+    chart_roots = [args.dest]
+    aggregate_roots = [args.dest]
+    if args.include_local:
+        aggregate_roots = [
+            "benchmarks/output_storage/python",
+            "benchmarks/output_storage/rust",
+            args.dest,
+        ]
+        chart_roots = [
+            "benchmarks/output_storage/python",
+            "benchmarks/output_storage/rust",
+            args.dest,
+        ]
+    env_with_path["VIRTUUS_BENCH_CHART_ROOTS"] = ",".join(chart_roots)
+    if args.bucket and not args.include_local:
+        charts_dir = ROOT / "benchmarks" / "output_storage" / "charts"
+        if charts_dir.exists():
+            for path in charts_dir.glob("*.png"):
+                path.unlink()
 
     run(
         [
             "python3",
             "tools/aggregate_storage_results.py",
             "--roots",
-            "benchmarks/output_storage/python",
-            "benchmarks/output_storage/rust",
-            "benchmarks/output_storage/ec2-sync",
+            *aggregate_roots,
             "--out-json",
             "benchmarks/output_storage/summary.json",
             "--out-csv",
