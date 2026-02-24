@@ -317,7 +317,9 @@ impl PyTable {
             directory=None,
             validation="silent",
             check_interval=0,
-            auto_refresh=true
+            auto_refresh=true,
+            storage=None,
+            search_fields=None
         )
     )]
     fn new(
@@ -330,6 +332,8 @@ impl PyTable {
         validation: &str,
         check_interval: u64,
         auto_refresh: bool,
+        storage: Option<String>,
+        search_fields: Option<Vec<String>>,
     ) -> PyResult<Self> {
         let validation = parse_validation(validation)?;
         let table = Table::new(
@@ -345,6 +349,18 @@ impl PyTable {
             let mut table = table.lock().expect("lock table");
             table.set_check_interval(check_interval);
             table.set_auto_refresh(auto_refresh);
+            if let Some(storage) = storage {
+                match storage.as_str() {
+                    "memory" => table.set_storage_mode(crate::table::StorageMode::Memory),
+                    "index_only" => table.set_storage_mode(crate::table::StorageMode::IndexOnly),
+                    _ => {}
+                }
+            }
+            if let Some(fields) = search_fields {
+                if !fields.is_empty() {
+                    table.set_search_fields(fields);
+                }
+            }
         }
         Ok(Self {
             inner: table,
@@ -600,6 +616,16 @@ impl PyTable {
     fn describe(&self, py: Python<'_>) -> PyResult<PyObject> {
         let table = self.inner.lock().expect("lock table");
         Ok(pythonize(py, &table.describe())?)
+    }
+
+    fn search(&self, py: Python<'_>, query: String) -> PyResult<Vec<PyObject>> {
+        let mut table = self.inner.lock().expect("lock table");
+        let records = table.search(&query);
+        let mut results = Vec::with_capacity(records.len());
+        for record in records {
+            results.push(pythonize(py, &record)?);
+        }
+        Ok(results)
     }
 
     #[pyo3(signature = (name, partition_value, sort_condition=None, descending=false))]
@@ -914,7 +940,19 @@ impl PyDatabase {
             return Ok(pythonize(py, &enriched)?);
         }
 
-        let items: Vec<Value> = if let Some(index_value) = directive.get("index") {
+        let items: Vec<Value> = if let Some(search_value) = directive.get("search") {
+            let query_text = search_value.as_str().unwrap_or("");
+            let where_map = directive
+                .get("where")
+                .and_then(|v| v.as_object())
+                .cloned()
+                .unwrap_or_default();
+            table
+                .search(query_text)
+                .into_iter()
+                .filter(|record| record_matches(record, &where_map))
+                .collect()
+        } else if let Some(index_value) = directive.get("index") {
             let gsi_name = index_value.as_str().unwrap_or_default();
             let where_map = directive
                 .get("where")
@@ -1042,6 +1080,27 @@ impl PyDatabase {
                 ValidationMode::Warn,
             );
             let table_ref = Arc::new(Mutex::new(table));
+            if let Some(storage) = conf.get("storage").and_then(|v| v.as_str()) {
+                let mut table = table_ref.lock().expect("lock table");
+                match storage {
+                    "memory" => table.set_storage_mode(crate::table::StorageMode::Memory),
+                    "index_only" => table.set_storage_mode(crate::table::StorageMode::IndexOnly),
+                    _ => {}
+                }
+            }
+            if let Some(search_conf) = conf.get("search").and_then(|v| v.as_object()) {
+                if let Some(fields_value) = search_conf.get("fields").and_then(|v| v.as_array()) {
+                    let fields: Vec<String> = fields_value
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                    if !fields.is_empty() {
+                        let mut table = table_ref.lock().expect("lock table");
+                        table.set_search_fields(fields);
+                    }
+                }
+            }
             if let Some(gsis) = conf.get("gsis").and_then(|v| v.as_object()) {
                 for (gsi_name, gsi_conf) in gsis {
                     let partition_key = gsi_conf

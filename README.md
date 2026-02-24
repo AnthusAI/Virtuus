@@ -9,7 +9,7 @@ A **virtual-table database system** — a file-backed, in-memory indexed table e
 [![Crates.io](https://img.shields.io/crates/v/virtuus.svg)](https://crates.io/crates/virtuus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus loads data into memory, builds indexes, and provides fast query access with DynamoDB-style Global Secondary Indexes, associations, pagination, and a nested query interface — a **virtual-table** experience backed by the filesystem. Writes persist back to disk atomically.
+Data lives on disk as one JSON file per record. In many use cases, you can **eliminate the database entirely**: load JSON files from disk, build indexes and associations like DynamoDB, and serve fast queries with no external dependencies. In our benchmarks, a **single table loads in a couple of milliseconds** at ~10k total records, and a **full three-table dataset loads in under half a second**; **warm primary-key lookups stay well under a millisecond**. Virtuus builds indexes in memory and, for file-backed tables, defaults to an **index-only** mode where records stay on disk while indexes remain hot. You can opt into full in-memory records when needed. Writes persist back to disk atomically.
 
 ## Motivation / Operating Context
 
@@ -79,7 +79,14 @@ data/
     post-002.json
 ```
 
-On startup, Virtuus scans each directory, loads all JSON files into memory, and builds GSI indexes. On write (`put`/`delete`), changes go to memory and to disk via atomic temp-file + rename.
+On startup, Virtuus scans each directory, builds in-memory indexes, and (by default for file-backed tables) keeps only those indexes resident while records remain on disk. On write (`put`/`delete`), changes go to indexes in memory and to disk via atomic temp-file + rename.
+
+Storage modes:
+- `index_only`: default for file-backed tables, records stay on disk.
+- `memory`: keep full records in RAM (opt-in via schema).
+
+**Index-only storage:**
+Virtuus keeps the lightweight indexes in memory and leaves the full records on disk. That means memory growth is driven mostly by the indexes, not by the size of each record. It’s a practical way to handle large datasets without keeping every JSON document resident in RAM. When you query, Virtuus uses the index to find matching record IDs, then reads only the records it needs.
 
 ### Schema Definition
 
@@ -90,6 +97,7 @@ tables:
   users:
     primary_key: id
     directory: users
+    storage: index_only
     gsis:
       by_email: { partition_key: email }
       by_org: { partition_key: org_id }
@@ -102,7 +110,19 @@ tables:
       by_user: { partition_key: user_id, sort_key: created_at }
     associations:
       author: { type: belongs_to, table: users, foreign_key: user_id }
+
+Optional keyword search configuration:
+
+```yaml
+tables:
+  news:
+    primary_key: id
+    directory: news
+    search:
+      fields: [title, body]
 ```
+```
+
 
 ### Global Secondary Indexes (GSIs)
 
@@ -119,6 +139,7 @@ Sort conditions on range keys support: `eq`, `ne`, `lt`, `lte`, `gt`, `gte`, `be
 | `where` | Filter by field values |
 | `index` | GSI name for indexed lookup |
 | `pk` | Direct primary key lookup |
+| `search` | Keyword search across configured fields |
 | `fields` | Field projection |
 | `limit` | Max records returned |
 | `sort` | Sort condition on range key |
@@ -319,6 +340,38 @@ See `benchmarks/output_memory/results.csv` for raw numbers.
 - Incremental refresh is the preferred path to keep data fresh without full reloads.
 - Memory footprint scales predictably with record and index count; see charts for specifics.
 
+### Choosing a Storage Mode
+
+Virtuus supports two storage modes per table:
+- `index_only` (default for file-backed tables): keep only indexes in memory; read full records from disk on demand.
+- `memory`: keep full records resident in RAM alongside indexes.
+
+When to pick which:
+- **`index_only`**: large/variable record sizes, disk-backed datasets, and hot paths that are indexed (PK, GSI, keyword search on selected fields). Memory scales with indexes, not payload size.
+- **`memory`**: the table fits in RAM and you want the lowest-latency scans or wide projections.
+- You can mix per table (e.g., `users` in memory, `posts` index-only).
+
+Decision visuals are generated locally by `python tools/bench_storage_mode_charts.py` and are not committed to the repo. Run the commands below to produce charts and summaries in your workspace.
+
+How to reproduce the storage-mode benchmarks:
+```bash
+PYTHONPATH=python/src python tools/run_storage_mode_benchmarks.py
+PYTHONPATH=python/src python tools/bench_storage_mode_charts.py
+```
+
+Outputs are written under `benchmarks/output_storage/` (ignored by git). Tune with `VIRTUUS_BENCH_STORAGE_MODES`, `VIRTUUS_BENCH_RECORD_SIZES_KB`, `VIRTUUS_BENCH_DATASET_SHAPES`, `VIRTUUS_BENCH_TOTALS`, `VIRTUUS_BENCH_BACKENDS`; set `VIRTUUS_BENCH_NEWS_DATASET_CONFIG` for BBC variants.
+
+Aggregate all storage-mode results into a single summary file (useful after EC2 uploads or local reruns):
+```bash
+python tools/aggregate_storage_results.py \
+  --roots benchmarks/output_storage/python benchmarks/output_storage/rust \
+  --out-json benchmarks/output_storage/summary.json \
+  --out-csv benchmarks/output_storage/summary.csv
+
+# or with Make:
+make bench-sync bucket=my-bucket prefix=virtuus-bench profile=default
+```
+
 ### Interpretation
 
 - Virtuus fits small-to-mid deployments where you can pay a one-time load and then serve low-latency lookups.
@@ -356,6 +409,37 @@ make coverage-rust      # cargo tarpaulin --fail-under 100
 make check-parity       # verify Python and Rust step definitions cover all Gherkin steps
 make bench              # run benchmarks + generate visualizations
 ```
+
+### EC2 benchmark harness (optional, long-run)
+
+We provide a helper to run the full storage-mode suite on EC2 for 1M-record scale tests across multiple instance types:
+
+```bash
+python tools/run_ec2_storage_benchmarks.py \
+  --ami <ami-id> \
+  --subnet-id <subnet-xxxx> \
+  --security-group-id <sg-xxxx> \
+  --instance-types t3.nano,t3.small,m6i.large \
+  --totals 1000,10000,100000,1000000 \
+  --s3-bucket my-bucket --s3-prefix virtuus-bench \
+  --profile default \
+  --no-dry-run
+```
+
+Defaults: runs both backends, both storage modes, record sizes 0.5/2/10 KB, profiles `single_table` and `social_media`, with timeouts and RSS enabled. Results/charts stay on the instance and can optionally upload to S3 when `--s3-bucket` is provided. Dry-run is on by default; supply `--no-dry-run` to launch.
+You can copy `tools/ec2_params.example.json`, fill in real IDs, and translate it into the CLI args above.
+Or invoke from the JSON directly:
+```bash
+python tools/run_ec2_from_params.py --params tools/ec2_params.example.json --no-dry-run
+```
+Optional sanity check before launching:
+```bash
+python tools/check_ec2_params.py --params tools/ec2_params.example.json
+```
+
+Charts gallery:
+- Use `python tools/render_storage_gallery.py` to build a local HTML gallery (not committed).
+
 
 ## Release Automation
 

@@ -156,6 +156,34 @@ impl Database {
                 directory.clone().map(PathBuf::from),
                 crate::table::ValidationMode::Warn,
             );
+            if let Some(storage) = conf
+                .get(YamlValue::from("storage"))
+                .and_then(|v| v.as_str())
+            {
+                match storage {
+                    "memory" => table.set_storage_mode(crate::table::StorageMode::Memory),
+                    "index_only" => table.set_storage_mode(crate::table::StorageMode::IndexOnly),
+                    _ => {}
+                }
+            }
+            if let Some(search_conf) = conf
+                .get(YamlValue::from("search"))
+                .and_then(|v| v.as_mapping())
+            {
+                if let Some(fields_value) = search_conf
+                    .get(YamlValue::from("fields"))
+                    .and_then(|v| v.as_sequence())
+                {
+                    let fields: Vec<String> = fields_value
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect();
+                    if !fields.is_empty() {
+                        table.set_search_fields(fields);
+                    }
+                }
+            }
             if let Some(gsis) = conf
                 .get(YamlValue::from("gsis"))
                 .and_then(|v| v.as_mapping())
@@ -260,6 +288,47 @@ impl Database {
             }
             let include_map = directive.get("include").and_then(|v| v.as_object());
             return self.apply_includes(table_name, record, include_map);
+        }
+
+        if let Some(search_value) = directive.get("search") {
+            let query_text = search_value.as_str().unwrap_or("");
+            let where_map = directive
+                .get("where")
+                .and_then(|v| v.as_object())
+                .cloned()
+                .unwrap_or_default();
+            let mut records: Vec<Value> = table
+                .search(query_text)
+                .into_iter()
+                .filter(|record| record_matches(record, &where_map))
+                .collect();
+            if let Some(fields) = directive.get("fields").and_then(|v| v.as_array()) {
+                records = records.into_iter().map(|r| project(&r, fields)).collect();
+            }
+            let start: usize = directive
+                .get("next_token")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+            let mut result = json!({ "items": records });
+            if let Some(limit) = directive.get("limit").and_then(|v| v.as_u64()) {
+                let end = start + limit as usize;
+                let items = result["items"].as_array().cloned().unwrap_or_default();
+                let page: Vec<Value> = items.into_iter().skip(start).take(limit as usize).collect();
+                result["items"] = Value::Array(page.clone());
+                if end < records.len() {
+                    result["next_token"] = Value::String(end.to_string());
+                }
+            }
+            if let Some(includes) = directive.get("include").and_then(|v| v.as_object()) {
+                let items = result["items"].as_array().cloned().unwrap_or_default();
+                let mut enriched = Vec::new();
+                for item in items {
+                    enriched.push(self.apply_includes(table_name, item, Some(includes)));
+                }
+                result["items"] = Value::Array(enriched);
+            }
+            return result;
         }
 
         let mut records: Vec<Value> =
@@ -573,7 +642,7 @@ mod tests {
     use std::fs;
 
     use super::*;
-    use crate::table::ValidationMode;
+    use crate::table::{StorageMode, ValidationMode};
     use serde_json::json;
 
     fn table_with_pk(name: &str) -> Table {
@@ -790,6 +859,75 @@ tables:
         fs::write(&schema_path, schema).unwrap();
         let mut db = Database::from_schema(schema_path.as_path(), None);
         assert!(db.table_mut("users").unwrap().get("u1", None).is_some());
+    }
+
+    #[test]
+    fn from_schema_respects_storage_and_search_fields() {
+        let tmp = std::env::temp_dir().join("virtuus_db_schema_storage");
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(tmp.join("data")).unwrap();
+        fs::write(
+            tmp.join("data").join("u1.json"),
+            r#"{"id":"u1","title":"Alpha"}"#,
+        )
+        .unwrap();
+        let schema = r#"
+tables:
+  memory_table:
+    primary_key: id
+    directory: data
+    storage: memory
+    search:
+      fields: [title]
+  index_table:
+    primary_key: id
+    directory: data
+    storage: index_only
+  invalid_table:
+    primary_key: id
+    directory: data
+    storage: nope
+"#;
+        let schema_path = tmp.join("schema.yml");
+        fs::write(&schema_path, schema).unwrap();
+        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path()));
+        let memory = db.table_mut("memory_table").unwrap();
+        assert_eq!(memory.storage_mode(), StorageMode::Memory);
+        assert_eq!(memory.search_fields(), &vec!["title".to_string()]);
+        let index = db.table_mut("index_table").unwrap();
+        assert_eq!(index.storage_mode(), StorageMode::IndexOnly);
+        let invalid = db.table_mut("invalid_table").unwrap();
+        assert_eq!(invalid.storage_mode(), StorageMode::IndexOnly);
+    }
+
+    #[test]
+    fn execute_search_filters_paginates_and_includes() {
+        let mut db = Database::new();
+        let mut users = table_with_pk("users");
+        users.put(json!({"id":"u1","name":"Alice"}));
+        db.add_table("users", users);
+
+        let mut posts = table_with_pk("posts");
+        posts.set_search_fields(vec!["title".to_string()]);
+        posts.add_belongs_to("author", "users", "user_id");
+        posts.put(json!({"id":"p1","user_id":"u1","title":"Alpha Beta","status":"active"}));
+        posts.put(json!({"id":"p2","user_id":"u1","title":"Alpha Beta Two","status":"active"}));
+        posts.put(json!({"id":"p3","user_id":"u1","title":"Alpha Beta","status":"inactive"}));
+        db.add_table("posts", posts);
+
+        let result = db.execute(&json!({"posts": {
+            "search": "alpha beta",
+            "where": {"status": "active"},
+            "fields": ["id", "title", "user_id"],
+            "include": {"author": {}},
+            "limit": 1,
+            "next_token": "0"
+        }}));
+        let items = result.get("items").and_then(|v| v.as_array()).unwrap();
+        assert_eq!(items.len(), 1);
+        assert!(result.get("next_token").is_some());
+        assert_eq!(items[0]["author"]["name"].as_str(), Some("Alice"));
+        assert!(items[0].get("status").is_none());
     }
 
     #[test]

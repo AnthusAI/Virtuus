@@ -1,14 +1,15 @@
 //! Table storage implementation.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rayon::prelude::*;
 use serde_json::Value;
 
 use crate::gsi::Gsi;
+use crate::search::SearchIndex;
 use crate::sort::SortCondition;
 
 type Hook = Box<dyn Fn(&Value) + Send + Sync>;
@@ -49,9 +50,12 @@ pub struct Table {
     sort_key: Option<String>,
     directory: Option<PathBuf>,
     validation: ValidationMode,
+    storage_mode: StorageMode,
     records: HashMap<TableKey, Value>,
     gsis: HashMap<String, Gsi>,
     association_defs: HashMap<String, Association>,
+    search_fields: Vec<String>,
+    search_index: Option<SearchIndex>,
     warnings: Vec<String>,
     hook_errors: Vec<String>,
     on_put: Vec<Hook>,
@@ -62,6 +66,7 @@ pub struct Table {
     check_interval: Duration,
     auto_refresh: bool,
     manifest: HashMap<String, SystemTime>,
+    record_keys: HashMap<String, String>,
     last_dir_mtime: Option<SystemTime>,
     last_check_time: Option<SystemTime>,
     last_is_stale: bool,
@@ -87,9 +92,11 @@ impl std::fmt::Debug for Table {
             .field("sort_key", &self.sort_key)
             .field("directory", &self.directory)
             .field("validation", &self.validation)
+            .field("storage_mode", &self.storage_mode)
             .field("records", &self.records)
             .field("gsis", &self.gsis)
             .field("association_defs", &self.association_defs)
+            .field("search_fields", &self.search_fields)
             .field("warnings", &self.warnings)
             .field("hook_errors", &self.hook_errors)
             .field("last_write_used_atomic", &self.last_write_used_atomic)
@@ -107,6 +114,15 @@ pub enum ValidationMode {
     Warn,
     /// Raise validation errors.
     Error,
+}
+
+/// Storage mode for table records.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StorageMode {
+    /// Keep full records in memory.
+    Memory,
+    /// Keep only indexes in memory; read records from disk when needed.
+    IndexOnly,
 }
 
 impl Table {
@@ -128,6 +144,11 @@ impl Table {
         if partition_key.is_some() && sort_key.is_none() {
             panic!("sort_key is required for composite primary keys");
         }
+        let storage_mode = if directory.is_some() {
+            StorageMode::IndexOnly
+        } else {
+            StorageMode::Memory
+        };
         Self {
             name: name.to_string(),
             primary_key: primary_key.map(|s| s.to_string()),
@@ -135,9 +156,12 @@ impl Table {
             sort_key: sort_key.map(|s| s.to_string()),
             directory,
             validation,
+            storage_mode,
             records: HashMap::new(),
             gsis: HashMap::new(),
             association_defs: HashMap::new(),
+            search_fields: Vec::new(),
+            search_index: None,
             warnings: Vec::new(),
             hook_errors: Vec::new(),
             on_put: Vec::new(),
@@ -148,6 +172,7 @@ impl Table {
             check_interval: Duration::from_secs(0),
             auto_refresh: true,
             manifest: HashMap::new(),
+            record_keys: HashMap::new(),
             last_dir_mtime: None,
             last_check_time: None,
             last_is_stale: false,
@@ -174,11 +199,15 @@ impl Table {
             None => return,
         };
         self.validate_gsi_fields(&record);
-        if let Some(existing) = self.records.get(&key).cloned() {
+        if let Some(existing) = self.lookup_existing_record(&key) {
             self.remove_from_gsis(&key, &existing);
+            self.remove_from_search(&key, &existing);
         }
-        self.records.insert(key.clone(), record.clone());
+        if self.storage_mode == StorageMode::Memory {
+            self.records.insert(key.clone(), record.clone());
+        }
         self.index_in_gsis(&key, &record);
+        self.index_in_search(&key, &record);
         if let Some(dir) = self.directory.clone() {
             self.write_record(&dir, &key, &record);
         }
@@ -187,7 +216,7 @@ impl Table {
         Self::fire_hooks(hooks, hook_errors, &record);
     }
 
-    fn insert_record_from_load(&mut self, record: Value) {
+    fn insert_record_from_load(&mut self, record: Value, index_search: bool) {
         let key = match self.extract_key(&record) {
             Some(key) => key,
             None => return,
@@ -195,9 +224,15 @@ impl Table {
         self.validate_gsi_fields(&record);
         if let Some(existing) = self.records.get(&key).cloned() {
             self.remove_from_gsis(&key, &existing);
+            self.remove_from_search(&key, &existing);
         }
-        self.records.insert(key.clone(), record.clone());
+        if self.storage_mode == StorageMode::Memory {
+            self.records.insert(key.clone(), record.clone());
+        }
         self.index_in_gsis(&key, &record);
+        if index_search {
+            self.index_in_search(&key, &record);
+        }
         let hooks = self.on_put.as_slice();
         let hook_errors = &mut self.hook_errors;
         Self::fire_hooks(hooks, hook_errors, &record);
@@ -206,29 +241,38 @@ impl Table {
     /// Get a record by primary key.
     pub fn get(&self, pk: &str, sort: Option<&str>) -> Option<Value> {
         let key = self.compose_key(pk, sort);
-        self.records.get(&key).cloned()
+        match self.storage_mode {
+            StorageMode::Memory => self.records.get(&key).cloned(),
+            StorageMode::IndexOnly => self.read_record_by_key(&key),
+        }
     }
 
     /// Delete a record by primary key.
     pub fn delete(&mut self, pk: &str, sort: Option<&str>) {
         let key = self.compose_key(pk, sort);
-        let record = match self.records.remove(&key) {
-            Some(record) => record,
-            None => return,
+        let record = match self.storage_mode {
+            StorageMode::Memory => self.records.remove(&key),
+            StorageMode::IndexOnly => self.read_record_by_key(&key),
         };
-        self.remove_from_gsis(&key, &record);
+        if let Some(record) = record {
+            self.remove_from_gsis(&key, &record);
+            self.remove_from_search(&key, &record);
+            let hooks = self.on_delete.as_slice();
+            let hook_errors = &mut self.hook_errors;
+            Self::fire_hooks(hooks, hook_errors, &record);
+        }
         if let Some(dir) = self.directory.clone() {
             self.delete_record(&dir, &key);
         }
-        let hooks = self.on_delete.as_slice();
-        let hook_errors = &mut self.hook_errors;
-        Self::fire_hooks(hooks, hook_errors, &record);
     }
 
     /// Return all records.
     pub fn scan(&mut self) -> Vec<Value> {
         self.maybe_refresh_before_query();
-        self.records.values().cloned().collect()
+        match self.storage_mode {
+            StorageMode::Memory => self.records.values().cloned().collect(),
+            StorageMode::IndexOnly => self.read_all_records(),
+        }
     }
 
     /// Bulk load multiple records.
@@ -241,7 +285,10 @@ impl Table {
     /// Count records in table or GSI partition.
     pub fn count(&self, index: Option<&str>, value: Option<&Value>) -> usize {
         match index {
-            None => self.records.len(),
+            None => match self.storage_mode {
+                StorageMode::Memory => self.records.len(),
+                StorageMode::IndexOnly => self.manifest.len(),
+            },
             Some(name) => match self.gsis.get(name) {
                 Some(gsi) => gsi.query(value.unwrap_or(&Value::Null), None, false).len(),
                 None => 0,
@@ -255,7 +302,7 @@ impl Table {
         data.insert("name".to_string(), Value::String(self.name.clone()));
         data.insert(
             "record_count".to_string(),
-            Value::Number(self.records.len().into()),
+            Value::Number(self.record_count().into()),
         );
         data.insert(
             "gsis".to_string(),
@@ -280,6 +327,27 @@ impl Table {
             data.insert(
                 "sort_key".to_string(),
                 Value::String(self.sort_key.clone().unwrap_or_default()),
+            );
+        }
+        data.insert(
+            "storage".to_string(),
+            Value::String(
+                match self.storage_mode {
+                    StorageMode::Memory => "memory",
+                    StorageMode::IndexOnly => "index_only",
+                }
+                .to_string(),
+            ),
+        );
+        if !self.search_fields.is_empty() {
+            data.insert(
+                "search_fields".to_string(),
+                Value::Array(
+                    self.search_fields
+                        .iter()
+                        .map(|f| Value::String(f.clone()))
+                        .collect(),
+                ),
             );
         }
         Value::Object(data)
@@ -328,6 +396,31 @@ impl Table {
     /// Return the validation mode.
     pub fn validation(&self) -> ValidationMode {
         self.validation
+    }
+
+    /// Return the storage mode.
+    pub fn storage_mode(&self) -> StorageMode {
+        self.storage_mode
+    }
+
+    /// Set the storage mode for the table.
+    pub fn set_storage_mode(&mut self, mode: StorageMode) {
+        self.storage_mode = mode;
+    }
+
+    /// Return searchable field names.
+    pub fn search_fields(&self) -> &[String] {
+        &self.search_fields
+    }
+
+    /// Configure searchable fields for keyword search.
+    pub fn set_search_fields(&mut self, fields: Vec<String>) {
+        self.search_fields = fields.clone();
+        if fields.is_empty() {
+            self.search_index = None;
+        } else {
+            self.search_index = Some(SearchIndex::new(fields));
+        }
     }
 
     /// Return the records map.
@@ -460,11 +553,34 @@ impl Table {
         let mut result = Vec::new();
         for pk in gsi.query(partition_value, sort_condition, descending) {
             let key = self.key_from_string(&pk);
-            if let Some(record) = self.records.get(&key) {
-                result.push(record.clone());
+            if let Some(record) = match self.storage_mode {
+                StorageMode::Memory => self.records.get(&key).cloned(),
+                StorageMode::IndexOnly => self.read_record_by_key(&key),
+            } {
+                result.push(record);
             }
         }
         result
+    }
+
+    /// Search keyword index and return matching records.
+    pub fn search(&mut self, query: &str) -> Vec<Value> {
+        self.maybe_refresh_before_query();
+        let index = self
+            .search_index
+            .as_ref()
+            .expect("search is not configured");
+        let mut records = Vec::new();
+        for pk in index.search(query) {
+            let key = self.key_from_string(&pk);
+            if let Some(record) = match self.storage_mode {
+                StorageMode::Memory => self.records.get(&key).cloned(),
+                StorageMode::IndexOnly => self.read_record_by_key(&key),
+            } {
+                records.push(record);
+            }
+        }
+        records
     }
 
     /// Determine whether on-disk files are stale relative to the manifest.
@@ -502,6 +618,7 @@ impl Table {
         }
         self.refresh_errors.clear();
         let (mut summary, added, modified, deleted) = self.compute_changes();
+        let has_changes = summary.added + summary.modified + summary.deleted > 0;
         let mut reread = 0;
         for path in added.iter().chain(modified.iter()) {
             if let Some(record) = self.read_record(path) {
@@ -535,6 +652,12 @@ impl Table {
         self.last_is_stale = false;
         summary.reread = reread;
         self.last_change_summary = summary.clone();
+        if has_changes && self.storage_mode == StorageMode::IndexOnly && !self.gsis.is_empty() {
+            self.rebuild_gsis();
+        }
+        if has_changes && self.search_enabled() {
+            self.rebuild_search_index();
+        }
         let hooks = self.on_refresh.as_slice();
         let hook_errors = &mut self.hook_errors;
         let summary_value = serde_json::json!({
@@ -581,7 +704,46 @@ impl Table {
                 Some(path)
             })
             .collect();
-        self.records.reserve(paths.len());
+        if self.storage_mode == StorageMode::Memory {
+            self.records.reserve(paths.len());
+        }
+        let current_manifest: HashMap<String, SystemTime> = paths
+            .iter()
+            .filter_map(|path| {
+                let name = path.file_name()?.to_string_lossy().to_string();
+                let mtime = fs::metadata(path).ok()?.modified().ok()?;
+                Some((name, mtime))
+            })
+            .collect();
+        self.record_keys.clear();
+        if self.storage_mode == StorageMode::IndexOnly && !self.gsis.is_empty() {
+            let defs: Vec<(String, String, Option<String>)> = self
+                .gsis
+                .values()
+                .map(|gsi| {
+                    (
+                        gsi.name().to_string(),
+                        gsi.partition_key().to_string(),
+                        gsi.sort_key().map(|s| s.to_string()),
+                    )
+                })
+                .collect();
+            let mut rebuilt: HashMap<String, Gsi> = HashMap::new();
+            for (name, partition_key, sort_key) in defs {
+                rebuilt.insert(
+                    name.clone(),
+                    Gsi::new(&name, &partition_key, sort_key.as_deref()),
+                );
+            }
+            self.gsis = rebuilt;
+        }
+        let mut search_loaded = false;
+        if self.search_enabled() {
+            if self.search_index.is_none() {
+                self.search_index = Some(SearchIndex::new(self.search_fields.clone()));
+            }
+            search_loaded = self.load_search_index_if_fresh(&dir, &current_manifest);
+        }
         let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = paths
             .par_iter()
             .map(|path| {
@@ -596,25 +758,41 @@ impl Table {
                 (record, name, mtime)
             })
             .collect();
-        for (record, name, mtime) in parsed {
-            self.insert_record_from_load(record);
-            if let (Some(name), Some(mtime)) = (name, mtime) {
-                self.manifest.insert(name, mtime);
+        for (record, name, _) in parsed {
+            self.insert_record_from_load(record.clone(), !search_loaded);
+            if let (Some(name), Some(key)) = (name, self.extract_key_silent(&record)) {
+                self.record_keys.insert(name, key_to_string(&key));
             }
         }
+        self.manifest = current_manifest;
         self.last_dir_mtime = self.dir_mtime();
         self.last_check_time = Some(SystemTime::now());
         self.last_is_stale = false;
+        if self.search_enabled() && !search_loaded {
+            let _ = self.persist_search_index(&dir, &self.manifest);
+        }
     }
 
     /// Export records to directory.
     pub fn export(&mut self, directory: PathBuf) {
         fs::create_dir_all(&directory).expect("create export dir");
-        let records: Vec<(TableKey, Value)> = self
-            .records
-            .iter()
-            .map(|(key, record)| (key.clone(), record.clone()))
-            .collect();
+        let records: Vec<(TableKey, Value)> = match self.storage_mode {
+            StorageMode::Memory => self
+                .records
+                .iter()
+                .map(|(key, record)| (key.clone(), record.clone()))
+                .collect(),
+            StorageMode::IndexOnly => self
+                .iter_json_files()
+                .into_iter()
+                .filter_map(|path| {
+                    let data = fs::read_to_string(&path).ok()?;
+                    let record: Value = serde_json::from_str(&data).ok()?;
+                    let key = self.key_from_filename(path)?;
+                    Some((key, record))
+                })
+                .collect(),
+        };
         for (key, record) in records {
             self.validate_pk_for_path(&key);
             let filename = self.filename_for_key(&key);
@@ -646,6 +824,21 @@ impl Table {
         ))
     }
 
+    fn extract_key_silent(&self, record: &Value) -> Option<TableKey> {
+        if let Some(pk) = &self.primary_key {
+            let value = record.get(pk)?;
+            return Some(TableKey::Simple(value_to_string(value)));
+        }
+        let partition_key = self.partition_key.as_ref()?;
+        let sort_key = self.sort_key.as_ref()?;
+        let partition = record.get(partition_key)?;
+        let sort = record.get(sort_key)?;
+        Some(TableKey::Composite(
+            value_to_string(partition),
+            value_to_string(sort),
+        ))
+    }
+
     fn compose_key(&self, pk: &str, sort: Option<&str>) -> TableKey {
         if self.primary_key.is_some() {
             return TableKey::Simple(pk.to_string());
@@ -666,6 +859,219 @@ impl Table {
         for gsi in self.gsis.values_mut() {
             gsi.remove(&pk, record);
         }
+    }
+
+    fn index_in_search(&mut self, key: &TableKey, record: &Value) {
+        if let Some(index) = self.search_index.as_mut() {
+            index.index_record(&key_to_string(key), record);
+        }
+    }
+
+    fn remove_from_search(&mut self, key: &TableKey, record: &Value) {
+        if let Some(index) = self.search_index.as_mut() {
+            index.remove_record(&key_to_string(key), record);
+        }
+    }
+
+    fn lookup_existing_record(&self, key: &TableKey) -> Option<Value> {
+        match self.storage_mode {
+            StorageMode::Memory => self.records.get(key).cloned(),
+            StorageMode::IndexOnly => self.read_record_by_key(key),
+        }
+    }
+
+    fn read_record_by_key(&self, key: &TableKey) -> Option<Value> {
+        let dir = self.directory.as_ref()?;
+        let filename = self.filename_for_key(key);
+        if self.storage_mode == StorageMode::IndexOnly && !self.record_keys.contains_key(&filename)
+        {
+            return None;
+        }
+        let path = dir.join(filename);
+        fs::read_to_string(&path)
+            .ok()
+            .and_then(|data| serde_json::from_str(&data).ok())
+    }
+
+    fn read_all_records(&self) -> Vec<Value> {
+        let mut records_by_key: HashMap<String, Value> = HashMap::new();
+        let Some(dir) = self.directory.as_ref() else {
+            return Vec::new();
+        };
+        for (name, key) in &self.record_keys {
+            let path = dir.join(name);
+            let Ok(data) = fs::read_to_string(&path) else {
+                continue;
+            };
+            let Ok(record) = serde_json::from_str::<Value>(&data) else {
+                continue;
+            };
+            records_by_key.insert(key.clone(), record);
+        }
+        records_by_key.into_values().collect()
+    }
+
+    fn record_count(&self) -> usize {
+        match self.storage_mode {
+            StorageMode::Memory => self.records.len(),
+            StorageMode::IndexOnly => {
+                let mut seen: HashSet<String> = HashSet::new();
+                for key in self.record_keys.values() {
+                    seen.insert(key.clone());
+                }
+                seen.len()
+            }
+        }
+    }
+
+    fn search_enabled(&self) -> bool {
+        !self.search_fields.is_empty()
+    }
+
+    fn search_index_dir(&self, dir: &Path) -> PathBuf {
+        let base = dir.parent().unwrap_or(dir);
+        base.join(".virtuus").join("index").join(&self.name)
+    }
+
+    fn search_index_path(&self, dir: &Path) -> PathBuf {
+        self.search_index_dir(dir).join("search_index.json")
+    }
+
+    fn search_manifest_path(&self, dir: &Path) -> PathBuf {
+        self.search_index_dir(dir).join("search_manifest.json")
+    }
+
+    fn load_search_index_if_fresh(
+        &mut self,
+        dir: &Path,
+        manifest: &HashMap<String, SystemTime>,
+    ) -> bool {
+        let index_path = self.search_index_path(dir);
+        let manifest_path = self.search_manifest_path(dir);
+        let persisted_manifest = match fs::read_to_string(&manifest_path) {
+            Ok(data) => serde_json::from_str::<HashMap<String, u64>>(&data).ok(),
+            Err(_) => None,
+        };
+        let current_manifest = manifest_to_epoch_millis(manifest);
+        if persisted_manifest.as_ref() != Some(&current_manifest) {
+            return false;
+        }
+        let loaded = SearchIndex::load(&index_path);
+        if let Some(index) = loaded {
+            if index.fields() == self.search_fields.as_slice() {
+                self.search_index = Some(index);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn persist_search_index(
+        &self,
+        dir: &Path,
+        manifest: &HashMap<String, SystemTime>,
+    ) -> Result<(), String> {
+        let index_path = self.search_index_path(dir);
+        let manifest_path = self.search_manifest_path(dir);
+        let index_dir = self.search_index_dir(dir);
+        fs::create_dir_all(&index_dir).map_err(|err| err.to_string())?;
+        let Some(index) = &self.search_index else {
+            return Ok(());
+        };
+        self.write_search_index(&index_path, &manifest_path, index, manifest)?;
+        Ok(())
+    }
+
+    fn write_search_index(
+        &self,
+        index_path: &Path,
+        manifest_path: &Path,
+        index: &SearchIndex,
+        manifest: &HashMap<String, SystemTime>,
+    ) -> Result<(), String> {
+        index.persist(index_path)?;
+        let current_manifest = manifest_to_epoch_millis(manifest);
+        let data = serde_json::to_string(&current_manifest).map_err(|err| err.to_string())?;
+        fs::write(manifest_path, data).map_err(|err| err.to_string())?;
+        Ok(())
+    }
+
+    fn rebuild_search_index(&mut self) {
+        let Some(dir) = self.directory.clone() else {
+            return;
+        };
+        if !self.search_enabled() {
+            return;
+        }
+        let mut index = SearchIndex::new(self.search_fields.clone());
+        for path in self.iter_json_files() {
+            let Ok(data) = fs::read_to_string(&path) else {
+                continue;
+            };
+            let Ok(record) = serde_json::from_str::<Value>(&data) else {
+                continue;
+            };
+            let key = match self.extract_key(&record) {
+                Some(key) => key,
+                None => continue,
+            };
+            index.index_record(&key_to_string(&key), &record);
+        }
+        self.search_index = Some(index);
+        let _ = self.persist_search_index(&dir, &self.manifest);
+    }
+
+    fn rebuild_gsis(&mut self) {
+        if self.gsis.is_empty() {
+            return;
+        }
+        let defs: Vec<(String, String, Option<String>)> = self
+            .gsis
+            .values()
+            .map(|gsi| {
+                (
+                    gsi.name().to_string(),
+                    gsi.partition_key().to_string(),
+                    gsi.sort_key().map(|s| s.to_string()),
+                )
+            })
+            .collect();
+        let mut rebuilt: HashMap<String, Gsi> = HashMap::new();
+        for (name, partition_key, sort_key) in defs {
+            rebuilt.insert(
+                name.clone(),
+                Gsi::new(&name, &partition_key, sort_key.as_deref()),
+            );
+        }
+        match self.storage_mode {
+            StorageMode::Memory => {
+                for (key, record) in &self.records {
+                    let pk = key_to_string(key);
+                    for gsi in rebuilt.values_mut() {
+                        gsi.put(&pk, record);
+                    }
+                }
+            }
+            StorageMode::IndexOnly => {
+                for path in self.iter_json_files() {
+                    let Ok(data) = fs::read_to_string(&path) else {
+                        continue;
+                    };
+                    let Ok(record) = serde_json::from_str::<Value>(&data) else {
+                        continue;
+                    };
+                    let key = match self.extract_key(&record) {
+                        Some(key) => key,
+                        None => continue,
+                    };
+                    let pk = key_to_string(&key);
+                    for gsi in rebuilt.values_mut() {
+                        gsi.put(&pk, &record);
+                    }
+                }
+            }
+        }
+        self.gsis = rebuilt;
     }
 
     fn maybe_refresh_before_query(&mut self) {
@@ -746,12 +1152,11 @@ impl Table {
         let filename = self.filename_for_key(key);
         let path = directory.join(filename);
         self.write_json_atomic(&path, record);
+        let filename = path.file_name().unwrap().to_string_lossy().to_string();
         if let Ok(meta) = fs::metadata(&path) {
             if let Ok(mtime) = meta.modified() {
-                self.manifest.insert(
-                    path.file_name().unwrap().to_string_lossy().to_string(),
-                    mtime,
-                );
+                self.manifest.insert(filename.clone(), mtime);
+                self.record_keys.insert(filename, key_to_string(key));
                 self.last_dir_mtime = self.dir_mtime();
             }
         }
@@ -763,9 +1168,10 @@ impl Table {
         let path = directory.join(&filename);
         if path.exists() {
             fs::remove_file(path).expect("remove file");
-            self.manifest.remove(&filename);
-            self.last_dir_mtime = self.dir_mtime();
         }
+        self.manifest.remove(&filename);
+        self.record_keys.remove(&filename);
+        self.last_dir_mtime = self.dir_mtime();
     }
 
     fn validate_pk_for_path(&self, key: &TableKey) {
@@ -902,12 +1308,24 @@ fn value_to_string(value: &Value) -> String {
     }
 }
 
+fn manifest_to_epoch_millis(manifest: &HashMap<String, SystemTime>) -> HashMap<String, u64> {
+    manifest
+        .iter()
+        .filter_map(|(name, time)| {
+            let millis = time.duration_since(UNIX_EPOCH).ok()?.as_millis() as u64;
+            Some((name.clone(), millis))
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::database::Database;
     use serde_json::json;
+    use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
+    use std::time::SystemTime;
 
     fn temp_dir(name: &str) -> PathBuf {
         let mut dir = std::env::temp_dir();
@@ -1652,6 +2070,280 @@ mod tests {
         assert_eq!(table.check(), ChangeSummary::default());
         // mark_checked_now sets last_is_stale; is_stale(false) should reuse cached value when interval not elapsed
         assert!(table.is_stale(false));
+    }
+
+    #[test]
+    fn search_storage_and_refresh_cover_branches() {
+        let mut mem = Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent);
+        mem.set_search_fields(Vec::new());
+        assert!(mem.search_index.is_none());
+        mem.set_search_fields(vec!["title".to_string()]);
+        assert_eq!(mem.search_fields(), &vec!["title".to_string()]);
+        mem.put(json!({"id": "1", "title": "Alpha"}));
+        assert_eq!(mem.search("alpha").len(), 1);
+
+        let base = temp_dir("search_refresh");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("1.json"), r#"{"id":"1","title":"Alpha"}"#).unwrap();
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        assert_eq!(table.storage_mode(), StorageMode::IndexOnly);
+        table.set_storage_mode(StorageMode::Memory);
+        assert_eq!(table.storage_mode(), StorageMode::Memory);
+        table.set_storage_mode(StorageMode::IndexOnly);
+        table.set_search_fields(vec!["title".to_string()]);
+        table.search_index = None;
+        table.load_from_dir(None);
+        let desc = table.describe();
+        assert_eq!(desc.get("storage"), Some(&json!("index_only")));
+        let search_fields = desc
+            .get("search_fields")
+            .and_then(|v| v.as_array())
+            .unwrap();
+        assert!(search_fields.contains(&json!("title")));
+        assert_eq!(table.search("alpha").len(), 1);
+        fs::write(dir.join("1.json"), r#"{"id":"1","title":"Alpha Updated"}"#).unwrap();
+        table.refresh();
+    }
+
+    #[test]
+    fn search_index_paths_and_loading_cover_branches() {
+        let base = temp_dir("search_paths");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_search_fields(vec!["title".to_string()]);
+        table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
+        if let Some(index) = table.search_index.as_mut() {
+            index.index_record("1", &json!({"title": "Alpha"}));
+        }
+        let _index_dir = table.search_index_dir(&dir);
+        let index_path = table.search_index_path(&dir);
+        let manifest_path = table.search_manifest_path(&dir);
+        let now = SystemTime::now();
+        let mut manifest: HashMap<String, SystemTime> = HashMap::new();
+        manifest.insert("item.json".to_string(), now);
+        table.persist_search_index(&dir, &manifest).unwrap();
+        table
+            .write_search_index(
+                &index_path,
+                &manifest_path,
+                table.search_index.as_ref().unwrap(),
+                &manifest,
+            )
+            .unwrap();
+
+        let empty_manifest: HashMap<String, SystemTime> = HashMap::new();
+        assert!(!table.load_search_index_if_fresh(&dir, &empty_manifest));
+        assert!(table.load_search_index_if_fresh(&dir, &manifest));
+
+        fs::write(
+            &index_path,
+            json!({"fields": ["other"], "tokens": {}}).to_string(),
+        )
+        .unwrap();
+        assert!(!table.load_search_index_if_fresh(&dir, &manifest));
+        let _ = manifest_to_epoch_millis(&manifest);
+    }
+
+    #[test]
+    fn persist_search_index_writes_manifest() {
+        let base = temp_dir("persist_search");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.search_fields = vec!["title".to_string()];
+        table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
+        if let Some(index) = table.search_index.as_mut() {
+            index.index_record("1", &json!({"title": "Alpha"}));
+        }
+        let mut manifest: HashMap<String, SystemTime> = HashMap::new();
+        manifest.insert("1.json".to_string(), SystemTime::now());
+        table.persist_search_index(&dir, &manifest).unwrap();
+        let manifest_path = table.search_manifest_path(&dir);
+        assert!(manifest_path.exists());
+        let index_path = table.search_index_path(&dir);
+        assert!(index_path.exists());
+    }
+
+    #[test]
+    fn persist_search_index_skips_without_index() {
+        let base = temp_dir("persist_search_none");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        let table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        let manifest: HashMap<String, SystemTime> = HashMap::new();
+        assert!(table.persist_search_index(&dir, &manifest).is_ok());
+    }
+
+    #[test]
+    fn persist_search_index_propagates_manifest_write_error() {
+        let base = temp_dir("persist_search_error");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.search_fields = vec!["title".to_string()];
+        table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
+        let manifest_path = table.search_manifest_path(&dir);
+        fs::create_dir_all(&manifest_path).unwrap();
+        let mut manifest: HashMap<String, SystemTime> = HashMap::new();
+        manifest.insert("1.json".to_string(), SystemTime::now());
+        assert!(table.persist_search_index(&dir, &manifest).is_err());
+    }
+
+    #[test]
+    fn index_only_export_and_record_count_cover() {
+        let dir = temp_dir("export_index_only");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("user-1.json"), r#"{"id":"user-1"}"#).unwrap();
+        fs::write(dir.join("user-1-dup.json"), r#"{"id":"user-1"}"#).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.load_from_dir(None);
+        assert_eq!(table.record_count(), 1);
+
+        let export_dir = temp_dir("export_out");
+        table.export(export_dir.clone());
+        assert!(export_dir.join("user-1.json").exists());
+
+        let no_dir_table = Table::new(
+            "empty",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        assert!(no_dir_table.read_all_records().is_empty());
+
+        fs::write(dir.join("bad.json"), "not-json").unwrap();
+        table
+            .record_keys
+            .insert("missing.json".to_string(), "missing".to_string());
+        table
+            .record_keys
+            .insert("bad.json".to_string(), "bad".to_string());
+        let _ = table.read_all_records();
+    }
+
+    #[test]
+    fn rebuild_search_index_and_gsis_cover() {
+        let mut no_dir = Table::new(
+            "no_dir",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        no_dir.rebuild_search_index();
+
+        let dir = temp_dir("rebuild_search");
+        fs::create_dir_all(&dir).unwrap();
+        let mut no_search = Table::new(
+            "no_search",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        no_search.rebuild_search_index();
+
+        fs::write(dir.join("bad.json"), "not-json").unwrap();
+        fs::create_dir_all(dir.join("unreadable.json")).unwrap();
+        fs::write(dir.join("missing.json"), r#"{"name":"No PK"}"#).unwrap();
+        fs::write(dir.join("ok.json"), r#"{"id":"ok","title":"Alpha"}"#).unwrap();
+        let mut table = Table::new(
+            "search",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_search_fields(vec!["title".to_string()]);
+        table.rebuild_search_index();
+
+        let mut nogsi = Table::new(
+            "nogsi",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        nogsi.rebuild_gsis();
+
+        let mut mem = Table::new(
+            "memgsi",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        );
+        mem.add_gsi("by_status", "status", None);
+        mem.put(json!({"id":"u1","status":"active"}));
+        mem.rebuild_gsis();
+
+        let gsi_dir = temp_dir("gsi_index_only");
+        fs::create_dir_all(&gsi_dir).unwrap();
+        fs::write(gsi_dir.join("bad.json"), "not-json").unwrap();
+        fs::create_dir_all(gsi_dir.join("unreadable.json")).unwrap();
+        fs::write(gsi_dir.join("missing.json"), r#"{"status":"active"}"#).unwrap();
+        fs::write(gsi_dir.join("ok.json"), r#"{"id":"u1","status":"active"}"#).unwrap();
+        let mut idx = Table::new(
+            "idx",
+            Some("id"),
+            None,
+            None,
+            Some(gsi_dir.clone()),
+            ValidationMode::Silent,
+        );
+        idx.add_gsi("by_status", "status", None);
+        idx.rebuild_gsis();
     }
 
     #[test]

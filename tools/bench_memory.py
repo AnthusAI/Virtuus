@@ -9,6 +9,8 @@ Options:
   --totals  Comma-separated user counts (default: 100,500,1000,5000,10000)
   --gsis    Comma-separated GSI counts per users table (default: 0,1,3)
   --posts/--no-posts  Include a posts table with has_many/belongs_to associations (default: --posts)
+  --search  Enable search fields on the users table (default: disabled)
+  --text-size  Approximate character length for searchable text (default: 200)
   --port    Starting port to try (default: 18080)
   --output  Output directory (default: benchmarks/output_memory)
 
@@ -51,8 +53,21 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def write_yaml_schema(path: Path, include_posts: bool, gsi_count: int) -> None:
+def write_yaml_schema(
+    path: Path,
+    include_posts: bool,
+    gsi_count: int,
+    search_enabled: bool,
+    search_fields: list[str],
+    storage_mode: str,
+) -> None:
     lines = ["tables:", "  users:", "    primary_key: id", "    directory: users"]
+    if storage_mode:
+        lines.append(f"    storage: {storage_mode}")
+    if search_enabled and search_fields:
+        fields = ", ".join(search_fields)
+        lines.append("    search:")
+        lines.append(f"      fields: [{fields}]")
     if gsi_count > 0:
         lines.append("    gsis:")
         if gsi_count >= 1:
@@ -76,6 +91,7 @@ def write_yaml_schema(path: Path, include_posts: bool, gsi_count: int) -> None:
                 "  posts:",
                 "    primary_key: id",
                 "    directory: posts",
+                f"    storage: {storage_mode}" if storage_mode else "    storage: index_only",
                 "    gsis:",
                 "      by_user:",
                 "        partition_key: user_id",
@@ -90,7 +106,22 @@ def write_yaml_schema(path: Path, include_posts: bool, gsi_count: int) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def generate_data(root: Path, total_users: int, include_posts: bool) -> None:
+def _make_text(length: int) -> str:
+    base = "lorem ipsum dolor sit amet consectetur adipiscing elit "
+    if length <= 0:
+        return ""
+    repeats = (length // len(base)) + 1
+    return (base * repeats)[:length].strip()
+
+
+def generate_data(
+    root: Path,
+    total_users: int,
+    include_posts: bool,
+    search_enabled: bool,
+    text_size: int,
+    record_size_kb: float,
+) -> None:
     users_dir = root / "users"
     users_dir.mkdir(parents=True, exist_ok=True)
     posts_dir = root / "posts"
@@ -98,14 +129,21 @@ def generate_data(root: Path, total_users: int, include_posts: bool) -> None:
         posts_dir.mkdir(parents=True, exist_ok=True)
 
     statuses = ["active", "inactive", "suspended"]
+    bio_text = _make_text(text_size) if search_enabled else ""
+    payload_text = _make_text(int(record_size_kb * 1024)) if record_size_kb > 0 else ""
     for i in range(total_users):
         record = {
             "id": f"user-{i}",
+            "name": f"User {i}",
             "status": statuses[i % len(statuses)],
             "org_id": f"org-{i % max(1, total_users // 10)}",
             "created_at": f"2025-01-{(i % 28) + 1:02d}",
             "segment": "vip" if i % 10 == 0 else "std",
         }
+        if search_enabled:
+            record["bio"] = bio_text
+        if payload_text:
+            record["payload"] = payload_text
         write_json(users_dir / f"user-{i}.json", record)
 
     if include_posts:
@@ -198,6 +236,21 @@ def parse_list(value: str) -> list[int]:
     return out
 
 
+def parse_float_list(value: str) -> list[float]:
+    out: list[float] = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            out.append(float(part))
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"invalid float: {part}")
+    if not out:
+        raise argparse.ArgumentTypeError("empty list")
+    return out
+
+
 def _format_kb(value: float) -> str:
     if value >= 1024 * 1024:
         return f"{value / 1024 / 1024:.2f} GB"
@@ -216,86 +269,130 @@ def main() -> None:
     parser.add_argument("--gsis", default="0,1,3", type=str)
     parser.add_argument("--posts", dest="posts", action="store_true", default=True)
     parser.add_argument("--no-posts", dest="posts", action="store_false")
+    parser.add_argument("--search", dest="search", action="store_true", default=False)
+    parser.add_argument("--text-size", type=int, default=200)
+    parser.add_argument("--storage", type=str, default="index_only")
+    parser.add_argument("--record-size-kb", type=str, default="0")
     parser.add_argument("--port", type=int, default=18080)
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks" / "output_memory")
     args = parser.parse_args()
 
     totals = parse_list(args.totals)
     gsi_counts = parse_list(args.gsis)
+    record_sizes = parse_float_list(args.record_size_kb)
+    storage_modes = [s.strip() for s in args.storage.split(",") if s.strip()]
     bin_path = ensure_binary()
     out_dir = args.output
     out_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
 
-    for total in totals:
-        for gsi_count in gsi_counts:
-            for include_posts in ([True] if args.posts else [False]):
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    data_root = Path(tmpdir)
-                    generate_data(data_root, total, include_posts)
-                    schema_path = data_root / "schema.yml"
-                    write_yaml_schema(schema_path, include_posts, gsi_count)
+    search_fields = ["name", "bio"] if args.search else []
+    for record_size_kb in record_sizes:
+        for storage_mode in storage_modes or ["index_only"]:
+            for total in totals:
+                for gsi_count in gsi_counts:
+                    for include_posts in ([True] if args.posts else [False]):
+                        with tempfile.TemporaryDirectory() as tmpdir:
+                            data_root = Path(tmpdir)
+                            generate_data(
+                                data_root,
+                                total,
+                                include_posts,
+                                args.search,
+                                args.text_size,
+                                record_size_kb,
+                            )
+                            schema_path = data_root / "schema.yml"
+                            write_yaml_schema(
+                                schema_path,
+                                include_posts,
+                                gsi_count,
+                                args.search,
+                                search_fields,
+                                storage_mode,
+                            )
 
-                    port = _pick_port(args.port)
-                    proc = start_server(bin_path, data_root, schema_path, port)
-                    try:
-                        if not wait_for_port("127.0.0.1", port, timeout=20.0):
-                            raise RuntimeError(f"server did not open port {port}")
-                        if proc.poll() is not None:
-                            raise RuntimeError(f"server exited early with code {proc.returncode}")
-                        mem = query_memory(bin_path, port)
-                    finally:
-                        stop_process(proc)
+                            port = _pick_port(args.port)
+                            proc = start_server(bin_path, data_root, schema_path, port)
+                            try:
+                                if not wait_for_port("127.0.0.1", port, timeout=20.0):
+                                    raise RuntimeError(f"server did not open port {port}")
+                                if proc.poll() is not None:
+                                    raise RuntimeError(
+                                        f"server exited early with code {proc.returncode}"
+                                    )
+                                mem = query_memory(bin_path, port)
+                            finally:
+                                stop_process(proc)
 
-                    rss_kb = mem.get("rss_kb")
-                    results.append(
-                        {
-                            "total_users": total,
-                            "gsi_count": gsi_count,
-                            "include_posts": include_posts,
-                            "rss_kb": rss_kb,
-                            "rss_bytes": mem.get("rss_bytes"),
-                        }
-                    )
+                            rss_kb = mem.get("rss_kb")
+                            results.append(
+                                {
+                                    "total_users": total,
+                                    "gsi_count": gsi_count,
+                                    "include_posts": include_posts,
+                                    "search_enabled": args.search,
+                                    "text_size": args.text_size if args.search else 0,
+                                    "record_size_kb": record_size_kb,
+                                    "storage_mode": storage_mode,
+                                    "rss_kb": rss_kb,
+                                    "rss_bytes": mem.get("rss_bytes"),
+                                }
+                            )
     results_path = out_dir / "results.json"
     results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-    csv_lines = ["total_users,gsi_count,include_posts,rss_kb"]
+    csv_lines = [
+        "total_users,gsi_count,include_posts,search_enabled,text_size,record_size_kb,storage_mode,rss_kb"
+    ]
     for row in results:
         csv_lines.append(
-            f"{row['total_users']},{row['gsi_count']},{int(row['include_posts'])},{row.get('rss_kb','')}"
+            f"{row['total_users']},{row['gsi_count']},{int(row['include_posts'])},{int(row.get('search_enabled', False))},{row.get('text_size',0)},{row.get('record_size_kb',0)},{row.get('storage_mode','')},{row.get('rss_kb','')}"
         )
     (out_dir / "results.csv").write_text("\n".join(csv_lines) + "\n", encoding="utf-8")
 
-    # render chart
+    # render chart(s)
     categories = sorted({r["total_users"] for r in results})
-    series_labels = [_gsi_label(g) for g in sorted({r["gsi_count"] for r in results})]
-    data: dict[str, dict[str, float]] = {}
-    for total in categories:
-        label = f"{total:,} users"
-        data[label] = {}
-        for g in sorted({r["gsi_count"] for r in results}):
-            g_label = _gsi_label(g)
-            match = next(
-                (
-                    r
-                    for r in results
-                    if r["total_users"] == total and r["gsi_count"] == g and r["include_posts"]
-                ),
-                None,
-            )
-            if match:
-                data[label][g_label] = float(match.get("rss_kb") or 0)
-    chart_path = out_dir / "memory_rss.png"
-    viz._render_horizontal_bar_chart(
-        "RSS by corpus size and GSI count (includes posts associations)",
-        [f"{c:,} users" for c in categories],
-        series_labels,
-        data,
-        chart_path,
-        value_formatter=_format_kb,
-    )
+    record_sizes = sorted({r.get("record_size_kb", 0) for r in results})
+    gsi_counts = sorted({r["gsi_count"] for r in results})
+    storage_modes = sorted({r.get("storage_mode", "index_only") for r in results})
+    for record_size_kb in record_sizes:
+        series_labels = []
+        for storage_mode in storage_modes:
+            for gsi_count in gsi_counts:
+                series_labels.append(f"{storage_mode} {_gsi_label(gsi_count)}")
+        data: dict[str, dict[str, float]] = {}
+        for total in categories:
+            label = f"{total:,} users"
+            data[label] = {}
+            for storage_mode in storage_modes:
+                for gsi_count in gsi_counts:
+                    series_label = f"{storage_mode} {_gsi_label(gsi_count)}"
+                    match = next(
+                        (
+                            r
+                            for r in results
+                            if r["total_users"] == total
+                            and r["gsi_count"] == gsi_count
+                            and r["include_posts"]
+                            and r.get("storage_mode") == storage_mode
+                            and float(r.get("record_size_kb", 0)) == float(record_size_kb)
+                        ),
+                        None,
+                    )
+                    if match:
+                        data[label][series_label] = float(match.get("rss_kb") or 0)
+        suffix = f"{record_size_kb:g}kb" if record_size_kb else "base"
+        chart_path = out_dir / f"memory_rss_{suffix}.png"
+        viz._render_horizontal_bar_chart(
+            f"RSS by corpus size and GSI count (record size {record_size_kb:g} KB)",
+            [f"{c:,} users" for c in categories],
+            series_labels,
+            data,
+            chart_path,
+            value_formatter=_format_kb,
+        )
 
     print(f"Wrote {len(results)} samples to {results_path}")
 

@@ -39,6 +39,12 @@ benchmarks/output_py/posts/
 benchmarks/output_py/comments/
 benchmarks/output_py/social_media_scale_*/
 benchmarks/output_py/social_media_total_*/
+# Storage-mode benchmark datasets (keep charts/results)
+# NOTE: All storage-mode benchmark outputs are ignored to keep the repo clean.
+benchmarks/output_storage/**
+# Other benchmark dataset dumps
+benchmarks/output_memory_*/
+benchmarks/output_search_*/
 project-local/
 
 # Examples

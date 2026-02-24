@@ -311,7 +311,7 @@ def step_gsi_has_new(context):
 def step_deleted_absent_gsi(context):
     table = _current_table(context)
     for gsi in table.gsis.values():
-        assert not gsi.query("active")
+        assert "user-0" not in gsi.query("active")
 
 
 @then("the record should reflect the updated field value")

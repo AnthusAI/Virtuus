@@ -78,6 +78,8 @@ class Database:
                 sort_key=conf.get("sort_key"),
                 directory=directory,
                 validation="warn",
+                storage=conf.get("storage"),
+                search_fields=(conf.get("search") or {}).get("fields"),
             )
             for gsi_name, gsi_conf in conf.get("gsis", {}).items():
                 table.add_gsi(
@@ -140,6 +142,8 @@ class Database:
                 sort_key=conf.get("sort_key"),
                 directory=directory,
                 validation="warn",
+                storage=conf.get("storage"),
+                search_fields=(conf.get("search") or {}).get("fields"),
             )
             for gsi_name, gsi_conf in conf.get("gsis", {}).items():
                 table.add_gsi(
@@ -244,7 +248,15 @@ class Database:
                 result = self._project(result, directive["fields"])
             return self._apply_includes(table_name, result, directive.get("include"))
 
-        if "index" in directive:
+        if "search" in directive:
+            query_text = str(directive.get("search") or "")
+            where = directive.get("where", {})
+            records = [
+                record
+                for record in table.search(query_text)
+                if self._record_matches(record, where)
+            ]
+        elif "index" in directive:
             gsi_name = directive["index"]
             if gsi_name not in table.gsis:
                 raise KeyError(f'GSI "{gsi_name}" does not exist')

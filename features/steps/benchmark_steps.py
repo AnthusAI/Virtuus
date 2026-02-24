@@ -5,6 +5,8 @@ import json
 import os
 import random
 import struct
+import subprocess
+import sys
 import time
 import zlib
 from typing import Callable
@@ -21,6 +23,7 @@ from virtuus._python import Table as PyTable
 try:  # pragma: no cover - optional Rust backend
     from virtuus._rust import Database as RsDatabase
     from virtuus._rust import Table as RsTable
+
     HAS_RUST_BACKEND = True
 except Exception:  # noqa: BLE001
     HAS_RUST_BACKEND = False
@@ -45,6 +48,14 @@ def _bench_backend(context) -> str:
     return backend
 
 
+def _bench_storage_mode(context) -> str | None:
+    return getattr(context, "bench_storage_mode", None)
+
+
+def _bench_record_size_kb(context) -> float | None:
+    return getattr(context, "bench_record_size_kb", None)
+
+
 def _ensure_bench_root(context) -> Path:
     env_dir = os.getenv("VIRTUUS_BENCH_DIR")
     if env_dir:
@@ -65,12 +76,19 @@ def _bench_data_root(context) -> Path:
     scale = getattr(context, "bench_scale", 1)
     backend = _bench_backend(context)
     total_target = getattr(context, "bench_total_records_target", None)
+    record_size_kb = _bench_record_size_kb(context)
+    record_tag = ""
+    if record_size_kb is not None:
+        record_tag = f"_record_{record_size_kb:g}kb"
     if total_target is not None:
-        data_root = root / f"{profile}_total_{total_target}_{backend}"
+        data_root = root / f"{profile}_total_{total_target}{record_tag}_{backend}"
     else:
-        data_root = root / f"{profile}_scale_{scale}_{backend}"
+        data_root = root / f"{profile}_scale_{scale}{record_tag}_{backend}"
     data_root.mkdir(parents=True, exist_ok=True)
     context.bench_data_root = data_root
+    print(
+        f"[bench_root] profile={profile} total={total_target} record_size_kb={record_size_kb} backend={backend} -> {data_root}"
+    )
     return data_root
 
 
@@ -108,6 +126,23 @@ def _entry_primary_value(entry: dict) -> float | None:
             idx = int(0.95 * (len(vals) - 1))
             return vals[idx]
     return None
+
+
+def _augment_metadata(context, metadata: dict) -> None:
+    storage_mode = _bench_storage_mode(context)
+    record_size_kb = _bench_record_size_kb(context)
+    if storage_mode is not None:
+        metadata["storage_mode"] = storage_mode
+    if record_size_kb is not None:
+        metadata["record_size_kb"] = record_size_kb
+    metadata["profile"] = getattr(context, "bench_profile", "social_media")
+    metadata["backend"] = _bench_backend(context)
+    instance_type = (
+        getattr(context, "bench_instance_type", None)
+        or os.getenv("VIRTUUS_BENCH_INSTANCE_TYPE")
+    )
+    if instance_type:
+        metadata["instance_type"] = instance_type
 
 
 def _bench_totals() -> list[int]:
@@ -258,13 +293,17 @@ def _text_width(text: str, scale: int = 1) -> int:
     return len(text) * (5 + 1) * scale - scale
 
 
-def _new_canvas(width: int, height: int, color: tuple[int, int, int, int]) -> list[bytearray]:
+def _new_canvas(
+    width: int, height: int, color: tuple[int, int, int, int]
+) -> list[bytearray]:
     r, g, b, a = color
     row = bytearray([r, g, b, a] * width)
     return [bytearray(row) for _ in range(height)]
 
 
-def _set_pixel(rows: list[bytearray], x: int, y: int, color: tuple[int, int, int, int]) -> None:
+def _set_pixel(
+    rows: list[bytearray], x: int, y: int, color: tuple[int, int, int, int]
+) -> None:
     if y < 0 or y >= len(rows):
         return
     if x < 0 or x * 4 >= len(rows[y]):
@@ -429,7 +468,9 @@ def _render_bar_chart(  # pragma: no cover - currently unused in Behave flow
         bar_width = int(bar_max * (value / max_val))
         _draw_rect(rows, bar_left, y + 8, bar_width, 16, bar_color)
         value_text = _format_value_ms(value)
-        _draw_text(rows, bar_left + bar_width + 12, y + 4, value_text, text_color, scale=1)
+        _draw_text(
+            rows, bar_left + bar_width + 12, y + 4, value_text, text_color, scale=1
+        )
     _write_png(path, width, height, rows)
 
 
@@ -439,6 +480,10 @@ def _render_line_chart(
     path: Path,
     series_order: list[str] | None = None,
     annotations: list[dict] | None = None,
+    x_label: str = "TOTAL RECORDS",
+    x_formatter: Callable[[int], str] | None = None,
+    y_label: str = "MS",
+    y_formatter: Callable[[float], str] | None = None,
 ) -> None:
     width = 880
     height = 560
@@ -452,8 +497,8 @@ def _render_line_chart(
     grid_color = (210, 214, 220, 255)
     # Palette: magenta + light blue alternation for clarity
     palette = [
-        (204, 0, 153, 255),   # magenta
-        (102, 204, 255, 255), # light blue
+        (204, 0, 153, 255),  # magenta
+        (102, 204, 255, 255),  # light blue
     ]
     rows = _new_canvas(width, height, bg)
     _draw_text(rows, 20, 20, name, text_color, scale=2)
@@ -480,18 +525,38 @@ def _render_line_chart(
     for total in totals:
         x = x_positions[total]
         _draw_line(rows, x, plot_bottom, x, plot_bottom + 4, axis_color)
-        label = _format_int(total)
-        _draw_text(rows, max(x - _text_width(label, 1) // 2, 0), plot_bottom + 8, label, text_color, scale=1)
+        if x_formatter:
+            label = x_formatter(total)
+        else:
+            label = _format_int(total)
+        _draw_text(
+            rows,
+            max(x - _text_width(label, 1) // 2, 0),
+            plot_bottom + 8,
+            label,
+            text_color,
+            scale=1,
+        )
     y_ticks = 4
     for idx in range(y_ticks + 1):
         y_value = max_y * idx / y_ticks
         y = plot_bottom - int(plot_height * idx / y_ticks)
         _draw_line(rows, plot_left, y, plot_right, y, grid_color)
         _draw_line(rows, plot_left - 4, y, plot_left, y, axis_color)
-        label = _format_value_ms(y_value).replace(" MS", "")
-        _draw_text(rows, max(plot_left - 6 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
-    _draw_text(rows, plot_left, plot_bottom + 32, "TOTAL RECORDS", text_color, scale=1)
-    _draw_text(rows, 20, plot_top + 10, "MS", text_color, scale=1)
+        if y_formatter:
+            label = y_formatter(y_value)
+        else:
+            label = _format_value_ms(y_value).replace(" MS", "")
+        _draw_text(
+            rows,
+            max(plot_left - 6 - _text_width(label, 1), 0),
+            y - 3,
+            label,
+            text_color,
+            scale=1,
+        )
+    _draw_text(rows, plot_left, plot_bottom + 32, x_label, text_color, scale=1)
+    _draw_text(rows, 20, plot_top + 10, y_label, text_color, scale=1)
     ordered_labels = series_order or list(series.keys())
     label_colors = {
         label: palette[idx % len(palette)] for idx, label in enumerate(ordered_labels)
@@ -501,7 +566,7 @@ def _render_line_chart(
     for idx, label in enumerate(ordered_labels):
         color = label_colors[label]
         _draw_rect(rows, legend_x, legend_y, 14, 8, color)
-        _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
+        _draw_text(rows, legend_x + 20, legend_y - 2, label, text_color, scale=1)
         legend_x += 160
     for idx, label in enumerate(ordered_labels):
         color = label_colors[label]
@@ -585,14 +650,23 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     plot_bottom = height - margin_bottom
     plot_height = plot_bottom - plot_top
     _draw_line(rows, margin_left, plot_top, margin_left, plot_bottom, axis_color)
-    _draw_line(rows, margin_left, plot_bottom, width - margin_right, plot_bottom, axis_color)
+    _draw_line(
+        rows, margin_left, plot_bottom, width - margin_right, plot_bottom, axis_color
+    )
     y_ticks = 5
     for idx in range(y_ticks + 1):
         val = max_val * idx / y_ticks
         y = plot_bottom - int(plot_height * idx / y_ticks)
         _draw_line(rows, margin_left - 4, y, margin_left, y, axis_color)
         label = _format_value_ms(val).replace(" MS", "")
-        _draw_text(rows, max(margin_left - 8 - _text_width(label, 1), 0), y - 3, label, text_color, scale=1)
+        _draw_text(
+            rows,
+            max(margin_left - 8 - _text_width(label, 1), 0),
+            y - 3,
+            label,
+            text_color,
+            scale=1,
+        )
     cursor_x = margin_left
     for cat in categories:
         cat_center = cursor_x + group_width // 2
@@ -635,7 +709,9 @@ def _render_grouped_bar_chart(  # pragma: no cover - exercised via tools/bench_c
     for idx, label in enumerate(series_labels):
         color = palette[idx % len(palette)]
         _draw_rect(rows, legend_x, legend_y, 14, 10, color)
-        _draw_text(rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1)
+        _draw_text(
+            rows, legend_x + 20, legend_y - 2, label.upper(), text_color, scale=1
+        )
         legend_x += 180
     _write_png(path, width, height, rows)
 
@@ -693,7 +769,14 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
         x = plot_left + int(plot_width * idx / x_ticks)
         _draw_line(rows, x, plot_top - 4, x, height - margin_bottom + 6, axis_color)
         label = value_formatter(val).replace(" MS", "")
-        _draw_text(rows, x - _text_width(label, 1) // 2, height - margin_bottom + 24, label, text_color, scale=1)
+        _draw_text(
+            rows,
+            x - _text_width(label, 1) // 2,
+            height - margin_bottom + 24,
+            label,
+            text_color,
+            scale=1,
+        )
 
     cursor_y = plot_top
     for cat in categories:
@@ -723,7 +806,9 @@ def _render_horizontal_bar_chart(  # pragma: no cover - exercised via tools/benc
     for idx, label in enumerate(series_labels):
         color = palette[idx % len(palette)]
         _draw_rect(rows, legend_x, legend_y, 16, 12, color)
-        _draw_text(rows, legend_x + 24, legend_y - 2, label.upper(), text_color, scale=1)
+        _draw_text(
+            rows, legend_x + 24, legend_y - 2, label.upper(), text_color, scale=1
+        )
         legend_x += 200
     _write_png(path, width, height, rows)
 
@@ -785,6 +870,22 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
+def _make_text(length: int) -> str:
+    base = "lorem ipsum dolor sit amet consectetur adipiscing elit "
+    if length <= 0:
+        return ""
+    repeats = (length // len(base)) + 1
+    return (base * repeats)[:length].strip()
+
+
+def _record_payload(context) -> str:
+    record_size_kb = _bench_record_size_kb(context)
+    if record_size_kb is None:
+        return ""
+    target = max(int(record_size_kb * 1024), 0)
+    return _make_text(target)
+
+
 def _generate_social_media(context, root: Path, scale: int) -> None:
     users_dir = root / "users"
     posts_dir = root / "posts"
@@ -811,8 +912,16 @@ def _generate_social_media(context, root: Path, scale: int) -> None:
     end_date = date(2025, 12, 31)
     total_days = (end_date - start_date).days or 1
 
+    payload = _record_payload(context)
+    bio_text = payload
     for i in range(user_count):
-        record = {"id": f"user-{i}", "status": statuses[i % len(statuses)]}
+        record = {
+            "id": f"user-{i}",
+            "name": f"User {i}",
+            "status": statuses[i % len(statuses)],
+        }
+        if bio_text:
+            record["bio"] = bio_text
         _write_json(users_dir / f"user-{i}.json", record)
 
     for i in range(post_count):
@@ -837,6 +946,155 @@ def _generate_social_media(context, root: Path, scale: int) -> None:
         "comments": comment_count,
     }
     context.bench_date_range = (start_date.isoformat(), end_date.isoformat())
+    if bio_text:
+        tokens = _tokenize_text(bio_text)
+        if tokens:
+            single = tokens[0]
+            multi = " ".join(tokens[:2]) if len(tokens) > 1 else single
+        else:
+            single = "lorem"
+            multi = "lorem ipsum"
+        context.bench_search_terms = {"single": single, "multi": multi}
+
+
+def _generate_single_table(context, root: Path, scale: int) -> None:
+    start = time.time()
+    print(
+        f"[generate_single_table] start scale={scale} record_size_kb={_bench_record_size_kb(context)}"
+    )
+    docs_dir = root / "documents"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    total_target = getattr(context, "bench_total_records_target", None)
+    if total_target is not None:
+        total = int(total_target)
+    else:
+        total = 10000 * scale
+    body_text = _record_payload(context)
+    if not body_text:
+        body_text = _make_text(512)
+    sample_tokens: list[str] = []
+    start_date = date(2025, 1, 1)
+    for i in range(total):
+        created_at = start_date + timedelta(days=i % 365)
+        record = {
+            "id": f"doc-{i}",
+            "title": f"Doc {i}",
+            "category": f"cat-{i % 10}",
+            "created_at": created_at.isoformat(),
+            "body": body_text,
+        }
+        _write_json(docs_dir / f"doc-{i}.json", record)
+        if not sample_tokens:
+            tokens = _tokenize_text(f"{record['title']} {record['body']}")
+            if tokens:
+                sample_tokens = tokens
+    context.bench_counts = {"documents": total}
+    # Use a narrow search term so search benchmarks don't materialize all records
+    # (limits the candidate set and keeps index-only mode fast).
+    single = "doc 1"
+    multi = "doc 1"
+    context.bench_search_terms = {"single": single, "multi": multi}
+    print(
+        f"[generate_single_table] done total={total} elapsed={time.time()-start:.2f}s"
+    )
+
+
+def _normalize_text(value) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts = [item for item in value if isinstance(item, str)]
+        return " ".join(parts)
+    return ""
+
+
+def _first_text_field(row: dict, fields: list[str]) -> str:
+    for field in fields:
+        if field in row:
+            text = _normalize_text(row[field])
+            if text:
+                return text
+    return ""
+
+
+def _collect_text_fields(row: dict, exclude: set[str]) -> str:
+    parts = []
+    for key, value in row.items():
+        if key in exclude:
+            continue
+        text = _normalize_text(value)
+        if text:
+            parts.append(text)
+    return " ".join(parts)
+
+
+def _tokenize_text(text: str) -> list[str]:
+    tokens = []
+    current = []
+    for ch in text:
+        if ch.isalnum():
+            current.append(ch.lower())
+        elif current:
+            tokens.append("".join(current))
+            current = []
+    if current:
+        tokens.append("".join(current))
+    return tokens
+
+
+def _generate_bbc_news_alltime(context, root: Path, scale: int) -> None:
+    try:
+        from datasets import load_dataset  # type: ignore
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            "datasets library is required for BBC benchmarks (pip install datasets)"
+        ) from exc
+
+    dataset_name = os.getenv(
+        "VIRTUUS_BENCH_NEWS_DATASET", "RealTimeData/bbc_news_alltime"
+    )
+    dataset_config = os.getenv("VIRTUUS_BENCH_NEWS_DATASET_CONFIG")
+    if ":" in dataset_name:
+        dataset_name, dataset_config = dataset_name.split(":", 1)
+    if dataset_config:
+        dataset = load_dataset(dataset_name, dataset_config, split="train")
+    else:
+        dataset = load_dataset(dataset_name, split="train")
+    total_target = getattr(context, "bench_total_records_target", None)
+    target = total_target or int(50000 * scale)
+    total = min(len(dataset), max(1, target))
+    news_dir = root / "news"
+    news_dir.mkdir(parents=True, exist_ok=True)
+    sample_tokens: list[str] = []
+    for idx in range(total):
+        row = dataset[int(idx)]
+        title = _first_text_field(
+            row, ["title", "headline", "short_description", "summary"]
+        )
+        body = _first_text_field(
+            row, ["content", "text", "body", "article", "description"]
+        )
+        if not body:
+            body = _collect_text_fields(row, {"id", "article_id", "title", "headline"})
+        record_id = row.get("id") or row.get("article_id") or f"news-{idx}"
+        record = {
+            "id": str(record_id),
+            "title": title,
+            "body": body,
+        }
+        _write_json(news_dir / f"{record['id']}.json", record)
+        if not sample_tokens:
+            tokens = _tokenize_text(f"{title} {body}")
+            if tokens:
+                sample_tokens = tokens
+    context.bench_counts = {"news": total}
+    if sample_tokens:
+        single = sample_tokens[0]
+        multi = " ".join(sample_tokens[:2]) if len(sample_tokens) > 1 else single
+    else:
+        single = "news"
+        multi = "news update"
+    context.bench_search_terms = {"single": single, "multi": multi}
 
 
 def _generate_complex_hierarchy(context, root: Path, scale: int) -> None:
@@ -854,11 +1112,19 @@ def _ensure_fixtures(context) -> None:
     root = _bench_data_root(context)
     generated = getattr(context, "bench_generated_scales", set())
     total_target = getattr(context, "bench_total_records_target", None)
-    key = (profile, scale, total_target)
+    record_size_kb = _bench_record_size_kb(context)
+    key = (profile, scale, total_target, record_size_kb)
     if key in generated:
         return
+    print(
+        f"[fixtures] start profile={profile} total={total_target} record_size_kb={record_size_kb} backend={_bench_backend(context)}"
+    )
     if profile == "social_media":
         _generate_social_media(context, root, scale)
+    elif profile == "single_table":
+        _generate_single_table(context, root, scale)
+    elif profile == "bbc_news_alltime":
+        _generate_bbc_news_alltime(context, root, scale)
     elif profile == "complex_hierarchy":
         _generate_complex_hierarchy(context, root, scale)
     else:
@@ -866,6 +1132,9 @@ def _ensure_fixtures(context) -> None:
     generated.add(key)
     context.bench_generated_scales = generated
     context.bench_db = None
+    print(
+        f"[fixtures] done profile={profile} total={total_target} record_size_kb={record_size_kb} backend={_bench_backend(context)} root={root}"
+    )
 
 
 def _load_warm_db(context):
@@ -874,13 +1143,85 @@ def _load_warm_db(context):
     backend = _bench_backend(context)
     DatabaseCls, TableCls = _db_table_for_backend(backend)
     root = _bench_data_root(context)
+    profile = getattr(context, "bench_profile", "social_media")
+    storage_mode = _bench_storage_mode(context)
+    search_enabled = getattr(context, "bench_search_enabled", False)
+    print(
+        f"[load_db] start backend={backend} profile={profile} storage={storage_mode} search={search_enabled} root={root}"
+    )
+    if profile == "bbc_news_alltime":
+        news_dir = root / "news"
+        db = DatabaseCls()
+        news = TableCls(
+            "news",
+            primary_key="id",
+            directory=str(news_dir),
+            storage=storage_mode,
+            search_fields=["title", "body"],
+        )
+        news.load_from_dir()
+        db.add_table("news", news)
+        context.bench_db = db
+        return db
+    if profile == "single_table":
+        docs_dir = root / "documents"
+        db = DatabaseCls()
+        search_fields = ["title", "body"] if search_enabled else None
+        start_load = time.time()
+        docs = TableCls(
+            "documents",
+            primary_key="id",
+            directory=str(docs_dir),
+            storage=storage_mode,
+            search_fields=search_fields,
+        )
+        print(f"[load_db] documents load_from_dir start path={docs_dir}")
+        docs.load_from_dir()
+        print(
+            f"[load_db] documents load_from_dir done in {time.time()-start_load:.2f}s"
+        )
+        docs.add_gsi("by_category", "category")
+        docs.add_gsi("by_category_created", "category", "created_at")
+        start_reindex = time.time()
+        dir_backup = getattr(docs, "directory", None)
+        docs.directory = None
+        for idx, record in enumerate(docs.scan(), 1):
+            docs.put(record)
+            if idx % 2000 == 0:
+                print(
+                    f"[load_db] documents reindex progress {idx}/{len(docs._record_keys)}"
+                )
+        docs.directory = dir_backup
+        print(
+            f"[load_db] documents reindex pass done in {time.time()-start_reindex:.2f}s"
+        )
+        db.add_table("documents", docs)
+        context.bench_db = db
+        return db
     users_dir = root / "users"
     posts_dir = root / "posts"
     comments_dir = root / "comments"
     db = DatabaseCls()
-    users = TableCls("users", primary_key="id", directory=str(users_dir))
-    posts = TableCls("posts", primary_key="id", directory=str(posts_dir))
-    comments = TableCls("comments", primary_key="id", directory=str(comments_dir))
+    search_fields = ["name", "bio"] if search_enabled else None
+    users = TableCls(
+        "users",
+        primary_key="id",
+        directory=str(users_dir),
+        storage=storage_mode,
+        search_fields=search_fields,
+    )
+    posts = TableCls(
+        "posts",
+        primary_key="id",
+        directory=str(posts_dir),
+        storage=storage_mode,
+    )
+    comments = TableCls(
+        "comments",
+        primary_key="id",
+        directory=str(comments_dir),
+        storage=storage_mode,
+    )
     users.load_from_dir()
     posts.load_from_dir()
     comments.load_from_dir()
@@ -892,7 +1233,30 @@ def _load_warm_db(context):
     db.add_table("posts", posts)
     db.add_table("comments", comments)
     context.bench_db = db
+    print(
+        f"[load_db] done backend={backend} profile={profile} storage={storage_mode} search={search_enabled} root={root}"
+    )
     return db
+
+
+def _primary_table(context, db):
+    profile = getattr(context, "bench_profile", "social_media")
+    if profile == "single_table":
+        return db.tables["documents"]
+    if profile == "bbc_news_alltime":
+        return db.tables["news"]
+    return db.tables["users"]
+
+
+def _search_table(context, db):
+    return _primary_table(context, db)
+
+
+def _gsi_table_info(context, db):
+    profile = getattr(context, "bench_profile", "social_media")
+    if profile == "single_table":
+        return db.tables["documents"], "by_category", "by_category_created", "category"
+    return db.tables["posts"], "by_user", "by_user_created", "user_id"
 
 
 def _percentile(sorted_values: list[float], pct: float) -> float:
@@ -919,6 +1283,14 @@ def step_dir_count(context, table: str, count: int):
     directory = root / table
     files = [p for p in directory.iterdir() if p.suffix == ".json"]
     assert len(files) == count
+
+
+@then('the "{table}" directory should contain at least {count:d} JSON files')
+def step_dir_count_min(context, table: str, count: int):
+    root = _bench_data_root(context)
+    directory = root / table
+    files = [p for p in directory.iterdir() if p.suffix == ".json"]
+    assert len(files) >= count
 
 
 @given('generated "{profile}" fixtures')
@@ -1038,6 +1410,7 @@ def step_run_benchmark(context, benchmark: str):
     if isinstance(counts, dict):
         metadata["counts"] = counts
         metadata["total_records"] = sum(int(v) for v in counts.values())
+    _augment_metadata(context, metadata)
     context.last_benchmark = {
         "name": benchmark,
         "timing_ms": elapsed_ms,
@@ -1048,37 +1421,66 @@ def step_run_benchmark(context, benchmark: str):
 @when('I run the "{benchmark}" benchmark for {iterations:d} iterations')
 def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
     db = _load_warm_db(context)
-    users = db.tables["users"]
-    posts = db.tables["posts"]
-    user_ids = [record["id"] for record in users.scan()][:iterations]
     min_total_ns = 200_000_000
     batch_size = 1
-    if benchmark == "pk_lookup":
+    if benchmark in {"search_single_term", "search_multi_term"}:
+        table = _search_table(context, db)
+        terms = getattr(
+            context, "bench_search_terms", {"single": "news", "multi": "news update"}
+        )
+        query = terms["single"] if benchmark == "search_single_term" else terms["multi"]
+        min_total_ns = 250_000_000
+        batch_size = 10
+
+        def op() -> None:
+            table.search(query)
+
+        timings = _collect_timings(op, iterations, batch_size, min_total_ns)
+    elif benchmark == "pk_lookup":
+        table = _primary_table(context, db)
+        record_ids = [record["id"] for record in table.scan()][:iterations]
         min_total_ns = 150_000_000
         batch_size = 200
 
         def op() -> None:
-            pk = user_ids[random.randrange(len(user_ids))]
-            users.get(pk)
+            pk = record_ids[random.randrange(len(record_ids))]
+            table.get(pk)
 
         timings = _collect_timings(op, iterations, batch_size, min_total_ns)
     elif benchmark == "gsi_partition_lookup":
+        gsi_table, gsi_name, _, gsi_field = _gsi_table_info(context, db)
+        gsi_keys = [
+            record[gsi_field] for record in gsi_table.scan() if gsi_field in record
+        ][:iterations]
         min_total_ns = 250_000_000
         batch_size = 40
 
         def op() -> None:
-            user_id = user_ids[random.randrange(len(user_ids))]
-            posts.query_gsi("by_user", user_id)
+            key = gsi_keys[random.randrange(len(gsi_keys))]
+            gsi_table.query_gsi(gsi_name, key)
 
         timings = _collect_timings(op, iterations, batch_size, min_total_ns)
     elif benchmark == "gsi_sorted_query":
+        gsi_table, _, gsi_sorted, gsi_field = _gsi_table_info(context, db)
+        gsi_keys = [
+            record[gsi_field] for record in gsi_table.scan() if gsi_field in record
+        ][:iterations]
         min_total_ns = 300_000_000
         batch_size = 20
         predicate = Sort.gte("2025-06-01")
 
         def op() -> None:
-            user_id = user_ids[random.randrange(len(user_ids))]
-            posts.query_gsi("by_user_created", user_id, predicate, False)
+            key = gsi_keys[random.randrange(len(gsi_keys))]
+            gsi_table.query_gsi(gsi_sorted, key, predicate, False)
+
+        timings = _collect_timings(op, iterations, batch_size, min_total_ns)
+    elif benchmark == "scan":
+        table = _primary_table(context, db)
+        min_total_ns = 300_000_000
+        batch_size = 1
+
+        def op() -> None:
+            table.scan()
 
         timings = _collect_timings(op, iterations, batch_size, min_total_ns)
     else:
@@ -1097,6 +1499,7 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
     if isinstance(counts, dict):
         metadata["counts"] = counts
         metadata["total_records"] = sum(int(v) for v in counts.values())
+    _augment_metadata(context, metadata)
     context.last_benchmark = {
         "name": benchmark,
         "timings": timings,
@@ -1107,23 +1510,97 @@ def step_run_benchmark_iterations(context, benchmark: str, iterations: int):
 @when('I add 1 file and run the "{benchmark}" benchmark')
 def step_run_incremental_refresh(context, benchmark: str):
     db = _load_warm_db(context)
-    users = db.tables["users"]
-    directory = Path(users.directory)
-    new_id = f"user-new-{random.randint(100000, 999999)}"
-    _write_json(directory / f"{new_id}.json", {"id": new_id, "status": "active"})
+    table = _primary_table(context, db)
+    directory = Path(table.directory)
+    profile = getattr(context, "bench_profile", "social_media")
+    new_id = f"{table.name}-new-{random.randint(100000, 999999)}"
+    if profile == "single_table":
+        record = {
+            "id": new_id,
+            "title": "New doc",
+            "category": "cat-new",
+            "created_at": date(2025, 6, 1).isoformat(),
+            "body": _record_payload(context) or _make_text(256),
+        }
+    elif profile == "bbc_news_alltime":
+        record = {
+            "id": new_id,
+            "title": "New article",
+            "body": _make_text(256),
+        }
+    else:
+        record = {"id": new_id, "status": "active"}
+        payload = _record_payload(context)
+        if payload:
+            record["bio"] = payload
+    _write_json(directory / f"{new_id}.json", record)
     start = time.perf_counter()
-    _ = users.refresh()
+    _ = table.refresh()
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     counts = getattr(context, "bench_counts", None)
     metadata = {"scale": getattr(context, "bench_scale", 1)}
     if isinstance(counts, dict):
         metadata["counts"] = counts
         metadata["total_records"] = sum(int(v) for v in counts.values())
+    _augment_metadata(context, metadata)
     context.last_benchmark = {
         "name": benchmark,
         "timing_ms": elapsed_ms,
         "metadata": metadata,
     }
+
+
+@given("a memory benchmark configuration with search enabled")
+def step_memory_benchmark_config(context) -> None:
+    context.bench_memory_config = {
+        "search": True,
+        "text_size": 200,
+        "totals": "200",
+        "gsis": "0",
+        "posts": False,
+    }
+
+
+@when("I run the memory benchmark harness")
+def step_run_memory_benchmark(context) -> None:
+    config = getattr(context, "bench_memory_config", {})
+    root = Path(__file__).resolve().parents[2]
+    if not hasattr(context, "bench_memory_tmp"):
+        context.bench_memory_tmp = TemporaryDirectory()
+    output_dir = Path(context.bench_memory_tmp.name)
+    cmd = [
+        sys.executable,
+        str(root / "tools" / "bench_memory.py"),
+        "--totals",
+        str(config.get("totals", "200")),
+        "--gsis",
+        str(config.get("gsis", "0")),
+        "--output",
+        str(output_dir),
+    ]
+    if not config.get("posts", False):
+        cmd.append("--no-posts")
+    if config.get("search", False):
+        cmd.append("--search")
+        cmd.extend(["--text-size", str(config.get("text_size", 200))])
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        raise AssertionError(
+            f"memory benchmark failed: {(result.stderr or result.stdout).strip()}"
+        )
+    context.bench_memory_output = output_dir
+
+
+@then("the memory benchmark output should include RSS measurements")
+def step_memory_benchmark_output(context) -> None:
+    output_dir = getattr(context, "bench_memory_output", None)
+    assert output_dir is not None
+    results_path = Path(output_dir) / "results.json"
+    assert results_path.exists()
+    rows = json.loads(results_path.read_text(encoding="utf-8"))
+    assert rows
+    for row in rows:
+        assert row.get("rss_kb") is not None
 
 
 @then("the output should include a timing measurement in milliseconds")
@@ -1258,12 +1735,16 @@ def step_run_visualization(context):
         if "Rust" in series and "Python" in series:
             series_order = ["Rust", "Python"]
         annotations = None
-        if raw_name in (
-            "full_database_cold_load",
-            "single_table_cold_load",
-            "gsi_partition_lookup",
-            "gsi_sorted_query",
-        ) and series_order:
+        if (
+            raw_name
+            in (
+                "full_database_cold_load",
+                "single_table_cold_load",
+                "gsi_partition_lookup",
+                "gsi_sorted_query",
+            )
+            and series_order
+        ):
             series_map: dict[str, dict[int, float]] = {}
             for label, points in series.items():
                 series_map[label] = {total: value for total, value in points}
@@ -1317,7 +1798,11 @@ def step_run_visualization(context):
                     add_ann("Rust", total)
 
         _render_line_chart(
-            chart_name, series, png_path, series_order=series_order, annotations=annotations
+            chart_name,
+            series,
+            png_path,
+            series_order=series_order,
+            annotations=annotations,
         )
     report_path = root / "REPORT.md"
     _write_report(context, data, report_path)
@@ -1348,7 +1833,9 @@ def step_results_and_baseline(context):
 
 @when("I run the regression checker")
 def step_run_regression_checker(context):
-    results = json.loads(Path(context.benchmark_output_path).read_text(encoding="utf-8"))
+    results = json.loads(
+        Path(context.benchmark_output_path).read_text(encoding="utf-8")
+    )
     baseline = json.loads(Path(context.baseline_path).read_text(encoding="utf-8"))
     baseline_map = {entry["name"]: entry for entry in baseline}
     report = []

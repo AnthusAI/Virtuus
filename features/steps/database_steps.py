@@ -402,6 +402,22 @@ def step_schema_with_data(context):
     _write_schema(context, schema)
 
 
+@given('a data directory for "{table}" with records:')
+def step_data_directory_records(context, table: str) -> None:
+    rows = _table_from_step_table(context.table)
+    data_dir = getattr(context, "data_dir", None)
+    if data_dir is None:
+        data_dir = tempfile.mkdtemp()
+        context.data_dir = data_dir
+    table_dir = os.path.join(data_dir, table)
+    os.makedirs(table_dir, exist_ok=True)
+    for idx, row in enumerate(rows):
+        filename = row.get("id") or row.get("pk") or f"record-{idx}"
+        path = os.path.join(table_dir, f"{filename}.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(row, handle)
+
+
 @given("an empty database")
 def step_empty_db(context):
     context.db = Database()
@@ -627,6 +643,40 @@ def step_describe_users_entry(context):
     assert "gsis" in users
     assert "record_count" in users
     assert "stale" in users
+
+
+@then('the "{table}" table should report storage mode "{mode}"')
+def step_table_storage_mode(context, table: str, mode: str) -> None:
+    table_desc = context.result.get(table, {})
+    assert table_desc.get("storage") == mode
+
+
+@then(
+    'the "{table}" table should list searchable fields "{first}" and "{second}"'
+)
+def step_table_search_fields(context, table: str, first: str, second: str) -> None:
+    table_desc = context.result.get(table, {})
+    fields = table_desc.get("search_fields") or []
+    assert first in fields
+    assert second in fields
+
+
+@then('the result should include record "{record_id}"')
+def step_result_includes_record(context, record_id: str) -> None:
+    items = context.result.get("items", [])
+    ids = {item.get("id") for item in items}
+    assert record_id in ids
+
+
+@then('the search index should be persisted for "{table}"')
+def step_search_index_persisted(context, table: str) -> None:
+    data_dir = context.data_dir
+    assert data_dir is not None
+    index_root = os.path.join(data_dir, ".virtuus", "index", table)
+    index_path = os.path.join(index_root, "search_index.json")
+    manifest_path = os.path.join(index_root, "search_manifest.json")
+    assert os.path.exists(index_path)
+    assert os.path.exists(manifest_path)
 
 
 @then('the "users" entry should list the "posts" association')
