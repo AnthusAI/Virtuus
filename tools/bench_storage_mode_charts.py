@@ -19,6 +19,18 @@ def _x_formatter_size(value: int) -> str:
 def _y_formatter_mb(value: float) -> str:
     return f"{value:.1f}"
 
+def _dedupe_xy(points: list[tuple[int, float]]) -> list[tuple[int, float]]:
+    buckets: dict[int, list[float]] = defaultdict(list)
+    for x, y in points:
+        buckets[int(x)].append(float(y))
+    deduped = []
+    for x in sorted(buckets):
+        ys = sorted(buckets[x])
+        mid = len(ys) // 2
+        y = ys[mid] if ys else 0.0
+        deduped.append((x, y))
+    return deduped
+
 
 def _chart_roots(default_root: Path) -> list[Path]:
     override = os.getenv("VIRTUUS_BENCH_CHART_ROOTS")
@@ -39,6 +51,8 @@ def _load_results(out_root: Path) -> list[dict]:
         if not root.exists():
             continue
         for path in root.rglob("results.json"):
+            if "partial" in path.parts:
+                continue
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
             except Exception:
@@ -116,10 +130,7 @@ def _generate_latency_charts(entries: list[dict], charts_dir: Path) -> None:
                     for instance_key, series_map in inst_map.items():
                         if not series_map:
                             continue
-                        series = {
-                            mode: sorted(points, key=lambda pair: pair[0])
-                            for mode, points in series_map.items()
-                        }
+                        series = {mode: _dedupe_xy(points) for mode, points in series_map.items()}
                         chart_path = (
                             charts_dir
                             / f"latency_{backend}_{shape}_{op_name}_total_{total}_instance_{instance_key}.png"
@@ -202,10 +213,7 @@ def _generate_instance_latency_charts(entries: list[dict], charts_dir: Path) -> 
             for op_name, totals_map in ops_map.items():
                 for total, storage_map in totals_map.items():
                     for storage_mode, inst_map in storage_map.items():
-                        series = {
-                            inst: sorted(points, key=lambda pair: pair[0])
-                            for inst, points in inst_map.items()
-                        }
+                        series = {inst: _dedupe_xy(points) for inst, points in inst_map.items()}
                         if not series:
                             continue
                         chart_path = (
@@ -263,10 +271,7 @@ def _generate_memory_charts(entries: list[dict], charts_dir: Path) -> None:
         for shape, record_map in shapes_map.items():
             for record_size, inst_map in record_map.items():
                 for instance_key, series_map in inst_map.items():
-                    series = {
-                        mode: sorted(points, key=lambda pair: pair[0])
-                        for mode, points in series_map.items()
-                    }
+                    series = {mode: _dedupe_xy(points) for mode, points in series_map.items()}
                     chart_path = (
                         charts_dir
                         / f"memory_rss_{backend}_{shape}_record_{record_size:g}kb_instance_{instance_key}.png"
