@@ -131,6 +131,7 @@ def run() -> None:
     gsi_iters = int(os.getenv("VIRTUUS_BENCH_GSI_ITERATIONS", "100"))
     scan_iters = int(os.getenv("VIRTUUS_BENCH_SCAN_ITERATIONS", "20"))
 
+    instance_type = os.getenv("VIRTUUS_BENCH_INSTANCE_TYPE", "local")
     out_root = ROOT / "benchmarks" / "output_storage"
     out_root.mkdir(parents=True, exist_ok=True)
 
@@ -163,6 +164,7 @@ def run() -> None:
                         meta.get("total_records"),
                         meta.get("profile"),
                         meta.get("backend"),
+                        meta.get("instance_type"),
                     )
                 )
 
@@ -210,12 +212,13 @@ def run() -> None:
                                     "elapsed_ms": (time.time() - start) * 1000,
                                     "metadata": {
                                         "storage_mode": None,
-                                        "record_size_kb": record_size_kb,
-                                        "profile": shape,
-                                        "backend": backend,
-                                        "total_records": total,
-                                    },
-                                }
+                                    "record_size_kb": record_size_kb,
+                                    "profile": shape,
+                                    "backend": backend,
+                                    "total_records": total,
+                                    "instance_type": instance_type,
+                                },
+                            }
                             )
                             return False
                         return True
@@ -256,6 +259,7 @@ def run() -> None:
                             "profile": shape,
                             "backend": backend,
                             "total_records": total,
+                            "instance_type": instance_type,
                         }
 
                         record(
@@ -344,6 +348,7 @@ def run() -> None:
                                         "profile": shape,
                                         "backend": backend,
                                         "total_records": total,
+                                        "instance_type": instance_type,
                                     },
                                 }
                                 key = (
@@ -357,7 +362,7 @@ def run() -> None:
             results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
             csv_lines = [
-                "backend,profile,storage_mode,record_size_kb,total_records,name,p50,p95,p99,timing_ms,rss_kb"
+                "backend,profile,storage_mode,record_size_kb,total_records,instance_type,name,p50,p95,p99,timing_ms,rss_kb"
             ]
             for entry in results:
                 meta = entry.get("metadata", {}) or {}
@@ -370,6 +375,7 @@ def run() -> None:
                             str(meta.get("storage_mode", "")),
                             str(meta.get("record_size_kb", "")),
                             str(meta.get("total_records", "")),
+                            str(meta.get("instance_type", "")),
                             str(entry.get("name", "")),
                             str(metrics.get("p50", "")),
                             str(metrics.get("p95", "")),
