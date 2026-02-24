@@ -100,9 +100,11 @@ class Ec2BenchStack(Stack):
             user_data.add_commands(
                 "set -euxo pipefail",
                 "exec > >(tee /var/log/bench_userdata.log|logger -t user-data -s 2>/dev/console) 2>&1",
-                "dnf -y install git python3 python3-pip python3-devel gcc gcc-c++ make openssl-devel pkgconfig awscli tmux --allowerasing",
-                "if ! command -v curl >/dev/null 2>&1; then dnf -y install curl --allowerasing; fi",
+                "MEM_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo) && if [ \"$MEM_KB\" -lt 2000000 ]; then fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile; fi",
+                "dnf -y remove curl-minimal || true",
+                "dnf -y install curl git python3 python3-pip python3-devel gcc gcc-c++ make openssl-devel pkgconfig tmux --allowerasing",
                 "curl -sSf https://sh.rustup.rs | sh -s -- -y",
+                "export HOME=/root",
                 "source /root/.cargo/env",
                 "if [ ! -d /root/virtuus ]; then git clone {repo} /root/virtuus; fi".format(
                     repo=repo_url_param.value_as_string
@@ -114,12 +116,14 @@ class Ec2BenchStack(Stack):
                 "python3 -m venv /opt/virtuus-venv",
                 "source /opt/virtuus-venv/bin/activate",
                 "python -m pip install --upgrade pip setuptools wheel",
-                "python -m pip install maturin duckdb tinydb",
+                "python -m pip install maturin duckdb tinydb awscli behave",
+                "export CARGO_BUILD_JOBS=1",
                 "cd /root/virtuus",
                 "maturin develop --manifest-path rust/Cargo.toml --features python --release",
                 "cat > /usr/local/bin/virtuus-bench.sh <<'SCRIPT'\n"
                 "#!/bin/bash\n"
                 "set -euo pipefail\n"
+                "source /opt/virtuus-venv/bin/activate\n"
                 "LOG=/var/log/virtuus_bench.log\n"
                 "DONE=/var/lib/virtuus_bench/done\n"
                 "mkdir -p /var/lib/virtuus_bench\n"
@@ -138,7 +142,9 @@ class Ec2BenchStack(Stack):
                 "export VIRTUUS_COLD_ITERATIONS=3\n"
                 "export VIRTUUS_COLD_ENGINES=sqlite,duckdb,tinydb,virtuus\n"
                 "export VIRTUUS_COLD_STORAGE_MODES=index_only,memory\n"
+                "export VIRTUUS_COLD_PREBUILD=1\n"
                 "export VIRTUUS_COLD_DIR=/root/virtuus/benchmarks/output_cold_start\n"
+                "mkdir -p /root/virtuus/benchmarks/output_storage /root/virtuus/benchmarks/output_cold_start\n"
                 "source /opt/virtuus-venv/bin/activate\n"
                 "cd /root/virtuus\n"
                 "PYTHONPATH=python/src python tools/run_storage_mode_benchmarks.py || STATUS=$?\n"
@@ -179,6 +185,16 @@ class Ec2BenchStack(Stack):
                 role=role,
                 security_group=sg,
                 user_data=user_data,
+                user_data_causes_replacement=True,
+                block_devices=[
+                    ec2.BlockDevice(
+                        device_name="/dev/xvda",
+                        volume=ec2.BlockDeviceVolume.ebs(
+                            64,
+                            volume_type=ec2.EbsDeviceVolumeType.GP3,
+                        ),
+                    )
+                ],
                 detailed_monitoring=True,
             )
 

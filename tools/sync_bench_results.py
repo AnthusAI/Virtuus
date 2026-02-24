@@ -36,6 +36,11 @@ def main() -> None:
         default="benchmarks/output_storage/ec2-sync",
         help="Destination directory for pulled artifacts",
     )
+    parser.add_argument(
+        "--cold-dest",
+        default="benchmarks/output_cold_start/ec2-sync",
+        help="Destination directory for cold-start artifacts",
+    )
     parser.add_argument("--profile", help="AWS profile")
     args = parser.parse_args()
 
@@ -54,6 +59,21 @@ def main() -> None:
             cmd.extend(["--profile", args.profile])
         run(cmd)
 
+        cold_prefix = args.prefix.rstrip("/") + "/cold_start/"
+        cmd = [
+            "python3",
+            "tools/pull_cold_results_s3.py",
+            "--bucket",
+            args.bucket,
+            "--prefix",
+            cold_prefix,
+            "--dest",
+            args.cold_dest,
+        ]
+        if args.profile:
+            cmd.extend(["--profile", args.profile])
+        run(cmd)
+
     run(
         [
             "python3",
@@ -61,6 +81,7 @@ def main() -> None:
             "--roots",
             "benchmarks/output_storage/python",
             "benchmarks/output_storage/rust",
+            "benchmarks/output_storage/ec2-sync",
             "--out-json",
             "benchmarks/output_storage/summary.json",
             "--out-csv",
@@ -68,12 +89,8 @@ def main() -> None:
         ]
     )
 
-    run(
-        [
-            "python3",
-            "tools/bench_storage_mode_charts.py",
-        ]
-    )
+    run(["python3", "tools/bench_storage_mode_charts.py"])
+    run(["python3", "tools/bench_cold_start_charts.py"])
     print("sync complete: aggregation + charts refreshed")
 
 

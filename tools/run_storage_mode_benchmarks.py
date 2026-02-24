@@ -64,9 +64,12 @@ def _rss_kb() -> int:
 
 
 def _memory_probe(ctx_dict: dict, queue: mp.Queue) -> None:
-    ctx = SimpleNamespace(**ctx_dict)
-    _ = b._load_warm_db(ctx)
-    queue.put(_rss_kb())
+    try:
+        ctx = SimpleNamespace(**ctx_dict)
+        _ = b._load_warm_db(ctx)
+        queue.put(_rss_kb())
+    except Exception:
+        queue.put(-1)
 
 
 def measure_memory_kb(ctx: SimpleNamespace) -> int:
@@ -81,8 +84,11 @@ def measure_memory_kb(ctx: SimpleNamespace) -> int:
     proc.start()
     proc.join()
     if proc.exitcode != 0:
-        raise RuntimeError("memory probe failed")
-    return int(queue.get())
+        return -1
+    try:
+        return int(queue.get())
+    except Exception:
+        return -1
 
 
 def _entry_metrics(entry: dict) -> dict:
@@ -327,25 +333,26 @@ def run() -> None:
 
                         if not os.getenv("VIRTUUS_BENCH_SKIP_MEMORY"):
                             rss_kb = measure_memory_kb(ctx)
-                            mem_entry = {
-                                "name": "memory_rss",
-                                "metadata": {
-                                    "rss_kb": rss_kb,
-                                    "rss_bytes": rss_kb * 1024,
-                                    "storage_mode": storage_mode,
-                                    "record_size_kb": record_size_kb,
-                                    "profile": shape,
-                                    "backend": backend,
-                                    "total_records": total,
-                                },
-                            }
-                            key = (
-                                mem_entry["name"],
-                                *combo_base,
-                            )
-                            if key not in seen:
-                                results.append(mem_entry)
-                                seen.add(key)
+                            if rss_kb >= 0:
+                                mem_entry = {
+                                    "name": "memory_rss",
+                                    "metadata": {
+                                        "rss_kb": rss_kb,
+                                        "rss_bytes": rss_kb * 1024,
+                                        "storage_mode": storage_mode,
+                                        "record_size_kb": record_size_kb,
+                                        "profile": shape,
+                                        "backend": backend,
+                                        "total_records": total,
+                                    },
+                                }
+                                key = (
+                                    mem_entry["name"],
+                                    *combo_base,
+                                )
+                                if key not in seen:
+                                    results.append(mem_entry)
+                                    seen.add(key)
 
             results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 

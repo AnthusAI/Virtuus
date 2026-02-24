@@ -262,6 +262,8 @@ def _run_bench() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     fixtures_root = out_dir / "fixtures"
     db_root = out_dir / "databases"
+    prebuilt = os.getenv("VIRTUUS_COLD_PREBUILT", "1") == "1"
+    prebuild = os.getenv("VIRTUUS_COLD_PREBUILD", "0") == "1"
 
     totals = _parse_int_list(os.getenv("VIRTUUS_COLD_TOTALS", "10000,100000"), [10000, 100000])
     record_sizes = _parse_float_list(os.getenv("VIRTUUS_COLD_RECORD_SIZES_KB", "0.5,2"), [0.5, 2.0])
@@ -305,17 +307,49 @@ def _run_bench() -> None:
 
     for total in totals:
         for record_size_kb in record_sizes:
-            fixture = _ensure_fixture(fixtures_root, total, record_size_kb)
+            fixture_root = _fixture_dir(fixtures_root, total, record_size_kb)
+            if prebuild:
+                fixture = _ensure_fixture(fixtures_root, total, record_size_kb)
+            elif prebuilt:
+                meta_path = fixture_root / "meta.json"
+                if not meta_path.exists():
+                    raise RuntimeError(
+                        f"Missing fixture metadata at {meta_path}. "
+                        "Set VIRTUUS_COLD_PREBUILD=1 to generate fixtures."
+                    )
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                fixture = Fixture(
+                    root=fixture_root,
+                    total=int(meta["total"]),
+                    record_size_kb=float(meta["record_size_kb"]),
+                    search_term=str(meta["search_term"]),
+                    pk_value=str(meta["pk_value"]),
+                )
+            else:
+                fixture = _ensure_fixture(fixtures_root, total, record_size_kb)
             sqlite_path = db_root / f"sqlite_total_{total}_record_{record_size_kb:g}kb.db"
             duckdb_path = db_root / f"duckdb_total_{total}_record_{record_size_kb:g}kb.duckdb"
             tinydb_path = db_root / f"tinydb_total_{total}_record_{record_size_kb:g}kb.json"
 
-            if "sqlite" in engines:
-                _ensure_sqlite_db(fixture, sqlite_path)
-            if "duckdb" in engines:
-                _ensure_duckdb_db(fixture, duckdb_path)
-            if "tinydb" in engines:
-                _ensure_tinydb_db(fixture, tinydb_path)
+            if prebuild or not prebuilt:
+                if "sqlite" in engines:
+                    _ensure_sqlite_db(fixture, sqlite_path)
+                if "duckdb" in engines:
+                    _ensure_duckdb_db(fixture, duckdb_path)
+                if "tinydb" in engines:
+                    _ensure_tinydb_db(fixture, tinydb_path)
+            elif prebuilt:
+                missing = []
+                if "sqlite" in engines and not sqlite_path.exists():
+                    missing.append(str(sqlite_path))
+                if "duckdb" in engines and not duckdb_path.exists():
+                    missing.append(str(duckdb_path))
+                if "tinydb" in engines and not tinydb_path.exists():
+                    missing.append(str(tinydb_path))
+                if missing:
+                    raise RuntimeError(
+                        "Missing prebuilt databases: " + ", ".join(missing)
+                    )
 
             for engine in engines:
                 for query in queries:
