@@ -100,7 +100,8 @@ class Ec2BenchStack(Stack):
             user_data.add_commands(
                 "set -euxo pipefail",
                 "exec > >(tee /var/log/bench_userdata.log|logger -t user-data -s 2>/dev/console) 2>&1",
-                "dnf -y install git python3 python3-pip python3-devel gcc gcc-c++ make openssl-devel pkgconfig curl awscli tmux",
+                "dnf -y install git python3 python3-pip python3-devel gcc gcc-c++ make openssl-devel pkgconfig awscli tmux",
+                "if ! command -v curl >/dev/null 2>&1; then dnf -y install curl --allowerasing; fi",
                 "curl -sSf https://sh.rustup.rs | sh -s -- -y",
                 "source /root/.cargo/env",
                 "if [ ! -d /root/virtuus ]; then git clone {repo} /root/virtuus; fi".format(
