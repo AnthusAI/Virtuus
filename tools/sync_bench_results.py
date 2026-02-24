@@ -18,13 +18,14 @@ from __future__ import annotations
 import argparse
 import subprocess
 from pathlib import Path
+import os
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run(cmd: list[str]) -> None:
-    subprocess.check_call(cmd, cwd=ROOT)
+def run(cmd: list[str], env: dict | None = None) -> None:
+    subprocess.check_call(cmd, cwd=ROOT, env=env)
 
 
 def main() -> None:
@@ -74,6 +75,9 @@ def main() -> None:
             cmd.extend(["--profile", args.profile])
         run(cmd)
 
+    env_with_path = os.environ.copy()
+    env_with_path.setdefault("PYTHONPATH", str(ROOT / "python" / "src"))
+
     run(
         [
             "python3",
@@ -86,11 +90,12 @@ def main() -> None:
             "benchmarks/output_storage/summary.json",
             "--out-csv",
             "benchmarks/output_storage/summary.csv",
-        ]
+        ],
+        env=env_with_path,
     )
 
-    run(["python3", "tools/bench_storage_mode_charts.py"])
-    run(["python3", "tools/bench_cold_start_charts.py"])
+    run(["python3", "tools/bench_storage_mode_charts.py"], env=env_with_path)
+    run(["python3", "tools/bench_cold_start_charts.py"], env=env_with_path)
     print("sync complete: aggregation + charts refreshed")
 
 
