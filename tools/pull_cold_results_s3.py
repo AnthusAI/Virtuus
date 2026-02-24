@@ -27,6 +27,8 @@ def ensure_boto(profile: str | None):
 
 
 def pull(bucket: str, prefix: str, dest: Path, profile: str | None) -> None:
+    if prefix and not prefix.endswith("/"):
+        prefix = prefix + "/"
     session = ensure_boto(profile)
     s3 = session.client("s3")
     paginator = s3.get_paginator("list_objects_v2")
