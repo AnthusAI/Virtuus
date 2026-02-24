@@ -110,9 +110,11 @@ class Ec2BenchStack(Stack):
                     repo=repo_url_param.value_as_string
                 ),
                 "cd /root/virtuus",
-                "git fetch --all --prune",
+                "git fetch origin --prune",
                 "git checkout {branch}".format(branch=repo_branch_param.value_as_string),
-                "git pull --ff-only || true",
+                "git reset --hard origin/{branch}".format(
+                    branch=repo_branch_param.value_as_string
+                ),
                 "python3 -m venv /opt/virtuus-venv",
                 "source /opt/virtuus-venv/bin/activate",
                 "python -m pip install --upgrade pip setuptools wheel",
