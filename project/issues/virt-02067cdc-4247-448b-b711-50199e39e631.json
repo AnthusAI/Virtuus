@@ -1,0 +1,31 @@
+{
+  "id": "virt-02067cdc-4247-448b-b711-50199e39e631",
+  "title": "Audit CI checks for ruleset",
+  "description": "Determine if Virtuus repo has CI test action/check name to require in branch ruleset.",
+  "type": "chore",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "a8b99e70-5ed7-4642-940a-e40dc9ad8884",
+      "author": "derek",
+      "text": "Latest CI check names in Virtuus: check (py 3.9), check (py 3.10), check (py 3.11), check (py 3.12). There are also 'release' check runs appearing twice; recommend not requiring release checks.",
+      "created_at": "2026-02-26T04:06:14.343307084Z"
+    },
+    {
+      "id": "ef895fa5-863c-4020-b6f2-e1c36af56f66",
+      "author": "derek",
+      "text": "Created ruleset 'main-branch-protection' for refs/heads/main with PR requirement (1 approval, dismiss stale, require last push approval), required status checks: check (py 3.9), check (py 3.10), check (py 3.11), check (py 3.12); plus block deletions and force pushes. No bypass actors.",
+      "created_at": "2026-02-26T04:06:43.224545993Z"
+    }
+  ],
+  "created_at": "2026-02-26T04:05:57.006551185Z",
+  "updated_at": "2026-02-26T04:06:49.497316380Z",
+  "closed_at": "2026-02-26T04:06:49.497316380Z",
+  "custom": {}
+}
