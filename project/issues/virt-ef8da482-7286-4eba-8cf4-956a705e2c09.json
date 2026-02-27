@@ -3,7 +3,7 @@
   "title": "Fix black formatting in table.py",
   "description": "",
   "type": "task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,16 @@
       "author": "derek",
       "text": "Ran cargo fmt to satisfy check-rust. make check now fails only because cargo-tarpaulin is not installed (tarpaulin command missing).",
       "created_at": "2026-02-27T17:48:16.913368170Z"
+    },
+    {
+      "id": "f50f7d4f-a285-4624-b03c-d8dbf452649e",
+      "author": "derek",
+      "text": "Closed after push. make check passed until cargo tarpaulin step; failure due to missing cargo-tarpaulin in this environment.",
+      "created_at": "2026-02-27T17:48:40.297502714Z"
     }
   ],
   "created_at": "2026-02-27T17:46:51.308734016Z",
-  "updated_at": "2026-02-27T17:48:16.913368170Z",
-  "closed_at": null,
+  "updated_at": "2026-02-27T17:48:40.297502714Z",
+  "closed_at": "2026-02-27T17:48:34.941691656Z",
   "custom": {}
 }
