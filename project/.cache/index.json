@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-27T17:46:45Z",
+  "built_at": "2026-02-27T18:09:09Z",
   "file_mtimes": {
     "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
@@ -76,12 +76,14 @@
     "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772140979.638002,
     "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1771957454.416678,
     "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772212152.606017,
+    "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772214522.682568,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771957454.416678,
     "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1771957454.416678,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771957454.416678,
     "virt-eb357c6f-e32f-409d-8402-21af4103a09c.json": 1771957454.416678,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771957454.416678,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771957454.416678,
+    "virt-ef8da482-7286-4eba-8cf4-956a705e2c09.json": 1772214520.282552,
     "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1771957454.416678,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771957454.416678
   },
@@ -3069,6 +3071,31 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-27T17:48:38.019338442Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:42.688862907Z",
+          "id": "a1ed3d8b-cd7e-4b43-b993-8d141887203f",
+          "text": "Closed: fixed black formatting and ran rustfmt to keep checks green. Changes pushed."
+        }
+      ],
+      "created_at": "2026-02-27T17:46:49.120940703Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "CI: Fix Python formatting",
+      "type": "epic",
+      "updated_at": "2026-02-27T17:48:42.688862907Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T20:27:34.123313Z",
       "comments": [
         {
@@ -3324,6 +3351,49 @@
       "title": "Phase 8: Concurrency & Integration Testing",
       "type": "epic",
       "updated_at": "2026-02-22T02:15:04.254123Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T17:48:34.941691656Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:47:04.674998936Z",
+          "id": "46e4ffa1-7a61-49c6-bebc-25be9ca56ed8",
+          "text": "Ran black on python/src/virtuus/_python/table.py to satisfy formatting check."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:47:31.476646287Z",
+          "id": "1e0a27ed-fcfe-40e8-a523-c58de34f9068",
+          "text": "Ran make check; Python checks and coverage passed. Rust fmt check failed in rust/src/table.rs (cargo fmt --check wants reformat)."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:16.913368170Z",
+          "id": "dd8935dc-61e5-40a0-9792-c0a4438c20d6",
+          "text": "Ran cargo fmt to satisfy check-rust. make check now fails only because cargo-tarpaulin is not installed (tarpaulin command missing)."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:40.297502714Z",
+          "id": "f50f7d4f-a285-4624-b03c-d8dbf452649e",
+          "text": "Closed after push. make check passed until cargo tarpaulin step; failure due to missing cargo-tarpaulin in this environment."
+        }
+      ],
+      "created_at": "2026-02-27T17:46:51.308734016Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ef8da482-7286-4eba-8cf4-956a705e2c09",
+      "labels": [],
+      "parent": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+      "priority": 2,
+      "status": "closed",
+      "title": "Fix black formatting in table.py",
+      "type": "task",
+      "updated_at": "2026-02-27T17:48:40.297502714Z"
     },
     {
       "assignee": null,

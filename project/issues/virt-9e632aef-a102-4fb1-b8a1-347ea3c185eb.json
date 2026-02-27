@@ -1,0 +1,25 @@
+{
+  "id": "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb",
+  "title": "Generate requirements from pyproject",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "b9fe2bea-3f8a-4d5f-901f-fed6ca917379",
+      "author": "derek",
+      "text": "Generated python/requirements.txt and python/requirements-dev.txt via pip-compile from python/pyproject.toml.",
+      "created_at": "2026-02-27T18:09:41.309368343Z"
+    }
+  ],
+  "created_at": "2026-02-27T18:09:13.357978566Z",
+  "updated_at": "2026-02-27T18:09:43.238451201Z",
+  "closed_at": "2026-02-27T18:09:43.238451201Z",
+  "custom": {}
+}
