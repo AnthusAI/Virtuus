@@ -3,7 +3,7 @@
   "title": "Auto-generate requirements.txt from pyproject",
   "description": "",
   "type": "task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -22,10 +22,16 @@
       "author": "derek",
       "text": "Implemented .github/workflows/requirements-sync.yml to run pip-compile on python/pyproject.toml changes, generate python/requirements*.txt, and auto-commit/push if changed. Uses GITHUB_TOKEN with contents: write and skips when actor is github-actions[bot] to prevent loops.",
       "created_at": "2026-02-27T17:05:47.954585726Z"
+    },
+    {
+      "id": "44ff2376-34cd-4b18-8c79-17fd09462daf",
+      "author": "derek",
+      "text": "Closed after push. Workflow added and pushed. No tests run (workflow-only change).",
+      "created_at": "2026-02-27T17:09:12.613803018Z"
     }
   ],
   "created_at": "2026-02-27T17:05:19.412727133Z",
-  "updated_at": "2026-02-27T17:05:47.954585726Z",
-  "closed_at": null,
+  "updated_at": "2026-02-27T17:09:12.613803018Z",
+  "closed_at": "2026-02-27T17:09:07.442619819Z",
   "custom": {}
 }
