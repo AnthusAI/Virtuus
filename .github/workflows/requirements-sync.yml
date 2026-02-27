@@ -29,8 +29,8 @@ jobs:
 
       - name: Compile requirements
         run: |
-          pip-compile -o python/requirements.txt python/pyproject.toml
-          pip-compile --extra dev -o python/requirements-dev.txt python/pyproject.toml
+          pip-compile --strip-extras -o python/requirements.txt python/pyproject.toml
+          pip-compile --strip-extras --extra dev -o python/requirements-dev.txt python/pyproject.toml
 
       - name: Commit and push if changed
         run: |

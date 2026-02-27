@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-27T18:09:09Z",
+  "built_at": "2026-02-27T18:29:31Z",
   "file_mtimes": {
     "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
@@ -57,6 +57,7 @@
     "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772212158.556058,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771957454.416678,
     "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771957454.416678,
+    "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb.json": 1772215783.221439,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771957454.416678,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771957454.416678,
     "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771957454.416678,
@@ -79,6 +80,7 @@
     "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772214522.682568,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771957454.416678,
     "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1771957454.416678,
+    "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82.json": 1772215785.751457,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771957454.416678,
     "virt-eb357c6f-e32f-409d-8402-21af4103a09c.json": 1771957454.416678,
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771957454.416678,
@@ -2358,6 +2360,31 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-27T18:09:43.238451201Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:09:41.309368343Z",
+          "id": "b9fe2bea-3f8a-4d5f-901f-fed6ca917379",
+          "text": "Generated python/requirements.txt and python/requirements-dev.txt via pip-compile from python/pyproject.toml."
+        }
+      ],
+      "created_at": "2026-02-27T18:09:13.357978566Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb",
+      "labels": [],
+      "parent": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+      "priority": 2,
+      "status": "closed",
+      "title": "Generate requirements from pyproject",
+      "type": "task",
+      "updated_at": "2026-02-27T18:09:43.238451201Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:17.516865Z",
       "comments": [
         {
@@ -3179,6 +3206,24 @@
       "title": "Skip disk writes during load (Python + Rust)",
       "type": "task",
       "updated_at": "2026-02-23T03:48:00.677322Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:09:45.764252920Z",
+      "comments": [],
+      "created_at": "2026-02-27T18:09:17.082114032Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Dependency artifacts",
+      "type": "epic",
+      "updated_at": "2026-02-27T18:09:45.764252920Z"
     },
     {
       "assignee": null,
