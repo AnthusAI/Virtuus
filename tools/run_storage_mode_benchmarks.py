@@ -10,7 +10,6 @@ from types import SimpleNamespace
 import multiprocessing as mp
 import time
 import signal
-import traceback
 import tempfile
 import resource
 

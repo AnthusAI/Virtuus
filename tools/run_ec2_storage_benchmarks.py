@@ -16,17 +16,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import subprocess
-import sys
 import textwrap
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 try:
     import boto3  # type: ignore
     from botocore.config import Config as BotoConfig  # type: ignore
-except Exception as exc:  # pragma: no cover - optional dep
+except ImportError:  # pragma: no cover - optional dep
     boto3 = None
     BotoConfig = None
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from contextlib import suppress
 from typing import Any, Callable
 
 from behave import given, then, use_step_matcher, when
@@ -17,33 +18,21 @@ def _exercise_table_coverage() -> None:
     if _TABLE_COVERAGE_EXERCISED:
         return
     _TABLE_COVERAGE_EXERCISED = True
-    try:
+    with suppress(ValueError):
         Table("bad")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", primary_key="id", partition_key="pk")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", partition_key="pk")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", primary_key="id", validation="nope")
-    except ValueError:
-        pass
     composite = Table(
         "composite", partition_key="pk", sort_key="sk", validation="error"
     )
-    try:
+    with suppress(ValueError):
         composite.get("only-partition")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         composite.put({"pk": "a"})
-    except ValueError:
-        pass
     composite_warnings = Table(
         "composite-warn", partition_key="pk", sort_key="sk", validation="warn"
     )
@@ -53,40 +42,28 @@ def _exercise_table_coverage() -> None:
     gsi_table = Table("gsi", primary_key="id", validation="warn")
     gsi_table.add_gsi("by_email", "email", "created_at")
     gsi_table.put({"id": "user-1", "email": "a@example.com"})
-    try:
+    with suppress(KeyError):
         gsi_table.query_gsi("missing", "value")
-    except KeyError:
-        pass
-    try:
+    with suppress(ValueError):
         gsi_table.load_from_dir()
-    except ValueError:
-        pass
     missing_dir = tempfile.mkdtemp()
     os.rmdir(missing_dir)
     gsi_table.load_from_dir(missing_dir)
     invalid_dir = tempfile.mkdtemp()
     invalid_table = Table("invalid", primary_key="id", directory=invalid_dir)
-    try:
+    with suppress(ValueError):
         invalid_table.put({"id": "bad/name"})
-    except ValueError:
-        pass
-    try:
+    with suppress(OSError):
         invalid_table._write_json_atomic(invalid_dir, {"id": "bad"})
-    except OSError:
-        pass
     os.rmdir(invalid_dir)
-    try:
+    with suppress(ValueError):
         Table("bad-storage", primary_key="id", storage="invalid")
-    except ValueError:
-        pass
     index_only = Table("index-only", primary_key="id", storage="index_only")
     index_only.get("missing")
     index_only.scan()
     index_only._search_enabled()
-    try:
+    with suppress(ValueError):
         index_only.search("query")
-    except ValueError:
-        pass
     index_only._search_index_root()
     index_only._search_index_path()
     index_only._search_manifest_path()

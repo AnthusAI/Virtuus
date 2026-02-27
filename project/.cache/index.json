@@ -1,9 +1,10 @@
 {
-  "built_at": "2026-02-27T18:29:31Z",
+  "built_at": "2026-02-27T18:39:21Z",
   "file_mtimes": {
     "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771957454.416678,
+    "virt-141eb51f-09ac-4704-8659-b44bebaaefcb.json": 1772217009.620087,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771957454.416678,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771957454.416678,
     "virt-18b9c259-430b-46ac-8306-49bab32d2db0.json": 1771957454.416678,
@@ -200,6 +201,31 @@
       "title": "Schema from YAML",
       "type": "story",
       "updated_at": "2026-02-21T23:42:14.473950Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:30:09.636388105Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:30:06.079824753Z",
+          "id": "52b7e0de-ad4e-4b70-be7b-b778285c57c4",
+          "text": "Updated requirements sync workflow to use --strip-extras and recompiled requirements files with --strip-extras."
+        }
+      ],
+      "created_at": "2026-02-27T18:29:33.582652064Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-141eb51f-09ac-4704-8659-b44bebaaefcb",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Align pip-compile with strip-extras default",
+      "type": "task",
+      "updated_at": "2026-02-27T18:30:09.636388105Z"
     },
     {
       "assignee": null,

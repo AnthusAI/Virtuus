@@ -1,0 +1,31 @@
+{
+  "id": "virt-bc21eaec-1e98-4ab0-9fd4-e16ab329a6b9",
+  "title": "Fix github-code-quality findings",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-1e864f87-c6d1-457d-b138-10beed5a78d6",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "1ad07cb4-1c81-4662-baf3-1cf6148288ff",
+      "author": "derek",
+      "text": "Applied lint cleanups (unused imports, ImportError handling, contextlib.suppress for intentional exceptions). Added Rust tests to cover search index removal and refresh rebuild to satisfy tarpaulin coverage gaps.",
+      "created_at": "2026-02-27T18:43:41.696708068Z"
+    },
+    {
+      "id": "eeaccf45-cb7c-4ac3-9543-016dbe7ef9a4",
+      "author": "derek",
+      "text": "Ran make check: all gates passed (black, ruff, behave + coverage, rust fmt/clippy/tests, tarpaulin 100%, parity OK).",
+      "created_at": "2026-02-27T18:45:03.425462470Z"
+    }
+  ],
+  "created_at": "2026-02-27T18:39:26.537625Z",
+  "updated_at": "2026-02-27T18:45:03.425462470Z",
+  "closed_at": null,
+  "custom": {}
+}

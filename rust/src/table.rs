@@ -2132,6 +2132,38 @@ mod tests {
     }
 
     #[test]
+    fn delete_removes_from_search_index() {
+        let mut table = Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent);
+        table.set_search_fields(vec!["title".to_string()]);
+        table.put(json!({"id": "1", "title": "Alpha"}));
+        assert_eq!(table.search("alpha").len(), 1);
+        table.delete("1", None);
+        assert!(table.search("alpha").is_empty());
+    }
+
+    #[test]
+    fn refresh_rebuilds_search_index_on_change() {
+        let base = temp_dir("search_refresh_rebuild");
+        let dir = base.join("data");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("1.json"), r#"{"id":"1","title":"Alpha"}"#).unwrap();
+        let mut table = Table::new(
+            "items",
+            Some("id"),
+            None,
+            None,
+            Some(dir.clone()),
+            ValidationMode::Silent,
+        );
+        table.set_search_fields(vec!["title".to_string()]);
+        table.load_from_dir(None);
+        assert_eq!(table.search("alpha").len(), 1);
+        fs::write(dir.join("2.json"), r#"{"id":"2","title":"Beta"}"#).unwrap();
+        table.refresh();
+        assert_eq!(table.search("beta").len(), 1);
+    }
+
+    #[test]
     fn search_index_paths_and_loading_cover_branches() {
         let base = temp_dir("search_paths");
         let dir = base.join("data");

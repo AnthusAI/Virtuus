@@ -12,12 +12,11 @@ Example:
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 
 try:
     import boto3  # type: ignore
-except Exception as exc:  # pragma: no cover - optional dep
+except ImportError:  # pragma: no cover - optional dep
     boto3 = None
 
 
