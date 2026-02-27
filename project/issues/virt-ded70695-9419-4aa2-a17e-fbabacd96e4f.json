@@ -1,0 +1,18 @@
+{
+  "id": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+  "title": "CI: Fix Python formatting",
+  "description": "",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-27T17:46:49.120940703Z",
+  "updated_at": "2026-02-27T17:46:49.120940703Z",
+  "closed_at": null,
+  "custom": {}
+}

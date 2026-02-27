@@ -883,16 +883,13 @@ impl Table {
             StorageMode::IndexOnly => {
                 let dir = self.directory.as_ref()?;
                 let key_str = key_to_string(key);
-                let filename = self
-                    .record_keys
-                    .iter()
-                    .find_map(|(name, existing)| {
-                        if existing == &key_str {
-                            Some(name)
-                        } else {
-                            None
-                        }
-                    })?;
+                let filename = self.record_keys.iter().find_map(|(name, existing)| {
+                    if existing == &key_str {
+                        Some(name)
+                    } else {
+                        None
+                    }
+                })?;
                 let path = dir.join(filename);
                 fs::read_to_string(&path)
                     .ok()

@@ -338,9 +338,7 @@ class Table:
             return self.records.get(key)
         return self._read_record_by_key(key)
 
-    def _lookup_existing_record_from_load(
-        self, key: Any
-    ) -> Optional[dict[str, Any]]:
+    def _lookup_existing_record_from_load(self, key: Any) -> Optional[dict[str, Any]]:
         if self.storage_mode == "memory":
             return self.records.get(key)
         if not self._record_keys or self.directory is None:

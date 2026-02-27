@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-02-27T17:05:10Z",
+  "built_at": "2026-02-27T17:46:45Z",
   "file_mtimes": {
     "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
@@ -54,6 +54,7 @@
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771957454.416678,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771957454.416678,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771957454.416678,
+    "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772212158.556058,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771957454.416678,
     "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771957454.416678,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771957454.416678,
@@ -74,6 +75,7 @@
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771957454.416678,
     "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772140979.638002,
     "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1771957454.416678,
+    "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772212152.606017,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771957454.416678,
     "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1771957454.416678,
     "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771957454.416678,
@@ -2243,6 +2245,31 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-27T17:09:14.869886837Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:09:18.566593362Z",
+          "id": "9b5f66c7-47e8-4c90-8c31-e372f31ca3e4",
+          "text": "Closed: requirements auto-sync workflow implemented and pushed."
+        }
+      ],
+      "created_at": "2026-02-27T17:05:17.178432129Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Dependency sync automation",
+      "type": "epic",
+      "updated_at": "2026-02-27T17:09:18.566593362Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T01:54:08.511533Z",
       "comments": [
         {
@@ -3002,6 +3029,43 @@
       "title": "Define Sakila subset schema + transform",
       "type": "task",
       "updated_at": "2026-02-23T03:44:06.475785Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T17:09:07.442619819Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:05:22.262398833Z",
+          "id": "78264019-64e4-4313-9a15-99190b8ddb8b",
+          "text": "Plan: add GitHub Action to auto-run pip-compile on changes to python/pyproject.toml, commit updated requirements*.txt back to branch using GITHUB_TOKEN. Will target PR branches (not main) and guard against CI loops."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:05:47.954585726Z",
+          "id": "d11b1c69-f4ef-4170-a832-2b95a1676165",
+          "text": "Implemented .github/workflows/requirements-sync.yml to run pip-compile on python/pyproject.toml changes, generate python/requirements*.txt, and auto-commit/push if changed. Uses GITHUB_TOKEN with contents: write and skips when actor is github-actions[bot] to prevent loops."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:09:12.613803018Z",
+          "id": "44ff2376-34cd-4b18-8c79-17fd09462daf",
+          "text": "Closed after push. Workflow added and pushed. No tests run (workflow-only change)."
+        }
+      ],
+      "created_at": "2026-02-27T17:05:19.412727133Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-d961585d-020c-4b3f-8c85-a10bd990d136",
+      "labels": [],
+      "parent": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+      "priority": 2,
+      "status": "closed",
+      "title": "Auto-generate requirements.txt from pyproject",
+      "type": "task",
+      "updated_at": "2026-02-27T17:09:12.613803018Z"
     },
     {
       "assignee": null,
