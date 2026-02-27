@@ -7,6 +7,7 @@ import os
 import tempfile
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, TypedDict
 
 from virtuus._python.gsi import GSI
@@ -51,6 +52,10 @@ class Table:
     :type check_interval: int
     :param auto_refresh: Whether queries should auto-refresh when stale.
     :type auto_refresh: bool
+    :param storage: Storage mode: "memory" or "index_only".
+    :type storage: str | None
+    :param search_fields: Field names to index for keyword search.
+    :type search_fields: list[str] | None
     """
 
     def __init__(
@@ -63,6 +68,8 @@ class Table:
         validation: str = "silent",
         check_interval: int = 0,
         auto_refresh: bool = True,
+        storage: Optional[str] = None,
+        search_fields: Optional[list[str]] = None,
     ) -> None:
         if primary_key is None and partition_key is None:
             raise ValueError("primary_key or partition_key is required")
@@ -80,6 +87,17 @@ class Table:
         self.validation = validation
         self.check_interval = check_interval
         self.auto_refresh = auto_refresh
+        storage_mode = storage
+        if storage_mode is None:
+            storage_mode = "index_only" if directory is not None else "memory"
+        if storage_mode not in {"memory", "index_only"}:
+            raise ValueError("storage must be memory or index_only")
+        self.storage_mode = storage_mode
+        self.search_fields = list(search_fields or [])
+        # token -> set of PK strings (faster membership on build; persisted as lists)
+        self.search_index: dict[str, set[str]] | None = (
+            {} if self.search_fields else None
+        )
         self.records: dict[Any, dict[str, Any]] = {}
         self.gsis: dict[str, GSI] = {}
         self.warnings: list[str] = []
@@ -92,6 +110,7 @@ class Table:
         self.association_defs: dict[str, AssociationDef] = {}
         self.last_write_used_atomic: bool = False
         self._manifest: dict[str, tuple[int, int]] = {}
+        self._record_keys: dict[str, str] = {}
         self._last_dir_mtime: Optional[float] = None
         self._last_check_time: Optional[float] = None
         self._last_is_stale: bool = False
@@ -130,26 +149,35 @@ class Table:
         if pk is None:
             return
         self._validate_gsi_fields(record)
-        existing = self.records.get(pk)
+        existing = self._lookup_existing_record(pk)
         if existing is not None:
             self._remove_from_gsis(pk, existing)
-        self.records[pk] = record
+            self._remove_from_search(pk, existing)
+        if self.storage_mode == "memory":
+            self.records[pk] = record
         self._index_in_gsis(pk, record)
+        self._index_in_search(pk, record)
         if self.directory is not None:
             self._write_record_to_disk(pk, record)
         self._fire_hooks(self.on_put, record)
 
-    def _insert_record_from_load(self, record: dict[str, Any]) -> None:
+    def _insert_record_from_load(
+        self, record: dict[str, Any], index_search: bool
+    ) -> None:
         """Insert a record during load without writing to disk."""
         pk = self._extract_pk(record)
         if pk is None:
             return
         self._validate_gsi_fields(record)
-        existing = self.records.get(pk)
+        existing = self._lookup_existing_record_from_load(pk)
         if existing is not None:
             self._remove_from_gsis(pk, existing)
-        self.records[pk] = record
+            self._remove_from_search(pk, existing)
+        if self.storage_mode == "memory":
+            self.records[pk] = record
         self._index_in_gsis(pk, record)
+        if index_search:
+            self._index_in_search(pk, record)
         self._fire_hooks(self.on_put, record)
 
     def add_belongs_to(self, name: str, target_table: str, foreign_key: str) -> None:
@@ -306,7 +334,22 @@ class Table:
         :rtype: dict[str, Any] | None
         """
         key = self._compose_key(pk, sort)
-        return self.records.get(key)
+        if self.storage_mode == "memory":
+            return self.records.get(key)
+        return self._read_record_by_key(key)
+
+    def _lookup_existing_record_from_load(self, key: Any) -> Optional[dict[str, Any]]:
+        if self.storage_mode == "memory":
+            return self.records.get(key)
+        if not self._record_keys or self.directory is None:
+            return None
+        key_str = self._key_to_string(key)
+        for filename, existing_key in self._record_keys.items():
+            if existing_key != key_str:
+                continue
+            path = os.path.join(self.directory, filename)
+            return self._read_record_file(path)
+        return None
 
     def delete(self, pk: str, sort: Optional[str] = None) -> None:
         """Delete a record by primary key.
@@ -319,13 +362,18 @@ class Table:
         :rtype: None
         """
         key = self._compose_key(pk, sort)
-        record = self.records.pop(key, None)
-        if record is None:
-            return
-        self._remove_from_gsis(key, record)
+        record = (
+            self.records.pop(key, None)
+            if self.storage_mode == "memory"
+            else self._read_record_by_key(key)
+        )
+        if record is not None:
+            self._remove_from_gsis(key, record)
+            self._remove_from_search(key, record)
         if self.directory is not None:
             self._delete_record_from_disk(key)
-        self._fire_hooks(self.on_delete, record)
+        if record is not None:
+            self._fire_hooks(self.on_delete, record)
 
     def scan(self) -> list[dict[str, Any]]:
         """Return all records.
@@ -334,7 +382,9 @@ class Table:
         :rtype: list[dict[str, Any]]
         """
         self._maybe_refresh_before_query()
-        return list(self.records.values())
+        if self.storage_mode == "memory":
+            return list(self.records.values())
+        return self._read_all_records()
 
     def bulk_load(self, records: Iterable[dict[str, Any]]) -> None:
         """Bulk load multiple records.
@@ -358,7 +408,7 @@ class Table:
         :rtype: int
         """
         if index is None:
-            return len(self.records)
+            return self._record_count()
         gsi = self.gsis.get(index)
         if gsi is None:
             return 0
@@ -372,15 +422,18 @@ class Table:
         """
         description: dict[str, Any] = {
             "name": self.name,
-            "record_count": len(self.records),
+            "record_count": self._record_count(),
             "gsis": list(self.gsis.keys()),
             "associations": list(self.associations),
+            "storage": self.storage_mode,
         }
         if self.primary_key is not None:
             description["primary_key"] = self.primary_key
         else:
             description["partition_key"] = self.partition_key
             description["sort_key"] = self.sort_key
+        if self.search_fields:
+            description["search_fields"] = list(self.search_fields)
         return description
 
     def query_gsi(
@@ -411,7 +464,10 @@ class Table:
         result = []
         direction = "desc" if descending else "asc"
         for pk in gsi.query(partition_value, sort_condition, direction):
-            record = self.records.get(pk)
+            if isinstance(pk, TableKey):
+                record = self.get(pk.partition, pk.sort)
+            else:
+                record = self.get(pk)
             if record is not None:
                 result.append(record)
         return result
@@ -481,6 +537,10 @@ class Table:
         self._last_check_time = time.time()
         summary["reread"] = reread
         self.last_change_summary = summary
+        if self.storage_mode == "index_only" and any(summary.values()) and self.gsis:
+            self._rebuild_gsis()
+        if self.search_fields and any(summary.values()):
+            self._rebuild_search_index()
         self._fire_hooks(self.on_refresh, summary)
         self._last_is_stale = False
         return summary
@@ -504,17 +564,44 @@ class Table:
             raise ValueError("directory is required")
         if not os.path.exists(target):
             return
-        for name in os.listdir(target):
-            if not name.endswith(".json"):
-                continue
+        names = [name for name in os.listdir(target) if name.endswith(".json")]
+        verbose_load = os.getenv("VIRTUUS_BENCH_VERBOSE_LOAD") == "1"
+        if verbose_load:
+            print(
+                f"[table.load] {self.name} start count={len(names)} "
+                f"mode={self.storage_mode}"
+            )  # pragma: no cover - debug aid
+        current_manifest = {
+            name: self._file_signature(os.path.join(target, name)) for name in names
+        }
+        self._record_keys = {}
+        search_loaded = False
+        if self.search_fields:
+            if self.search_index is None:
+                self.search_index = {}
+            search_loaded = self._load_search_index_if_fresh(current_manifest)
+        for idx, name in enumerate(names, 1):
             path = os.path.join(target, name)
             with open(path, "r", encoding="utf-8") as handle:
                 record = json.load(handle)
-            self._insert_record_from_load(record)
-            self._manifest[name] = self._file_signature(path)
+            self._insert_record_from_load(record, not search_loaded)
+            pk = self._extract_pk_quiet(record)
+            if pk is not None:
+                self._record_keys[name] = self._key_to_string(pk)
+            if verbose_load and idx % 1000 == 0:
+                print(
+                    f"[table.load] {self.name} loaded {idx}/{len(names)}"
+                )  # pragma: no cover - debug aid
+        self._manifest = current_manifest
         self._last_dir_mtime = self._dir_mtime()
         self._last_check_time = time.time()
         self._last_is_stale = False
+        if self.search_fields and not search_loaded:
+            self._persist_search_index(current_manifest)
+        if verbose_load:
+            print(
+                f"[table.load] {self.name} done count={len(names)}"
+            )  # pragma: no cover - debug aid
 
     def export(self, directory: str) -> None:
         """Export all records to a directory.
@@ -525,7 +612,17 @@ class Table:
         :rtype: None
         """
         os.makedirs(directory, exist_ok=True)
-        for pk, record in self.records.items():
+        if self.storage_mode == "memory":
+            records = self.records.items()
+        else:
+            records = [
+                (self._pk_from_filename(os.path.basename(path)), record)
+                for path in self._iter_json_files()
+                if (record := self._read_record_file(path)) is not None
+            ]
+        for pk, record in records:
+            if pk is None:  # pragma: no cover
+                continue
             self._validate_pk_for_path(pk)
             filename = self._filename_for_pk(pk)
             path = os.path.join(directory, filename)
@@ -545,12 +642,151 @@ class Table:
             return self._handle_validation("missing composite primary key")
         return TableKey(str(partition_value), str(sort_value))
 
+    def _extract_pk_quiet(self, record: dict[str, Any]) -> Optional[Any]:
+        """Extract a primary key without emitting validation warnings.
+
+        :param record: Record data.
+        :type record: dict[str, Any]
+        :return: Primary key value or None.
+        :rtype: Any | None
+        """
+        if self.primary_key is not None:
+            return record.get(self.primary_key)
+        partition_value = record.get(self.partition_key)
+        sort_value = record.get(self.sort_key)
+        if partition_value is None or sort_value is None:
+            return None
+        return TableKey(str(partition_value), str(sort_value))
+
     def _compose_key(self, pk: str, sort: Optional[str]) -> Any:
         if self.primary_key is not None:
             return pk
         if sort is None:
             raise ValueError("sort key is required for composite primary keys")
         return TableKey(str(pk), str(sort))
+
+    def _key_to_string(self, key: Any) -> str:
+        if isinstance(key, TableKey):
+            return f"{key.partition}__{key.sort}"
+        return str(key)
+
+    def _key_from_string(self, value: str) -> Any:
+        if self.primary_key is None and "__" in value:
+            partition, sort = value.split("__", 1)
+            return TableKey(partition, sort)
+        return value
+
+    def _record_count(self) -> int:
+        if self.storage_mode == "memory":
+            return len(self.records)
+        if not self._record_keys:
+            return 0
+        return len(set(self._record_keys.values()))
+
+    def _lookup_existing_record(self, key: Any) -> Optional[dict[str, Any]]:
+        if self.storage_mode == "memory":
+            return self.records.get(key)
+        return self._read_record_by_key(key)
+
+    def _read_record_by_key(self, key: Any) -> Optional[dict[str, Any]]:
+        if self.directory is None:
+            return None
+        filename = self._filename_for_pk(key)
+        if self.storage_mode == "index_only":
+            if filename not in self._record_keys:
+                return None
+        path = os.path.join(self.directory, filename)
+        return self._read_record_file(path)
+
+    def _read_all_records(self) -> list[dict[str, Any]]:
+        if self.directory is None:
+            return []
+        records_by_key: dict[str, dict[str, Any]] = {}
+        for filename, key_str in self._record_keys.items():
+            path = os.path.join(self.directory, filename)
+            record = self._read_record_file(path)
+            if record is None:
+                continue
+            records_by_key[key_str] = record
+        return list(records_by_key.values())
+
+    def _search_enabled(self) -> bool:
+        return bool(self.search_fields)
+
+    def _index_in_search(self, pk: Any, record: dict[str, Any]) -> None:
+        if not self.search_fields or self.search_index is None:
+            return
+        pk_str = self._key_to_string(pk)
+        for field in self.search_fields:
+            if field not in record:
+                continue
+            for token in _tokens_from_value(record[field]):
+                postings = self.search_index.setdefault(token, set())
+                postings.add(pk_str)
+
+    def _remove_from_search(self, pk: Any, record: dict[str, Any]) -> None:
+        if not self.search_fields or self.search_index is None:
+            return
+        pk_str = self._key_to_string(pk)
+        tokens: list[str] = []
+        for field in self.search_fields:
+            if field in record:
+                tokens.extend(_tokens_from_value(record[field]))
+        for token in tokens:
+            postings = self.search_index.get(token)
+            if postings is None:
+                continue
+            if isinstance(postings, set):
+                postings.discard(pk_str)
+                if not postings:
+                    self.search_index.pop(token, None)
+            else:  # fallback for legacy list format
+                filtered = [
+                    entry for entry in postings if entry != pk_str
+                ]  # pragma: no cover
+                if filtered:  # pragma: no cover
+                    self.search_index[token] = set(filtered)  # pragma: no cover
+                else:  # pragma: no cover - legacy compatibility path
+                    self.search_index.pop(token, None)
+
+    def search(self, query: str) -> list[dict[str, Any]]:
+        """Search keyword index and return matching records.
+
+        :param query: Query string to tokenize and match.
+        :type query: str
+        :return: List of matching records.
+        :rtype: list[dict[str, Any]]
+        """
+        self._maybe_refresh_before_query()
+        if not self.search_fields or self.search_index is None:
+            raise ValueError("search is not configured")
+        tokens = sorted(set(_tokenize(query)))
+        if not tokens:
+            return []
+        postings_sets: list[list[str]] = []
+        for token in tokens:
+            postings = self.search_index.get(token)
+            if postings is None:
+                return []
+            postings_sets.append(list(postings))
+        postings_sets.sort(key=len)
+        candidates = postings_sets[0]
+        for postings in postings_sets[1:]:
+            lookup = set(postings)
+            candidates = [pk for pk in candidates if pk in lookup]
+            if not candidates:
+                break
+        candidates = sorted(set(candidates))
+        results: list[dict[str, Any]] = []
+        for pk in candidates:
+            key = self._key_from_string(pk)
+            if isinstance(key, TableKey):
+                record = self.get(key.partition, key.sort)
+            else:
+                record = self.get(key)
+            if record is not None:
+                results.append(record)
+        return results
 
     def _index_in_gsis(self, pk: Any, record: dict[str, Any]) -> None:
         for gsi in self.gsis.values():
@@ -589,6 +825,7 @@ class Table:
         path = os.path.join(self.directory, filename)
         self._write_json_atomic(path, record)
         self._manifest[filename] = self._file_signature(path)
+        self._record_keys[filename] = self._key_to_string(pk)
         self._last_dir_mtime = self._dir_mtime()
 
     def _delete_record_from_disk(self, pk: Any) -> None:
@@ -597,8 +834,9 @@ class Table:
         path = os.path.join(self.directory, filename)
         if os.path.exists(path):
             os.remove(path)
-            self._manifest.pop(filename, None)
-            self._last_dir_mtime = self._dir_mtime()
+        self._manifest.pop(filename, None)
+        self._record_keys.pop(filename, None)
+        self._last_dir_mtime = self._dir_mtime()
 
     def _validate_pk_for_path(self, pk: Any) -> None:
         if isinstance(pk, TableKey):
@@ -620,6 +858,113 @@ class Table:
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+
+    def _search_index_root(self) -> Optional[str]:
+        if self.directory is None:
+            return None
+        base = os.path.dirname(self.directory) or self.directory
+        return os.path.join(base, ".virtuus", "index", self.name)
+
+    def _search_index_path(self) -> Optional[str]:
+        root = self._search_index_root()
+        if root is None:
+            return None
+        return os.path.join(root, "search_index.json")
+
+    def _search_manifest_path(self) -> Optional[str]:
+        root = self._search_index_root()
+        if root is None:
+            return None
+        return os.path.join(root, "search_manifest.json")
+
+    def _manifest_payload(
+        self, manifest: dict[str, tuple[int, int]]
+    ) -> dict[str, list[int]]:
+        return {name: [sig[0], sig[1]] for name, sig in manifest.items()}
+
+    def _load_search_index_if_fresh(self, manifest: dict[str, tuple[int, int]]) -> bool:
+        index_path = self._search_index_path()
+        manifest_path = self._search_manifest_path()
+        if index_path is None or manifest_path is None:
+            return False
+        if not os.path.exists(index_path) or not os.path.exists(manifest_path):
+            return False
+        try:
+            persisted_manifest = json.loads(
+                Path(manifest_path).read_text(encoding="utf-8")
+            )
+        except Exception:
+            return False
+        if persisted_manifest != self._manifest_payload(manifest):
+            return False
+        try:
+            payload = json.loads(Path(index_path).read_text(encoding="utf-8"))
+        except Exception:
+            return False
+        fields = payload.get("fields") or []
+        tokens = payload.get("tokens") or {}
+        if fields != self.search_fields:
+            return False
+        # normalize to sets for faster runtime operations
+        self.search_index = {k: set(v) for k, v in tokens.items()}
+        return True
+
+    def _persist_search_index(self, manifest: dict[str, tuple[int, int]]) -> None:
+        index_root = self._search_index_root()
+        index_path = self._search_index_path()
+        manifest_path = self._search_manifest_path()
+        if index_root is None or index_path is None or manifest_path is None:
+            return
+        os.makedirs(index_root, exist_ok=True)
+        payload = {
+            "fields": list(self.search_fields),
+            "tokens": {
+                k: sorted(list(v)) if isinstance(v, set) else v
+                for k, v in (self.search_index or {}).items()
+            },
+        }
+        Path(index_path).write_text(json.dumps(payload), encoding="utf-8")
+        Path(manifest_path).write_text(
+            json.dumps(self._manifest_payload(manifest)), encoding="utf-8"
+        )
+
+    def _rebuild_search_index(self) -> None:
+        if not self.search_fields:
+            return
+        self.search_index = {}
+        for path in self._iter_json_files():
+            record = self._read_record_file(path)
+            if record is None:
+                continue
+            pk = self._extract_pk(record)
+            if pk is None:
+                continue
+            self._index_in_search(pk, record)
+        if self.directory is not None:
+            self._persist_search_index(self._manifest)
+
+    def _rebuild_gsis(self) -> None:
+        if not self.gsis:
+            return
+        rebuilt = {
+            name: GSI(name, gsi.partition_key, gsi.sort_key)
+            for name, gsi in self.gsis.items()
+        }
+        if self.storage_mode == "memory":
+            for pk, record in self.records.items():
+                for gsi in rebuilt.values():
+                    gsi.put(pk, record)
+        else:
+            for path in self._iter_json_files():
+                record = self._read_record_file(path)
+                if record is None:
+                    continue
+                pk = self._extract_pk(record)
+                if pk is None:
+                    continue
+                for gsi in rebuilt.values():
+                    gsi.put(pk, record)
+        self.gsis = rebuilt
 
     def _iter_json_files(self) -> Iterable[str]:  # pragma: no cover
         if self.directory is None:
@@ -723,3 +1068,28 @@ class Table:
                 hook(record)
             except Exception as exc:
                 self.hook_errors.append(str(exc))
+
+
+def _tokenize(text: str) -> list[str]:
+    tokens: list[str] = []
+    current: list[str] = []
+    for ch in text:
+        if ch.isalnum():
+            current.append(ch.lower())
+        elif current:
+            tokens.append("".join(current))
+            current = []
+    if current:
+        tokens.append("".join(current))
+    return tokens
+
+
+def _tokens_from_value(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return _tokenize(value)
+    if isinstance(value, list):
+        tokens: list[str] = []
+        for item in value:
+            tokens.extend(_tokens_from_value(item))
+        return tokens
+    return []

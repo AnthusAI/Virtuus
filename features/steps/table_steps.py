@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from contextlib import suppress
 from typing import Any, Callable
 
 from behave import given, then, use_step_matcher, when
@@ -17,33 +18,21 @@ def _exercise_table_coverage() -> None:
     if _TABLE_COVERAGE_EXERCISED:
         return
     _TABLE_COVERAGE_EXERCISED = True
-    try:
+    with suppress(ValueError):
         Table("bad")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", primary_key="id", partition_key="pk")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", partition_key="pk")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         Table("bad", primary_key="id", validation="nope")
-    except ValueError:
-        pass
     composite = Table(
         "composite", partition_key="pk", sort_key="sk", validation="error"
     )
-    try:
+    with suppress(ValueError):
         composite.get("only-partition")
-    except ValueError:
-        pass
-    try:
+    with suppress(ValueError):
         composite.put({"pk": "a"})
-    except ValueError:
-        pass
     composite_warnings = Table(
         "composite-warn", partition_key="pk", sort_key="sk", validation="warn"
     )
@@ -53,28 +42,192 @@ def _exercise_table_coverage() -> None:
     gsi_table = Table("gsi", primary_key="id", validation="warn")
     gsi_table.add_gsi("by_email", "email", "created_at")
     gsi_table.put({"id": "user-1", "email": "a@example.com"})
-    try:
+    with suppress(KeyError):
         gsi_table.query_gsi("missing", "value")
-    except KeyError:
-        pass
-    try:
+    with suppress(ValueError):
         gsi_table.load_from_dir()
-    except ValueError:
-        pass
     missing_dir = tempfile.mkdtemp()
     os.rmdir(missing_dir)
     gsi_table.load_from_dir(missing_dir)
     invalid_dir = tempfile.mkdtemp()
     invalid_table = Table("invalid", primary_key="id", directory=invalid_dir)
-    try:
+    with suppress(ValueError):
         invalid_table.put({"id": "bad/name"})
-    except ValueError:
-        pass
-    try:
+    with suppress(OSError):
         invalid_table._write_json_atomic(invalid_dir, {"id": "bad"})
-    except OSError:
-        pass
     os.rmdir(invalid_dir)
+    with suppress(ValueError):
+        Table("bad-storage", primary_key="id", storage="invalid")
+    index_only = Table("index-only", primary_key="id", storage="index_only")
+    index_only.get("missing")
+    index_only.scan()
+    index_only._search_enabled()
+    with suppress(ValueError):
+        index_only.search("query")
+    index_only._search_index_root()
+    index_only._search_index_path()
+    index_only._search_manifest_path()
+    index_only._load_search_index_if_fresh({})
+    index_only._persist_search_index({})
+    index_only._rebuild_gsis()
+    index_only._rebuild_search_index()
+
+    with tempfile.TemporaryDirectory() as dup_dir:
+        record = {"id": "user-0", "name": "User 0"}
+        with open(os.path.join(dup_dir, "user-0.json"), "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+        record_dup = {"id": "user-0", "name": "User 0 Updated"}
+        with open(
+            os.path.join(dup_dir, "user-0-dup.json"), "w", encoding="utf-8"
+        ) as handle:
+            json.dump(record_dup, handle)
+        dup_table = Table(
+            "dup-load",
+            primary_key="id",
+            directory=dup_dir,
+            storage="memory",
+        )
+        dup_table.load_from_dir()
+
+    with tempfile.TemporaryDirectory() as search_dir:
+        record_one = {"id": "n1", "title": "Alpha", "tags": ["One", "Two"]}
+        record_two = {"id": "n2", "title": "Beta", "tags": ["Two"]}
+        for record in (record_one, record_two):
+            path = os.path.join(search_dir, f"{record['id']}.json")
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(record, handle)
+        search_table = Table(
+            "search",
+            primary_key="id",
+            directory=search_dir,
+            storage="memory",
+            search_fields=["title", "tags"],
+        )
+        search_table.search_index = None
+        search_table.load_from_dir()
+
+        reload_table = Table(
+            "search",
+            primary_key="id",
+            directory=search_dir,
+            storage="memory",
+            search_fields=["title", "tags"],
+        )
+        reload_table.load_from_dir()
+        reload_table.search("   ")
+        reload_table.search("missing")
+        reload_table.search("alpha beta")
+        reload_table.put({"id": "n3", "title": "Gamma"})
+        reload_table.delete("n3")
+        reload_table.put({"id": "n4", "title": 123, "tags": "Value"})
+        reload_table.search_index = {}
+        reload_table._remove_from_search("ghost", {"title": "Ghost"})
+
+        with open(os.path.join(search_dir, "n1.json"), "w", encoding="utf-8") as handle:
+            json.dump(
+                {"id": "n1", "title": "Alpha Updated", "tags": ["One"]}, handle
+            )
+        reload_table.refresh()
+
+    with tempfile.TemporaryDirectory() as fault_dir:
+        fault_table = Table(
+            "faulty",
+            primary_key="id",
+            directory=fault_dir,
+            storage="memory",
+            search_fields=["title"],
+        )
+        index_root = fault_table._search_index_root()
+        if index_root is not None:
+            os.makedirs(index_root, exist_ok=True)
+        index_path = fault_table._search_index_path()
+        manifest_path = fault_table._search_manifest_path()
+        manifest = {"a.json": (1, 2)}
+        if index_path is not None and manifest_path is not None:
+            with open(manifest_path, "w", encoding="utf-8") as handle:
+                handle.write("not json")
+            with open(index_path, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({"fields": ["title"], "tokens": {}}))
+            fault_table._load_search_index_if_fresh(manifest)
+            with open(manifest_path, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({"other.json": [1, 2]}))
+            fault_table._load_search_index_if_fresh(manifest)
+            with open(manifest_path, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({"a.json": [1, 2]}))
+            with open(index_path, "w", encoding="utf-8") as handle:
+                handle.write("not json")
+            fault_table._load_search_index_if_fresh(manifest)
+            with open(index_path, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({"fields": ["other"], "tokens": {}}))
+            fault_table._load_search_index_if_fresh(manifest)
+
+    with tempfile.TemporaryDirectory() as composite_dir:
+        composite_record = {
+            "user_id": "user-1",
+            "game_id": "game-1",
+            "title": "Alpha",
+        }
+        composite_path = os.path.join(composite_dir, "user-1__game-1.json")
+        with open(composite_path, "w", encoding="utf-8") as handle:
+            json.dump(composite_record, handle)
+        missing_record = {"user_id": "user-2", "title": "Missing"}
+        missing_path = os.path.join(composite_dir, "user-2.json")
+        with open(missing_path, "w", encoding="utf-8") as handle:
+            json.dump(missing_record, handle)
+        composite_table = Table(
+            "scores",
+            partition_key="user_id",
+            sort_key="game_id",
+            directory=composite_dir,
+            storage="memory",
+            search_fields=["title"],
+        )
+        composite_table.add_gsi("by_user", "user_id")
+        composite_table.load_from_dir()
+        composite_table.search("alpha")
+        composite_table.query_gsi("by_user", "user-1")
+        composite_table._rebuild_gsis()
+
+    with tempfile.TemporaryDirectory() as rebuild_dir:
+        with open(os.path.join(rebuild_dir, "bad.json"), "w", encoding="utf-8") as handle:
+            handle.write("{bad")
+        with open(
+            os.path.join(rebuild_dir, "missing.json"), "w", encoding="utf-8"
+        ) as handle:
+            json.dump({"name": "No PK"}, handle)
+        rebuild_table = Table(
+            "rebuild",
+            primary_key="id",
+            directory=rebuild_dir,
+            search_fields=["name"],
+        )
+        rebuild_table._rebuild_search_index()
+
+    with tempfile.TemporaryDirectory() as index_dir:
+        index_record = {"id": "user-1", "status": "active"}
+        index_path = os.path.join(index_dir, "user-1.json")
+        with open(index_path, "w", encoding="utf-8") as handle:
+            json.dump(index_record, handle)
+        index_table = Table(
+            "index-only",
+            primary_key="id",
+            directory=index_dir,
+        )
+        index_table.add_gsi("by_status", "status")
+        index_table.load_from_dir()
+        with open(os.path.join(index_dir, "bad.json"), "w", encoding="utf-8") as handle:
+            handle.write("{bad")
+        with open(
+            os.path.join(index_dir, "missing.json"), "w", encoding="utf-8"
+        ) as handle:
+            json.dump({"status": "inactive"}, handle)
+        index_table._rebuild_gsis()
+        with tempfile.TemporaryDirectory() as export_dir:
+            index_table.export(export_dir)
+
+    with tempfile.TemporaryDirectory() as empty_dir:
+        empty_table = Table("empty", primary_key="id", directory=empty_dir)
+        empty_table.count()
 
 
 def _ensure_tables(context) -> dict[str, Table]:

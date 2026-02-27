@@ -1,0 +1,25 @@
+{
+  "id": "virt-141eb51f-09ac-4704-8659-b44bebaaefcb",
+  "title": "Align pip-compile with strip-extras default",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "52b7e0de-ad4e-4b70-be7b-b778285c57c4",
+      "author": "derek",
+      "text": "Updated requirements sync workflow to use --strip-extras and recompiled requirements files with --strip-extras.",
+      "created_at": "2026-02-27T18:30:06.079824753Z"
+    }
+  ],
+  "created_at": "2026-02-27T18:29:33.582652064Z",
+  "updated_at": "2026-02-27T18:30:09.636388105Z",
+  "closed_at": "2026-02-27T18:30:09.636388105Z",
+  "custom": {}
+}

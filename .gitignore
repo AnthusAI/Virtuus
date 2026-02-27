@@ -39,7 +39,17 @@ benchmarks/output_py/posts/
 benchmarks/output_py/comments/
 benchmarks/output_py/social_media_scale_*/
 benchmarks/output_py/social_media_total_*/
+# Storage-mode benchmark datasets (keep charts/results)
+# NOTE: All storage-mode benchmark outputs are ignored to keep the repo clean.
+benchmarks/output_storage/**
+# Other benchmark dataset dumps
+benchmarks/output_memory_*/
+benchmarks/output_search_*/
+benchmarks/output_cold_start/**
 project-local/
+infra/ec2_bench/.venv/
+infra/ec2_bench/cdk.context.json
+infra/ec2_bench/cdk.out/
 
 # Examples
 examples/sakila/.cache/

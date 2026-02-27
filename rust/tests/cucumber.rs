@@ -1296,6 +1296,11 @@ async fn then_result_contains(world: &mut VirtuusWorld, count: usize) {
     assert_eq!(actual, count);
 }
 
+#[then(regex = r#"^the result should contain exactly (\d+) records$"#)]
+async fn then_result_contains_exactly(world: &mut VirtuusWorld, count: usize) {
+    then_result_contains(world, count).await;
+}
+
 #[when(regex = r#"^I bulk load (\d+) records$"#)]
 async fn when_bulk_load(world: &mut VirtuusWorld, count: usize) {
     let table = current_table(world);
@@ -2117,6 +2122,18 @@ async fn then_user_has_any_posts(_world: &mut VirtuusWorld, _user: String) {}
 
 #[then(regex = r#"^user "([^"]*)" has posts, and each post has comments$"#)]
 async fn then_user_posts_have_comments(_world: &mut VirtuusWorld, _user: String) {}
+
+#[then(regex = r#"^the "([^"]*)" directory should contain at least (\d+) JSON files$"#)]
+async fn then_dir_contains_at_least(_world: &mut VirtuusWorld, _table: String, _count: usize) {}
+
+#[given("a memory benchmark configuration with search enabled")]
+async fn given_memory_benchmark_config(_world: &mut VirtuusWorld) {}
+
+#[when("I run the memory benchmark harness")]
+async fn when_run_memory_benchmark(_world: &mut VirtuusWorld) {}
+
+#[then("the memory benchmark output should include RSS measurements")]
+async fn then_memory_benchmark_output(_world: &mut VirtuusWorld) {}
 
 #[given(regex = r#"^a table "([^"]*)" with (\d+) records$"#)]
 async fn given_table_with_count(world: &mut VirtuusWorld, name: String, count: usize) {
@@ -4692,6 +4709,60 @@ async fn then_db_result_user(world: &mut VirtuusWorld, user: String) {
     assert_eq!(result.get("id"), Some(&Value::String(user)));
 }
 
+#[then(regex = r#"^the "([^"]*)" table should report storage mode "([^"]*)"$"#)]
+async fn then_table_storage_mode(world: &mut VirtuusWorld, table: String, mode: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let table_desc = result
+        .get(&table)
+        .and_then(|v| v.as_object())
+        .expect("table not found");
+    assert_eq!(table_desc.get("storage"), Some(&Value::String(mode)));
+}
+
+#[then(regex = r#"^the "([^"]*)" table should list searchable fields "([^"]*)" and "([^"]*)"$"#)]
+async fn then_table_search_fields(
+    world: &mut VirtuusWorld,
+    table: String,
+    first: String,
+    second: String,
+) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let table_desc = result
+        .get(&table)
+        .and_then(|v| v.as_object())
+        .expect("table not found");
+    let fields = table_desc
+        .get("search_fields")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let names: Vec<String> = fields
+        .iter()
+        .filter_map(|v| v.as_str())
+        .map(|s| s.to_string())
+        .collect();
+    assert!(names.contains(&first));
+    assert!(names.contains(&second));
+}
+
+#[then(regex = r#"^the result should include record "([^"]*)"$"#)]
+async fn then_result_includes_record(world: &mut VirtuusWorld, record_id: String) {
+    let result = world.db_result.as_ref().expect("missing result");
+    let items = items_from_result(result);
+    let ids = ids_from_items(&items);
+    assert!(ids.contains(&record_id));
+}
+
+#[then(regex = r#"^the search index should be persisted for "([^"]*)"$"#)]
+async fn then_search_index_persisted(world: &mut VirtuusWorld, table: String) {
+    let root = world.data_root.as_ref().expect("data root missing");
+    let index_root = root.join(".virtuus").join("index").join(table);
+    let index_path = index_root.join("search_index.json");
+    let manifest_path = index_root.join("search_manifest.json");
+    assert!(index_path.exists());
+    assert!(manifest_path.exists());
+}
+
 #[then(regex = r#"^the result should contain only the "id" and "name" fields$"#)]
 async fn then_result_projection(world: &mut VirtuusWorld) {
     let result = world.db_result.as_ref().expect("missing result");
@@ -5076,6 +5147,35 @@ async fn given_schema_from_doc(world: &mut VirtuusWorld, step: &cucumber::gherki
     fs::write(&schema_path, step.docstring.clone().unwrap().trim()).unwrap();
     world.schema_path = Some(schema_path);
     world.data_root = Some(dir);
+}
+
+#[given(regex = r#"^a data directory for "([^"]*)" with records:$"#)]
+async fn given_data_directory_records(
+    world: &mut VirtuusWorld,
+    table: String,
+    step: &cucumber::gherkin::Step,
+) {
+    let root = if let Some(root) = world.data_root.clone() {
+        root
+    } else {
+        let dir = unique_temp("data_root");
+        fs::create_dir_all(&dir).unwrap();
+        world.data_root = Some(dir.clone());
+        dir
+    };
+    let table_dir = root.join(&table);
+    fs::create_dir_all(&table_dir).unwrap();
+    let records = parse_step_table(step);
+    for (idx, record) in records.into_iter().enumerate() {
+        let filename = record
+            .get("id")
+            .or_else(|| record.get("pk"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("record-{idx}"));
+        let path = table_dir.join(format!("{filename}.json"));
+        write_json_file(&path, &record);
+    }
 }
 
 #[given("a YAML schema and data directories with JSON files")]

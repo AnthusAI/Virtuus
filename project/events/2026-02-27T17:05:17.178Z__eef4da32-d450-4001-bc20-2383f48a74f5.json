@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "eef4da32-d450-4001-bc20-2383f48a74f5",
+  "issue_id": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-27T17:05:17.178Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 2,
+    "status": "open",
+    "title": "Dependency sync automation"
+  }
+}

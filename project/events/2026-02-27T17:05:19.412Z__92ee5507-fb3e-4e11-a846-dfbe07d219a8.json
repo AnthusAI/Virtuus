@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "92ee5507-fb3e-4e11-a846-dfbe07d219a8",
+  "issue_id": "virt-d961585d-020c-4b3f-8c85-a10bd990d136",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-27T17:05:19.412Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+    "priority": 2,
+    "status": "open",
+    "title": "Auto-generate requirements.txt from pyproject"
+  }
+}

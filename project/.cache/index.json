@@ -1,76 +1,127 @@
 {
-  "built_at": "2026-02-23T03:33:15Z",
+  "built_at": "2026-02-27T18:39:21Z",
   "file_mtimes": {
-    "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771724603.204033,
-    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771717334.474095,
-    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771744187.223507,
-    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771724839.3594,
-    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1771816772.031498,
-    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771705654.27983,
-    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771816123.231262,
-    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771744192.334412,
-    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771714067.325406,
-    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771700178.986893,
-    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771714054.091713,
-    "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1771784292.565696,
-    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771710545.711479,
-    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771697740.085544,
-    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771726492.781843,
-    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1771766633.560711,
-    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771697753.668476,
-    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771709265.184778,
-    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771816846.955416,
-    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771705653.890486,
-    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1771817024.80805,
-    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771714070.754441,
-    "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1771817253.099732,
-    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771709273.533325,
-    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771700112.080751,
-    "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1771745792.274328,
-    "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771696060.634795,
-    "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771724559.586077,
-    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771700123.351469,
-    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771714061.194019,
-    "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1771784285.755966,
-    "virt-689472bc-703f-40a2-8c8b-18ff570f046a.json": 1771817230.037107,
-    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771710549.805551,
-    "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771696060.632423,
-    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771705653.61684,
-    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771714064.710461,
-    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771783929.224291,
-    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771817028.998514,
-    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771705654.200847,
-    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771700136.65412,
-    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771710553.3841,
-    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771727546.19616,
-    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771733649.091532,
-    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771705785.444604,
-    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771709279.565643,
-    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771725039.274945,
-    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771725252.018969,
-    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771814574.389248,
-    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771710557.517015,
-    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771705653.705977,
-    "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771749586.526532,
-    "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771723894.886977,
-    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771733686.154369,
-    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771725634.155066,
-    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771705653.810676,
-    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771710561.790502,
-    "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161.json": 1771783956.520486,
-    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771727537.486045,
-    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771697223.246901,
-    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771705653.967159,
-    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771709284.516897,
-    "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1771749613.949164,
-    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771705654.123434,
-    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771709290.662331,
-    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771705654.044356,
-    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771726504.254243,
-    "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1771784300.001996,
-    "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771717340.88181
+    "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
+    "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
+    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771957454.416678,
+    "virt-141eb51f-09ac-4704-8659-b44bebaaefcb.json": 1772217009.620087,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771957454.416678,
+    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771957454.416678,
+    "virt-18b9c259-430b-46ac-8306-49bab32d2db0.json": 1771957454.416678,
+    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1771957454.416678,
+    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771957454.416678,
+    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771957454.416678,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771957454.416678,
+    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771957454.416678,
+    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771957454.416678,
+    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771957454.416678,
+    "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1772140979.638002,
+    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771957454.416678,
+    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771957454.416678,
+    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771957454.416678,
+    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1772140979.638002,
+    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771957454.416678,
+    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771957454.416678,
+    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771957454.416678,
+    "virt-44f07bbb-2770-4244-a296-dde40425b68f.json": 1771957454.416678,
+    "virt-46d4a8e3-8b45-4ef3-b984-556b8c04be39.json": 1771957454.416678,
+    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771957454.416678,
+    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1771957454.416678,
+    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771957454.416678,
+    "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1771957454.416678,
+    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771957454.416678,
+    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771957454.416678,
+    "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1771957454.416678,
+    "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771957454.416678,
+    "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771957454.416678,
+    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771957454.416678,
+    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771957454.416678,
+    "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1771957454.416678,
+    "virt-689472bc-703f-40a2-8c8b-18ff570f046a.json": 1771957454.416678,
+    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771957454.416678,
+    "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771957454.416678,
+    "virt-6dad6793-8da3-47e5-be78-bc41090f4756.json": 1771957454.416678,
+    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771957454.416678,
+    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771957454.416678,
+    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771957454.416678,
+    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771957454.416678,
+    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771957454.416678,
+    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771957454.416678,
+    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771957454.416678,
+    "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef.json": 1771957454.416678,
+    "virt-7ecdb670-3482-4cec-a779-c1c16657feae.json": 1771957454.416678,
+    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771957454.416678,
+    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771957454.416678,
+    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771957454.416678,
+    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771957454.416678,
+    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771957454.416678,
+    "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772212158.556058,
+    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771957454.416678,
+    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771957454.416678,
+    "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb.json": 1772215783.221439,
+    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771957454.416678,
+    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771957454.416678,
+    "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771957454.416678,
+    "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c.json": 1771957454.416678,
+    "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771957454.416678,
+    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771957454.416678,
+    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771957454.416678,
+    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771957454.416678,
+    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771957454.416678,
+    "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161.json": 1771957454.416678,
+    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771957454.416678,
+    "virt-ba7b74a7-70e3-455a-b2dc-88d67ff0cac0.json": 1771957454.416678,
+    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771957454.416678,
+    "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d.json": 1771957454.416678,
+    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771957454.416678,
+    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771957454.416678,
+    "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772140979.638002,
+    "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1771957454.416678,
+    "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772212152.606017,
+    "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772214522.682568,
+    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771957454.416678,
+    "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1771957454.416678,
+    "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82.json": 1772215785.751457,
+    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771957454.416678,
+    "virt-eb357c6f-e32f-409d-8402-21af4103a09c.json": 1771957454.416678,
+    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771957454.416678,
+    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771957454.416678,
+    "virt-ef8da482-7286-4eba-8cf4-956a705e2c09.json": 1772214520.282552,
+    "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1771957454.416678,
+    "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771957454.416678
   },
   "issues": [
+    {
+      "assignee": null,
+      "closed_at": "2026-02-26T04:06:49.497316380Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-26T04:06:14.343307084Z",
+          "id": "a8b99e70-5ed7-4642-940a-e40dc9ad8884",
+          "text": "Latest CI check names in Virtuus: check (py 3.9), check (py 3.10), check (py 3.11), check (py 3.12). There are also 'release' check runs appearing twice; recommend not requiring release checks."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-26T04:06:43.224545993Z",
+          "id": "ef895fa5-863c-4020-b6f2-e1c36af56f66",
+          "text": "Created ruleset 'main-branch-protection' for refs/heads/main with PR requirement (1 approval, dismiss stale, require last push approval), required status checks: check (py 3.9), check (py 3.10), check (py 3.11), check (py 3.12); plus block deletions and force pushes. No bypass actors."
+        }
+      ],
+      "created_at": "2026-02-26T04:05:57.006551185Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Determine if Virtuus repo has CI test action/check name to require in branch ruleset.",
+      "id": "virt-02067cdc-4247-448b-b711-50199e39e631",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Audit CI checks for ruleset",
+      "type": "chore",
+      "updated_at": "2026-02-26T04:06:49.497316380Z"
+    },
     {
       "assignee": null,
       "closed_at": "2026-02-22T01:43:19.685792Z",
@@ -150,6 +201,31 @@
       "title": "Schema from YAML",
       "type": "story",
       "updated_at": "2026-02-21T23:42:14.473950Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:30:09.636388105Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:30:06.079824753Z",
+          "id": "52b7e0de-ad4e-4b70-be7b-b778285c57c4",
+          "text": "Updated requirements sync workflow to use --strip-extras and recompiled requirements files with --strip-extras."
+        }
+      ],
+      "created_at": "2026-02-27T18:29:33.582652064Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-141eb51f-09ac-4704-8659-b44bebaaefcb",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Align pip-compile with strip-extras default",
+      "type": "task",
+      "updated_at": "2026-02-27T18:30:09.636388105Z"
     },
     {
       "assignee": null,
@@ -284,6 +360,43 @@
       "title": "Concurrent reads",
       "type": "story",
       "updated_at": "2026-02-22T01:47:19.359221Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:50:39.311451Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:49:08.035741Z",
+          "id": "ec804a77-9948-404f-a1f9-ea170ebd066f",
+          "text": "Starting lesson markdown: will add examples/ lessons with short snippets from the Python/Rust files and note DynamoDB-style limitations."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:50:35.753879Z",
+          "id": "178fc4bf-be3f-4a8f-8666-24a73525677c",
+          "text": "Added examples/sakila/README.md + lessons 01-05 markdown (load, GSI, associations, has_many_through, pagination) with short Python/Rust snippets and DynamoDB-style limits section."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:02:10.279151Z",
+          "id": "af57a3ef-b649-4d7f-8cb4-c686acd8d57b",
+          "text": "Follow-up: updated lesson 03 snippets to keep nested customer include (added customer to fields list)."
+        }
+      ],
+      "created_at": "2026-02-23T03:33:49.841425Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Draft the how-to lessons using the Sakila dataset, with short code snippets from the example programs and notes on DynamoDB-style limitations.",
+      "id": "virt-18b9c259-430b-46ac-8306-49bab32d2db0",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Write lesson markdown + snippets",
+      "type": "task",
+      "updated_at": "2026-02-23T04:02:10.279151Z"
     },
     {
       "assignee": null,
@@ -637,7 +750,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-24T05:25:47.260227Z",
+          "id": "76ae4aef-c2fe-4603-8a61-d779e919fa5e",
+          "text": "Marked done per user confirmation."
+        }
+      ],
       "created_at": "2026-02-22T18:18:12.565578Z",
       "creator": null,
       "custom": {},
@@ -647,10 +767,10 @@
       "labels": [],
       "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
       "priority": 2,
-      "status": "open",
+      "status": "done",
       "title": "Parallelize Rust file ingestion (rayon, buffered IO)",
       "type": "story",
-      "updated_at": "2026-02-22T18:18:12.565578Z"
+      "updated_at": "2026-02-24T05:25:47.260227Z"
     },
     {
       "assignee": null,
@@ -772,6 +892,12 @@
           "created_at": "2026-02-22T13:23:48.205735Z",
           "id": "37534377-fc60-45fb-8fce-77d967ba48fe",
           "text": "## Perf improvement options\n- **Profile hot paths (Rust):** perf/flamegraph on GSI query + PK lookup; focus on clones/allocs in `table.rs` (Vec sorting, serde_json Value handling).\n- **Index structures:** use `BTreeMap` per GSI partition to keep sorted order without per-query sort; consider `FxHashMap` for PK map to reduce hashing cost.\n- **Serde overhead:** try typed structs or borrowing `Value`/`Cow` to avoid clones on hot paths.\n- **I/O batching:** reuse buffers and `BufWriter` for export/persistence; reduce syscalls.\n- **Parallel load:** rayon-based directory load + GSI build per partition to speed cold load.\n- **Query caching:** optional per-GSI partition cache of last sorted slice for repeated scans.\n- **Instrumentation:** add tracing spans around load/query to split time between sort vs deserialization.\n\nNext: run perf on 100k corpus, prototype BTreeMap GSI, measure vs baseline.\n"
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-24T05:23:31.292086Z",
+          "id": "1a541a3a-ab28-4f7d-bf56-9c91f8b1d3ab",
+          "text": "Marked done per user confirmation (second time). This was a thought experiment; no further action planned."
         }
       ],
       "created_at": "2026-02-22T07:34:10.355149Z",
@@ -783,10 +909,10 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "done",
       "title": "Explore performance improvements (thought experiment)",
       "type": "task",
-      "updated_at": "2026-02-22T13:23:53.560572Z"
+      "updated_at": "2026-02-24T05:23:31.292086Z"
     },
     {
       "assignee": null,
@@ -904,6 +1030,62 @@
       "title": "Set up public packages",
       "type": "epic",
       "updated_at": "2026-02-23T03:20:46.955252Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T04:09:23.521949Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:07:29.687624Z",
+          "id": "cfc271f8-39e5-4d3b-a7e1-9fa2867d904c",
+          "text": "Experiment: parallel JSON parsing in load_from_dir (Rayon) with sequential insert. Bench: /tmp/bench_repeat.py (10k full_database_cold_load). Baseline Rust mean 478.758 ms (median 449.211). New Rust runs [385.523, 384.113, 390.311, 390.056, 390.726], mean 388.146 ms, median 390.056 (~19% faster). Python unchanged (mean 536.593, median 501.1 on same run). Decision: keep change; adds rayon dependency but meaningful speedup."
+        }
+      ],
+      "created_at": "2026-02-23T04:04:23.303459Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-44f07bbb-2770-4244-a296-dde40425b68f",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "closed",
+      "title": "Experiment: parallel JSON parsing for load_from_dir",
+      "type": "story",
+      "updated_at": "2026-02-23T04:09:23.521949Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:43:27.851010Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:41:28.290047Z",
+          "id": "a23d938f-37eb-495f-b17b-7f3bc056d00b",
+          "text": "Feature: Optimized load preserves correctness\n  Scenario: Cold load reads all records after load-path change\n    Given a data directory with JSON records for users, posts, and comments\n    When I load the database from the schema\n    Then the record counts match the fixture sizes\n    And primary key lookups return the expected records\n\nNotes:\n- This story targets `Table::load_from_dir` optimizations (e.g., byte reads + preallocation).\n- Performance evaluated via 10k `full_database_cold_load` yardstick."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:43:23.618319Z",
+          "id": "7cbc9a96-7ae4-4dfd-869f-30c6551396f2",
+          "text": "Tried byte reads + preallocation in Rust load; no measurable improvement, so reverted. Story closed without implementation."
+        }
+      ],
+      "created_at": "2026-02-23T03:41:24.051124Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-46d4a8e3-8b45-4ef3-b984-556b8c04be39",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "closed",
+      "title": "Optimize Rust load path uses byte reads",
+      "type": "story",
+      "updated_at": "2026-02-23T03:43:27.851010Z"
     },
     {
       "assignee": null,
@@ -1042,13 +1224,19 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-23T03:35:54.412532Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-23T03:27:15.608791Z",
           "id": "0b554ef1-f6f2-4492-bd8f-1496b66a93e4",
           "text": "Linked story: virt-689472\nGoal: parallelize Rust `Table::load_from_dir` (and/or `Database::from_schema`) without changing behavior.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms). Keep only if improvement justifies complexity."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:35:51.703338Z",
+          "id": "6657b223-0ad2-48b2-8d7a-490278d90aee",
+          "text": "## Experiment: Parallel file IO (Rayon) in `Table::load_from_dir`\nApproach: gather JSON paths, read+parse in parallel, then sequentially `put` + manifest updates.\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust (parallel attempt): mean **2934.240 ms**, median 2869.528\n- Rust baseline (pre-change): 2929.900 ms (single run) → no meaningful improvement\n- Python baseline: mean **3301.024 ms**, median 3126.695\n\n### Decision\nNo measurable improvement vs Rust baseline; change adds dependency + complexity. **Reverted** the parallel load changes and removed Rayon."
         }
       ],
       "created_at": "2026-02-23T03:27:12.539107Z",
@@ -1060,10 +1248,10 @@
       "labels": [],
       "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
       "priority": 2,
-      "status": "in_progress",
+      "status": "closed",
       "title": "Implement parallel file load in Rust",
       "type": "task",
-      "updated_at": "2026-02-23T03:27:33.099545Z"
+      "updated_at": "2026-02-23T03:35:54.412532Z"
     },
     {
       "assignee": null,
@@ -1350,13 +1538,19 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
+      "closed_at": "2026-02-23T03:36:02.051943Z",
       "comments": [
         {
           "author": "ryan.porter",
           "created_at": "2026-02-23T03:27:10.036968Z",
           "id": "5e7670a6-f39f-462a-bfe7-174337fa90d9",
           "text": "Feature: Parallel load preserves correctness\n  Scenario: Cold load reads all records\n    Given a data directory with JSON records for users, posts, and comments\n    When I load the database from the schema\n    Then the record counts match the fixture sizes\n    And primary key lookups return the expected records\n\nNotes:\n- This story exists to ensure correctness is unchanged when load is parallelized.\n- Performance outcomes will be evaluated via the 10k `full_database_cold_load` yardstick and recorded separately."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:35:59.338408Z",
+          "id": "4239736c-32cd-4d63-ae6b-e09de2d404d8",
+          "text": "Parallel load was prototyped and benchmarked; no meaningful speedup, so the change was reverted. Story closed without implementation."
         }
       ],
       "created_at": "2026-02-23T03:27:04.013571Z",
@@ -1368,10 +1562,10 @@
       "labels": [],
       "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "Parallel Rust load preserves correctness",
       "type": "story",
-      "updated_at": "2026-02-23T03:27:10.036968Z"
+      "updated_at": "2026-02-23T03:36:02.051943Z"
     },
     {
       "assignee": null,
@@ -1421,6 +1615,43 @@
       "title": "Library availability smoke test",
       "type": "story",
       "updated_at": "2026-02-21T17:42:27.640133Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:49:02.822769Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:44:51.164949Z",
+          "id": "73317dd1-4921-4dfe-9b41-c49b1893423f",
+          "text": "Starting example program work: will add runnable Python + Rust examples under examples/ and rust/examples for each lesson."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:49:00.434912Z",
+          "id": "eb081064-32fd-41a6-a3c7-04353d109490",
+          "text": "Added example programs under examples/sakila/python (01-05) and examples/sakila/rust (Cargo.toml + src/lib.rs + src/bin/01-05). Python run checks: 01_load_table.py and 05_pagination.py succeeded. Rust: cargo check --manifest-path examples/sakila/rust/Cargo.toml succeeded."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:02:07.132804Z",
+          "id": "67f7dc8e-fb56-4bad-a361-c21c0d81f3f5",
+          "text": "Follow-up: forced Python examples to use python backend (examples/sakila/python/common.py) to avoid Rust-PyO3 include deadlock; updated associations example fields list to retain nested customer include; reran all Python + Rust examples successfully."
+        }
+      ],
+      "created_at": "2026-02-23T03:33:46.951108Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Write runnable Python and Rust example files for each lesson (load, GSI, associations, pagination).",
+      "id": "virt-6dad6793-8da3-47e5-be78-bc41090f4756",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Create Python/Rust example programs",
+      "type": "task",
+      "updated_at": "2026-02-23T04:02:07.132804Z"
     },
     {
       "assignee": null,
@@ -1590,6 +1821,30 @@
           "created_at": "2026-02-23T03:23:48.998399Z",
           "id": "a19bf75a-ea88-46bf-bd36-398f2e60765f",
           "text": "## Rust-native benchmark update (2026-02-23)\nRan Rust directly via CLI (no Python harness). `cargo run --release --bin virtuus -- query` with schema loading all tables, 10k dataset. Mean load+query time: **2807.248 ms** (3 runs). Details logged on task virt-4a074a."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:36:07.014248Z",
+          "id": "6549dd32-0b60-4a66-837f-8ca73f777e17",
+          "text": "## Experiment result: Parallel IO (Rayon)\nTried parallelizing `Table::load_from_dir` with Rayon (read+parse in parallel, sequential put). Benchmarks at 10k `full_database_cold_load` showed **no meaningful improvement** (mean ~2934 ms vs prior ~2930 ms). Changes were reverted and dependency removed."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:43:33.035689Z",
+          "id": "298c46c5-9516-4499-a716-ae6c8570d6a8",
+          "text": "## Experiment result: byte reads + preallocation\nTried `fs::read` + `serde_json::from_slice` with pre-allocation in `Table::load_from_dir`. 10k `full_database_cold_load` showed no meaningful improvement (median ~2884 ms, mean worse due outlier). Reverted change."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:48:13.802742Z",
+          "id": "5cdea39a-7737-491c-b69f-bedd2fab315c",
+          "text": "## Win: Load is now read-only\nChanged `load_from_dir` to skip disk writes during load (Python + Rust), aligning with README (only `put`/`delete` write). 10k `full_database_cold_load` improved from ~2.9–3.3s to ~0.48s (mean Rust 478.758 ms, Python 492.872 ms). Keeping change."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:09:27.010719Z",
+          "id": "2a0a5381-e08e-443b-9f80-7c0e0b4775c0",
+          "text": "New experiment: parallel JSON parsing in Rust load_from_dir (Rayon). Bench (10k full_database_cold_load): baseline mean 478.758 ms -> new mean 388.146 ms (~19% faster). CI passed; change committed in repo."
         }
       ],
       "created_at": "2026-02-22T18:16:24.961819Z",
@@ -1604,7 +1859,7 @@
       "status": "in_progress",
       "title": "Rust performance investigation --status in_progress",
       "type": "epic",
-      "updated_at": "2026-02-23T03:23:48.998399Z"
+      "updated_at": "2026-02-23T04:09:27.010719Z"
     },
     {
       "assignee": null,
@@ -1734,6 +1989,68 @@
       "title": "Has-many associations",
       "type": "story",
       "updated_at": "2026-02-21T21:49:13.383936Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:43:17.715780Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:41:34.768085Z",
+          "id": "a2fd3d33-a405-483b-9bbb-97468085182c",
+          "text": "Linked story: virt-46d4a8\nGoal: switch `Table::load_from_dir` to `fs::read` + `serde_json::from_slice` and pre-allocate record/manifest capacity based on file count.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:43:13.299307Z",
+          "id": "c709429e-8664-4355-9246-382b51f3b138",
+          "text": "## Experiment: byte reads + preallocation\nChange: `fs::read` + `serde_json::from_slice`, pre-allocate `records`/`manifest` based on file count.\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust (attempt): runs [3023.481, 2674.395, 2884.114, 2766.328, 4762.610]\n- mean **3222.186 ms**, median **2884.114 ms**\n- Python runs [2983.267, 3069.394, 2945.505, 3091.563, 2992.783]\n- mean **3016.502 ms**, median **2992.783 ms**\n\n### Decision\nNo clear improvement over Rust baseline (median roughly unchanged; mean worse due outlier). Reverted the change."
+        }
+      ],
+      "created_at": "2026-02-23T03:41:31.048895Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "closed",
+      "title": "Implement byte-read + preallocation in Rust load",
+      "type": "task",
+      "updated_at": "2026-02-23T03:43:17.715780Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:48:09.250508Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:46:30.765280Z",
+          "id": "d2ac7ab2-0c98-4c83-a8ea-84cb87e17ec5",
+          "text": "Feature: Load from disk does not rewrite files\n  Scenario: Cold load reads records without writing\n    Given a data directory with JSON records for users, posts, and comments\n    When I load the database from the schema\n    Then the record counts match the fixture sizes\n    And primary key lookups return the expected records\n\nNotes:\n- Aligns with README: load should scan files and build indexes; only `put`/`delete` write.\n- Performance evaluated via 10k `full_database_cold_load` yardstick."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:48:05.398443Z",
+          "id": "9b74441c-102a-48c2-abd9-32981dc3502e",
+          "text": "Load is now read-only in Python + Rust; benchmarked at ~0.48s for 10k full_database_cold_load. Keeping change."
+        }
+      ],
+      "created_at": "2026-02-23T03:46:26.180324Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-7ecdb670-3482-4cec-a779-c1c16657feae",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "closed",
+      "title": "Load from disk is read-only",
+      "type": "story",
+      "updated_at": "2026-02-23T03:48:09.250508Z"
     },
     {
       "assignee": null,
@@ -1958,6 +2275,31 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-27T17:09:14.869886837Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:09:18.566593362Z",
+          "id": "9b5f66c7-47e8-4c90-8c31-e372f31ca3e4",
+          "text": "Closed: requirements auto-sync workflow implemented and pushed."
+        }
+      ],
+      "created_at": "2026-02-27T17:05:17.178432129Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Dependency sync automation",
+      "type": "epic",
+      "updated_at": "2026-02-27T17:09:18.566593362Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T01:54:08.511533Z",
       "comments": [
         {
@@ -2041,6 +2383,31 @@
       "title": "Set up semantic-release (conventional commits)",
       "type": "task",
       "updated_at": "2026-02-23T02:42:54.389112Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:09:43.238451201Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:09:41.309368343Z",
+          "id": "b9fe2bea-3f8a-4d5f-901f-fed6ca917379",
+          "text": "Generated python/requirements.txt and python/requirements-dev.txt via pip-compile from python/pyproject.toml."
+        }
+      ],
+      "created_at": "2026-02-27T18:09:13.357978566Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb",
+      "labels": [],
+      "parent": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+      "priority": 2,
+      "status": "closed",
+      "title": "Generate requirements from pyproject",
+      "type": "task",
+      "updated_at": "2026-02-27T18:09:43.238451201Z"
     },
     {
       "assignee": null,
@@ -2158,6 +2525,24 @@
       "title": "Fix CI to run full make check on all Python versions",
       "type": "task",
       "updated_at": "2026-02-22T08:39:46.526401Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T04:15:49.607700Z",
+      "comments": [],
+      "created_at": "2026-02-23T03:33:36.504812Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Create a Sakila-derived example dataset plus Python/Rust example code and lesson markdown to teach Virtuus basics (load, GSI, associations, pagination).",
+      "id": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Sakila-based examples & how-to docs",
+      "type": "epic",
+      "updated_at": "2026-02-23T04:15:49.607700Z"
     },
     {
       "assignee": null,
@@ -2431,6 +2816,37 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-23T04:15:45.081946Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:14:51.781568Z",
+          "id": "52b48c2f-2f82-456a-9a09-4da69f9561c3",
+          "text": "Investigating python example import behavior and making import robust for repo-root execution."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:15:41.994240Z",
+          "id": "3e1d1d90-6663-4fbd-99e9-149aaaf2828e",
+          "text": "Updated python example scripts to insert their directory into sys.path before importing common; re-ran all five python examples from repo root successfully."
+        }
+      ],
+      "created_at": "2026-02-23T04:14:43.694258Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Ensure examples/sakila/python scripts can import common when run from repo root per README command.",
+      "id": "virt-ba7b74a7-70e3-455a-b2dc-88d67ff0cac0",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Fix python example imports",
+      "type": "task",
+      "updated_at": "2026-02-23T04:15:45.081946Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T18:07:00.043911Z",
       "comments": [
         {
@@ -2459,6 +2875,43 @@
       "title": "Phase 0: Project Scaffolding + Coverage Infrastructure",
       "type": "epic",
       "updated_at": "2026-02-21T18:07:03.246765Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:44:39.407852Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:44:11.315736Z",
+          "id": "40640d3c-5208-42f9-a2f3-9860773e7e86",
+          "text": "Starting data generation task: will run examples/sakila/build_sakila.py to produce JSON dataset for docs."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:44:36.876980Z",
+          "id": "85c0aa61-31df-4833-aec7-bc2816e1674a",
+          "text": "Ran /opt/anaconda3/bin/conda run -n virtuus python examples/sakila/build_sakila.py. Generated examples/sakila/data with counts: customers=3, rentals=133, payments=133, inventory=131, films=123, film_actor=708, actors=196 (total 1427)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:02:04.110917Z",
+          "id": "b3e23d34-6cad-47c1-89be-db73ae658616",
+          "text": "Follow-up: updated builder to stringify IDs and inject an id field mirroring the primary key for each record, then regenerated examples/sakila/data with --force."
+        }
+      ],
+      "created_at": "2026-02-23T03:33:44.827835Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Run the Sakila transform to produce a small, committed JSON dataset for docs and examples.",
+      "id": "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Generate Sakila JSON example data",
+      "type": "task",
+      "updated_at": "2026-02-23T04:02:04.110917Z"
     },
     {
       "assignee": null,
@@ -2579,6 +3032,12 @@
           "created_at": "2026-02-22T08:40:13.948819Z",
           "id": "1bb25295-7adf-4de2-a11b-3135d41a58d0",
           "text": "In progress: implemented Database.from_schema_dict; docs updated. Pending: decide if additional validation/helpers needed."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-24T05:22:48.954985Z",
+          "id": "fab52640-f9d1-4e4b-af9f-1f900a1874e7",
+          "text": "Marked done per user confirmation. Status was in_progress; features already delivered (Database.from_schema_dict, docs). No remaining work."
         }
       ],
       "created_at": "2026-02-22T07:58:11.683573Z",
@@ -2590,10 +3049,103 @@
       "labels": [],
       "parent": null,
       "priority": 2,
-      "status": "in_progress",
+      "status": "done",
       "title": "API: load schema from dict",
       "type": "task",
-      "updated_at": "2026-02-22T08:40:13.948819Z"
+      "updated_at": "2026-02-24T05:22:48.954985Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T03:44:06.475785Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:33:55.263559Z",
+          "id": "c41525e9-3430-4aa4-9e4e-d7d42139fa1b",
+          "text": "Starting work: assess repo structure, plan Sakila subset tables/associations, decide data source and transform approach."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:44:04.091812Z",
+          "id": "c29b0e0c-0d85-4a36-840a-cb24fd0224ad",
+          "text": "Completed: added examples/sakila/build_sakila.py (download + transform), examples/sakila/schema.yml with tables/GSIs/associations. Data subset selection: top N customers by rental count; include rentals, payments, inventory, films, film_actor, actors. Source DB URL: https://sq.io/testdata/sakila.db (SQLite Sakila)."
+        }
+      ],
+      "created_at": "2026-02-23T03:33:41.136235Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Select Sakila tables/associations for examples; design schema.yml and write a transformation script to export JSON tables.",
+      "id": "virt-cd3e464d-55ed-4fec-9873-febee80de138",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Define Sakila subset schema + transform",
+      "type": "task",
+      "updated_at": "2026-02-23T03:44:06.475785Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T17:09:07.442619819Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:05:22.262398833Z",
+          "id": "78264019-64e4-4313-9a15-99190b8ddb8b",
+          "text": "Plan: add GitHub Action to auto-run pip-compile on changes to python/pyproject.toml, commit updated requirements*.txt back to branch using GITHUB_TOKEN. Will target PR branches (not main) and guard against CI loops."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:05:47.954585726Z",
+          "id": "d11b1c69-f4ef-4170-a832-2b95a1676165",
+          "text": "Implemented .github/workflows/requirements-sync.yml to run pip-compile on python/pyproject.toml changes, generate python/requirements*.txt, and auto-commit/push if changed. Uses GITHUB_TOKEN with contents: write and skips when actor is github-actions[bot] to prevent loops."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:09:12.613803018Z",
+          "id": "44ff2376-34cd-4b18-8c79-17fd09462daf",
+          "text": "Closed after push. Workflow added and pushed. No tests run (workflow-only change)."
+        }
+      ],
+      "created_at": "2026-02-27T17:05:19.412727133Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-d961585d-020c-4b3f-8c85-a10bd990d136",
+      "labels": [],
+      "parent": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+      "priority": 2,
+      "status": "closed",
+      "title": "Auto-generate requirements.txt from pyproject",
+      "type": "task",
+      "updated_at": "2026-02-27T17:09:12.613803018Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T17:48:38.019338442Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:42.688862907Z",
+          "id": "a1ed3d8b-cd7e-4b43-b993-8d141887203f",
+          "text": "Closed: fixed black formatting and ran rustfmt to keep checks green. Changes pushed."
+        }
+      ],
+      "created_at": "2026-02-27T17:46:49.120940703Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "CI: Fix Python formatting",
+      "type": "epic",
+      "updated_at": "2026-02-27T17:48:42.688862907Z"
     },
     {
       "assignee": null,
@@ -2652,6 +3204,55 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-02-23T03:48:00.677322Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:46:39.562163Z",
+          "id": "202fffa4-51bd-40f0-8dcc-f34b45f4310e",
+          "text": "Linked story: virt-7ecdb6\nGoal: make `load_from_dir` read-only by bypassing disk writes during load in both Python and Rust while preserving indexing + hooks.\nBenchmark gate: compare 10k `full_database_cold_load` vs Rust baseline (2929.900 ms) and Python baseline (3354.440 ms)."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T03:47:56.901814Z",
+          "id": "3fa1a4b0-874f-4e75-9987-c00414536d26",
+          "text": "## Results: skip disk writes during load\nChange: `load_from_dir` now inserts into memory + indexes + hooks without rewriting files (Python + Rust).\n\n### Bench results (10k `full_database_cold_load`, 5 runs)\n- Rust runs: [449.211, 427.741, 448.473, 576.032, 492.336]\n- mean **478.758 ms**, median **449.211 ms**\n- Python runs: [479.577, 464.932, 478.768, 487.738, 553.343]\n- mean **492.872 ms**, median **479.577 ms**\n\n### Decision\nSignificant improvement (~6x faster vs prior ~2.9–3.3s). Keep change."
+        }
+      ],
+      "created_at": "2026-02-23T03:46:34.250006Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553",
+      "labels": [],
+      "parent": "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7",
+      "priority": 2,
+      "status": "closed",
+      "title": "Skip disk writes during load (Python + Rust)",
+      "type": "task",
+      "updated_at": "2026-02-23T03:48:00.677322Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:09:45.764252920Z",
+      "comments": [],
+      "created_at": "2026-02-27T18:09:17.082114032Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "Dependency artifacts",
+      "type": "epic",
+      "updated_at": "2026-02-27T18:09:45.764252920Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:28:10.662168Z",
       "comments": [
         {
@@ -2698,6 +3299,49 @@
       "title": "Cache check (dry-run refresh)",
       "type": "story",
       "updated_at": "2026-02-21T21:28:10.662168Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-23T04:10:16.043899Z",
+      "comments": [
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:02:46.983475Z",
+          "id": "02e1dfaf-2c97-456a-b4a9-d8356e355351",
+          "text": "Adding README section listing Sakila examples with brief explanations."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:03:06.146196Z",
+          "id": "ab587c39-6d66-4be6-bc03-972cac7862b0",
+          "text": "Updated README with a Sakila examples section listing each Python/Rust example and what it demonstrates, plus data build command."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:09:53.575051Z",
+          "id": "9ad079e0-b264-4f4a-a485-64f64557b447",
+          "text": "Updating README examples section to link to lesson pages with fuller explanations."
+        },
+        {
+          "author": "ryan.porter",
+          "created_at": "2026-02-23T04:10:13.252004Z",
+          "id": "f53d82f5-d68b-4dcc-9c3b-2d88c0702994",
+          "text": "Updated README Examples (Sakila) section to link to lesson pages with fuller explanations and direct links to Python/Rust code for each lesson."
+        }
+      ],
+      "created_at": "2026-02-23T04:02:41.439901Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Add a README section that lists each Sakila example with a brief explanation of what it demonstrates.",
+      "id": "virt-eb357c6f-e32f-409d-8402-21af4103a09c",
+      "labels": [],
+      "parent": "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c",
+      "priority": 2,
+      "status": "closed",
+      "title": "Document Sakila examples in README",
+      "type": "task",
+      "updated_at": "2026-02-23T04:10:16.043899Z"
     },
     {
       "assignee": null,
@@ -2778,6 +3422,49 @@
       "title": "Phase 8: Concurrency & Integration Testing",
       "type": "epic",
       "updated_at": "2026-02-22T02:15:04.254123Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T17:48:34.941691656Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:47:04.674998936Z",
+          "id": "46e4ffa1-7a61-49c6-bebc-25be9ca56ed8",
+          "text": "Ran black on python/src/virtuus/_python/table.py to satisfy formatting check."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:47:31.476646287Z",
+          "id": "1e0a27ed-fcfe-40e8-a523-c58de34f9068",
+          "text": "Ran make check; Python checks and coverage passed. Rust fmt check failed in rust/src/table.rs (cargo fmt --check wants reformat)."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:16.913368170Z",
+          "id": "dd8935dc-61e5-40a0-9792-c0a4438c20d6",
+          "text": "Ran cargo fmt to satisfy check-rust. make check now fails only because cargo-tarpaulin is not installed (tarpaulin command missing)."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T17:48:40.297502714Z",
+          "id": "f50f7d4f-a285-4624-b03c-d8dbf452649e",
+          "text": "Closed after push. make check passed until cargo tarpaulin step; failure due to missing cargo-tarpaulin in this environment."
+        }
+      ],
+      "created_at": "2026-02-27T17:46:51.308734016Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ef8da482-7286-4eba-8cf4-956a705e2c09",
+      "labels": [],
+      "parent": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+      "priority": 2,
+      "status": "closed",
+      "title": "Fix black formatting in table.py",
+      "type": "task",
+      "updated_at": "2026-02-27T17:48:40.297502714Z"
     },
     {
       "assignee": null,

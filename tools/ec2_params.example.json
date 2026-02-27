@@ -1,0 +1,11 @@
+{
+  "ami": "ami-xxxxxxxx",
+  "subnet_id": "subnet-xxxxxxxx",
+  "security_group_id": "sg-xxxxxxxx",
+  "instance_types": ["t3.nano", "t3.medium", "r6i.large"],
+  "totals": "1000,10000,100000,1000000",
+  "s3_bucket": "my-bucket",
+  "s3_prefix": "virtuus-bench",
+  "profile": "default",
+  "key_name": "my-keypair"
+}

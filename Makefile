@@ -46,3 +46,9 @@ check-parity:
 # ── Combined coverage ────────────────────────────────────────────────────────
 
 coverage: coverage-python coverage-rust
+
+# ── Bench sync helpers (local + optional S3) ────────────────────────────────
+
+.PHONY: bench-sync
+bench-sync:
+	$(PYTHON) tools/sync_bench_results.py $(if $(bucket),--bucket $(bucket),) $(if $(prefix),--prefix $(prefix),) $(if $(profile),--profile $(profile),)

@@ -3,7 +3,7 @@
   "title": "Explore performance improvements (thought experiment)",
   "description": "",
   "type": "task",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -28,10 +28,16 @@
       "author": "ryan.porter",
       "text": "## Perf improvement options\n- **Profile hot paths (Rust):** perf/flamegraph on GSI query + PK lookup; focus on clones/allocs in `table.rs` (Vec sorting, serde_json Value handling).\n- **Index structures:** use `BTreeMap` per GSI partition to keep sorted order without per-query sort; consider `FxHashMap` for PK map to reduce hashing cost.\n- **Serde overhead:** try typed structs or borrowing `Value`/`Cow` to avoid clones on hot paths.\n- **I/O batching:** reuse buffers and `BufWriter` for export/persistence; reduce syscalls.\n- **Parallel load:** rayon-based directory load + GSI build per partition to speed cold load.\n- **Query caching:** optional per-GSI partition cache of last sorted slice for repeated scans.\n- **Instrumentation:** add tracing spans around load/query to split time between sort vs deserialization.\n\nNext: run perf on 100k corpus, prototype BTreeMap GSI, measure vs baseline.\n",
       "created_at": "2026-02-22T13:23:48.205735Z"
+    },
+    {
+      "id": "1a541a3a-ab28-4f7d-bf56-9c91f8b1d3ab",
+      "author": "ryan.porter",
+      "text": "Marked done per user confirmation (second time). This was a thought experiment; no further action planned.",
+      "created_at": "2026-02-24T05:23:31.292086Z"
     }
   ],
   "created_at": "2026-02-22T07:34:10.355149Z",
-  "updated_at": "2026-02-22T13:23:53.560572Z",
+  "updated_at": "2026-02-24T05:23:31.292086Z",
   "closed_at": null,
   "custom": {}
 }

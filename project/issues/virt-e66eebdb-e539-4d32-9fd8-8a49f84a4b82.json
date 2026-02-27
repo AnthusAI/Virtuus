@@ -1,0 +1,18 @@
+{
+  "id": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82",
+  "title": "Dependency artifacts",
+  "description": "",
+  "type": "epic",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-27T18:09:17.082114032Z",
+  "updated_at": "2026-02-27T18:09:45.764252920Z",
+  "closed_at": "2026-02-27T18:09:45.764252920Z",
+  "custom": {}
+}

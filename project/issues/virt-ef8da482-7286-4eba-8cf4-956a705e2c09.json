@@ -1,0 +1,43 @@
+{
+  "id": "virt-ef8da482-7286-4eba-8cf4-956a705e2c09",
+  "title": "Fix black formatting in table.py",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "46e4ffa1-7a61-49c6-bebc-25be9ca56ed8",
+      "author": "derek",
+      "text": "Ran black on python/src/virtuus/_python/table.py to satisfy formatting check.",
+      "created_at": "2026-02-27T17:47:04.674998936Z"
+    },
+    {
+      "id": "1e0a27ed-fcfe-40e8-a523-c58de34f9068",
+      "author": "derek",
+      "text": "Ran make check; Python checks and coverage passed. Rust fmt check failed in rust/src/table.rs (cargo fmt --check wants reformat).",
+      "created_at": "2026-02-27T17:47:31.476646287Z"
+    },
+    {
+      "id": "dd8935dc-61e5-40a0-9792-c0a4438c20d6",
+      "author": "derek",
+      "text": "Ran cargo fmt to satisfy check-rust. make check now fails only because cargo-tarpaulin is not installed (tarpaulin command missing).",
+      "created_at": "2026-02-27T17:48:16.913368170Z"
+    },
+    {
+      "id": "f50f7d4f-a285-4624-b03c-d8dbf452649e",
+      "author": "derek",
+      "text": "Closed after push. make check passed until cargo tarpaulin step; failure due to missing cargo-tarpaulin in this environment.",
+      "created_at": "2026-02-27T17:48:40.297502714Z"
+    }
+  ],
+  "created_at": "2026-02-27T17:46:51.308734016Z",
+  "updated_at": "2026-02-27T17:48:40.297502714Z",
+  "closed_at": "2026-02-27T17:48:34.941691656Z",
+  "custom": {}
+}

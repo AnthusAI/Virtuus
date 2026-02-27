@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "6f342a97-af63-4a31-99d8-4bcae7e99c12",
+  "issue_id": "virt-bc21eaec-1e98-4ab0-9fd4-e16ab329a6b9",
+  "event_type": "issue_created",
+  "occurred_at": "2026-02-27T18:39:26.537Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-1e864f87-c6d1-457d-b138-10beed5a78d6",
+    "priority": 2,
+    "status": "open",
+    "title": "Fix github-code-quality findings"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "event_id": "c121228a-f070-4311-b46d-765142ffecd5",
+  "issue_id": "virt-ef8da482-7286-4eba-8cf4-956a705e2c09",
+  "event_type": "comment_added",
+  "occurred_at": "2026-02-27T17:48:40.297Z",
+  "actor_id": "derek",
+  "payload": {
+    "comment_author": "derek",
+    "comment_id": "f50f7d4f-a285-4624-b03c-d8dbf452649e"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "event_id": "6b1c02ca-38c4-40a1-b24f-e53e120c58de",
+  "issue_id": "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb",
+  "event_type": "field_updated",
+  "occurred_at": "2026-02-27T18:09:19.920Z",
+  "actor_id": "derek",
+  "payload": {
+    "changes": {
+      "parent": {
+        "from": null,
+        "to": "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82"
+      }
+    }
+  }
+}
