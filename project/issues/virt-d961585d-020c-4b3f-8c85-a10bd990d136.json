@@ -1,0 +1,31 @@
+{
+  "id": "virt-d961585d-020c-4b3f-8c85-a10bd990d136",
+  "title": "Auto-generate requirements.txt from pyproject",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "78264019-64e4-4313-9a15-99190b8ddb8b",
+      "author": "derek",
+      "text": "Plan: add GitHub Action to auto-run pip-compile on changes to python/pyproject.toml, commit updated requirements*.txt back to branch using GITHUB_TOKEN. Will target PR branches (not main) and guard against CI loops.",
+      "created_at": "2026-02-27T17:05:22.262398833Z"
+    },
+    {
+      "id": "d11b1c69-f4ef-4170-a832-2b95a1676165",
+      "author": "derek",
+      "text": "Implemented .github/workflows/requirements-sync.yml to run pip-compile on python/pyproject.toml changes, generate python/requirements*.txt, and auto-commit/push if changed. Uses GITHUB_TOKEN with contents: write and skips when actor is github-actions[bot] to prevent loops.",
+      "created_at": "2026-02-27T17:05:47.954585726Z"
+    }
+  ],
+  "created_at": "2026-02-27T17:05:19.412727133Z",
+  "updated_at": "2026-02-27T17:05:47.954585726Z",
+  "closed_at": null,
+  "custom": {}
+}
