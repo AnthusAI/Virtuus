@@ -3,7 +3,7 @@
   "title": "CI code quality cleanup",
   "description": "",
   "type": "epic",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -12,7 +12,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-02-27T18:39:24.242115765Z",
-  "updated_at": "2026-02-27T18:39:24.242115765Z",
-  "closed_at": null,
+  "updated_at": "2026-02-27T18:45:25.087989131Z",
+  "closed_at": "2026-02-27T18:45:25.087989131Z",
   "custom": {}
 }
