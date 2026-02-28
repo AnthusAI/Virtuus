@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "17bd7317-92a9-41ec-aa83-ca263c8d2542",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Uses list-form subprocess.check_output() without shell=True. The cmd list is built from hardcoded strings plus developer-supplied --region/--profile CLI flags. No shell interpreter is involved, so CWE-78 injection path does not exist. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:37.421310Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.116804Z",
-  "updated_at": "2026-02-28T01:38:39.116804Z",
+  "updated_at": "2026-02-28T02:20:37.421310Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 23,

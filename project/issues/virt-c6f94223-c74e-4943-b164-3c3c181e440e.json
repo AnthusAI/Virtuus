@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "6c9396d2-d007-4c0f-a50f-1999f49300ee",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. subprocess.check_call(cmd) where cmd is a list built from a developer-controlled JSON params file. shell=False (default). Line 61 already uses shlex.quote() for display, showing awareness. No shell injection vector. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:37.582854Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.117Z",
-  "updated_at": "2026-02-28T01:38:39.117Z",
+  "updated_at": "2026-02-28T02:20:37.582854Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 9,

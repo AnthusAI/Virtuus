@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "66504ae1-858b-4276-8b88-0f2a8536e656",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. The flagged call is wait_for_invocation() at line 87 — instance_id originates from the AWS API response (InstanceId field), not user input. Passed as a list element to subprocess, not interpolated into a shell string. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:37.511132Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.114636Z",
-  "updated_at": "2026-02-28T01:38:39.114636Z",
+  "updated_at": "2026-02-28T02:20:37.511132Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 15,

@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "07caba76-caec-49f0-b32a-5486d67094dc",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Path(root) where root comes from --roots CLI args specifying input directories to scan. Developer-controlled input paths in an aggregation tool. No untrusted external input. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.592087Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.113145Z",
-  "updated_at": "2026-02-28T01:38:39.113145Z",
+  "updated_at": "2026-02-28T02:20:54.592087Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 61,

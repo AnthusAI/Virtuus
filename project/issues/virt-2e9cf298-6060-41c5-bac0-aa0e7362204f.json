@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "6fa4496a-3b65-477b-a8b7-54c656d6d698",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Same pattern as virt-15b80e — Path(args.params).read_text() in a developer CLI tool. Path is entirely developer-controlled via --params flag. No untrusted input involved. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.384741Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.116132Z",
-  "updated_at": "2026-02-28T01:38:39.116132Z",
+  "updated_at": "2026-02-28T02:20:54.384741Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 12,

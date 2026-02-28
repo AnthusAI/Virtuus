@@ -3,7 +3,7 @@
   "title": "[Snyk Code] Path Traversal",
   "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 305, column 9 to line 305, column 20\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:303-307)\n```\n 303 | \n 304 |     for table, rows in tables.items():\n 305 |         write_table(data_root, table, rows)\n 306 | \n 307 |     total = sum(len(rows) for rows in tables.values())\n```\n\n**Issue Key:** fb6ba7da-c14a-4bd2-b0e2-dd2bd5fda36a\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
   "type": "sub-task",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -13,10 +13,17 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "9c76a87a-d332-4d24-b0b2-b36b680de8eb",
+      "author": "derek.norrbom",
+      "text": "Fixed. Covered by the same write_table() fix as virt-7d1c81 — path containment check added in examples/sakila/build_sakila.py.",
+      "created_at": "2026-02-28T02:23:06.845976Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.112676Z",
-  "updated_at": "2026-02-28T01:38:39.112676Z",
-  "closed_at": null,
+  "updated_at": "2026-02-28T02:23:06.845976Z",
+  "closed_at": "2026-02-28T02:22:56.472592Z",
   "custom": {
     "snyk_column": 9,
     "snyk_end_column": 20,

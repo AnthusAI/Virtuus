@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "79e74ce8-32c6-4c5e-af2f-0087e69ed8cf",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Path(args.out_csv) is a developer-specified output path via --out-csv CLI flag. Same rationale as virt-8426fd. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.731618Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.114162Z",
-  "updated_at": "2026-02-28T01:38:39.114162Z",
+  "updated_at": "2026-02-28T02:20:54.731618Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 15,

@@ -3,7 +3,7 @@
   "title": "[Snyk Code] Path Traversal",
   "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_cold_results_s3.py`\n**Location:** line 42, column 24 to line 42, column 34\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_cold_results_s3.py:40-44)\n```\n  40 |                 continue\n  41 |             rel = key[len(prefix) :] if key.startswith(prefix) else key\n  42 |             out_path = dest / rel\n  43 |             out_path.parent.mkdir(parents=True, exist_ok=True)\n  44 |             s3.download_file(bucket, key, str(out_path))\n```\n\n**Issue Key:** 30be6114-e8b1-4513-b0f6-23fc28d8fc8d\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
   "type": "sub-task",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -13,10 +13,17 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "c8a08b68-5ad8-43d6-a312-6e307ce3aca2",
+      "author": "derek.norrbom",
+      "text": "Fixed. Added path containment check in tools/pull_cold_results_s3.py: out_path is now resolved and asserted to be under dest before download. Raises ValueError on any S3 key containing path traversal sequences.",
+      "created_at": "2026-02-28T02:23:06.449671Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.115024Z",
-  "updated_at": "2026-02-28T01:38:39.115024Z",
-  "closed_at": null,
+  "updated_at": "2026-02-28T02:23:06.449671Z",
+  "closed_at": "2026-02-28T02:22:56.002660Z",
   "custom": {
     "snyk_column": 24,
     "snyk_end_column": 34,

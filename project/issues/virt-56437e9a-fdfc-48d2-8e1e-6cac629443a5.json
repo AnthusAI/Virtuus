@@ -3,7 +3,7 @@
   "title": "Snyk Code Vulnerabilities",
   "description": "Security vulnerabilities imported from Snyk.",
   "type": "epic",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -16,7 +16,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-02-28T01:38:39.111108Z",
-  "updated_at": "2026-02-28T01:38:39.111108Z",
+  "updated_at": "2026-02-28T02:22:24.094487Z",
   "closed_at": null,
   "custom": {
     "snyk_category": "code"

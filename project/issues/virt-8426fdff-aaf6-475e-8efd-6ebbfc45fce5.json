@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "7e22acc1-c2a8-4d02-a0ab-1640bd0bb1cb",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Path(args.out_json) is a developer-specified output path via --out-json CLI flag. No trusted base to assert containment against for a user-chosen output location. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.661273Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.116600Z",
-  "updated_at": "2026-02-28T01:38:39.116600Z",
+  "updated_at": "2026-02-28T02:20:54.661273Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 16,

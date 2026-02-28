@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "72eab185-bb83-4666-b42c-cd199d2b1d05",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Path(args.params).read_text() reads a developer-specified local JSON file passed via --params CLI flag. This is an internal developer validation tool with no web-facing attack surface. The developer controls the path entirely. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.302041Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.113645Z",
-  "updated_at": "2026-02-28T01:38:39.113645Z",
+  "updated_at": "2026-02-28T02:20:54.302041Z",
   "closed_at": null,
   "custom": {
     "snyk_column": 12,
