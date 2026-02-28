@@ -1,0 +1,21 @@
+{
+  "id": "virt-dc3af1a0-c8cb-4309-a624-c664880c473c",
+  "title": "Snyk Vulnerability Remediation",
+  "description": "Track remediation of Snyk vulnerabilities.",
+  "type": "initiative",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-27T22:44:45.245993Z",
+  "updated_at": "2026-02-27T22:44:45.245993Z",
+  "closed_at": null,
+  "custom": {}
+}

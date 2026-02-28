@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "f53342f3-5845-41c2-915a-b09bcdb94f11",
+  "issue_id": "virt-173233cd-86a7-4385-a64b-b0ecd7dde8c0",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-27T22:40:28.331Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "sub-task",
+    "status": "open",
+    "title": "[Snyk Code] Path Traversal"
+  }
+}

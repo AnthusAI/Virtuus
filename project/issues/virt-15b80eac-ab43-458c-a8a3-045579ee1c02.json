@@ -1,0 +1,30 @@
+{
+  "id": "virt-15b80eac-ab43-458c-a8a3-045579ee1c02",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/check_ec2_params.py`\n**Location:** line 29, column 12 to line 29, column 16\n**Classes:** CWE-CWE-23\n### Snippet (tools/check_ec2_params.py:27-31)\n```\n  27 |     args = parser.parse_args()\n  28 | \n  29 |     path = Path(args.params)\n  30 |     data = json.loads(path.read_text())\n  31 |     missing = [k for k in REQUIRED_KEYS if not data.get(k)]\n```\n\n**Issue Key:** bb90bacc-f44c-4095-8426-c65cf6dfb9f7\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-28T01:38:39.113645Z",
+  "updated_at": "2026-02-28T01:38:39.113645Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 12,
+    "snyk_end_column": 16,
+    "snyk_end_line": 29,
+    "snyk_file": "tools/check_ec2_params.py",
+    "snyk_key": "bb90bacc-f44c-4095-8426-c65cf6dfb9f7",
+    "snyk_line": 29,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

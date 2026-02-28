@@ -1,0 +1,24 @@
+{
+  "id": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "title": "AnthusAI/Virtuus",
+  "description": "Snyk vulnerabilities found in `AnthusAI/Virtuus`.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-56437e9a-fdfc-48d2-8e1e-6cac629443a5",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-28T01:38:39.111511Z",
+  "updated_at": "2026-02-28T01:38:39.111511Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_category": "code",
+    "snyk_target_file": "AnthusAI/Virtuus"
+  }
+}

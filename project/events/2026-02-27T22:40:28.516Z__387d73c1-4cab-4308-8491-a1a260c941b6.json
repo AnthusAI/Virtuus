@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "387d73c1-4cab-4308-8491-a1a260c941b6",
+  "issue_id": "virt-25d0016f-7ea7-470b-a1fc-ade65b6dd2dc",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-27T22:40:28.516Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "sub-task",
+    "status": "open",
+    "title": "[Snyk Code] Server-Side Request Forgery (SSRF)"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "virt-44da5873-71a5-4a91-9490-ed2da458b0f3",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_cold_results_s3.py`\n**Location:** line 56, column 36 to line 56, column 40\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_cold_results_s3.py:54-58)\n```\n  54 |     args = parser.parse_args()\n  55 | \n  56 |     pull(args.bucket, args.prefix, Path(args.dest), args.profile)\n  57 | \n  58 | \n```\n\n**Issue Key:** 45a0fa8a-1530-4ed3-ab33-fc862375cd56\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-28T01:38:39.115224Z",
+  "updated_at": "2026-02-28T01:38:39.115224Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 36,
+    "snyk_end_column": 40,
+    "snyk_end_line": 56,
+    "snyk_file": "tools/pull_cold_results_s3.py",
+    "snyk_key": "45a0fa8a-1530-4ed3-ab33-fc862375cd56",
+    "snyk_line": 56,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

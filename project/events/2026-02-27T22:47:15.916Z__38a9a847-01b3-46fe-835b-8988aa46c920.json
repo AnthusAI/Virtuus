@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "38a9a847-01b3-46fe-835b-8988aa46c920",
+  "issue_id": "virt-491b9d63-016f-49c9-8563-7df65682d1a9",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-27T22:47:15.916Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "epic",
+    "status": "open",
+    "title": "Snyk Dependency Vulnerabilities"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "virt-a63dee12-28ef-4fe1-95c3-be782b24a095",
+  "title": "[Snyk Code] Server-Side Request Forgery (SSRF)",
+  "description": "## Server-Side Request Forgery (SSRF)\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 78, column 14 to line 78, column 21\n**Classes:** CWE-CWE-918\n### Snippet (examples/sakila/build_sakila.py:76-80)\n```\n  76 |     request = Request(url, headers={\"User-Agent\": \"virtuus-sakila-builder\"})\n  77 |     try:\n  78 |         with urlopen(request) as response:\n  79 |             data = response.read()\n  80 |     except Exception as exc:  # pragma: no cover - network errors vary\n```\n\n**Issue Key:** b2a66a08-73eb-427c-b2f1-d87d683b0c43\n\n### Details\nServer-Side Request Forgery (SSRF)\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-02-28T01:38:39.111992Z",
+  "updated_at": "2026-02-28T01:38:39.111992Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 14,
+    "snyk_end_column": 21,
+    "snyk_end_line": 78,
+    "snyk_file": "examples/sakila/build_sakila.py",
+    "snyk_key": "b2a66a08-73eb-427c-b2f1-d87d683b0c43",
+    "snyk_line": 78,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

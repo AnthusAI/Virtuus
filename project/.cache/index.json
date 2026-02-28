@@ -1,94 +1,115 @@
 {
-  "built_at": "2026-02-27T18:39:21Z",
+  "built_at": "2026-02-28T01:33:44Z",
   "file_mtimes": {
-    "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772078809.485016,
-    "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1771957454.416678,
-    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1771957454.416678,
-    "virt-141eb51f-09ac-4704-8659-b44bebaaefcb.json": 1772217009.620087,
-    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1771957454.416678,
-    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1771957454.416678,
-    "virt-18b9c259-430b-46ac-8306-49bab32d2db0.json": 1771957454.416678,
-    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1771957454.416678,
-    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1771957454.416678,
-    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1771957454.416678,
-    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1771957454.416678,
-    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1771957454.416678,
-    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1771957454.416678,
-    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1771957454.416678,
-    "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1772140979.638002,
-    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1771957454.416678,
-    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1771957454.416678,
-    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1771957454.416678,
-    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1772140979.638002,
-    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1771957454.416678,
-    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1771957454.416678,
-    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1771957454.416678,
-    "virt-44f07bbb-2770-4244-a296-dde40425b68f.json": 1771957454.416678,
-    "virt-46d4a8e3-8b45-4ef3-b984-556b8c04be39.json": 1771957454.416678,
-    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1771957454.416678,
-    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1771957454.416678,
-    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1771957454.416678,
-    "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1771957454.416678,
-    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1771957454.416678,
-    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1771957454.416678,
-    "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1771957454.416678,
-    "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1771957454.416678,
-    "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1771957454.416678,
-    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1771957454.416678,
-    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1771957454.416678,
-    "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1771957454.416678,
-    "virt-689472bc-703f-40a2-8c8b-18ff570f046a.json": 1771957454.416678,
-    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1771957454.416678,
-    "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1771957454.416678,
-    "virt-6dad6793-8da3-47e5-be78-bc41090f4756.json": 1771957454.416678,
-    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1771957454.416678,
-    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1771957454.416678,
-    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1771957454.416678,
-    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1771957454.416678,
-    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1771957454.416678,
-    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1771957454.416678,
-    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1771957454.416678,
-    "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef.json": 1771957454.416678,
-    "virt-7ecdb670-3482-4cec-a779-c1c16657feae.json": 1771957454.416678,
-    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1771957454.416678,
-    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1771957454.416678,
-    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1771957454.416678,
-    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1771957454.416678,
-    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1771957454.416678,
-    "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772212158.556058,
-    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1771957454.416678,
-    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1771957454.416678,
-    "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb.json": 1772215783.221439,
-    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1771957454.416678,
-    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1771957454.416678,
-    "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1771957454.416678,
-    "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c.json": 1771957454.416678,
-    "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1771957454.416678,
-    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1771957454.416678,
-    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1771957454.416678,
-    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1771957454.416678,
-    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1771957454.416678,
-    "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161.json": 1771957454.416678,
-    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1771957454.416678,
-    "virt-ba7b74a7-70e3-455a-b2dc-88d67ff0cac0.json": 1771957454.416678,
-    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1771957454.416678,
-    "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d.json": 1771957454.416678,
-    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1771957454.416678,
-    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1771957454.416678,
-    "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772140979.638002,
-    "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1771957454.416678,
-    "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772212152.606017,
-    "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772214522.682568,
-    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1771957454.416678,
-    "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1771957454.416678,
-    "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82.json": 1772215785.751457,
-    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1771957454.416678,
-    "virt-eb357c6f-e32f-409d-8402-21af4103a09c.json": 1771957454.416678,
-    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1771957454.416678,
-    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1771957454.416678,
-    "virt-ef8da482-7286-4eba-8cf4-956a705e2c09.json": 1772214520.282552,
-    "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1771957454.416678,
-    "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1771957454.416678
+    "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772241782.631866,
+    "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1772221720.009125,
+    "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1772221720.009285,
+    "virt-141eb51f-09ac-4704-8659-b44bebaaefcb.json": 1772241782.63194,
+    "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1772221720.009385,
+    "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1772221720.009614,
+    "virt-18b9c259-430b-46ac-8306-49bab32d2db0.json": 1772221720.00982,
+    "virt-1abdceeb-d628-44c0-9cfd-e279e2f08d17.json": 1772221720.010092,
+    "virt-1af03f2b-4409-42fc-91e4-8a57db2bf181.json": 1772232747.118839,
+    "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1772221720.010543,
+    "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1772221720.010755,
+    "virt-1e864f87-c6d1-457d-b138-10beed5a78d6.json": 1772241782.632021,
+    "virt-21bb842e-af30-4b02-bc0b-4a34246de1be.json": 1772232747.119643,
+    "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1772221720.010841,
+    "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1772221720.012595,
+    "virt-2bf3b210-1b3a-4ba8-8c21-154ce2b60b89.json": 1772232747.120644,
+    "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1772221720.012869,
+    "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1772221720.01335,
+    "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1772241782.632213,
+    "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1772221720.013687,
+    "virt-337caeee-98b9-42ed-afa2-13f8627edff2.json": 1772221720.013799,
+    "virt-36594452-858f-4e15-a388-b3510125ff23.json": 1772221720.013898,
+    "virt-38072f24-ecf3-4658-9127-d1e2049e03fe.json": 1772232747.118453,
+    "virt-384faa72-ce06-4e0e-96eb-11202977de8c.json": 1772241782.632681,
+    "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1772221720.014116,
+    "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1772221720.014198,
+    "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1772221720.014285,
+    "virt-44f07bbb-2770-4244-a296-dde40425b68f.json": 1772221720.014352,
+    "virt-46d4a8e3-8b45-4ef3-b984-556b8c04be39.json": 1772221720.014418,
+    "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1772221720.014489,
+    "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1772221720.014566,
+    "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1772221720.014635,
+    "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847.json": 1772232285.281117,
+    "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1772221720.014709,
+    "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1772221720.01479,
+    "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1772221720.014861,
+    "virt-59e8cf43-bc3f-43fb-99da-1f2617f86b57.json": 1772221720.014925,
+    "virt-5a408779-4bc9-4785-8f34-a7c69d79a70b.json": 1772232747.121019,
+    "virt-5b0257cc-8332-49b6-beb6-1ff1be5d1f02.json": 1772221720.014988,
+    "virt-5fdcdb82-f3c5-4a90-9caf-9f847c4d734d.json": 1772221720.015053,
+    "virt-605c81b5-ac99-4e69-b14a-3f4e36dca3d7.json": 1772221720.015132,
+    "virt-62859ea8-ad42-4ed2-90d4-7dc4bd1682b1.json": 1772232747.117866,
+    "virt-631d58e3-99a3-4aae-9d70-2156f8c9f08a.json": 1772221720.015198,
+    "virt-634415a6-5c8e-4bd4-8fcc-6804fb48c097.json": 1772221720.015422,
+    "virt-65f04b3c-848c-4714-a6c5-ec73b77c5884.json": 1772232747.119341,
+    "virt-689472bc-703f-40a2-8c8b-18ff570f046a.json": 1772221720.015759,
+    "virt-6957b6b1-df84-4936-8dc0-e900de49c404.json": 1772221720.01588,
+    "virt-6d061c71-1063-4863-9bcb-e27dd42f1f16.json": 1772221720.015954,
+    "virt-6dad6793-8da3-47e5-be78-bc41090f4756.json": 1772221720.016028,
+    "virt-6e7ecfc0-269d-40e2-9e17-b3879975a91c.json": 1772232747.117373,
+    "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1772221720.016185,
+    "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1772221720.016268,
+    "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1772221720.016447,
+    "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1772221720.01654,
+    "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1772221720.016773,
+    "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1772221720.017011,
+    "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1772221720.017203,
+    "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef.json": 1772221720.017431,
+    "virt-7ecdb670-3482-4cec-a779-c1c16657feae.json": 1772221720.017512,
+    "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1772221720.0176,
+    "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1772221720.017674,
+    "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1772221720.01775,
+    "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1772221720.017827,
+    "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1772221720.017905,
+    "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772241782.632781,
+    "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1772221720.018,
+    "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1772221720.018212,
+    "virt-9ce16104-4a9d-4f30-b361-055a214002a3.json": 1772232747.117101,
+    "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb.json": 1772241782.632866,
+    "virt-9e760eac-7efe-4cc5-907b-2f7ae9c995db.json": 1772232747.120323,
+    "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1772221720.018294,
+    "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1772221720.018403,
+    "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1772221720.018623,
+    "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c.json": 1772221720.018729,
+    "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1772221720.018962,
+    "virt-aacfa0fa-b6cb-4fc7-b6b9-45143c063a6d.json": 1772232747.120842,
+    "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1772221720.019266,
+    "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1772221720.019359,
+    "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1772221720.0196,
+    "virt-aec10102-66b6-4fd3-b962-721c135d9371.json": 1772232747.121211,
+    "virt-b820cca9-ba3e-45fe-b756-1bdcc629a604.json": 1772221720.019786,
+    "virt-b8818a60-0ce6-4fce-9be8-dc4a67a1b161.json": 1772221720.019937,
+    "virt-ba127472-5220-4712-b009-6c52df50bf7f.json": 1772221720.020101,
+    "virt-ba7b74a7-70e3-455a-b2dc-88d67ff0cac0.json": 1772221720.020172,
+    "virt-bc21eaec-1e98-4ab0-9fd4-e16ab329a6b9.json": 1772241782.632943,
+    "virt-be8f6a2d-bc1f-453c-89d6-e48ebf4cbff9.json": 1772221720.020332,
+    "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d.json": 1772221720.02041,
+    "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1772221720.020586,
+    "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1772221720.020672,
+    "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772241782.63318,
+    "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1772221720.02091,
+    "virt-d2c75a01-bb7b-4998-bb90-08c21b4024fb.json": 1772232747.119167,
+    "virt-d653eadf-e6c9-4662-abf2-d514139addd8.json": 1772232747.116088,
+    "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772241782.63329,
+    "virt-dc3af1a0-c8cb-4309-a624-c664880c473c.json": 1772232285.246378,
+    "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772241782.633382,
+    "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1772221720.021075,
+    "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1772221720.021249,
+    "virt-e66eebdb-e539-4d32-9fd8-8a49f84a4b82.json": 1772241782.633468,
+    "virt-e75dc68d-d9c2-47c6-80fa-b037404da000.json": 1772221720.021428,
+    "virt-eb357c6f-e32f-409d-8402-21af4103a09c.json": 1772221720.0216,
+    "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1772221720.02166,
+    "virt-eccac6a0-5c11-4bcc-ae68-0ecf374a4a20.json": 1772232747.120128,
+    "virt-eee80f57-85c7-49bc-933f-f2e85968a04d.json": 1772232747.117604,
+    "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1772221720.021873,
+    "virt-ef8da482-7286-4eba-8cf4-956a705e2c09.json": 1772241782.633556,
+    "virt-f840d9d5-9e51-40b1-aa18-ce247026ded3.json": 1772232747.119932,
+    "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1772221720.022234,
+    "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1772221720.022429
   },
   "issues": [
     {
@@ -437,6 +458,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.283247Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 12,
+        "snyk_end_column": 16,
+        "snyk_end_line": 29,
+        "snyk_file": "tools/check_ec2_params.py",
+        "snyk_key": "bb90bacc-f44c-4095-8426-c65cf6dfb9f7",
+        "snyk_line": 29,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/check_ec2_params.py`\n**Location:** line 29, column 12 to line 29, column 16\n**Classes:** CWE-CWE-23\n### Snippet (tools/check_ec2_params.py:27-31)\n```\n  27 |     args = parser.parse_args()\n  28 | \n  29 |     path = Path(args.params)\n  30 |     data = json.loads(path.read_text())\n  31 |     missing = [k for k in REQUIRED_KEYS if not data.get(k)]\n```\n\n**Issue Key:** bb90bacc-f44c-4095-8426-c65cf6dfb9f7\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-1af03f2b-4409-42fc-91e4-8a57db2bf181",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.118709Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T20:27:34.279699Z",
       "comments": [
         {
@@ -526,6 +577,54 @@
       "title": "File race conditions",
       "type": "story",
       "updated_at": "2026-02-23T03:08:43.230736Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:45:25.087989131Z",
+      "comments": [],
+      "created_at": "2026-02-27T18:39:24.242115765Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-1e864f87-c6d1-457d-b138-10beed5a78d6",
+      "labels": [],
+      "parent": null,
+      "priority": 2,
+      "status": "closed",
+      "title": "CI code quality cleanup",
+      "type": "epic",
+      "updated_at": "2026-02-27T18:45:25.087989131Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.284130Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 15,
+        "snyk_end_column": 34,
+        "snyk_end_line": 87,
+        "snyk_file": "tools/ec2_bench_status.py",
+        "snyk_key": "5b713713-8205-499c-b09c-7a0c48ffa034",
+        "snyk_line": 87,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Command Injection\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/ec2_bench_status.py`\n**Location:** line 87, column 15 to line 87, column 34\n**Classes:** CWE-CWE-78\n### Snippet (tools/ec2_bench_status.py:85-89)\n```\n  85 | \n  86 |     for inst in instance_ids:\n  87 |         inv = wait_for_invocation(command_id, inst, region=args.region, profile=args.profile)\n  88 |         print(\"=\" * 80)\n  89 |         print(f\"Instance: {inst}\")\n```\n\n**Issue Key:** 5b713713-8205-499c-b09c-7a0c48ffa034\n\n### Details\nCommand Injection\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-21bb842e-af30-4b02-bc0b-4a34246de1be",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Command Injection",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.119543Z"
     },
     {
       "assignee": null,
@@ -648,6 +747,36 @@
       "title": "Database describe",
       "type": "story",
       "updated_at": "2026-02-21T22:47:47.325263Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.285461Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 12,
+        "snyk_end_column": 16,
+        "snyk_end_line": 56,
+        "snyk_file": "tools/run_ec2_from_params.py",
+        "snyk_key": "408142dd-4e51-47b5-96cf-e4c341642555",
+        "snyk_line": 56,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/run_ec2_from_params.py`\n**Location:** line 56, column 12 to line 56, column 16\n**Classes:** CWE-CWE-23\n### Snippet (tools/run_ec2_from_params.py:54-58)\n```\n  54 |     args = parser.parse_args()\n  55 | \n  56 |     path = Path(args.params)\n  57 |     params = json.loads(path.read_text())\n  58 |     cmd = [\"python3\", \"tools/run_ec2_storage_benchmarks.py\"] + build_args(\n```\n\n**Issue Key:** 408142dd-4e51-47b5-96cf-e4c341642555\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-2bf3b210-1b3a-4ba8-8c21-154ce2b60b89",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.120519Z"
     },
     {
       "assignee": null,
@@ -870,6 +999,36 @@
       "title": "Referential integrity under load",
       "type": "story",
       "updated_at": "2026-02-22T02:14:52.781694Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.282779Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 61,
+        "snyk_end_column": 65,
+        "snyk_end_line": 85,
+        "snyk_file": "tools/aggregate_storage_results.py",
+        "snyk_key": "67feb010-80d6-4837-9e92-2173599948ab",
+        "snyk_line": 85,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/aggregate_storage_results.py`\n**Location:** line 85, column 61 to line 85, column 65\n**Classes:** CWE-CWE-23\n### Snippet (tools/aggregate_storage_results.py:83-87)\n```\n  83 |     rows: List[dict] = []\n  84 |     for root in args.roots:\n  85 |         rows.extend(row_from_entry(e) for e in load_results(Path(root)))\n  86 | \n  87 |     out_json = Path(args.out_json) if args.out_json else None\n```\n\n**Issue Key:** 67feb010-80d6-4837-9e92-2173599948ab\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-38072f24-ecf3-4658-9127-d1e2049e03fe",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.118316Z"
     },
     {
       "assignee": null,
@@ -1224,6 +1383,30 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.280995Z",
+      "creator": null,
+      "custom": {
+        "snyk_category": "code",
+        "snyk_target_file": "AnthusAI/Virtuus"
+      },
+      "dependencies": [],
+      "description": "Snyk vulnerabilities found in `AnthusAI/Virtuus`.",
+      "id": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-d653eadf-e6c9-4662-abf2-d514139addd8",
+      "priority": 2,
+      "status": "open",
+      "title": "AnthusAI/Virtuus",
+      "type": "task",
+      "updated_at": "2026-02-27T22:44:45.280995Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-23T03:35:54.412532Z",
       "comments": [
         {
@@ -1372,6 +1555,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.285913Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 23,
+        "snyk_end_column": 46,
+        "snyk_end_line": 10,
+        "snyk_file": "tools/ec2_bench_status.py",
+        "snyk_key": "35e8d6ad-4ef9-41bf-9933-c93aa9939f86",
+        "snyk_line": 10,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Command Injection\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/ec2_bench_status.py`\n**Location:** line 10, column 23 to line 10, column 46\n**Classes:** CWE-CWE-78\n### Snippet (tools/ec2_bench_status.py:8-12)\n```\n   8 | def aws_json(args):\n   9 |     cmd = [\"aws\"] + args + [\"--output\", \"json\"]\n  10 |     return json.loads(subprocess.check_output(cmd, text=True))\n  11 | \n  12 | \n```\n\n**Issue Key:** 35e8d6ad-4ef9-41bf-9933-c93aa9939f86\n\n### Details\nCommand Injection\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-5a408779-4bc9-4785-8f34-a7c69d79a70b",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Command Injection",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.120914Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T17:42:27.551903Z",
       "comments": [
         {
@@ -1483,6 +1696,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.282243Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 9,
+        "snyk_end_column": 20,
+        "snyk_end_line": 305,
+        "snyk_file": "examples/sakila/build_sakila.py",
+        "snyk_key": "fb6ba7da-c14a-4bd2-b0e2-dd2bd5fda36a",
+        "snyk_line": 305,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 305, column 9 to line 305, column 20\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:303-307)\n```\n 303 | \n 304 |     for table, rows in tables.items():\n 305 |         write_table(data_root, table, rows)\n 306 | \n 307 |     total = sum(len(rows) for rows in tables.values())\n```\n\n**Issue Key:** fb6ba7da-c14a-4bd2-b0e2-dd2bd5fda36a\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-62859ea8-ad42-4ed2-90d4-7dc4bd1682b1",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.117724Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T22:47:09.473799Z",
       "comments": [
         {
@@ -1535,6 +1778,36 @@
       "title": "Profile Rust JSON load/GSI build path",
       "type": "story",
       "updated_at": "2026-02-22T18:18:05.755775Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.283799Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 15,
+        "snyk_end_column": 19,
+        "snyk_end_line": 88,
+        "snyk_file": "tools/aggregate_storage_results.py",
+        "snyk_key": "769f5932-66f1-4bb1-86f4-f063fb0e5770",
+        "snyk_line": 88,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/aggregate_storage_results.py`\n**Location:** line 88, column 15 to line 88, column 19\n**Classes:** CWE-CWE-23\n### Snippet (tools/aggregate_storage_results.py:86-90)\n```\n  86 | \n  87 |     out_json = Path(args.out_json) if args.out_json else None\n  88 |     out_csv = Path(args.out_csv) if args.out_csv else None\n  89 |     write_outputs(rows, out_json, out_csv)\n  90 |     print(f\"aggregated {len(rows)} entries\")\n```\n\n**Issue Key:** 769f5932-66f1-4bb1-86f4-f063fb0e5770\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-65f04b3c-848c-4714-a6c5-ec73b77c5884",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.119232Z"
     },
     {
       "assignee": null,
@@ -1652,6 +1925,36 @@
       "title": "Create Python/Rust example programs",
       "type": "task",
       "updated_at": "2026-02-23T04:02:07.132804Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.281867Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 13,
+        "snyk_end_column": 26,
+        "snyk_end_line": 291,
+        "snyk_file": "examples/sakila/build_sakila.py",
+        "snyk_key": "3f93a699-3b92-4aa6-8b0a-94f56bc9a761",
+        "snyk_line": 291,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 291, column 13 to line 291, column 26\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:289-293)\n```\n 289 |     if data_root.exists():\n 290 |         if args.force:\n 291 |             shutil.rmtree(data_root)\n 292 |         else:\n 293 |             raise SystemExit(\n```\n\n**Issue Key:** 3f93a699-3b92-4aa6-8b0a-94f56bc9a761\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-6e7ecfc0-269d-40e2-9e17-b3879975a91c",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.117234Z"
     },
     {
       "assignee": null,
@@ -2386,6 +2689,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.281532Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 14,
+        "snyk_end_column": 21,
+        "snyk_end_line": 78,
+        "snyk_file": "examples/sakila/build_sakila.py",
+        "snyk_key": "b2a66a08-73eb-427c-b2f1-d87d683b0c43",
+        "snyk_line": 78,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Server-Side Request Forgery (SSRF)\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 78, column 14 to line 78, column 21\n**Classes:** CWE-CWE-918\n### Snippet (examples/sakila/build_sakila.py:76-80)\n```\n  76 |     request = Request(url, headers={\"User-Agent\": \"virtuus-sakila-builder\"})\n  77 |     try:\n  78 |         with urlopen(request) as response:\n  79 |             data = response.read()\n  80 |     except Exception as exc:  # pragma: no cover - network errors vary\n```\n\n**Issue Key:** b2a66a08-73eb-427c-b2f1-d87d683b0c43\n\n### Details\nServer-Side Request Forgery (SSRF)\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-9ce16104-4a9d-4f30-b361-055a214002a3",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Server-Side Request Forgery (SSRF)",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.116806Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-27T18:09:43.238451201Z",
       "comments": [
         {
@@ -2408,6 +2741,36 @@
       "title": "Generate requirements from pyproject",
       "type": "task",
       "updated_at": "2026-02-27T18:09:43.238451201Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.285087Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 24,
+        "snyk_end_column": 34,
+        "snyk_end_line": 42,
+        "snyk_file": "tools/pull_storage_results_s3.py",
+        "snyk_key": "ecc6c11d-bacc-4bda-8ef8-8b3765a12695",
+        "snyk_line": 42,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_storage_results_s3.py`\n**Location:** line 42, column 24 to line 42, column 34\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_storage_results_s3.py:40-44)\n```\n  40 |                 continue\n  41 |             rel = key[len(prefix) :] if key.startswith(prefix) else key\n  42 |             out_path = dest / rel\n  43 |             out_path.parent.mkdir(parents=True, exist_ok=True)\n  44 |             s3.download_file(bucket, key, str(out_path))\n```\n\n**Issue Key:** ecc6c11d-bacc-4bda-8ef8-8b3765a12695\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-9e760eac-7efe-4cc5-907b-2f7ae9c995db",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.120205Z"
     },
     {
       "assignee": null,
@@ -2577,6 +2940,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.285713Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 16,
+        "snyk_end_column": 20,
+        "snyk_end_line": 87,
+        "snyk_file": "tools/aggregate_storage_results.py",
+        "snyk_key": "789e02df-f210-4c30-a7a6-90a82c2b0b06",
+        "snyk_line": 87,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/aggregate_storage_results.py`\n**Location:** line 87, column 16 to line 87, column 20\n**Classes:** CWE-CWE-23\n### Snippet (tools/aggregate_storage_results.py:85-89)\n```\n  85 |         rows.extend(row_from_entry(e) for e in load_results(Path(root)))\n  86 | \n  87 |     out_json = Path(args.out_json) if args.out_json else None\n  88 |     out_csv = Path(args.out_csv) if args.out_csv else None\n  89 |     write_outputs(rows, out_json, out_csv)\n```\n\n**Issue Key:** 789e02df-f210-4c30-a7a6-90a82c2b0b06\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-aacfa0fa-b6cb-4fc7-b6b9-45143c063a6d",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.120721Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T04:14:46.154207Z",
       "comments": [
         {
@@ -2736,6 +3129,36 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.286109Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 9,
+        "snyk_end_column": 30,
+        "snyk_end_line": 63,
+        "snyk_file": "tools/run_ec2_from_params.py",
+        "snyk_key": "2df9abcd-9b07-4158-ab45-adf6ad64c61d",
+        "snyk_line": 63,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Command Injection\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/run_ec2_from_params.py`\n**Location:** line 63, column 9 to line 63, column 30\n**Classes:** CWE-CWE-78\n### Snippet (tools/run_ec2_from_params.py:61-65)\n```\n  61 |     print(\"Running:\", \" \".join(shlex.quote(c) for c in cmd))\n  62 |     try:\n  63 |         subprocess.check_call(cmd)\n  64 |     except subprocess.CalledProcessError as exc:  # noqa: BLE001\n  65 |         print(\"EC2 runner failed. Did you install boto3 and configure AWS credentials?\")\n```\n\n**Issue Key:** 2df9abcd-9b07-4158-ab45-adf6ad64c61d\n\n### Details\nCommand Injection\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-aec10102-66b6-4fd3-b962-721c135d9371",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Command Injection",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.121104Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-21T21:49:21.790375Z",
       "comments": [
         {
@@ -2844,6 +3267,37 @@
       "title": "Fix python example imports",
       "type": "task",
       "updated_at": "2026-02-23T04:15:45.081946Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-02-27T18:45:20.743659704Z",
+      "comments": [
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:43:41.696708068Z",
+          "id": "1ad07cb4-1c81-4662-baf3-1cf6148288ff",
+          "text": "Applied lint cleanups (unused imports, ImportError handling, contextlib.suppress for intentional exceptions). Added Rust tests to cover search index removal and refresh rebuild to satisfy tarpaulin coverage gaps."
+        },
+        {
+          "author": "derek",
+          "created_at": "2026-02-27T18:45:03.425462470Z",
+          "id": "eeaccf45-cb7c-4ac3-9543-016dbe7ef9a4",
+          "text": "Ran make check: all gates passed (black, ruff, behave + coverage, rust fmt/clippy/tests, tarpaulin 100%, parity OK)."
+        }
+      ],
+      "created_at": "2026-02-27T18:39:26.537625Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-bc21eaec-1e98-4ab0-9fd4-e16ab329a6b9",
+      "labels": [],
+      "parent": "virt-1e864f87-c6d1-457d-b138-10beed5a78d6",
+      "priority": 2,
+      "status": "closed",
+      "title": "Fix github-code-quality findings",
+      "type": "task",
+      "updated_at": "2026-02-27T18:45:20.743659704Z"
     },
     {
       "assignee": null,
@@ -3087,6 +3541,60 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.283615Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 36,
+        "snyk_end_column": 40,
+        "snyk_end_line": 56,
+        "snyk_file": "tools/pull_storage_results_s3.py",
+        "snyk_key": "d925ec02-ffd1-4606-a88d-93abee179fbe",
+        "snyk_line": 56,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_storage_results_s3.py`\n**Location:** line 56, column 36 to line 56, column 40\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_storage_results_s3.py:54-58)\n```\n  54 |     args = parser.parse_args()\n  55 | \n  56 |     pull(args.bucket, args.prefix, Path(args.dest), args.profile)\n  57 | \n  58 | \n```\n\n**Issue Key:** d925ec02-ffd1-4606-a88d-93abee179fbe\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-d2c75a01-bb7b-4998-bb90-08c21b4024fb",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.119066Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.268457Z",
+      "creator": null,
+      "custom": {
+        "snyk_category": "code"
+      },
+      "dependencies": [],
+      "description": "Security vulnerabilities imported from Snyk.",
+      "id": "virt-d653eadf-e6c9-4662-abf2-d514139addd8",
+      "labels": [
+        "security",
+        "snyk",
+        "code"
+      ],
+      "parent": "virt-dc3af1a0-c8cb-4309-a624-c664880c473c",
+      "priority": 2,
+      "status": "open",
+      "title": "Snyk Code Vulnerabilities",
+      "type": "epic",
+      "updated_at": "2026-02-27T22:52:27.115904Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-27T17:09:07.442619819Z",
       "comments": [
         {
@@ -3121,6 +3629,27 @@
       "title": "Auto-generate requirements.txt from pyproject",
       "type": "task",
       "updated_at": "2026-02-27T17:09:12.613803018Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.245993Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "Track remediation of Snyk vulnerabilities.",
+      "id": "virt-dc3af1a0-c8cb-4309-a624-c664880c473c",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": null,
+      "priority": 1,
+      "status": "open",
+      "title": "Snyk Vulnerability Remediation",
+      "type": "initiative",
+      "updated_at": "2026-02-27T22:44:45.245993Z"
     },
     {
       "assignee": null,
@@ -3400,6 +3929,66 @@
     },
     {
       "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.284853Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 36,
+        "snyk_end_column": 40,
+        "snyk_end_line": 56,
+        "snyk_file": "tools/pull_cold_results_s3.py",
+        "snyk_key": "45a0fa8a-1530-4ed3-ab33-fc862375cd56",
+        "snyk_line": 56,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_cold_results_s3.py`\n**Location:** line 56, column 36 to line 56, column 40\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_cold_results_s3.py:54-58)\n```\n  54 |     args = parser.parse_args()\n  55 | \n  56 |     pull(args.bucket, args.prefix, Path(args.dest), args.profile)\n  57 | \n  58 | \n```\n\n**Issue Key:** 45a0fa8a-1530-4ed3-ab33-fc862375cd56\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-eccac6a0-5c11-4bcc-ae68-0ecf374a4a20",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.120008Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.282042Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 13,
+        "snyk_end_column": 22,
+        "snyk_end_line": 126,
+        "snyk_file": "examples/sakila/build_sakila.py",
+        "snyk_key": "06c3c83f-9a23-4247-8517-5222a71e35fc",
+        "snyk_line": 126,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 126, column 13 to line 126, column 22\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:124-128)\n```\n 124 |         path = table_dir / f\"{pk_value}.json\"\n 125 |         with path.open(\"w\", encoding=\"utf-8\") as handle:\n 126 |             json.dump(row, handle, indent=2, sort_keys=True)\n 127 | \n 128 | \n```\n\n**Issue Key:** 06c3c83f-9a23-4247-8517-5222a71e35fc\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-eee80f57-85c7-49bc-933f-f2e85968a04d",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.117458Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T02:15:04.254123Z",
       "comments": [
         {
@@ -3465,6 +4054,36 @@
       "title": "Fix black formatting in table.py",
       "type": "task",
       "updated_at": "2026-02-27T17:48:40.297502714Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": null,
+      "comments": [],
+      "created_at": "2026-02-27T22:44:45.284542Z",
+      "creator": null,
+      "custom": {
+        "snyk_column": 24,
+        "snyk_end_column": 34,
+        "snyk_end_line": 42,
+        "snyk_file": "tools/pull_cold_results_s3.py",
+        "snyk_key": "30be6114-e8b1-4513-b0f6-23fc28d8fc8d",
+        "snyk_line": 42,
+        "snyk_severity": "medium",
+        "snyk_type": "code"
+      },
+      "dependencies": [],
+      "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_cold_results_s3.py`\n**Location:** line 42, column 24 to line 42, column 34\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_cold_results_s3.py:40-44)\n```\n  40 |                 continue\n  41 |             rel = key[len(prefix) :] if key.startswith(prefix) else key\n  42 |             out_path = dest / rel\n  43 |             out_path.parent.mkdir(parents=True, exist_ok=True)\n  44 |             s3.download_file(bucket, key, str(out_path))\n```\n\n**Issue Key:** 30be6114-e8b1-4513-b0f6-23fc28d8fc8d\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+      "id": "virt-f840d9d5-9e51-40b1-aa18-ce247026ded3",
+      "labels": [
+        "security",
+        "snyk"
+      ],
+      "parent": "virt-52e6f113-44ca-4ddd-88bd-8cc163d7e847",
+      "priority": 2,
+      "status": "open",
+      "title": "[Snyk Code] Path Traversal",
+      "type": "sub-task",
+      "updated_at": "2026-02-27T22:52:27.119822Z"
     },
     {
       "assignee": null,

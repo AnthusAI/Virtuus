@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "ebbfbebe-c4ce-405a-94cf-7ec05809746b",
+  "issue_id": "virt-16942a08-f846-40a4-a813-9bc0422acdc1",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-27T22:40:32.159Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "task",
+    "status": "open",
+    "title": "AnthusAI/Virtuus"
+  }
+}
