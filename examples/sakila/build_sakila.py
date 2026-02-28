@@ -70,6 +70,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def download_db(url: str, target_path: Path, refresh: bool) -> None:
+    if not url.startswith("https://"):
+        raise ValueError(f"Only https:// URLs are allowed, got: {url!r}")
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if target_path.exists() and not refresh:
         return
@@ -119,9 +121,12 @@ def write_table(output_root: Path, table: str, rows: list[dict]) -> None:
     pk_field = PRIMARY_KEYS[table]
     table_dir = output_root / table
     table_dir.mkdir(parents=True, exist_ok=True)
+    root_resolved = output_root.resolve()
     for row in rows:
         pk_value = row[pk_field]
-        path = table_dir / f"{pk_value}.json"
+        path = (table_dir / f"{pk_value}.json").resolve()
+        if not str(path).startswith(str(root_resolved)):
+            raise ValueError(f"Refusing path traversal for pk {pk_value!r} in table {table!r}")
         with path.open("w", encoding="utf-8") as handle:
             json.dump(row, handle, indent=2, sort_keys=True)
 
@@ -288,6 +293,8 @@ def main() -> int:
 
     if data_root.exists():
         if args.force:
+            if not str(data_root.resolve()).startswith(str(output_dir.resolve())):
+                raise ValueError(f"Refusing to delete directory outside output_dir: {data_root}")
             shutil.rmtree(data_root)
         else:
             raise SystemExit(
