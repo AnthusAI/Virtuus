@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "571216a2-f3cc-434f-8a98-467c9b3ef0ad",
+  "issue_id": "virt-25b2ebea-2ad8-4c33-9492-ec7116f254a0",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T20:56:41.093Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Rust CodeQL remediation (sanitized)",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "security",
+      "codeql"
+    ]
+  }
+}

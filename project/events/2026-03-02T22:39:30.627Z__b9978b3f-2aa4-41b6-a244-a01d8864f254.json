@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "b9978b3f-2aa4-41b6-a244-a01d8864f254",
+  "issue_id": "virt-c3262135-3262-45cb-a2bb-ab2d93a72181",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T22:39:30.627Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Remediate remaining S3 path-concat findings and close out final Snyk Code issues",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": []
+  }
+}

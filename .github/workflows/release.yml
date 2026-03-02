@@ -18,21 +18,27 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Ensure branch checkout for semantic-release
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          git fetch origin "${{ github.event.workflow_run.head_branch }}"
-          git checkout -B "${{ github.event.workflow_run.head_branch }}" "${{ github.event.workflow_run.head_sha }}"
+          if ! printf '%s\n' "$HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "Invalid HEAD_SHA: $HEAD_SHA" >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          git checkout -B main "$HEAD_SHA"
 
       - name: Install semantic-release
         run: pip install python-semantic-release
@@ -78,14 +84,16 @@ jobs:
         if: ${{ steps.release_tag.outputs.released == 'true' }}
 
       - name: Publish to PyPI (trusted publisher)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           packages-dir: python/dist
         if: ${{ steps.release_tag.outputs.released == 'true' }}
 
       # Publish Rust crate (OIDC trusted publisher or token fallback)
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
+        with:
+          toolchain: stable
         if: ${{ steps.release_tag.outputs.released == 'true' }}
 
       - name: Publish to crates.io

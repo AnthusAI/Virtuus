@@ -1,0 +1,31 @@
+{
+  "id": "virt-6e6467de-1a5f-4952-b89c-94cadc689f98",
+  "title": "Resolve final open SSRF Snyk Code finding",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "687782f5-88c4-42fd-bd7c-615fadab6f3a",
+      "author": "derek.norrbom",
+      "text": "Started: verify currently open SSRF finding after user rescan, identify finding ID and location, then resolve via remediation or audit-grade ignore and re-verify scan counts.",
+      "created_at": "2026-03-02T22:43:18.272005Z"
+    },
+    {
+      "id": "81b0bbd6-fa28-4d8a-88e6-404ae393046e",
+      "author": "derek.norrbom",
+      "text": "Verification results for reported remaining SSRF issue:\n\n- Re-ran `snyk code test --include-ignores` and `snyk code test` on 2026-03-02.\n- Current local CLI state shows no open issues:\n  - Total: 16\n  - Ignored: 16\n  - Open: 0\n- No SSRF finding is currently open in local CLI output for org `capacity-aqa`.\n\nLikely explanation if UI still shows one open issue: stale project snapshot/view filter mismatch in Snyk web UI (for example: older snapshot, different branch target, or different project import).",
+      "created_at": "2026-03-02T22:43:54.416632Z"
+    }
+  ],
+  "created_at": "2026-03-02T22:43:09.174428Z",
+  "updated_at": "2026-03-02T22:43:54.912242Z",
+  "closed_at": "2026-03-02T22:43:54.912242Z",
+  "custom": {}
+}

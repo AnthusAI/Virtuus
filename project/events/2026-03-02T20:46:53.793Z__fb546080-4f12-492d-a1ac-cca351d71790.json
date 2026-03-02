@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "fb546080-4f12-492d-a1ac-cca351d71790",
+  "issue_id": "virt-f93598b4-66da-4ad6-8d7c-192f53c98a6f",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T20:46:53.793Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Remediate Rust CodeQL findings from existing rcql scan",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "security",
+      "codeql"
+    ]
+  }
+}

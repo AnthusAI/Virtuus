@@ -1,0 +1,34 @@
+{
+  "id": "virt-e959ba2b-5550-42c2-b06b-79d0642d6b89",
+  "title": "Enforce code-block output in PR message skill",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "tooling",
+    "skills"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "e295d1a7-4403-46d3-a65e-a9648b2a45d4",
+      "author": "derek.norrbom",
+      "text": "Updating pr-message-writer skill to require fenced-code-block Markdown output by default, without requiring explicit user request.",
+      "created_at": "2026-03-02T21:36:29.315004Z"
+    },
+    {
+      "id": "1dc8cd57-4e54-49c7-a63a-5e84c469025f",
+      "author": "derek.norrbom",
+      "text": "Completed. Skill now mandates fenced-code-block Markdown output by default and only allows plain text on explicit user request. Regenerated agents/openai.yaml and validated skill.",
+      "created_at": "2026-03-02T21:36:38.854059Z"
+    }
+  ],
+  "created_at": "2026-03-02T21:36:26.007918Z",
+  "updated_at": "2026-03-02T21:36:39.333291Z",
+  "closed_at": "2026-03-02T21:36:39.333291Z",
+  "custom": {}
+}

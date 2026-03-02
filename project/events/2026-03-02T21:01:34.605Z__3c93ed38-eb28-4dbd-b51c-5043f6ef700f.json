@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "3c93ed38-eb28-4dbd-b51c-5043f6ef700f",
+  "issue_id": "virt-374b859a-3ade-49d2-9354-9c7cd4292153",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T21:01:34.605Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Triage/remediate GitHub Actions CodeQL findings",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "security",
+      "codeql"
+    ]
+  }
+}

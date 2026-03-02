@@ -1,0 +1,28 @@
+{
+  "id": "virt-ab1f4ce0-0dcf-4bf9-8255-dcc0ab36344f",
+  "title": "Python CodeQL remediation (sanitized)",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "codeql"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "05c33b20-7aa7-4a64-9e18-4717f9e6b201",
+      "author": "derek.norrbom",
+      "text": "Python remediation completed.\n- Findings fixed: 7 warnings.\n- Files touched: tools/bench_memory.py, features/steps/database_python_paths_steps.py, features/steps/database_python_steps.py, features/steps/gsi_steps.py, features/steps/table_steps.py.\n- Validation: python3 -m black --check, python3 -m ruff check.\n- Fresh scan: rcql -q -v --lang=python --no-fail => Total: 0.",
+      "created_at": "2026-03-02T20:56:46.823417Z"
+    }
+  ],
+  "created_at": "2026-03-02T20:56:41.627810Z",
+  "updated_at": "2026-03-02T20:56:47.329680Z",
+  "closed_at": "2026-03-02T20:56:47.329680Z",
+  "custom": {}
+}

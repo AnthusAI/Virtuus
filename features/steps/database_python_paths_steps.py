@@ -1,5 +1,4 @@
 import json
-import os
 import tempfile
 from pathlib import Path
 
@@ -35,7 +34,9 @@ def step_setup_paths(context):
 
 @when("I load the python database from that yaml")
 def step_load_yaml(context):
-    context.db = Database.from_schema(str(context.schema_path), data_root=context.data_root)
+    context.db = Database.from_schema(
+        str(context.schema_path), data_root=context.data_root
+    )
 
 
 @then("describe() should report users table not stale with 1 record")

@@ -1,5 +1,4 @@
 import json
-import os
 import tempfile
 from pathlib import Path
 
@@ -19,24 +18,30 @@ def step_add_table_pk(context, name, pk):
     context.db.add_table(name, table)
 
 
-@given('a python gsi table "{name}" with primary key "{pk}" and gsi "{gsi}" on "{field}"')
+@given(
+    'a python gsi table "{name}" with primary key "{pk}" and gsi "{gsi}" on "{field}"'
+)
 def step_add_table_gsi(context, name, pk, gsi, field):
     table = Table(name, primary_key=pk)
     table.add_gsi(gsi, field)
     context.db.add_table(name, table)
 
 
-@given('a has_many association "{assoc}" from "{source}" via GSI "{gsi}" on table "{target}"')
+@given(
+    'a has_many association "{assoc}" from "{source}" via GSI "{gsi}" on table "{target}"'
+)
 def step_has_many(context, assoc, source, gsi, target):
     context.db.tables[source].add_has_many(assoc, target, gsi)
 
 
-@given('a belongs_to association "{assoc}" on "{source}" targeting "{target}" via "{fk}"')
+@given(
+    'a belongs_to association "{assoc}" on "{source}" targeting "{target}" via "{fk}"'
+)
 def step_belongs_to(context, assoc, source, target, fk):
     context.db.tables[source].add_belongs_to(assoc, target, fk)
 
 
-@given("records exist in table \"{name}\":")
+@given('records exist in table "{name}":')
 def step_records_exist(context, name):
     table = context.db.tables[name]
     for row in context.table:
@@ -46,7 +51,9 @@ def step_records_exist(context, name):
 
 @when("I execute the python database query:")
 def step_execute_query(context):
-    raw = context.text.replace("<previous_token>", str(getattr(context, "prev_token", "0")))
+    raw = context.text.replace(
+        "<previous_token>", str(getattr(context, "prev_token", "0"))
+    )
     query = json.loads(raw)
     context.last_result = context.db.execute(query)
     if isinstance(context.last_result, dict) and "next_token" in context.last_result:
@@ -66,7 +73,9 @@ def step_assert_include(context, user_id):
 def step_execute_second_query(context):
     query = json.loads(context.text)
     if "<previous_token>" in context.text and hasattr(context, "prev_token"):
-        query = json.loads(context.text.replace("<previous_token>", context.prev_token or "0"))
+        query = json.loads(
+            context.text.replace("<previous_token>", context.prev_token or "0")
+        )
     context.second_result = context.db.execute(query)
 
 

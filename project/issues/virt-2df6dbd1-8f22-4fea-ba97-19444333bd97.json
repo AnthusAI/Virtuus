@@ -1,0 +1,31 @@
+{
+  "id": "virt-2df6dbd1-8f22-4fea-ba97-19444333bd97",
+  "title": "Verify Snyk Code ignores API availability/usability",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "373600b1-ef30-4ec6-abb2-27f981052eaa",
+      "author": "derek.norrbom",
+      "text": "Started: validate whether Snyk Code consistent-ignores API is available and usable in this org by making authenticated read-only API calls first, then safe write-test only if needed.",
+      "created_at": "2026-03-02T22:12:51.427285Z"
+    },
+    {
+      "id": "5fe346e1-fcbd-44f8-beba-a1426f6feef6",
+      "author": "derek.norrbom",
+      "text": "Snyk API capability check complete (2026-03-02).\n\nWhat was tested (org: `dbec85a8-d7a0-482a-b5c4-eb609a451b53`):\n- `GET /rest/orgs/{org_id}/policies?version=2025-11-05` -> **HTTP 200** (API available)\n- `POST /rest/orgs/{org_id}/policies?version=2025-11-05` with a harmless probe ignore policy -> **HTTP 201** (write works)\n- `DELETE /rest/orgs/{org_id}/policies/{policy_id}?version=2025-11-05` on that probe policy -> **HTTP 204** (cleanup works)\n- Final list check -> policy count back to 0.\n\nNotes:\n- Auth header that worked in this environment: `Authorization: Bearer <access_token>`.\n- `Authorization: Token <access_token>` returned 401 for this OAuth token flow.\n\nConclusion:\n- The Consistent Ignores for Snyk Code API is available and usable in this org/account context.",
+      "created_at": "2026-03-02T22:15:10.429192Z"
+    }
+  ],
+  "created_at": "2026-03-02T22:12:45.533572Z",
+  "updated_at": "2026-03-02T22:15:10.939402Z",
+  "closed_at": "2026-03-02T22:15:10.939402Z",
+  "custom": {}
+}

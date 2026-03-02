@@ -1,0 +1,31 @@
+{
+  "id": "virt-26e82017-1c5a-49e4-9325-b167261f6f56",
+  "title": "Finalize Snyk ignore skill and apply remaining approved ignores",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "3114028b-dd29-4063-8792-c79e784eab0b",
+      "author": "derek.norrbom",
+      "text": "Started: finalize skill content for audit-grade ignore rationales (remove process/pilot wording expectations), validate skill, then apply ignore policies for remaining findings already classified as dismiss.",
+      "created_at": "2026-03-02T22:33:53.433806Z"
+    },
+    {
+      "id": "6ee0b36d-a9d1-4385-9aa9-bb024f9282fb",
+      "author": "derek.norrbom",
+      "text": "Completed.\n\nSkill finalization:\n- Updated `~/.codex/skills/snyk-code-ignore-rationale/SKILL.md` guardrails/output sections to enforce audit-focused rationale and explicitly forbid process/meta wording (pilot/API/scripted/generated).\n- Updated `~/.codex/skills/snyk-code-ignore-rationale/references/ignore-template.md` quality bar with the same constraint.\n- Revalidated skill: `quick_validate.py` => Skill is valid.\n\nApplied remaining approved ignores (9 findings):\n- 73a117d3-bead-4e45-851d-f4da2d8c80ae\n- 55534b96-f432-459c-ad9a-a77d0dd6ae8a\n- 19419583-63d4-4b78-9750-79142c4be93a\n- 874c2313-0ed9-4471-8c1c-7453653b400b\n- 66d3cd77-9d38-48b8-a4fe-cd6d49d1911c\n- 736390df-852e-4ccf-b765-9a3443c85f8a\n- 91bac8d7-68d5-4c45-b143-fd73c9131eb9\n- d360c5c6-00bc-4e76-a649-314c2bdd607f\n- cc6d8d85-bd39-4b77-9635-9e944717ee39\n\nVerification:\n- `snyk code test --include-ignores` summary now reports:\n  - Ignored issues: 10\n  - Open issues: 6\n- Open issues correspond to the findings not in the approved ignore set.",
+      "created_at": "2026-03-02T22:35:15.284284Z"
+    }
+  ],
+  "created_at": "2026-03-02T22:33:48.636856Z",
+  "updated_at": "2026-03-02T22:35:15.810477Z",
+  "closed_at": "2026-03-02T22:35:15.810477Z",
+  "custom": {}
+}
