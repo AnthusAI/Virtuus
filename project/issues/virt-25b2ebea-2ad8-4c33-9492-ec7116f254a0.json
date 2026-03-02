@@ -1,0 +1,28 @@
+{
+  "id": "virt-25b2ebea-2ad8-4c33-9492-ec7116f254a0",
+  "title": "Rust CodeQL remediation (sanitized)",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "codeql"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "ec84c1cc-28d4-46e9-a9b7-8b3b2ea62c5e",
+      "author": "derek.norrbom",
+      "text": "Rust remediation completed.\n- Findings fixed: 2 (unused-variable).\n- Files touched: rust/src/python.rs.\n- Validation: cargo fmt --check, cargo clippy -- -D warnings.\n- Fresh scan: rcql -q -v --lang=rust --no-fail => Total: 0.",
+      "created_at": "2026-03-02T20:56:45.793116Z"
+    }
+  ],
+  "created_at": "2026-03-02T20:56:41.092768Z",
+  "updated_at": "2026-03-02T20:56:46.298626Z",
+  "closed_at": "2026-03-02T20:56:46.298626Z",
+  "custom": {}
+}

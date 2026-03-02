@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "a13db65e-d787-42cb-9e00-d9557c4778f0",
+  "issue_id": "virt-ab1f4ce0-0dcf-4bf9-8255-dcc0ab36344f",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T20:56:41.628Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Python CodeQL remediation (sanitized)",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "security",
+      "codeql"
+    ]
+  }
+}

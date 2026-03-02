@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "2738b86e-0d36-4da6-a202-550d4c974d1c",
+  "issue_id": "virt-5b02a896-eed5-40fd-be94-a8eed2a6c2ee",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T20:50:24.328Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Remediate Python CodeQL findings from existing rcql scan",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "security",
+      "codeql"
+    ]
+  }
+}

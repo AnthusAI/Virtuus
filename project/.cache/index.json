@@ -1,13 +1,13 @@
 {
-  "built_at": "2026-02-28T01:46:33Z",
+  "built_at": "2026-03-02T20:56:51Z",
   "file_mtimes": {
     "virt-02067cdc-4247-448b-b711-50199e39e631.json": 1772241782.631866,
     "virt-03fbfb15-361e-448b-97d6-3d1f816bb8d4.json": 1772221720.009125,
-    "virt-04abc3ed-b3dd-4ddb-b867-11a07ec8bf90.json": 1772242719.11473,
-    "virt-0e28ceb3-c8bd-4b04-913b-60286f54a829.json": 1772242719.112347,
+    "virt-04abc3ed-b3dd-4ddb-b867-11a07ec8bf90.json": 1772473305.127819,
+    "virt-0e28ceb3-c8bd-4b04-913b-60286f54a829.json": 1772473305.128068,
     "virt-127dff59-40dc-4618-81d6-a7b5f5318a07.json": 1772221720.009285,
     "virt-141eb51f-09ac-4704-8659-b44bebaaefcb.json": 1772241782.63194,
-    "virt-15b80eac-ab43-458c-a8a3-045579ee1c02.json": 1772242719.113735,
+    "virt-15b80eac-ab43-458c-a8a3-045579ee1c02.json": 1772473305.128316,
     "virt-169b776e-b040-4cd6-8531-f36e3a883f20.json": 1772221720.009385,
     "virt-17b867e4-5655-483b-9b75-b371b203a333.json": 1772221720.009614,
     "virt-18b9c259-430b-46ac-8306-49bab32d2db0.json": 1772221720.00982,
@@ -15,10 +15,11 @@
     "virt-1bc8e5f0-689c-4b62-b55c-11c06d36513a.json": 1772221720.010543,
     "virt-1d96dc50-2ed3-4c5b-acc7-ec0b49baffd8.json": 1772221720.010755,
     "virt-1e864f87-c6d1-457d-b138-10beed5a78d6.json": 1772241782.632021,
+    "virt-25b2ebea-2ad8-4c33-9492-ec7116f254a0.json": 1772485006.299097,
     "virt-26a3a6aa-fe0f-471e-88c6-1da12cb9c362.json": 1772221720.010841,
     "virt-28bb9df3-eb66-4d15-987e-3000ceb89096.json": 1772221720.012595,
     "virt-2db1bd55-bfbb-4b86-a6f5-40e5c8134c49.json": 1772221720.012869,
-    "virt-2e9cf298-6060-41c5-bac0-aa0e7362204f.json": 1772242719.116463,
+    "virt-2e9cf298-6060-41c5-bac0-aa0e7362204f.json": 1772473305.128554,
     "virt-2f8cfab5-a3b0-4bf6-8cc0-0c39b09c66af.json": 1772221720.01335,
     "virt-3134b694-b7b5-4596-99cd-4f65f6dc3fba.json": 1772241782.632213,
     "virt-32a700a3-728c-471e-a10d-24c9cb6f2f2d.json": 1772221720.013687,
@@ -28,14 +29,14 @@
     "virt-3b7c6f9f-9568-407b-a830-94229dbe38ef.json": 1772221720.014116,
     "virt-3d5f253d-4310-449e-8a72-898ff0bb47c9.json": 1772221720.014198,
     "virt-3faa018e-273f-49fc-b3c9-269039d9873e.json": 1772221720.014285,
-    "virt-44da5873-71a5-4a91-9490-ed2da458b0f3.json": 1772242719.115318,
+    "virt-44da5873-71a5-4a91-9490-ed2da458b0f3.json": 1772473305.128926,
     "virt-44f07bbb-2770-4244-a296-dde40425b68f.json": 1772221720.014352,
     "virt-46d4a8e3-8b45-4ef3-b984-556b8c04be39.json": 1772221720.014418,
     "virt-4762d92e-f567-4b6f-867c-39d00a14d830.json": 1772221720.014489,
     "virt-4a074a8c-e1e2-4d8d-8148-0af7bfc1387b.json": 1772221720.014566,
     "virt-4be56aba-fa68-4fb3-8023-0cd68aca361a.json": 1772221720.014635,
-    "virt-4e270d0f-788f-407e-a2db-06af6542de0f.json": 1772242719.115803,
-    "virt-56437e9a-fdfc-48d2-8e1e-6cac629443a5.json": 1772242719.111423,
+    "virt-4e270d0f-788f-407e-a2db-06af6542de0f.json": 1772473305.129142,
+    "virt-56437e9a-fdfc-48d2-8e1e-6cac629443a5.json": 1772473305.129456,
     "virt-577307e8-6670-49ce-b3cd-61a7d46a0991.json": 1772221720.014709,
     "virt-59635a9f-e39f-4df4-aa80-4316b27c4d8b.json": 1772221720.01479,
     "virt-59862e11-3b04-4dca-832a-1062309db8b4.json": 1772221720.014861,
@@ -52,34 +53,35 @@
     "virt-6e91f815-7799-4997-b950-fbaa63dccea8.json": 1772221720.016185,
     "virt-6ecd3968-8790-44b7-8281-5b5f3ea8dca8.json": 1772221720.016268,
     "virt-6f5b5e4b-f720-418b-8e35-5561e1822a68.json": 1772221720.016447,
-    "virt-7029da19-f0a5-4bc8-8001-fba42322353e.json": 1772242719.113244,
+    "virt-7029da19-f0a5-4bc8-8001-fba42322353e.json": 1772473305.129658,
     "virt-7227b5e8-d0ac-419e-8aca-fb06db6bcfd7.json": 1772221720.01654,
     "virt-73f05685-9e7e-48c8-b626-25606983ba9d.json": 1772221720.016773,
     "virt-783663cd-5140-4a71-8386-4bdd0019d850.json": 1772221720.017011,
     "virt-78905434-f1b1-4261-9572-72d7fb91b1ec.json": 1772221720.017203,
     "virt-7b354858-729b-4b9c-9b1c-9689ec2912ef.json": 1772221720.017431,
-    "virt-7d1c8118-e320-4e89-8678-975c09ea4365.json": 1772242719.112567,
-    "virt-7ded5232-6a4d-4c29-a00f-861eadaf97dc.json": 1772242719.112761,
+    "virt-7d1c8118-e320-4e89-8678-975c09ea4365.json": 1772473305.12985,
+    "virt-7ded5232-6a4d-4c29-a00f-861eadaf97dc.json": 1772473305.130052,
     "virt-7ecdb670-3482-4cec-a779-c1c16657feae.json": 1772221720.017512,
     "virt-7f5fb00d-dcd2-4bdc-a252-89f52ce2b301.json": 1772221720.0176,
     "virt-801fb71e-f4dc-43b9-b92e-65b51451d911.json": 1772221720.017674,
-    "virt-818b4470-b222-4837-9c8f-5ad56e21a841.json": 1772242719.115116,
+    "virt-818b4470-b222-4837-9c8f-5ad56e21a841.json": 1772473305.130236,
     "virt-829d0d5f-c661-4c94-a1ed-d9525076af15.json": 1772221720.01775,
-    "virt-8426fdff-aaf6-475e-8efd-6ebbfc45fce5.json": 1772242719.116692,
+    "virt-8426fdff-aaf6-475e-8efd-6ebbfc45fce5.json": 1772473305.13042,
     "virt-8454083d-a138-4372-a188-cba03e2050d8.json": 1772221720.017827,
     "virt-8fa6e805-052e-4107-87f5-d2682c27e429.json": 1772221720.017905,
     "virt-90b80c7b-6df0-4762-921d-39a4fc30b1b1.json": 1772241782.632781,
     "virt-95e7d8f7-b0e1-4407-abeb-0290c11cd8d8.json": 1772221720.018,
     "virt-984ee9b9-ab4e-4dd5-9a26-3c5c25852f74.json": 1772221720.018212,
-    "virt-9dcb20ae-59c7-4405-aa1c-324afe311ebb.json": 1772242719.116889,
+    "virt-9dcb20ae-59c7-4405-aa1c-324afe311ebb.json": 1772473305.130625,
     "virt-9e632aef-a102-4fb1-b8a1-347ea3c185eb.json": 1772241782.632866,
     "virt-9efadebe-b50d-4b48-bb44-a84f361b5c2c.json": 1772221720.018294,
     "virt-9f432a03-5946-4157-ae7f-fdb66d560bb5.json": 1772221720.018403,
-    "virt-a63dee12-28ef-4fe1-95c3-be782b24a095.json": 1772242719.112111,
+    "virt-a63dee12-28ef-4fe1-95c3-be782b24a095.json": 1772473305.130814,
     "virt-a6ffc171-7a47-49b1-9a31-e649b451531b.json": 1772221720.018623,
     "virt-a95698d1-df8e-4dce-aa0f-2d0cdc67eb1c.json": 1772221720.018729,
     "virt-a97d7952-ea86-423f-8231-dbd0a04a860d.json": 1772221720.018962,
-    "virt-a9e90344-4214-40c5-a38f-57d2072dc733.json": 1772242719.114252,
+    "virt-a9e90344-4214-40c5-a38f-57d2072dc733.json": 1772473305.130998,
+    "virt-ab1f4ce0-0dcf-4bf9-8255-dcc0ab36344f.json": 1772485007.330303,
     "virt-ab37b375-adfd-44f4-b71c-2bb7658a476e.json": 1772221720.019266,
     "virt-ac5d8ed6-f2cd-4224-ba9f-644eecd2b733.json": 1772221720.019359,
     "virt-ad605957-9d5e-463d-a0ae-cb99c6f9788c.json": 1772221720.0196,
@@ -92,12 +94,12 @@
     "virt-c2b53a38-7c6e-4b0f-93b0-d1a074d6085d.json": 1772221720.02041,
     "virt-c2baed68-5a58-47eb-b766-b48c78234a85.json": 1772221720.020586,
     "virt-c34e6bd7-4c6d-4891-b55c-32ec7b496c06.json": 1772221720.020672,
-    "virt-c6f94223-c74e-4943-b164-3c3c181e440e.json": 1772242719.117088,
+    "virt-c6f94223-c74e-4943-b164-3c3c181e440e.json": 1772473305.131182,
     "virt-ccf3d867-d583-4d97-aac1-b6223878cc62.json": 1772241782.63318,
     "virt-cd3e464d-55ed-4fec-9873-febee80de138.json": 1772221720.02091,
     "virt-d961585d-020c-4b3f-8c85-a10bd990d136.json": 1772241782.63329,
-    "virt-dc3af1a0-c8cb-4309-a624-c664880c473c.json": 1772232285.246378,
-    "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97.json": 1772242719.111608,
+    "virt-dc3af1a0-c8cb-4309-a624-c664880c473c.json": 1772473305.13156,
+    "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97.json": 1772473305.13176,
     "virt-ded70695-9419-4aa2-a17e-fbabacd96e4f.json": 1772241782.633382,
     "virt-df850d1d-74c4-4b21-aae2-1141c082cf61.json": 1772221720.021075,
     "virt-e130bf86-a069-4ef9-9a42-aafc47bb8553.json": 1772221720.021249,
@@ -107,7 +109,7 @@
     "virt-ec83d65c-61d0-4c34-83fb-e3e55a2979cb.json": 1772221720.02166,
     "virt-ef60b4bb-0aeb-4238-90f7-e04dcf3b9bc2.json": 1772221720.021873,
     "virt-ef8da482-7286-4eba-8cf4-956a705e2c09.json": 1772241782.633556,
-    "virt-f21dc82c-9c82-4462-89ef-81d56a37597a.json": 1772242719.114045,
+    "virt-f21dc82c-9c82-4462-89ef-81d56a37597a.json": 1772473305.131946,
     "virt-faae6397-875a-4e66-bcb7-0d34d10480fb.json": 1772221720.022234,
     "virt-fbbdd27b-777a-4833-9f65-54a6d5bea2e9.json": 1772221720.022429
   },
@@ -177,7 +179,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:37.511132Z",
+          "id": "66504ae1-858b-4276-8b88-0f2a8536e656",
+          "text": "Current stance: dismiss. The flagged call is wait_for_invocation() at line 87 — instance_id originates from the AWS API response (InstanceId field), not user input. Passed as a list element to subprocess, not interpolated into a shell string. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.114636Z",
       "creator": null,
       "custom": {
@@ -202,12 +211,19 @@
       "status": "open",
       "title": "[Snyk Code] Command Injection",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.114636Z"
+      "updated_at": "2026-02-28T02:20:37.511132Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.304690Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.685141Z",
+          "id": "0939f61c-2cc1-417c-adc8-f09ae779f2aa",
+          "text": "Fixed. Added path containment assertion in examples/sakila/build_sakila.py before shutil.rmtree(data_root): confirms data_root resolves to within output_dir before deletion."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.112242Z",
       "creator": null,
       "custom": {
@@ -229,10 +245,10 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.112242Z"
+      "updated_at": "2026-02-28T02:23:06.685141Z"
     },
     {
       "assignee": null,
@@ -311,7 +327,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.302041Z",
+          "id": "72eab185-bb83-4666-b42c-cd199d2b1d05",
+          "text": "Current stance: dismiss. Path(args.params).read_text() reads a developer-specified local JSON file passed via --params CLI flag. This is an internal developer validation tool with no web-facing attack surface. The developer controls the path entirely. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.113645Z",
       "creator": null,
       "custom": {
@@ -336,7 +359,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.113645Z"
+      "updated_at": "2026-02-28T02:20:54.302041Z"
     },
     {
       "assignee": null,
@@ -658,6 +681,34 @@
     },
     {
       "assignee": null,
+      "closed_at": "2026-03-02T20:56:46.298626Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-03-02T20:56:45.793116Z",
+          "id": "ec84c1cc-28d4-46e9-a9b7-8b3b2ea62c5e",
+          "text": "Rust remediation completed.\n- Findings fixed: 2 (unused-variable).\n- Files touched: rust/src/python.rs.\n- Validation: cargo fmt --check, cargo clippy -- -D warnings.\n- Fresh scan: rcql -q -v --lang=rust --no-fail => Total: 0."
+        }
+      ],
+      "created_at": "2026-03-02T20:56:41.092768Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-25b2ebea-2ad8-4c33-9492-ec7116f254a0",
+      "labels": [
+        "security",
+        "codeql"
+      ],
+      "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+      "priority": 1,
+      "status": "closed",
+      "title": "Rust CodeQL remediation (sanitized)",
+      "type": "sub-task",
+      "updated_at": "2026-03-02T20:56:46.298626Z"
+    },
+    {
+      "assignee": null,
       "closed_at": "2026-02-22T07:09:52.334275Z",
       "comments": [
         {
@@ -836,7 +887,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.384741Z",
+          "id": "6fa4496a-3b65-477b-a8b7-54c656d6d698",
+          "text": "Current stance: dismiss. Same pattern as virt-15b80e — Path(args.params).read_text() in a developer CLI tool. Path is entirely developer-controlled via --params flag. No untrusted input involved. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.116132Z",
       "creator": null,
       "custom": {
@@ -861,7 +919,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.116132Z"
+      "updated_at": "2026-02-28T02:20:54.384741Z"
     },
     {
       "assignee": null,
@@ -1193,7 +1251,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.453312Z",
+          "id": "6034b009-a8fa-4f6d-8cdd-fdc007adf22c",
+          "text": "Current stance: dismiss. Path(args.dest) is the developer-specified download destination via --dest CLI flag. There is no trusted base directory to assert against for an output path the developer is intentionally specifying. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.115224Z",
       "creator": null,
       "custom": {
@@ -1218,7 +1283,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.115224Z"
+      "updated_at": "2026-02-28T02:20:54.453312Z"
     },
     {
       "assignee": null,
@@ -1413,8 +1478,15 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.109550Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.532954Z",
+          "id": "ae3b21f5-e1ae-48b9-9ba2-4148758bdf34",
+          "text": "Fixed. Added path containment check in tools/pull_storage_results_s3.py: out_path is now resolved and asserted to be under dest before download. Raises ValueError on any S3 key containing path traversal sequences."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.115722Z",
       "creator": null,
       "custom": {
@@ -1436,10 +1508,10 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.115722Z"
+      "updated_at": "2026-02-28T02:23:06.532954Z"
     },
     {
       "assignee": null,
@@ -1460,10 +1532,10 @@
       ],
       "parent": "virt-dc3af1a0-c8cb-4309-a624-c664880c473c",
       "priority": 2,
-      "status": "open",
+      "status": "in_progress",
       "title": "Snyk Code Vulnerabilities",
       "type": "epic",
-      "updated_at": "2026-02-28T01:38:39.111108Z"
+      "updated_at": "2026-02-28T02:22:24.094487Z"
     },
     {
       "assignee": null,
@@ -2028,7 +2100,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.592087Z",
+          "id": "07caba76-caec-49f0-b32a-5486d67094dc",
+          "text": "Current stance: dismiss. Path(root) where root comes from --roots CLI args specifying input directories to scan. Developer-controlled input paths in an aggregation tool. No untrusted external input. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.113145Z",
       "creator": null,
       "custom": {
@@ -2053,7 +2132,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.113145Z"
+      "updated_at": "2026-02-28T02:20:54.592087Z"
     },
     {
       "assignee": null,
@@ -2296,8 +2375,15 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.388429Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.767158Z",
+          "id": "42b47a0d-581b-4688-8345-44bd1e81db5b",
+          "text": "Fixed. Updated write_table() in examples/sakila/build_sakila.py to resolve each output path and assert it remains under output_root before writing. Raises ValueError on traversal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.112472Z",
       "creator": null,
       "custom": {
@@ -2319,15 +2405,22 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.112472Z"
+      "updated_at": "2026-02-28T02:23:06.767158Z"
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.472592Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.845976Z",
+          "id": "9c76a87a-d332-4d24-b0b2-b36b680de8eb",
+          "text": "Fixed. Covered by the same write_table() fix as virt-7d1c81 — path containment check added in examples/sakila/build_sakila.py."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.112676Z",
       "creator": null,
       "custom": {
@@ -2349,10 +2442,10 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.112676Z"
+      "updated_at": "2026-02-28T02:23:06.845976Z"
     },
     {
       "assignee": null,
@@ -2455,8 +2548,15 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.002660Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.449671Z",
+          "id": "c8a08b68-5ad8-43d6-a312-6e307ce3aca2",
+          "text": "Fixed. Added path containment check in tools/pull_cold_results_s3.py: out_path is now resolved and asserted to be under dest before download. Raises ValueError on any S3 key containing path traversal sequences."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.115024Z",
       "creator": null,
       "custom": {
@@ -2478,10 +2578,10 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.115024Z"
+      "updated_at": "2026-02-28T02:23:06.449671Z"
     },
     {
       "assignee": null,
@@ -2553,7 +2653,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.661273Z",
+          "id": "7e22acc1-c2a8-4d02-a0ab-1640bd0bb1cb",
+          "text": "Current stance: dismiss. Path(args.out_json) is a developer-specified output path via --out-json CLI flag. No trusted base to assert containment against for a user-chosen output location. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.116600Z",
       "creator": null,
       "custom": {
@@ -2578,7 +2685,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.116600Z"
+      "updated_at": "2026-02-28T02:20:54.661273Z"
     },
     {
       "assignee": null,
@@ -2780,7 +2887,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:37.421310Z",
+          "id": "17bd7317-92a9-41ec-aa83-ca263c8d2542",
+          "text": "Current stance: dismiss. Uses list-form subprocess.check_output() without shell=True. The cmd list is built from hardcoded strings plus developer-supplied --region/--profile CLI flags. No shell interpreter is involved, so CWE-78 injection path does not exist. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.116804Z",
       "creator": null,
       "custom": {
@@ -2805,7 +2919,7 @@
       "status": "open",
       "title": "[Snyk Code] Command Injection",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.116804Z"
+      "updated_at": "2026-02-28T02:20:37.421310Z"
     },
     {
       "assignee": null,
@@ -2920,8 +3034,15 @@
     },
     {
       "assignee": null,
-      "closed_at": null,
-      "comments": [],
+      "closed_at": "2026-02-28T02:22:56.200475Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:23:06.608737Z",
+          "id": "cc39603e-1580-482d-8f76-33d507b69028",
+          "text": "Fixed. Added https:// scheme validation in examples/sakila/build_sakila.py download_db(): raises ValueError if a non-https URL is passed, preventing redirection to internal/arbitrary hosts."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.111992Z",
       "creator": null,
       "custom": {
@@ -2943,10 +3064,10 @@
       ],
       "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
       "priority": 2,
-      "status": "open",
+      "status": "closed",
       "title": "[Snyk Code] Server-Side Request Forgery (SSRF)",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.111992Z"
+      "updated_at": "2026-02-28T02:23:06.608737Z"
     },
     {
       "assignee": null,
@@ -3031,7 +3152,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.731618Z",
+          "id": "79e74ce8-32c6-4c5e-af2f-0087e69ed8cf",
+          "text": "Current stance: dismiss. Path(args.out_csv) is a developer-specified output path via --out-csv CLI flag. Same rationale as virt-8426fd. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.114162Z",
       "creator": null,
       "custom": {
@@ -3056,7 +3184,35 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.114162Z"
+      "updated_at": "2026-02-28T02:20:54.731618Z"
+    },
+    {
+      "assignee": null,
+      "closed_at": "2026-03-02T20:56:47.329680Z",
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-03-02T20:56:46.823417Z",
+          "id": "05c33b20-7aa7-4a64-9e18-4717f9e6b201",
+          "text": "Python remediation completed.\n- Findings fixed: 7 warnings.\n- Files touched: tools/bench_memory.py, features/steps/database_python_paths_steps.py, features/steps/database_python_steps.py, features/steps/gsi_steps.py, features/steps/table_steps.py.\n- Validation: python3 -m black --check, python3 -m ruff check.\n- Fresh scan: rcql -q -v --lang=python --no-fail => Total: 0."
+        }
+      ],
+      "created_at": "2026-03-02T20:56:41.627810Z",
+      "creator": null,
+      "custom": {},
+      "dependencies": [],
+      "description": "",
+      "id": "virt-ab1f4ce0-0dcf-4bf9-8255-dcc0ab36344f",
+      "labels": [
+        "security",
+        "codeql"
+      ],
+      "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+      "priority": 1,
+      "status": "closed",
+      "title": "Python CodeQL remediation (sanitized)",
+      "type": "sub-task",
+      "updated_at": "2026-03-02T20:56:47.329680Z"
     },
     {
       "assignee": null,
@@ -3534,7 +3690,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:37.582854Z",
+          "id": "6c9396d2-d007-4c0f-a50f-1999f49300ee",
+          "text": "Current stance: dismiss. subprocess.check_call(cmd) where cmd is a list built from a developer-controlled JSON params file. shell=False (default). Line 61 already uses shlex.quote() for display, showing awareness. No shell injection vector. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.117Z",
       "creator": null,
       "custom": {
@@ -3559,7 +3722,7 @@
       "status": "open",
       "title": "[Snyk Code] Command Injection",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.117Z"
+      "updated_at": "2026-02-28T02:20:37.582854Z"
     },
     {
       "assignee": null,
@@ -4058,7 +4221,14 @@
     {
       "assignee": null,
       "closed_at": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "derek.norrbom",
+          "created_at": "2026-02-28T02:20:54.523106Z",
+          "id": "ae05584f-2c35-4a2b-88b5-a26c34c84898",
+          "text": "Current stance: dismiss. Identical pattern to virt-44da58 in pull_storage_results_s3.py. Path(args.dest) is developer-controlled output destination. No trusted base to assert against. Pending triple-check before formal dismissal."
+        }
+      ],
       "created_at": "2026-02-28T01:38:39.113961Z",
       "creator": null,
       "custom": {
@@ -4083,7 +4253,7 @@
       "status": "open",
       "title": "[Snyk Code] Path Traversal",
       "type": "sub-task",
-      "updated_at": "2026-02-28T01:38:39.113961Z"
+      "updated_at": "2026-02-28T02:20:54.523106Z"
     },
     {
       "assignee": null,
