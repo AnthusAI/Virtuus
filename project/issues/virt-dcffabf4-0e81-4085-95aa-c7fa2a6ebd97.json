@@ -13,9 +13,16 @@
     "snyk"
   ],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "6a56942b-25c3-49e1-bc6b-9dcea3a1f255",
+      "author": "derek.norrbom",
+      "text": "CodeQL remediation commit landed on branch fix/codeql-findings: acb4c72. Includes Rust, Python, and GitHub Actions fixes; full quality gate passed via make check; fresh rcql scans for rust/python/actions report Total: 0.",
+      "created_at": "2026-03-02T21:22:29.801470Z"
+    }
+  ],
   "created_at": "2026-02-28T01:38:39.111511Z",
-  "updated_at": "2026-02-28T01:38:39.111511Z",
+  "updated_at": "2026-03-02T21:22:29.801470Z",
   "closed_at": null,
   "custom": {
     "snyk_category": "code",

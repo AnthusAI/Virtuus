@@ -1,0 +1,31 @@
+{
+  "id": "virt-ddf64785-5706-4f43-af32-1e99019308b0",
+  "title": "Harden Snyk ignore rationale text for audit quality",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "68129c83-8700-4eb0-a0a6-36f2a42acabe",
+      "author": "derek.norrbom",
+      "text": "Updating existing Snyk ignore rationale to remove pilot/API phrasing and replace with audit-ready technical context (scope, control, exploitability basis, residual risk statement).",
+      "created_at": "2026-03-02T22:26:11.999666Z"
+    },
+    {
+      "id": "462a9ce7-d1e1-458b-bbce-d431faa953a0",
+      "author": "derek.norrbom",
+      "text": "Updated ignore rationale text for finding 983bb4bf-16a9-4225-9394-956896b825e8 to audit-ready wording and removed pilot/API language.\n\nChanges made:\n- Updated policy id 9f5b1d65-bbd2-44a1-a2c6-1c3a13cb9b48 via PATCH.\n- Renamed policy to: ignore-command-injection-ec2-bench-status-line-10.\n- Replaced reason with detailed technical context (non-shell list invocation, trust boundary, argv token handling).\n\nVerification:\n- `snyk code test --include-ignores` shows the same finding as ignored with the updated reason text.\n- Summary remains: Ignored issues 1, Open issues 15.",
+      "created_at": "2026-03-02T22:27:03.265862Z"
+    }
+  ],
+  "created_at": "2026-03-02T22:26:07.223745Z",
+  "updated_at": "2026-03-02T22:27:03.813171Z",
+  "closed_at": "2026-03-02T22:27:03.813171Z",
+  "custom": {}
+}

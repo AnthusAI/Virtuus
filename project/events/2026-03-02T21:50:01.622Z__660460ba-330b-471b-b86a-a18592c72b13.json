@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "event_id": "660460ba-330b-471b-b86a-a18592c72b13",
+  "issue_id": "virt-dac6edda-ff10-4d44-9a35-9045808a9bc7",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T21:50:01.622Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Create reusable rcql code-quality workflow skill",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "tooling",
+      "skills",
+      "codeql"
+    ]
+  }
+}

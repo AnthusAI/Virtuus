@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "event_id": "1723f287-8db2-44c4-afaf-73f0021520db",
+  "issue_id": "virt-e959ba2b-5550-42c2-b06b-79d0642d6b89",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-02T21:36:26.008Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Enforce code-block output in PR message skill",
+    "description": "",
+    "issue_type": "sub-task",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": [
+      "tooling",
+      "skills"
+    ]
+  }
+}

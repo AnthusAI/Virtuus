@@ -1,0 +1,25 @@
+{
+  "id": "virt-f1177992-fa92-406c-96e6-bb0e95f8cc5e",
+  "title": "Create Snyk ignore-rationale skill and pilot on 1 finding",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "da4f5821-cbcb-47d8-993b-199e32b2d8e6",
+      "author": "derek.norrbom",
+      "text": "Completed creation + one-finding pilot for local skill `snyk-code-ignore-rationale`.\n\nArtifacts created:\n- `~/.codex/skills/snyk-code-ignore-rationale/SKILL.md`\n- `~/.codex/skills/snyk-code-ignore-rationale/references/ignore-template.md`\n- `~/.codex/skills/snyk-code-ignore-rationale/scripts/extract_finding.py`\n- `~/.codex/skills/snyk-code-ignore-rationale/agents/openai.yaml`\n\nValidation:\n- `quick_validate.py` => Skill is valid.\n- Ran helper script on one real finding:\n  - file `tools/ec2_bench_status.py`, line 10\n  - finding id `983bb4bf-16a9-4225-9394-956896b825e8`\n  - rule `python/CommandInjection`\n\nPilot decision outcome (for this one finding): dismiss as false positive with finding-specific rationale (non-shell subprocess list invocation in developer CLI context).",
+      "created_at": "2026-03-02T22:19:41.368086Z"
+    }
+  ],
+  "created_at": "2026-03-02T22:18:01.010412Z",
+  "updated_at": "2026-03-02T22:19:41.876500Z",
+  "closed_at": "2026-03-02T22:19:41.876500Z",
+  "custom": {}
+}

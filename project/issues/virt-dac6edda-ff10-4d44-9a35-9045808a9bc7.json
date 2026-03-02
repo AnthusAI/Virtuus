@@ -1,0 +1,35 @@
+{
+  "id": "virt-dac6edda-ff10-4d44-9a35-9045808a9bc7",
+  "title": "Create reusable rcql code-quality workflow skill",
+  "description": "",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "tooling",
+    "skills",
+    "codeql"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "77c6ca3b-1c3d-4c3f-b482-0ad6fd2b733f",
+      "author": "derek.norrbom",
+      "text": "Creating a global Codex skill for rcql workflows with opinionated defaults: quiet mode, report-only behavior, language targeting, remediation loop, and verification scans.",
+      "created_at": "2026-03-02T21:50:07.277548Z"
+    },
+    {
+      "id": "e3d6de1e-2de1-4c43-ba62-8d38ea9e4e87",
+      "author": "derek.norrbom",
+      "text": "Completed global skill creation: ~/.codex/skills/rcql-analysis. Skill enforces rcql quiet mode (-q -v), language targeting, report-only semantics, remediation loop, and fresh non-report-only verification scans. Validated with quick_validate.py.",
+      "created_at": "2026-03-02T21:50:41.128344Z"
+    }
+  ],
+  "created_at": "2026-03-02T21:50:01.621973Z",
+  "updated_at": "2026-03-02T21:50:41.690640Z",
+  "closed_at": "2026-03-02T21:50:41.690640Z",
+  "custom": {}
+}
