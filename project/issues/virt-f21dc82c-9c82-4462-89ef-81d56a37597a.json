@@ -1,0 +1,37 @@
+{
+  "id": "virt-f21dc82c-9c82-4462-89ef-81d56a37597a",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/pull_storage_results_s3.py`\n**Location:** line 56, column 36 to line 56, column 40\n**Classes:** CWE-CWE-23\n### Snippet (tools/pull_storage_results_s3.py:54-58)\n```\n  54 |     args = parser.parse_args()\n  55 | \n  56 |     pull(args.bucket, args.prefix, Path(args.dest), args.profile)\n  57 | \n  58 | \n```\n\n**Issue Key:** d925ec02-ffd1-4606-a88d-93abee179fbe\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "ae05584f-2c35-4a2b-88b5-a26c34c84898",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Identical pattern to virt-44da58 in pull_storage_results_s3.py. Path(args.dest) is developer-controlled output destination. No trusted base to assert against. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.523106Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.113961Z",
+  "updated_at": "2026-02-28T02:20:54.523106Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 36,
+    "snyk_end_column": 40,
+    "snyk_end_line": 56,
+    "snyk_file": "tools/pull_storage_results_s3.py",
+    "snyk_key": "d925ec02-ffd1-4606-a88d-93abee179fbe",
+    "snyk_line": 56,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

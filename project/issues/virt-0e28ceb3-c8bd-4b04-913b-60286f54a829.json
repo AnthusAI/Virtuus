@@ -1,0 +1,37 @@
+{
+  "id": "virt-0e28ceb3-c8bd-4b04-913b-60286f54a829",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 291, column 13 to line 291, column 26\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:289-293)\n```\n 289 |     if data_root.exists():\n 290 |         if args.force:\n 291 |             shutil.rmtree(data_root)\n 292 |         else:\n 293 |             raise SystemExit(\n```\n\n**Issue Key:** 3f93a699-3b92-4aa6-8b0a-94f56bc9a761\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "0939f61c-2cc1-417c-adc8-f09ae779f2aa",
+      "author": "derek.norrbom",
+      "text": "Fixed. Added path containment assertion in examples/sakila/build_sakila.py before shutil.rmtree(data_root): confirms data_root resolves to within output_dir before deletion.",
+      "created_at": "2026-02-28T02:23:06.685141Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.112242Z",
+  "updated_at": "2026-02-28T02:23:06.685141Z",
+  "closed_at": "2026-02-28T02:22:56.304690Z",
+  "custom": {
+    "snyk_column": 13,
+    "snyk_end_column": 26,
+    "snyk_end_line": 291,
+    "snyk_file": "examples/sakila/build_sakila.py",
+    "snyk_key": "3f93a699-3b92-4aa6-8b0a-94f56bc9a761",
+    "snyk_line": 291,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

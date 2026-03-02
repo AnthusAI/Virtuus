@@ -1,0 +1,37 @@
+{
+  "id": "virt-7029da19-f0a5-4bc8-8001-fba42322353e",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/aggregate_storage_results.py`\n**Location:** line 85, column 61 to line 85, column 65\n**Classes:** CWE-CWE-23\n### Snippet (tools/aggregate_storage_results.py:83-87)\n```\n  83 |     rows: List[dict] = []\n  84 |     for root in args.roots:\n  85 |         rows.extend(row_from_entry(e) for e in load_results(Path(root)))\n  86 | \n  87 |     out_json = Path(args.out_json) if args.out_json else None\n```\n\n**Issue Key:** 67feb010-80d6-4837-9e92-2173599948ab\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "07caba76-caec-49f0-b32a-5486d67094dc",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Path(root) where root comes from --roots CLI args specifying input directories to scan. Developer-controlled input paths in an aggregation tool. No untrusted external input. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:54.592087Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.113145Z",
+  "updated_at": "2026-02-28T02:20:54.592087Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 61,
+    "snyk_end_column": 65,
+    "snyk_end_line": 85,
+    "snyk_file": "tools/aggregate_storage_results.py",
+    "snyk_key": "67feb010-80d6-4837-9e92-2173599948ab",
+    "snyk_line": 85,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

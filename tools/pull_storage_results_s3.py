@@ -39,7 +39,9 @@ def pull(bucket: str, prefix: str, dest: Path, profile: str | None) -> None:
             if key.endswith("/"):
                 continue
             rel = key[len(prefix) :] if key.startswith(prefix) else key
-            out_path = dest / rel
+            out_path = (dest / rel).resolve()
+            if not str(out_path).startswith(str(dest.resolve())):
+                raise ValueError(f"Refusing path traversal from S3 key: {key}")
             out_path.parent.mkdir(parents=True, exist_ok=True)
             s3.download_file(bucket, key, str(out_path))
             print(f"downloaded s3://{bucket}/{key} -> {out_path}")

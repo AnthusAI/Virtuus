@@ -1,0 +1,37 @@
+{
+  "id": "virt-9dcb20ae-59c7-4405-aa1c-324afe311ebb",
+  "title": "[Snyk Code] Command Injection",
+  "description": "## Command Injection\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/ec2_bench_status.py`\n**Location:** line 10, column 23 to line 10, column 46\n**Classes:** CWE-CWE-78\n### Snippet (tools/ec2_bench_status.py:8-12)\n```\n   8 | def aws_json(args):\n   9 |     cmd = [\"aws\"] + args + [\"--output\", \"json\"]\n  10 |     return json.loads(subprocess.check_output(cmd, text=True))\n  11 | \n  12 | \n```\n\n**Issue Key:** 35e8d6ad-4ef9-41bf-9933-c93aa9939f86\n\n### Details\nCommand Injection\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "17bd7317-92a9-41ec-aa83-ca263c8d2542",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. Uses list-form subprocess.check_output() without shell=True. The cmd list is built from hardcoded strings plus developer-supplied --region/--profile CLI flags. No shell interpreter is involved, so CWE-78 injection path does not exist. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:37.421310Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.116804Z",
+  "updated_at": "2026-02-28T02:20:37.421310Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 23,
+    "snyk_end_column": 46,
+    "snyk_end_line": 10,
+    "snyk_file": "tools/ec2_bench_status.py",
+    "snyk_key": "35e8d6ad-4ef9-41bf-9933-c93aa9939f86",
+    "snyk_line": 10,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

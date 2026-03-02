@@ -1,0 +1,37 @@
+{
+  "id": "virt-04abc3ed-b3dd-4ddb-b867-11a07ec8bf90",
+  "title": "[Snyk Code] Command Injection",
+  "description": "## Command Injection\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `tools/ec2_bench_status.py`\n**Location:** line 87, column 15 to line 87, column 34\n**Classes:** CWE-CWE-78\n### Snippet (tools/ec2_bench_status.py:85-89)\n```\n  85 | \n  86 |     for inst in instance_ids:\n  87 |         inv = wait_for_invocation(command_id, inst, region=args.region, profile=args.profile)\n  88 |         print(\"=\" * 80)\n  89 |         print(f\"Instance: {inst}\")\n```\n\n**Issue Key:** 5b713713-8205-499c-b09c-7a0c48ffa034\n\n### Details\nCommand Injection\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "66504ae1-858b-4276-8b88-0f2a8536e656",
+      "author": "derek.norrbom",
+      "text": "Current stance: dismiss. The flagged call is wait_for_invocation() at line 87 — instance_id originates from the AWS API response (InstanceId field), not user input. Passed as a list element to subprocess, not interpolated into a shell string. Pending triple-check before formal dismissal.",
+      "created_at": "2026-02-28T02:20:37.511132Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.114636Z",
+  "updated_at": "2026-02-28T02:20:37.511132Z",
+  "closed_at": null,
+  "custom": {
+    "snyk_column": 15,
+    "snyk_end_column": 34,
+    "snyk_end_line": 87,
+    "snyk_file": "tools/ec2_bench_status.py",
+    "snyk_key": "5b713713-8205-499c-b09c-7a0c48ffa034",
+    "snyk_line": 87,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "284c1973-8752-4db5-9669-1d71edbec9ef",
+  "issue_id": "virt-1faa7fa9-8a46-476b-9f74-f7f634d18a67",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-27T22:40:28.457Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "sub-task",
+    "status": "open",
+    "title": "[Snyk Code] Command Injection"
+  }
+}

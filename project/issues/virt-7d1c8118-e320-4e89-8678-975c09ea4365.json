@@ -1,0 +1,37 @@
+{
+  "id": "virt-7d1c8118-e320-4e89-8678-975c09ea4365",
+  "title": "[Snyk Code] Path Traversal",
+  "description": "## Path Traversal\n\n**Severity:** medium\n**Project:** `AnthusAI/Virtuus`\n**File:** `examples/sakila/build_sakila.py`\n**Location:** line 126, column 13 to line 126, column 22\n**Classes:** CWE-CWE-23\n### Snippet (examples/sakila/build_sakila.py:124-128)\n```\n 124 |         path = table_dir / f\"{pk_value}.json\"\n 125 |         with path.open(\"w\", encoding=\"utf-8\") as handle:\n 126 |             json.dump(row, handle, indent=2, sort_keys=True)\n 127 | \n 128 | \n```\n\n**Issue Key:** 06c3c83f-9a23-4247-8517-5222a71e35fc\n\n### Details\nPath Traversal\n\n**Fix:** Review and remediate in code.",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [
+    "security",
+    "snyk"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "42b47a0d-581b-4688-8345-44bd1e81db5b",
+      "author": "derek.norrbom",
+      "text": "Fixed. Updated write_table() in examples/sakila/build_sakila.py to resolve each output path and assert it remains under output_root before writing. Raises ValueError on traversal.",
+      "created_at": "2026-02-28T02:23:06.767158Z"
+    }
+  ],
+  "created_at": "2026-02-28T01:38:39.112472Z",
+  "updated_at": "2026-02-28T02:23:06.767158Z",
+  "closed_at": "2026-02-28T02:22:56.388429Z",
+  "custom": {
+    "snyk_column": 13,
+    "snyk_end_column": 22,
+    "snyk_end_line": 126,
+    "snyk_file": "examples/sakila/build_sakila.py",
+    "snyk_key": "06c3c83f-9a23-4247-8517-5222a71e35fc",
+    "snyk_line": 126,
+    "snyk_severity": "medium",
+    "snyk_type": "code"
+  }
+}

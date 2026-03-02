@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "903e491a-7018-45bc-a2e0-99b4a709d77f",
+  "issue_id": "virt-d653eadf-e6c9-4662-abf2-d514139addd8",
+  "event_type": "issue_deleted",
+  "occurred_at": "2026-02-28T01:37:28.256Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "issue_type": "epic",
+    "status": "open",
+    "title": "Snyk Code Vulnerabilities"
+  }
+}
