@@ -10,9 +10,11 @@ import sqlite3
 import sys
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 DEFAULT_DB_URL = "https://sq.io/testdata/sakila.db"
+DEFAULT_DB_HOST = "sq.io"
 
 PRIMARY_KEYS = {
     "customers": "customer_id",
@@ -51,6 +53,15 @@ def parse_args() -> argparse.Namespace:
         help="URL to a Sakila SQLite database.",
     )
     parser.add_argument(
+        "--allow-db-host",
+        action="append",
+        default=[],
+        help=(
+            "Additional allowed host for --db-url. "
+            f"Default allowed host: {DEFAULT_DB_HOST}."
+        ),
+    )
+    parser.add_argument(
         "--customers",
         type=int,
         default=3,
@@ -69,9 +80,29 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def download_db(url: str, target_path: Path, refresh: bool) -> None:
-    if not url.startswith("https://"):
+def _ensure_within(base: Path, candidate: Path) -> Path:
+    base_resolved = base.resolve()
+    candidate_resolved = candidate.resolve()
+    try:
+        candidate_resolved.relative_to(base_resolved)
+    except ValueError as exc:
+        raise ValueError(
+            f"Refusing path traversal outside {base_resolved}: {candidate_resolved}"
+        ) from exc
+    return candidate_resolved
+
+
+def download_db(
+    url: str, target_path: Path, refresh: bool, allowed_hosts: set[str]
+) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
         raise ValueError(f"Only https:// URLs are allowed, got: {url!r}")
+    host = parsed.hostname or ""
+    if host not in allowed_hosts:
+        raise ValueError(
+            f"DB URL host {host!r} is not allowed. Allowed hosts: {sorted(allowed_hosts)}"
+        )
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if target_path.exists() and not refresh:
         return
@@ -121,12 +152,9 @@ def write_table(output_root: Path, table: str, rows: list[dict]) -> None:
     pk_field = PRIMARY_KEYS[table]
     table_dir = output_root / table
     table_dir.mkdir(parents=True, exist_ok=True)
-    root_resolved = output_root.resolve()
     for row in rows:
         pk_value = row[pk_field]
-        path = (table_dir / f"{pk_value}.json").resolve()
-        if not str(path).startswith(str(root_resolved)):
-            raise ValueError(f"Refusing path traversal for pk {pk_value!r} in table {table!r}")
+        path = _ensure_within(table_dir, table_dir / f"{pk_value}.json")
         with path.open("w", encoding="utf-8") as handle:
             json.dump(row, handle, indent=2, sort_keys=True)
 
@@ -289,13 +317,12 @@ def main() -> int:
     cache_root = output_dir / ".cache"
     db_path = cache_root / "sakila.db"
 
-    download_db(args.db_url, db_path, args.refresh)
+    allowed_hosts = {DEFAULT_DB_HOST, *args.allow_db_host}
+    download_db(args.db_url, db_path, args.refresh, allowed_hosts)
 
     if data_root.exists():
         if args.force:
-            if not str(data_root.resolve()).startswith(str(output_dir.resolve())):
-                raise ValueError(f"Refusing to delete directory outside output_dir: {data_root}")
-            shutil.rmtree(data_root)
+            shutil.rmtree(_ensure_within(output_dir, data_root))
         else:
             raise SystemExit(
                 f"Output data directory already exists: {data_root}. "
