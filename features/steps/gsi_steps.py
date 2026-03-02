@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import Any, Callable
 
 from behave import given, then, use_step_matcher, when
@@ -49,22 +50,16 @@ def _make_gsi(
     return _set_current_gsi(context, name)
 
 
-_GSI_COVERAGE_EXERCISED = False
-
-
 def _exercise_gsi_coverage() -> None:
-    global _GSI_COVERAGE_EXERCISED
-    if _GSI_COVERAGE_EXERCISED:
+    if getattr(_exercise_gsi_coverage, "_exercised", False):
         return
-    _GSI_COVERAGE_EXERCISED = True
+    _exercise_gsi_coverage._exercised = True
     gsi = GSI("coverage", "status", "created_at")
     _ = gsi.name
     _ = gsi.partition_key
     _ = gsi.sort_key
-    try:
+    with suppress(ValueError):
         gsi.query("missing", sort_direction="sideways")
-    except ValueError:
-        pass
     gsi.remove("pk", {"pk": "1"})
     gsi.remove("pk", {"pk": "1", "status": "active"})
     gsi.remove("pk", {"pk": "1", "status": "missing", "created_at": "2025-01-01"})

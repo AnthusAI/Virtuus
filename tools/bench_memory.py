@@ -18,25 +18,30 @@ Outputs:
   - results.json (structured data)
   - results.csv  (summary table)
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
-import shutil
 import signal
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Iterable
 import sys
 import socket
 
 ROOT = Path(__file__).resolve().parents[1]
 VIRTUUS_BIN = ROOT / "rust" / "target" / "release" / "virtuus"
-sys.path.insert(0, str(ROOT))
-from features.steps import benchmark_steps as viz  # type: ignore
+
+
+def _viz_module():
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from features.steps import benchmark_steps as viz  # type: ignore
+
+    return viz
 
 
 def ensure_binary() -> Path:
@@ -46,7 +51,9 @@ def ensure_binary() -> Path:
     debug_bin = ROOT / "rust" / "target" / "debug" / "virtuus"
     if debug_bin.exists():
         return debug_bin
-    raise SystemExit("virtuus binary not found; build with `cd rust && cargo build --release`")
+    raise SystemExit(
+        "virtuus binary not found; build with `cd rust && cargo build --release`"
+    )
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -91,7 +98,11 @@ def write_yaml_schema(
                 "  posts:",
                 "    primary_key: id",
                 "    directory: posts",
-                f"    storage: {storage_mode}" if storage_mode else "    storage: index_only",
+                (
+                    f"    storage: {storage_mode}"
+                    if storage_mode
+                    else "    storage: index_only"
+                ),
                 "    gsis:",
                 "      by_user:",
                 "        partition_key: user_id",
@@ -157,11 +168,22 @@ def generate_data(
             write_json(posts_dir / f"post-{i}.json", record)
 
 
-def start_server(bin_path: Path, data_dir: Path, schema_path: Path, port: int) -> subprocess.Popen:
+def start_server(
+    bin_path: Path, data_dir: Path, schema_path: Path, port: int
+) -> subprocess.Popen:
     env = os.environ.copy()
     env.setdefault("RUST_LOG", "warn")
     return subprocess.Popen(
-        [str(bin_path), "serve", "--dir", str(data_dir), "--schema", str(schema_path), "--port", str(port)],
+        [
+            str(bin_path),
+            "serve",
+            "--dir",
+            str(data_dir),
+            "--schema",
+            str(schema_path),
+            "--port",
+            str(port),
+        ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         env=env,
@@ -200,11 +222,15 @@ def _pick_port(start_port: int, attempts: int = 50) -> int:
         return sock.getsockname()[1]
 
 
-def query_memory(bin_path: Path, port: int, retries: int = 20, delay: float = 0.25) -> dict:
+def query_memory(
+    bin_path: Path, port: int, retries: int = 20, delay: float = 0.25
+) -> dict:
     for attempt in range(retries):
         try:
             output = subprocess.check_output(
-                [str(bin_path), "memory", "--port", str(port)], text=True, stderr=subprocess.DEVNULL
+                [str(bin_path), "memory", "--port", str(port)],
+                text=True,
+                stderr=subprocess.DEVNULL,
             )
             return json.loads(output.strip())
         except Exception:
@@ -264,7 +290,9 @@ def _gsi_label(count: int) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Measure Virtuus server RSS across dataset shapes.")
+    parser = argparse.ArgumentParser(
+        description="Measure Virtuus server RSS across dataset shapes."
+    )
     parser.add_argument("--totals", default="100,500,1000,5000,10000", type=str)
     parser.add_argument("--gsis", default="0,1,3", type=str)
     parser.add_argument("--posts", dest="posts", action="store_true", default=True)
@@ -274,7 +302,9 @@ def main() -> None:
     parser.add_argument("--storage", type=str, default="index_only")
     parser.add_argument("--record-size-kb", type=str, default="0")
     parser.add_argument("--port", type=int, default=18080)
-    parser.add_argument("--output", type=Path, default=ROOT / "benchmarks" / "output_memory")
+    parser.add_argument(
+        "--output", type=Path, default=ROOT / "benchmarks" / "output_memory"
+    )
     args = parser.parse_args()
 
     totals = parse_list(args.totals)
@@ -317,7 +347,9 @@ def main() -> None:
                             proc = start_server(bin_path, data_root, schema_path, port)
                             try:
                                 if not wait_for_port("127.0.0.1", port, timeout=20.0):
-                                    raise RuntimeError(f"server did not open port {port}")
+                                    raise RuntimeError(
+                                        f"server did not open port {port}"
+                                    )
                                 if proc.poll() is not None:
                                     raise RuntimeError(
                                         f"server exited early with code {proc.returncode}"
@@ -377,7 +409,8 @@ def main() -> None:
                             and r["gsi_count"] == gsi_count
                             and r["include_posts"]
                             and r.get("storage_mode") == storage_mode
-                            and float(r.get("record_size_kb", 0)) == float(record_size_kb)
+                            and float(r.get("record_size_kb", 0))
+                            == float(record_size_kb)
                         ),
                         None,
                     )
@@ -385,7 +418,7 @@ def main() -> None:
                         data[label][series_label] = float(match.get("rss_kb") or 0)
         suffix = f"{record_size_kb:g}kb" if record_size_kb else "base"
         chart_path = out_dir / f"memory_rss_{suffix}.png"
-        viz._render_horizontal_bar_chart(
+        _viz_module()._render_horizontal_bar_chart(
             f"RSS by corpus size and GSI count (record size {record_size_kb:g} KB)",
             [f"{c:,} users" for c in categories],
             series_labels,

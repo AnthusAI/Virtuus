@@ -10,14 +10,11 @@ from behave import given, then, use_step_matcher, when
 
 from virtuus import Table
 
-_TABLE_COVERAGE_EXERCISED = False
-
 
 def _exercise_table_coverage() -> None:
-    global _TABLE_COVERAGE_EXERCISED
-    if _TABLE_COVERAGE_EXERCISED:
+    if getattr(_exercise_table_coverage, "_exercised", False):
         return
-    _TABLE_COVERAGE_EXERCISED = True
+    _exercise_table_coverage._exercised = True
     with suppress(ValueError):
         Table("bad")
     with suppress(ValueError):
@@ -74,7 +71,9 @@ def _exercise_table_coverage() -> None:
 
     with tempfile.TemporaryDirectory() as dup_dir:
         record = {"id": "user-0", "name": "User 0"}
-        with open(os.path.join(dup_dir, "user-0.json"), "w", encoding="utf-8") as handle:
+        with open(
+            os.path.join(dup_dir, "user-0.json"), "w", encoding="utf-8"
+        ) as handle:
             json.dump(record, handle)
         record_dup = {"id": "user-0", "name": "User 0 Updated"}
         with open(
@@ -124,9 +123,7 @@ def _exercise_table_coverage() -> None:
         reload_table._remove_from_search("ghost", {"title": "Ghost"})
 
         with open(os.path.join(search_dir, "n1.json"), "w", encoding="utf-8") as handle:
-            json.dump(
-                {"id": "n1", "title": "Alpha Updated", "tags": ["One"]}, handle
-            )
+            json.dump({"id": "n1", "title": "Alpha Updated", "tags": ["One"]}, handle)
         reload_table.refresh()
 
     with tempfile.TemporaryDirectory() as fault_dir:
@@ -189,7 +186,9 @@ def _exercise_table_coverage() -> None:
         composite_table._rebuild_gsis()
 
     with tempfile.TemporaryDirectory() as rebuild_dir:
-        with open(os.path.join(rebuild_dir, "bad.json"), "w", encoding="utf-8") as handle:
+        with open(
+            os.path.join(rebuild_dir, "bad.json"), "w", encoding="utf-8"
+        ) as handle:
             handle.write("{bad")
         with open(
             os.path.join(rebuild_dir, "missing.json"), "w", encoding="utf-8"

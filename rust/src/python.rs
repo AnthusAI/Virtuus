@@ -730,7 +730,7 @@ impl PyTable {
             Some(record) => record,
             None => return Ok(py.None()),
         };
-        let result = resolve_association_py(py, name.as_str(), definition, record, tables)?;
+        let result = resolve_association_py(py, definition, record, tables)?;
         Ok(result)
     }
 }
@@ -1272,7 +1272,6 @@ fn build_sort_condition(value: &Value) -> Option<SortCondition> {
 
 fn resolve_association_py(
     py: Python<'_>,
-    assoc_name: &str,
     definition: Association,
     record: Value,
     tables: &PyAny,
@@ -1386,7 +1385,7 @@ fn apply_includes(
             Some(def) => def.clone(),
             None => continue,
         };
-        let related = resolve_association_value(&tables, table_name, assoc_name, &pk, definition);
+        let related = resolve_association_value(&tables, table_name, &pk, definition);
         let target_table = association_defs
             .get(assoc_name)
             .map(|d| match d {
@@ -1428,7 +1427,6 @@ fn apply_includes(
 fn resolve_association_value(
     tables: &HashMap<String, TableRef>,
     table_name: &str,
-    assoc_name: &str,
     pk: &str,
     definition: Association,
 ) -> Value {
