@@ -1,0 +1,18 @@
+{
+  "id": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "title": "Release automation on protected main",
+  "description": "Track repository ruleset and workflow updates needed so semantic-release can run while main stays PR-only for developers.",
+  "type": "epic",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-03-03T19:05:30.688711Z",
+  "updated_at": "2026-03-03T19:05:30.688711Z",
+  "closed_at": null,
+  "custom": {}
+}

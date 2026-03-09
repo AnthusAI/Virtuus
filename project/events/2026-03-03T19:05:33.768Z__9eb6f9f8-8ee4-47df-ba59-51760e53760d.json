@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "9eb6f9f8-8ee4-47df-ba59-51760e53760d",
+  "issue_id": "virt-7ac21094-7824-4e95-ba76-7c065b6be0de",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-03T19:05:33.768Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Update ruleset bypass and release workflow for semantic-release",
+    "description": "Add an approved automation bypass path in the repository ruleset and align .github/workflows/release.yml so release commits can succeed with main protected by PR-only rules.",
+    "issue_type": "task",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+    "labels": []
+  }
+}

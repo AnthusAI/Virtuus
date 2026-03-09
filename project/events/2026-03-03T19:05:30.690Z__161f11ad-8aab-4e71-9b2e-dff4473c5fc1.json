@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "161f11ad-8aab-4e71-9b2e-dff4473c5fc1",
+  "issue_id": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-03T19:05:30.690Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Release automation on protected main",
+    "description": "Track repository ruleset and workflow updates needed so semantic-release can run while main stays PR-only for developers.",
+    "issue_type": "epic",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": null,
+    "labels": []
+  }
+}

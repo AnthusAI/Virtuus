@@ -1,0 +1,31 @@
+{
+  "id": "virt-7ac21094-7824-4e95-ba76-7c065b6be0de",
+  "title": "Update ruleset bypass and release workflow for semantic-release",
+  "description": "Add an approved automation bypass path in the repository ruleset and align .github/workflows/release.yml so release commits can succeed with main protected by PR-only rules.",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "4bf0cc1c-0f5c-42b4-bc2f-15ddae92183e",
+      "author": "derek.norrbom",
+      "text": "Attempted ruleset bypass updates via GitHub API. Integration actor id 15368 (GitHub Actions app) was rejected by GitHub for this repository ruleset; User actor github-actions[bot] was also rejected as invalid actor type. Proceeding to workflow alignment changes and documenting required bypass alternatives.",
+      "created_at": "2026-03-03T19:05:37.200266Z"
+    },
+    {
+      "id": "1fe6dc6c-e33a-485e-bcc1-2c764b365a98",
+      "author": "derek.norrbom",
+      "text": "Updated .github/workflows/release.yml to explicitly use github.token in checkout for release push credentials. Ruleset bypass remains unconfigured: GitHub API rejected both Integration actor 15368 (GitHub Actions) and User actor github-actions[bot] for this repository ruleset. Next step is selecting a valid bypass actor (typically a repo-installed GitHub App integration) and applying it.",
+      "created_at": "2026-03-03T19:05:59.042429Z"
+    }
+  ],
+  "created_at": "2026-03-03T19:05:33.768161Z",
+  "updated_at": "2026-03-03T19:05:59.042429Z",
+  "closed_at": null,
+  "custom": {}
+}

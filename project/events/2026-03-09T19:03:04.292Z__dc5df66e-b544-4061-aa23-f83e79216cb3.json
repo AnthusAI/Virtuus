@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "dc5df66e-b544-4061-aa23-f83e79216cb3",
+  "issue_id": "virt-c89178eb-f5ef-4844-910d-2e2e07182d3d",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-09T19:03:04.292Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Scope anthusbot auth to release/requirements push steps",
+    "description": "",
+    "issue_type": "task",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+    "labels": []
+  }
+}
