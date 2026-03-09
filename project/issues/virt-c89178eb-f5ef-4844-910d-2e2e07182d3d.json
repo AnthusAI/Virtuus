@@ -1,0 +1,31 @@
+{
+  "id": "virt-c89178eb-f5ef-4844-910d-2e2e07182d3d",
+  "title": "Scope anthusbot auth to release/requirements push steps",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "7ba1205d-88ee-4379-8f09-646b2decd750",
+      "author": "derek.norrbom",
+      "text": "Investigating current workflows. requirements-sync commits as github-actions[bot], and release.yml semantic-release uses GITHUB_TOKEN, both blocked by protected main. Implementing scoped anthusbot token usage only for write steps.",
+      "created_at": "2026-03-09T19:03:07.800205Z"
+    },
+    {
+      "id": "d219f425-f789-4d3f-862d-0485bca5ef5f",
+      "author": "derek.norrbom",
+      "text": "Patched workflows to scope bot auth to write paths only: requirements-sync now uses anthusbot identity/token only in commit+push step; release.yml now runs semantic-release with anthusbot token and bot git identity, while checkout/build steps remain normal GitHub Actions context. YAML validated locally.",
+      "created_at": "2026-03-09T19:03:51.855306Z"
+    }
+  ],
+  "created_at": "2026-03-09T19:03:04.291301Z",
+  "updated_at": "2026-03-09T19:03:51.855306Z",
+  "closed_at": null,
+  "custom": {}
+}

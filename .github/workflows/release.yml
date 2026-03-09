@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -43,16 +44,28 @@ jobs:
       - name: Install semantic-release
         run: pip install python-semantic-release
 
+      - name: Configure bot git identity and auth for release push
+        env:
+          ANTHUSBOT_GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
+        run: |
+          if [ -z "${ANTHUSBOT_GH_TOKEN}" ]; then
+            echo "Missing secret: ANTHUSBOT_GH_TOKEN" >&2
+            exit 1
+          fi
+          git config user.name "anthusbot"
+          git config user.email "anthusbot@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${ANTHUSBOT_GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
       - name: Semantic Release (version)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
         run: semantic-release version
 
       - name: Semantic Release (publish)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
         run: semantic-release publish
 
       - name: Detect release tag
