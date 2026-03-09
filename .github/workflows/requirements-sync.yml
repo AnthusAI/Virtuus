@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,12 +35,19 @@ jobs:
           pip-compile --strip-extras --extra dev -o python/requirements-dev.txt python/pyproject.toml
 
       - name: Commit and push if changed
+        env:
+          ANTHUSBOT_GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
         run: |
           if ! git diff --quiet -- python/requirements.txt python/requirements-dev.txt; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
+            if [ -z "${ANTHUSBOT_GH_TOKEN}" ]; then
+              echo "Missing secret: ANTHUSBOT_GH_TOKEN" >&2
+              exit 1
+            fi
+            git config user.name "anthusbot"
+            git config user.email "anthusbot@users.noreply.github.com"
+            git remote set-url origin "https://x-access-token:${ANTHUSBOT_GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
             git add python/requirements.txt python/requirements-dev.txt
             git commit -m "chore: update requirements"
             git pull --rebase
-            git push
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
