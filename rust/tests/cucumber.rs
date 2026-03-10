@@ -220,7 +220,21 @@ async fn given_version_file(world: &mut VirtuusWorld) {
 #[then("the library version should match the contents of that file")]
 async fn then_version_matches_file(world: &mut VirtuusWorld) {
     let path = world.version_file.as_ref().unwrap();
-    let expected = std::fs::read_to_string(path).unwrap().trim().to_string();
+    let expected = std::fs::read_to_string(path)
+        .unwrap()
+        .split(|c: char| !(c.is_ascii_digit() || c == '.'))
+        .find(|token| {
+            !token.is_empty()
+                && token.chars().all(|c| c.is_ascii_digit() || c == '.')
+                && token.matches('.').count() == 2
+        })
+        .unwrap_or("")
+        .to_string();
+    assert!(
+        !expected.is_empty(),
+        "No semantic version found in VERSION file {}",
+        path.display()
+    );
     let actual = virtuus::VERSION;
     assert_eq!(
         actual, expected,
