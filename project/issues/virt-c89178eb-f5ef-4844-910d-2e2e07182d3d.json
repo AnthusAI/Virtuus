@@ -82,10 +82,16 @@
       "author": "derek.norrbom",
       "text": "CI coverage regression observed: python/src/virtuus/_python/__init__.py line with explicit ValueError branch is not exercised, dropping module coverage to 95% and total to 99%. Applying minimal code-only fix to remove uncovered branch while preserving semver extraction behavior.",
       "created_at": "2026-03-10T18:25:17.096450Z"
+    },
+    {
+      "id": "1a9aebc4-206c-4fbb-b7aa-d3e2f128632b",
+      "author": "derek.norrbom",
+      "text": "Implementing CI hardening: configure semantic-release build_command to regenerate rust/Cargo.lock during versioning, and ensure Rust toolchain is available before semantic-release runs. Goal is to eliminate recurring local Cargo.lock drift after release bumps.",
+      "created_at": "2026-03-10T20:25:35.770179Z"
     }
   ],
   "created_at": "2026-03-09T19:03:04.291301Z",
-  "updated_at": "2026-03-10T18:25:17.096450Z",
+  "updated_at": "2026-03-10T20:25:35.770179Z",
   "closed_at": null,
   "custom": {}
 }

@@ -30,6 +30,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Set up Rust for semantic-release build command
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
+        with:
+          toolchain: stable
+
       - name: Ensure branch checkout for semantic-release
         env:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -100,13 +105,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           packages-dir: python/dist
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
-
-      # Publish Rust crate (OIDC trusted publisher or token fallback)
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7
-        with:
-          toolchain: stable
         if: ${{ steps.release_tag.outputs.released == 'true' }}
 
       - name: Publish to crates.io
