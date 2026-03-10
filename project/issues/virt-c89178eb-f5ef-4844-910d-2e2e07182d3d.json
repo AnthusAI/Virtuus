@@ -82,10 +82,34 @@
       "author": "derek.norrbom",
       "text": "CI coverage regression observed: python/src/virtuus/_python/__init__.py line with explicit ValueError branch is not exercised, dropping module coverage to 95% and total to 99%. Applying minimal code-only fix to remove uncovered branch while preserving semver extraction behavior.",
       "created_at": "2026-03-10T18:25:17.096450Z"
+    },
+    {
+      "id": "1a9aebc4-206c-4fbb-b7aa-d3e2f128632b",
+      "author": "derek.norrbom",
+      "text": "Implementing CI hardening: configure semantic-release build_command to regenerate rust/Cargo.lock during versioning, and ensure Rust toolchain is available before semantic-release runs. Goal is to eliminate recurring local Cargo.lock drift after release bumps.",
+      "created_at": "2026-03-10T20:25:35.770179Z"
+    },
+    {
+      "id": "e5bb683f-bfbc-45fb-a3e2-1d130f20ba38",
+      "author": "derek.norrbom",
+      "text": "Analyzed duplicate Release runs 22918805264 (success) and 22919016292 (failure). Root cause: second run triggered by release commit itself; semantic-release version reported \"No release will be made\", but tag detection still marked released=true because HEAD already had v0.4.0 tag, causing duplicate publish attempts and crates.io \"already exists\" failure. Applying workflow guard so publish steps run only when this run created a new release.",
+      "created_at": "2026-03-10T20:39:07.080929Z"
+    },
+    {
+      "id": "3cf78e83-c4d2-4d2d-b199-85c47b5f8af5",
+      "author": "derek.norrbom",
+      "text": "Verified duplicate release behavior from Actions logs: first release run (head 475e230) succeeded, second run (head e3b4e99) was triggered by anthusbot and attempted duplicate publish. Applying release.yml hardening to skip bot-triggered workflow_run and gate publish steps on whether semantic-release version creates a new tag in this run.",
+      "created_at": "2026-03-10T20:40:32.871435Z"
+    },
+    {
+      "id": "2a5fca51-fd22-4e02-aeaf-dc416e6f791f",
+      "author": "derek.norrbom",
+      "text": "Applied release workflow hardening: (1) skip release job when workflow_run actor is anthusbot, (2) record tags before/after semantic-release version and set semrel_version.outputs.released only when a new tag appears, and (3) gate semantic-release publish + PyPI + crates publish on that output. This prevents duplicate publish attempts on bot-triggered reruns.",
+      "created_at": "2026-03-10T20:40:55.205276Z"
     }
   ],
   "created_at": "2026-03-09T19:03:04.291301Z",
-  "updated_at": "2026-03-10T18:25:17.096450Z",
+  "updated_at": "2026-03-10T20:40:55.205276Z",
   "closed_at": null,
   "custom": {}
 }
