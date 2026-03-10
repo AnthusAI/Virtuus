@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 from behave import given, then  # noqa: F401
@@ -41,10 +42,11 @@ def step_then_version_matches_file(context):
     import virtuus
 
     with open(context.version_file) as f:
-        expected = f.read().strip()
+        expected = re.search(r"\b\d+\.\d+\.\d+\b", f.read())
+    assert expected is not None, f"No semantic version found in {context.version_file}"
     assert (
-        virtuus.__version__ == expected
-    ), f"Library version {virtuus.__version__!r} != VERSION file {expected!r}"
+        virtuus.__version__ == expected.group(0)
+    ), f"Library version {virtuus.__version__!r} != VERSION file {expected.group(0)!r}"
 
 
 @given("the Python virtuus library is available")
