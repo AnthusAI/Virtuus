@@ -14,6 +14,7 @@ version_pattern = "(?P<current_version>\\d+\\.\\d+\\.\\d+)"
 upload_to_repository = false
 upload_to_release = true
 build_command = "cargo generate-lockfile --manifest-path rust/Cargo.toml"
+assets = ["rust/Cargo.lock"]
 
 [tool.semantic_release.commit_parser_options]
 patch_types = ["fix", "perf", "docs", "chore"]

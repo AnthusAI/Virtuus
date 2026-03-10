@@ -106,10 +106,46 @@
       "author": "derek.norrbom",
       "text": "Applied release workflow hardening: (1) skip release job when workflow_run actor is anthusbot, (2) record tags before/after semantic-release version and set semrel_version.outputs.released only when a new tag appears, and (3) gate semantic-release publish + PyPI + crates publish on that output. This prevents duplicate publish attempts on bot-triggered reruns.",
       "created_at": "2026-03-10T20:40:55.205276Z"
+    },
+    {
+      "id": "4f74887a-27a5-43cc-8809-e610fa5b2a21",
+      "author": "derek.norrbom",
+      "text": "Verified persistent Cargo.lock churn root cause: rust/Cargo.toml on main is 0.4.1 but committed rust/Cargo.lock is still 0.4.0. Any cargo metadata invocation rewrites lock package version to 0.4.1, causing recurring dirty tree/pull friction. Recommended durable fix: PR that commits rust/Cargo.lock synchronized to 0.4.1.",
+      "created_at": "2026-03-10T22:00:25.465436Z"
+    },
+    {
+      "id": "8736e215-5d95-47d1-af12-0fc6740d3e12",
+      "author": "derek.norrbom",
+      "text": "Diagnosed additional post-release failure: separate workflow .github/workflows/publish-pypi.yml auto-triggers on release:published and attempts a second PyPI publish. Its OIDC claims map to publish-pypi.yml@refs/tags/*, causing invalid-publisher under current trusted publisher settings and duplicate publish intent. Applying fix: make publish-pypi workflow manual-only (workflow_dispatch) to keep a single automatic publishing path in release.yml.",
+      "created_at": "2026-03-10T21:55:06.461873Z"
+    },
+    {
+      "id": "0d686afe-1f5c-4dfd-b6ea-17ac85d59e05",
+      "author": "derek.norrbom",
+      "text": "Implemented durable lockfile fix: added  under [tool.semantic_release] in pyproject.toml so semantic-release includes regenerated Cargo.lock in the release commit. This closes the gap where build_command updated lockfile in CI workspace but the release commit omitted it.",
+      "created_at": "2026-03-10T22:06:49.338585Z"
+    },
+    {
+      "id": "35342a2d-4c82-4fd7-a665-ac7127485d05",
+      "author": "derek.norrbom",
+      "text": "Implemented durable lockfile fix: added `assets = [\"rust/Cargo.lock\"]` under [tool.semantic_release] in pyproject.toml so semantic-release includes regenerated Cargo.lock in the release commit. This closes the gap where build_command updated lockfile in CI workspace but the release commit omitted it.",
+      "created_at": "2026-03-10T22:06:53.741578Z"
+    },
+    {
+      "id": "8da2e937-1f5c-4cf5-8a99-c361a9dcbd24",
+      "author": "derek.norrbom",
+      "text": "Running local semantic-release simulation in a temp clone to verify `assets = [\"rust/Cargo.lock\"]` causes release commit to include Cargo.lock. No changes will be made to working branch.",
+      "created_at": "2026-03-10T22:08:38.633939Z"
+    },
+    {
+      "id": "f3cc6b77-3719-4195-a347-9464ffa94fb8",
+      "author": "derek.norrbom",
+      "text": "Validated in isolated temp clone on main with throwaway `fix:` commit and updated semantic-release config (`assets = [\"rust/Cargo.lock\"]`). Local `semantic-release version --no-push --no-vcs-release` produced release commit `0.4.2` containing VERSION, python/pyproject.toml, rust/Cargo.toml, and rust/Cargo.lock; Cargo.lock package version updated to 0.4.2. This confirms the fix works as intended.",
+      "created_at": "2026-03-10T22:10:06.833560Z"
     }
   ],
   "created_at": "2026-03-09T19:03:04.291301Z",
-  "updated_at": "2026-03-10T20:40:55.205276Z",
+  "updated_at": "2026-03-10T22:10:06.833560Z",
   "closed_at": null,
   "custom": {}
 }
