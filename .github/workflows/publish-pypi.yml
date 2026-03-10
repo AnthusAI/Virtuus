@@ -2,8 +2,6 @@ name: Publish PyPI (trusted publisher)
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   build-and-publish:

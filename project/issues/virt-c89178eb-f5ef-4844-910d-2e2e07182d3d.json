@@ -106,10 +106,16 @@
       "author": "derek.norrbom",
       "text": "Applied release workflow hardening: (1) skip release job when workflow_run actor is anthusbot, (2) record tags before/after semantic-release version and set semrel_version.outputs.released only when a new tag appears, and (3) gate semantic-release publish + PyPI + crates publish on that output. This prevents duplicate publish attempts on bot-triggered reruns.",
       "created_at": "2026-03-10T20:40:55.205276Z"
+    },
+    {
+      "id": "8736e215-5d95-47d1-af12-0fc6740d3e12",
+      "author": "derek.norrbom",
+      "text": "Diagnosed additional post-release failure: separate workflow .github/workflows/publish-pypi.yml auto-triggers on release:published and attempts a second PyPI publish. Its OIDC claims map to publish-pypi.yml@refs/tags/*, causing invalid-publisher under current trusted publisher settings and duplicate publish intent. Applying fix: make publish-pypi workflow manual-only (workflow_dispatch) to keep a single automatic publishing path in release.yml.",
+      "created_at": "2026-03-10T21:55:06.461873Z"
     }
   ],
   "created_at": "2026-03-09T19:03:04.291301Z",
-  "updated_at": "2026-03-10T20:40:55.205276Z",
+  "updated_at": "2026-03-10T21:55:06.461873Z",
   "closed_at": null,
   "custom": {}
 }
