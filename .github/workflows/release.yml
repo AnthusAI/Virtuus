@@ -18,7 +18,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.actor.login != 'anthusbot' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,54 +62,64 @@ jobs:
           git remote set-url origin "https://x-access-token:${ANTHUSBOT_GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Semantic Release (version)
+        id: semrel_version
         env:
           GITHUB_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
           GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
-        run: semantic-release version
+        run: |
+          set -euo pipefail
+
+          before_tags="$(git tag | sort || true)"
+          semantic-release version
+          after_tags="$(git tag | sort || true)"
+
+          new_tag="$(
+            comm -13 \
+              <(printf '%s\n' "$before_tags" | sed '/^$/d') \
+              <(printf '%s\n' "$after_tags" | sed '/^$/d') \
+            | tail -n1
+          )"
+
+          if [ -n "$new_tag" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Semantic Release (publish)
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
           GH_TOKEN: ${{ secrets.ANTHUSBOT_GH_TOKEN }}
         run: semantic-release publish
-
-      - name: Detect release tag
-        id: release_tag
-        run: |
-          tag="$(git tag --points-at HEAD | head -n1)"
-          if [ -z "$tag" ]; then
-            echo "released=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "released=true" >> "$GITHUB_OUTPUT"
-            echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          fi
 
       # Publish Python package via trusted publisher (PyPI)
       - name: Set up Python for build
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
 
       - name: Install build backend
         run: python -m pip install --upgrade pip build
         working-directory: python
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
 
       - name: Build wheel and sdist
         run: python -m build
         working-directory: python
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
 
       - name: Publish to PyPI (trusted publisher)
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           packages-dir: python/dist
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
 
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           cargo publish --manifest-path rust/Cargo.toml --allow-dirty
-        if: ${{ steps.release_tag.outputs.released == 'true' }}
+        if: ${{ steps.semrel_version.outputs.released == 'true' }}
