@@ -22,10 +22,34 @@
       "author": "derek.norrbom",
       "text": "Patched workflows to scope bot auth to write paths only: requirements-sync now uses anthusbot identity/token only in commit+push step; release.yml now runs semantic-release with anthusbot token and bot git identity, while checkout/build steps remain normal GitHub Actions context. YAML validated locally.",
       "created_at": "2026-03-09T19:03:51.855306Z"
+    },
+    {
+      "id": "446e3701-b3c9-42f3-b464-d2cd2b02e780",
+      "author": "derek.norrbom",
+      "text": "Investigated CI failure after release automation change (run 22876496241). Root cause is version skew introduced by semantic-release commit 299fa2c: rust/Cargo.toml and python/pyproject.toml were bumped to 0.3.0, but root VERSION remained 0.2.2. Python smoke path reads __version__ from VERSION file, so scenario 'Python and Rust report the same version' fails with Python 0.2.2 vs Rust 0.3.0.",
+      "created_at": "2026-03-09T22:04:50.486111Z"
+    },
+    {
+      "id": "3acc2229-29a7-4606-9399-4696d05ed23b",
+      "author": "derek.norrbom",
+      "text": "Implementing best-practice fix: update semantic-release configuration to use supported version file tracking key so root VERSION is updated on every release, and align current VERSION value with released 0.3.0 to restore Python/Rust version parity smoke test.",
+      "created_at": "2026-03-10T16:54:18.648567Z"
+    },
+    {
+      "id": "902098e0-f456-43e2-944f-9c74642267f8",
+      "author": "derek.norrbom",
+      "text": "Implemented fix in branch: switched [tool.semantic_release] from version_files to version_variables with plain-file format (VERSION:*:nf), and pinned CI install to python-semantic-release~=10.0 to reduce breaking config drift. Validated pyproject parses and semantic-release CLI runs without config errors.",
+      "created_at": "2026-03-10T16:55:22.197587Z"
+    },
+    {
+      "id": "7528bffd-db56-4f67-9642-4f0802152042",
+      "author": "derek.norrbom",
+      "text": "Prepared operator steps for one-time VERSION repair via PR-only flow (no direct main push). Verified current remote skew persists on origin/main: VERSION=0.2.2 while python/rust manifest versions are 0.3.0.",
+      "created_at": "2026-03-10T16:58:51.236905Z"
     }
   ],
   "created_at": "2026-03-09T19:03:04.291301Z",
-  "updated_at": "2026-03-09T19:03:51.855306Z",
+  "updated_at": "2026-03-10T16:58:51.236905Z",
   "closed_at": null,
   "custom": {}
 }
