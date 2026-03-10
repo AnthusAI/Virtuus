@@ -18,10 +18,7 @@ def _read_version() -> str:
     )
     with open(_version_file) as _f:
         _raw = _f.read()
-    _match = _re.search(r"\b\d+\.\d+\.\d+\b", _raw)
-    if not _match:
-        raise ValueError(f"Could not parse semantic version from {_version_file}")
-    return _match.group(0)
+    return _re.search(r"\b\d+\.\d+\.\d+\b", _raw).group(0)
 
 
 __version__: str = _read_version()
