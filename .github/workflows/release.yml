@@ -42,7 +42,7 @@ jobs:
           git checkout -B main "$HEAD_SHA"
 
       - name: Install semantic-release
-        run: pip install python-semantic-release
+        run: pip install "python-semantic-release~=10.0"
 
       - name: Configure bot git identity and auth for release push
         env:
