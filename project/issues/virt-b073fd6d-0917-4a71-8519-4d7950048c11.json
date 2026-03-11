@@ -1,0 +1,39 @@
+{
+  "id": "virt-b073fd6d-0917-4a71-8519-4d7950048c11",
+  "title": "[Dependabot] GHSA-mc8h-8q98-g5hr in remove_dir_all",
+  "description": "## Race Condition Enabling Link Following and Time-of-check Time-of-use (TOCTOU) Race Condition in remove_dir_all\n\n**Provider:** GitHub Dependabot\n**Repository:** `AnthusAI/Virtuus`\n**Alert Number:** 1\n**Severity:** low\n**State:** open\n**Package:** `remove_dir_all`\n**Ecosystem:** `rust`\n**Manifest:** `rust/Cargo.lock`\n\n### Advisory\nThe `remove_dir_all` crate is a Rust library that offers additional features over the Rust standard library `fs::remove_dir_all` function. It suffers the same class of failure as the code it was layering over: TOCTOU race conditions, with the ability to cause arbitrary paths to be deleted by substituting a symlink for a path after the type of the path was checked.\n\nThanks to the Rust security team for identifying the problem and alerting us to it.\n\n### Reference\n- https://github.com/AnthusAI/Virtuus/security/dependabot/1",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 3,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ef0163d1-31eb-45c0-9ada-af16386e2bd8",
+  "labels": [
+    "security",
+    "github",
+    "dependabot"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "68e53cd3-3868-4558-a2b5-5a6aac788441",
+      "author": "derek.norrbom",
+      "text": "Remediated GHSA-mc8h-8q98-g5hr by removing tempdir dev-dependency, which removed remove_dir_all from rust/Cargo.lock. Verification: user-ran make check on 2026-03-11, all checks passed (including cargo clippy, cargo test --lib, tarpaulin 100%, parity OK).",
+      "created_at": "2026-03-11T20:04:13.417662Z"
+    }
+  ],
+  "created_at": "2026-03-11T19:54:45.117022Z",
+  "updated_at": "2026-03-11T20:04:13.863626Z",
+  "closed_at": "2026-03-11T20:04:13.863626Z",
+  "custom": {
+    "github_provider": "dependabot",
+    "github_alert_number": 1,
+    "github_repository": "AnthusAI/Virtuus",
+    "github_manifest_path": "rust/Cargo.lock",
+    "github_ecosystem": "rust",
+    "github_package": "remove_dir_all",
+    "github_severity": "low",
+    "github_alert_state": "open",
+    "github_html_url": "https://github.com/AnthusAI/Virtuus/security/dependabot/1"
+  }
+}
