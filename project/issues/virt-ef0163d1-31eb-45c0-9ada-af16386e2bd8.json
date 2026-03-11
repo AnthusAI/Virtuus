@@ -1,0 +1,39 @@
+{
+  "id": "virt-ef0163d1-31eb-45c0-9ada-af16386e2bd8",
+  "title": "AnthusAI/Virtuus:rust/Cargo.lock",
+  "description": "Dependabot alerts for `rust/Cargo.lock`.",
+  "type": "task",
+  "status": "closed",
+  "priority": 3,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-ad4984d8-cad4-4fd5-9bc3-2afd84f5ba52",
+  "labels": [
+    "security",
+    "github",
+    "dependabot"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "b56b059f-2c2b-4bde-b43e-47ef097988b3",
+      "author": "derek.norrbom",
+      "text": "Triage result: 2 low-severity alerts in rust/Cargo.lock. Planned remediation: (1) bump pyo3/pythonize to 0.24.x to address GHSA-pph8-gcv7-4qj5, (2) remove tempdir dev-dependency to eliminate remove_dir_all from the lockfile for GHSA-mc8h-8q98-g5hr. Will verify with cargo tests and make check before closure.",
+      "created_at": "2026-03-11T20:01:42.165492Z"
+    },
+    {
+      "id": "d4f85caa-d8ee-4e7a-8b4c-fe07ffb0bff0",
+      "author": "derek.norrbom",
+      "text": "Completed Dependabot remediation for rust/Cargo.lock. Fixed pyo3 advisory via dependency upgrade and removed remove_dir_all path by dropping tempdir. Verification: make check passed on 2026-03-11 (100% Rust coverage; parity OK).",
+      "created_at": "2026-03-11T20:04:14.312770Z"
+    }
+  ],
+  "created_at": "2026-03-11T19:54:45.116171Z",
+  "updated_at": "2026-03-11T20:04:14.781860Z",
+  "closed_at": "2026-03-11T20:04:14.781860Z",
+  "custom": {
+    "github_provider": "dependabot",
+    "github_repository": "AnthusAI/Virtuus",
+    "github_manifest_path": "rust/Cargo.lock"
+  }
+}
