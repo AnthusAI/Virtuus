@@ -56,3 +56,4 @@ examples/sakila/.cache/
 
 # Snyk
 .tmp_snyk*
+project/.cache/
