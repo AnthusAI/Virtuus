@@ -38,11 +38,16 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
 
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip poetry
+
       - name: Install Python dev dependencies
-        run: pip install -e "python/[dev]"
+        run: |
+          cd python
+          poetry install --with dev
 
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin
 
       - name: make check
-        run: make check
+        run: cd python && poetry run make -C .. check

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "event_id": "8ac5d2a5-eb8b-400e-b02f-585f78e5d23d",
+  "issue_id": "virt-f349ac54-9f38-4530-9294-7b4759759827",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-13T16:24:10.449Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Migrate Python dependency management to Poetry for Snyk OSS scanning",
+    "description": "Switch python/ from hatch+pypi requirements duplication to Poetry (pyproject + poetry.lock) as single source of truth for dependency scanning. Remove requirements files/workflow, update CI/release/docs, verify make check and Snyk CLI detection.",
+    "issue_type": "task",
+    "status": "open",
+    "priority": 2,
+    "assignee": null,
+    "parent": "virt-56437e9a-fdfc-48d2-8e1e-6cac629443a5",
+    "labels": [
+      "security",
+      "snyk",
+      "dependencies"
+    ]
+  }
+}
