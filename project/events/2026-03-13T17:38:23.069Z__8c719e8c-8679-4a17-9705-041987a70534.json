@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "8c719e8c-8679-4a17-9705-041987a70534",
+  "issue_id": "virt-e4d899a1-4ae3-4f18-af3b-43e3a3343cfb",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-13T17:38:23.069Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Upgrade black to 26.3.1 for CVE-2026-32274",
+    "description": "",
+    "issue_type": "bug",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+    "labels": []
+  }
+}
