@@ -1,0 +1,37 @@
+{
+  "id": "virt-e4d899a1-4ae3-4f18-af3b-43e3a3343cfb",
+  "title": "Upgrade black to 26.3.1 for CVE-2026-32274",
+  "description": "",
+  "type": "bug",
+  "status": "in_progress",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-dcffabf4-0e81-4085-95aa-c7fa2a6ebd97",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "f06aed31-1230-4aaf-bc5c-b458e6264fff",
+      "author": "derek.norrbom",
+      "text": "Starting remediation for SNYK-PYTHON-BLACK-15518063: bump black from 25.11.0 to >=26.3.1, then run Python lint checks and make check.",
+      "created_at": "2026-03-13T17:38:26.688655Z"
+    },
+    {
+      "id": "2abc9873-d887-46de-b7ff-56cef82f2b1c",
+      "author": "derek.norrbom",
+      "text": "Decision update: stakeholder approved dropping Python 3.9 support to allow using black 26.3.1 (fixed for CVE-2026-32274). Updating requires-python to >=3.10 and revalidating.",
+      "created_at": "2026-03-13T17:39:24.793438Z"
+    },
+    {
+      "id": "2ca0cc49-f97f-4060-b0ef-174ba07c2fa7",
+      "author": "derek.norrbom",
+      "text": "Implemented remediation: updated python requires-python to >=3.10,<4.0, bumped black to >=26.3.1, regenerated python/poetry.lock to black 26.3.1, and removed Python 3.9 from CI matrix. Validation passed: black --check, ruff check, and full make check (Python/Rust lint, specs, 100% coverage, parity).",
+      "created_at": "2026-03-13T17:41:56.348228Z"
+    }
+  ],
+  "created_at": "2026-03-13T17:38:23.069038Z",
+  "updated_at": "2026-03-13T17:41:56.348228Z",
+  "closed_at": null,
+  "custom": {}
+}
