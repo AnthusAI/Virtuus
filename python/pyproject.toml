@@ -1,24 +1,22 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "virtuus"
 version = "0.4.3"
 description = "File-backed in-memory indexed table engine"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<4.0"
 dependencies = ["pyyaml>=6.0"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/virtuus"]
+[tool.poetry]
+packages = [{ include = "virtuus", from = "src" }]
 
-[project.optional-dependencies]
-dev = [
-    "behave>=1.2.6",
-    "coverage[toml]>=7.0",
-    "black>=24.0",
-    "ruff>=0.3",
-]
+[tool.poetry.group.dev.dependencies]
+behave = ">=1.2.6"
+coverage = { version = ">=7.0", extras = ["toml"] }
+black = ">=24.0"
+ruff = ">=0.3"
 
 [tool.black]
 line-length = 88

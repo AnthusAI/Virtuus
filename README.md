@@ -367,6 +367,9 @@ When to pick which:
 ## Development
 
 ```bash
+python -m pip install --upgrade pip poetry
+cd python && poetry install --with dev
+cd ..
 make check              # lint + specs + coverage + parity — the one command
 make coverage-python    # behave + coverage report --fail-under=100
 make coverage-rust      # cargo tarpaulin --fail-under 100
