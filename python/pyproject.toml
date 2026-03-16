@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "virtuus"
 version = "0.4.3"
 description = "File-backed in-memory indexed table engine"
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = ["pyyaml>=6.0"]
 
 [tool.poetry]
@@ -15,7 +15,7 @@ packages = [{ include = "virtuus", from = "src" }]
 [tool.poetry.group.dev.dependencies]
 behave = ">=1.2.6"
 coverage = { version = ">=7.0", extras = ["toml"] }
-black = ">=24.0"
+black = ">=26.3.1"
 ruff = ">=0.3"
 
 [tool.black]
