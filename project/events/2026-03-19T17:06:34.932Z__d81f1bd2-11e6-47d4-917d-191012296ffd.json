@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "event_id": "d81f1bd2-11e6-47d4-917d-191012296ffd",
+  "issue_id": "virt-f35b7d3a-9c3e-43d3-a937-e2501df8bb24",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-19T17:06:34.932Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "Refactor Virtuus release workflow to consume shared reusable semantic-release workflow in platform-ci. Keep project-specific publish steps in wrapper workflow. Validate config consistency with protected main branch rules and anthusbot auth path.",
+    "issue_type": "task",
+    "labels": [
+      "ci",
+      "release",
+      "workflows"
+    ],
+    "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+    "priority": 1,
+    "status": "open",
+    "title": "Adopt platform-ci reusable semantic release workflow"
+  }
+}

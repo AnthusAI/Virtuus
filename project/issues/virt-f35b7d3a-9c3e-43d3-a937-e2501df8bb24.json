@@ -1,0 +1,35 @@
+{
+  "id": "virt-f35b7d3a-9c3e-43d3-a937-e2501df8bb24",
+  "title": "Adopt platform-ci reusable semantic release workflow",
+  "description": "Refactor Virtuus release workflow to consume shared reusable semantic-release workflow in platform-ci. Keep project-specific publish steps in wrapper workflow. Validate config consistency with protected main branch rules and anthusbot auth path.",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [
+    "ci",
+    "release",
+    "workflows"
+  ],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "9b9fde6d-b6a1-497e-8d97-6715a0c427c0",
+      "author": "derek",
+      "text": "Starting work to standardize semantic-release with platform-ci reusable workflow shared by Virtuus and Tactus. Steps: define reusable contract in platform-ci, migrate wrappers in both repos, validate YAML and release-path parity.",
+      "created_at": "2026-03-19T17:06:40.462502790Z"
+    },
+    {
+      "id": "2c9e419e-be37-4950-a8f8-0870975cd322",
+      "author": "derek",
+      "text": "Implemented Virtuus migration to shared reusable semantic-release workflow in platform-ci. release job now calls reusable workflow with workflow_run head SHA + main branch, and project-specific publish steps moved to separate publish-artifacts job gated by needs.release.outputs.released. Validated workflow YAML parse.",
+      "created_at": "2026-03-19T17:08:45.018683904Z"
+    }
+  ],
+  "created_at": "2026-03-19T17:06:34.932727391Z",
+  "updated_at": "2026-03-19T17:08:45.018683904Z",
+  "closed_at": null,
+  "custom": {}
+}
