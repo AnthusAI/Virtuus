@@ -1,0 +1,31 @@
+{
+  "id": "virt-9a9168d3-e3e0-43b3-ac4f-6b6b7212daf4",
+  "title": "Update branch ruleset required checks after dropping Python 3.9",
+  "description": "",
+  "type": "bug",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "248a872e-549f-40ed-b75e-678e97cab8ba",
+      "author": "derek.norrbom",
+      "text": "Investigating stale required status check for python 3.9 on PR after CI matrix was updated to 3.10-3.12.",
+      "created_at": "2026-03-13T18:34:42.071193Z"
+    },
+    {
+      "id": "db97066e-3636-4ff5-89dc-32a525f1b9cd",
+      "author": "derek.norrbom",
+      "text": "Root cause confirmed in ruleset main-branch-protection (ID 13256471): required status checks still included check (py 3.9). Updated ruleset via GitHub API to require only check (py 3.10), check (py 3.11), check (py 3.12).",
+      "created_at": "2026-03-13T18:35:06.043021Z"
+    }
+  ],
+  "created_at": "2026-03-13T18:34:38.300668Z",
+  "updated_at": "2026-03-13T18:35:09.397500Z",
+  "closed_at": "2026-03-13T18:35:09.397500Z",
+  "custom": {}
+}

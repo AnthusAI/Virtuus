@@ -21,9 +21,8 @@ jobs:
     uses: AnthusAI/platform-ci/.github/workflows/semantic-release-reusable.yml@main
     with:
       python_version: "3.12"
-      checkout_ref: ${{ github.event.workflow_run.head_sha }}
       release_branch: "main"
-      install_command: 'pip install "python-semantic-release~=10.0"'
+      semantic_release_requirement: "python-semantic-release~=10.0"
       run_publish: true
     secrets:
       anthusbot_gh_token: ${{ secrets.ANTHUSBOT_GH_TOKEN }}

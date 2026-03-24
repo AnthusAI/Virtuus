@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "2fdbbc66-b648-45f5-9598-f22240d48d92",
+  "issue_id": "virt-5c069fb5-44fd-4d7a-ba54-f1e596cefc1a",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-24T18:44:20.329Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "chore",
+    "labels": [],
+    "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+    "priority": 1,
+    "status": "open",
+    "title": "Add main branch protection desired-state file matching live GitHub rules"
+  }
+}

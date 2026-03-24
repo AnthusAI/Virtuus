@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "a796c426-2c3b-4646-b791-f8fcfe256d97",
+  "issue_id": "virt-9a9168d3-e3e0-43b3-ac4f-6b6b7212daf4",
+  "event_type": "issue_created",
+  "occurred_at": "2026-03-13T18:34:38.300Z",
+  "actor_id": "derek.norrbom",
+  "payload": {
+    "title": "Update branch ruleset required checks after dropping Python 3.9",
+    "description": "",
+    "issue_type": "bug",
+    "status": "open",
+    "priority": 1,
+    "assignee": null,
+    "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+    "labels": []
+  }
+}
