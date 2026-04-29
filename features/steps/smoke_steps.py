@@ -44,9 +44,29 @@ def step_then_version_matches_file(context):
     with open(context.version_file) as f:
         expected = re.search(r"\b\d+\.\d+\.\d+\b", f.read())
     assert expected is not None, f"No semantic version found in {context.version_file}"
-    assert (
-        virtuus.__version__ == expected.group(0)
+    assert virtuus.__version__ == expected.group(
+        0
     ), f"Library version {virtuus.__version__!r} != VERSION file {expected.group(0)!r}"
+
+
+@then("the Python backend should read version from VERSION fallback")
+def step_then_python_backend_version_fallback(context):
+    import virtuus._python as python_backend
+
+    original_version_fn = python_backend._importlib_metadata.version
+
+    def _raise_package_not_found(_name):
+        raise python_backend._importlib_metadata.PackageNotFoundError
+
+    python_backend._importlib_metadata.version = _raise_package_not_found
+    try:
+        fallback_version = python_backend._read_version()
+    finally:
+        python_backend._importlib_metadata.version = original_version_fn
+
+    assert re.search(
+        r"\b\d+\.\d+\.\d+\b", fallback_version
+    ), f"Expected semantic version from fallback, got {fallback_version!r}"
 
 
 @given("the Python virtuus library is available")
