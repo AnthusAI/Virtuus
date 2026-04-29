@@ -8,9 +8,12 @@ Feature: Library availability
     Then it should report a valid version string
     And the CLI helper should report the same version string
 
-  Scenario: Version is read from the shared VERSION file
+  Scenario: Package version aligns with shared VERSION file
     Given a VERSION file at the repository root
-    Then the library version should match the contents of that file
+    Then the package version should match the contents of that file
+
+  Scenario: Python backend reads version from package metadata
+    Then the Python backend should read version from package metadata
 
   Scenario: Python and Rust report the same version
     Given the Python virtuus library is available

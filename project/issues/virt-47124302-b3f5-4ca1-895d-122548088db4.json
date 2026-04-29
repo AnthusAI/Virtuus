@@ -1,0 +1,31 @@
+{
+  "id": "virt-47124302-b3f5-4ca1-895d-122548088db4",
+  "title": "Refine CI triggers to push(main,develop)+pull_request(all)",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "9f8857ac-088a-4b20-838f-6cec2e9535a7",
+      "author": "derek",
+      "text": "Updating .github/workflows/ci.yml trigger config to: push on main+develop and pull_request on all targets. This avoids duplicate feature-branch push runs while ensuring PR and integration branch coverage.",
+      "created_at": "2026-04-29T21:45:56.276907396Z"
+    },
+    {
+      "id": "1b1c222d-79ba-448f-8d87-6e2cf4cac511",
+      "author": "derek",
+      "text": "Patched CI trigger: push now targets [main, develop]; pull_request remains unfiltered for all PR targets. YAML parse validation passed.",
+      "created_at": "2026-04-29T21:46:11.819850029Z"
+    }
+  ],
+  "created_at": "2026-04-29T21:45:51.699695821Z",
+  "updated_at": "2026-04-29T21:46:11.829522649Z",
+  "closed_at": "2026-04-29T21:46:11.829522649Z",
+  "custom": {}
+}

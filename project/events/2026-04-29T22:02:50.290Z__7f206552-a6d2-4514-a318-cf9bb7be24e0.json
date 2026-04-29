@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "7f206552-a6d2-4514-a318-cf9bb7be24e0",
+  "issue_id": "virt-8af4c22a-5579-40a8-b3e9-c083ca5358c9",
+  "event_type": "issue_created",
+  "occurred_at": "2026-04-29T22:02:50.290Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+    "priority": 1,
+    "status": "open",
+    "title": "Add coverage for Virtuus _python __version__ metadata+fallback paths"
+  }
+}

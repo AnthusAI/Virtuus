@@ -37,16 +37,37 @@ def step_given_version_file(context):
     ), f"VERSION file not found at {context.version_file}"
 
 
-@then("the library version should match the contents of that file")
+@then("the package version should match the contents of that file")
 def step_then_version_matches_file(context):
     import virtuus
 
     with open(context.version_file) as f:
         expected = re.search(r"\b\d+\.\d+\.\d+\b", f.read())
     assert expected is not None, f"No semantic version found in {context.version_file}"
-    assert (
-        virtuus.__version__ == expected.group(0)
+    assert virtuus.__version__ == expected.group(
+        0
     ), f"Library version {virtuus.__version__!r} != VERSION file {expected.group(0)!r}"
+
+
+@then("the Python backend should read version from package metadata")
+def step_then_python_backend_reads_metadata(context):
+    import virtuus._python as python_backend
+
+    original_version_fn = python_backend._importlib_metadata.version
+
+    expected_version = "9.9.9"
+
+    def _fake_version(package_name):
+        assert package_name == "virtuus"
+        return expected_version
+
+    python_backend._importlib_metadata.version = _fake_version
+    try:
+        resolved_version = python_backend._read_version()
+    finally:
+        python_backend._importlib_metadata.version = original_version_fn
+
+    assert resolved_version == expected_version
 
 
 @given("the Python virtuus library is available")
