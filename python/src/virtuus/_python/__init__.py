@@ -1,8 +1,8 @@
 """Pure-Python backend for Virtuus."""
 
-from importlib import metadata as _importlib_metadata
 import os as _os
 import re as _re
+from importlib import metadata as _importlib_metadata
 
 from virtuus._python.database import Database
 from virtuus._python.gsi import GSI
