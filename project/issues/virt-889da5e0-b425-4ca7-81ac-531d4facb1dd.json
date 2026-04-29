@@ -1,0 +1,25 @@
+{
+  "id": "virt-889da5e0-b425-4ca7-81ac-531d4facb1dd",
+  "title": "Refactor version resolution to metadata-only (remove runtime VERSION file lookup)",
+  "description": "",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "4d32387c-2a36-42f9-a938-0f0fe1be2a41",
+      "author": "derek",
+      "text": "Implementing no-fallback design: remove runtime VERSION file lookup, use package metadata as single Python version source, and update smoke specs accordingly.",
+      "created_at": "2026-04-29T22:10:05.914892751Z"
+    }
+  ],
+  "created_at": "2026-04-29T22:10:01.941170158Z",
+  "updated_at": "2026-04-29T22:10:05.914892751Z",
+  "closed_at": null,
+  "custom": {}
+}
