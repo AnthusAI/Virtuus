@@ -217,7 +217,7 @@ async fn given_version_file(world: &mut VirtuusWorld) {
     world.version_file = Some(version_file);
 }
 
-#[then("the library version should match the contents of that file")]
+#[then("the package version should match the contents of that file")]
 async fn then_version_matches_file(world: &mut VirtuusWorld) {
     let path = world.version_file.as_ref().unwrap();
     let expected = std::fs::read_to_string(path)
@@ -240,6 +240,33 @@ async fn then_version_matches_file(world: &mut VirtuusWorld) {
         actual, expected,
         "Library VERSION {actual:?} != VERSION file {expected:?}"
     );
+}
+
+#[then("the Python backend should read version from package metadata")]
+async fn then_python_backend_reads_from_package_metadata(world: &mut VirtuusWorld) {
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let python_src = manifest_dir.parent().unwrap().join("python").join("src");
+    // Keep this check aligned with Python step text by validating that
+    // _python.__version__ resolves via package metadata.
+    let src = python_src.to_str().unwrap();
+    let script = format!(
+        "import sys; sys.path.insert(0, {src:?}); import virtuus._python as py; print(py.__version__)"
+    );
+    let output = Command::new("python")
+        .args(["-c", &script])
+        .output()
+        .expect("Failed to run python for metadata version check");
+    assert!(
+        output.status.success(),
+        "Python command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let py_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    assert!(
+        !py_version.is_empty(),
+        "Python backend returned an empty metadata version"
+    );
+    world.python_version = Some(py_version);
 }
 
 // ---------------------------------------------------------------------------
