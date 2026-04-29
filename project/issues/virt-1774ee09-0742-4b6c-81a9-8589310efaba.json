@@ -3,16 +3,23 @@
   "title": "Fix Virtuus import failure in installed envs (missing lib/VERSION)",
   "description": "",
   "type": "epic",
-  "status": "open",
+  "status": "closed",
   "priority": 1,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "6d7fa0bf-4046-4f26-a356-6b173354fec2",
+      "author": "derek",
+      "text": "Completed via commit e34e55b: Python backend version resolution now uses package metadata with source-tree fallback, fixing installed env import failures.",
+      "created_at": "2026-04-29T21:32:14.761904164Z"
+    }
+  ],
   "created_at": "2026-04-29T21:28:41.102467607Z",
-  "updated_at": "2026-04-29T21:28:41.102467607Z",
-  "closed_at": null,
+  "updated_at": "2026-04-29T21:32:14.761904164Z",
+  "closed_at": "2026-04-29T21:32:14.753570863Z",
   "custom": {}
 }

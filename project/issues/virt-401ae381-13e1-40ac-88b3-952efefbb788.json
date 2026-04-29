@@ -3,7 +3,7 @@
   "title": "Use package metadata fallback for __version__ in python backend",
   "description": "",
   "type": "task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 1,
   "assignee": null,
   "creator": null,
@@ -25,7 +25,7 @@
     }
   ],
   "created_at": "2026-04-29T21:28:43.955336777Z",
-  "updated_at": "2026-04-29T21:29:24.521131868Z",
-  "closed_at": null,
+  "updated_at": "2026-04-29T21:32:14.744509426Z",
+  "closed_at": "2026-04-29T21:32:14.744509426Z",
   "custom": {}
 }
