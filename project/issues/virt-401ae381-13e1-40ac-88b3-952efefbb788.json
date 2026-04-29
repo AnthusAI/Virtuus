@@ -1,0 +1,31 @@
+{
+  "id": "virt-401ae381-13e1-40ac-88b3-952efefbb788",
+  "title": "Use package metadata fallback for __version__ in python backend",
+  "description": "",
+  "type": "task",
+  "status": "closed",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "ca9ccd28-e4ca-47e2-a1ba-4b8bf860a52c",
+      "author": "derek",
+      "text": "Implementing fix for installed-environment version lookup by using importlib.metadata with fallback, instead of requiring ../../../../VERSION to exist.",
+      "created_at": "2026-04-29T21:28:46.531715623Z"
+    },
+    {
+      "id": "d3ff935e-8b42-4f04-b01d-8922b92acab6",
+      "author": "derek",
+      "text": "Patched python/src/virtuus/_python/__init__.py to resolve version via importlib.metadata.version('virtuus') with fallback to repo VERSION file for source-tree use. Validated via py_compile and by installing editable Virtuus into Call-Criteria-Python env; import virtuus,biblicus now succeeds.",
+      "created_at": "2026-04-29T21:29:24.521131868Z"
+    }
+  ],
+  "created_at": "2026-04-29T21:28:43.955336777Z",
+  "updated_at": "2026-04-29T21:32:14.744509426Z",
+  "closed_at": "2026-04-29T21:32:14.744509426Z",
+  "custom": {}
+}
