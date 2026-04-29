@@ -12,6 +12,9 @@ Feature: Library availability
     Given a VERSION file at the repository root
     Then the library version should match the contents of that file
 
+  Scenario: Python backend falls back to VERSION file when metadata is unavailable
+    Then the Python backend should read version from VERSION fallback
+
   Scenario: Python and Rust report the same version
     Given the Python virtuus library is available
     And the Rust virtuus binary is available
