@@ -22,10 +22,22 @@
       "author": "derek",
       "text": "Patched python/src/virtuus/_python/__init__.py to resolve version via importlib.metadata.version('virtuus') with fallback to repo VERSION file for source-tree use. Validated via py_compile and by installing editable Virtuus into Call-Criteria-Python env; import virtuus,biblicus now succeeds.",
       "created_at": "2026-04-29T21:29:24.521131868Z"
+    },
+    {
+      "id": "be887bfb-ca8c-4160-b7bd-51b2361345a8",
+      "author": "derek",
+      "text": "Addressing CI lint failure from PR #19: ruff import-order (I001) in python/src/virtuus/_python/__init__.py.",
+      "created_at": "2026-04-29T21:42:03.569911964Z"
+    },
+    {
+      "id": "0fdb9dd1-b839-485b-9151-c10f245f82cb",
+      "author": "derek",
+      "text": "Fixed Ruff I001 import-order CI failure in python/src/virtuus/_python/__init__.py by reordering stdlib imports to match lint expectations. Validation: poetry run ruff check + black --check for the touched file in python subproject.",
+      "created_at": "2026-04-29T21:42:47.123822054Z"
     }
   ],
   "created_at": "2026-04-29T21:28:43.955336777Z",
-  "updated_at": "2026-04-29T21:32:14.744509426Z",
-  "closed_at": "2026-04-29T21:32:14.744509426Z",
+  "updated_at": "2026-04-29T21:42:47.132324143Z",
+  "closed_at": "2026-04-29T21:42:47.132324143Z",
   "custom": {}
 }
