@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "5c47303c-8a96-4341-bd2d-ad1b989cf504",
+  "issue_id": "virt-401ae381-13e1-40ac-88b3-952efefbb788",
+  "event_type": "issue_created",
+  "occurred_at": "2026-04-29T21:28:43.955Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "task",
+    "labels": [],
+    "parent": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+    "priority": 1,
+    "status": "open",
+    "title": "Use package metadata fallback for __version__ in python backend"
+  }
+}

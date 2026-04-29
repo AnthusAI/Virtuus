@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "5ec6cda8-036f-4fb7-ab74-4bd43e8372a7",
+  "issue_id": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+  "event_type": "issue_created",
+  "occurred_at": "2026-04-29T21:28:41.102Z",
+  "actor_id": "derek",
+  "payload": {
+    "assignee": null,
+    "description": "",
+    "issue_type": "epic",
+    "labels": [],
+    "parent": null,
+    "priority": 1,
+    "status": "open",
+    "title": "Fix Virtuus import failure in installed envs (missing lib/VERSION)"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "virt-1774ee09-0742-4b6c-81a9-8589310efaba",
+  "title": "Fix Virtuus import failure in installed envs (missing lib/VERSION)",
+  "description": "",
+  "type": "epic",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-04-29T21:28:41.102467607Z",
+  "updated_at": "2026-04-29T21:28:41.102467607Z",
+  "closed_at": null,
+  "custom": {}
+}
