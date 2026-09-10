@@ -29,20 +29,25 @@ statuses:
   - key: backlog
     name: Backlog
     category: To do
+    semantic_category: todo
     collapsed: true
   - key: open
     name: Discovery
     category: To do
+    semantic_category: todo
   - key: in_progress
     name: In Progress
     category: In progress
+    semantic_category: in_progress
   - key: blocked
     name: Blocked
     category: In progress
+    semantic_category: in_progress
     collapsed: true
   - key: closed
     name: Done
     category: Done
+    semantic_category: done
     collapsed: true
 
 categories:
