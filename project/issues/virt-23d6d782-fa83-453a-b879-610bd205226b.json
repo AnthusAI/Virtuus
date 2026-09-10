@@ -14,7 +14,7 @@
   "created_at": "2026-03-03T19:05:30.688711Z",
   "updated_at": "2026-03-03T19:05:30.688711Z",
   "closed_at": null,
-  "right_now_summary": "Release workflows and branch rules are aligned, but a valid automation bypass for protected main is still needed.",
-  "right_now_updated_at": "2026-09-10T14:34:21.777492480Z",
+  "right_now_summary": "Release workflows and branch rules are aligned, but a valid bypass actor and one pending push remain.",
+  "right_now_updated_at": "2026-09-10T14:34:43.302942167Z",
   "custom": {}
 }

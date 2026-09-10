@@ -10,15 +10,27 @@
   "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "1b734638-641f-4be4-a0ad-a92a12225b9c",
+      "author": "ubuntu",
+      "text": "PR opened: roll out template d44e9a05, regenerated CONTRIBUTING_AGENT.md, AGENTS.md Kanbus #264 section + dev git policy. SHA pending push.",
+      "created_at": "2026-09-10T14:34:38.149604214Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "cursor",
+        "model": "composer-2.5"
+      }
+    }
+  ],
   "created_at": "2026-09-10T14:34:17.097780170Z",
-  "updated_at": "2026-09-10T14:34:17.097820880Z",
+  "updated_at": "2026-09-10T14:34:38.149627830Z",
   "closed_at": null,
   "agent": {
     "platform": "cursor",
     "model": "composer-2.5"
   },
-  "right_now_summary": "Kanbus agent provenance files and contribution guidance are being synced and refreshed.",
-  "right_now_updated_at": "2026-09-10T14:34:19.013546817Z",
+  "right_now_summary": "A PR updates agent provenance files and AGENTS.md; the commit still awaits push.",
+  "right_now_updated_at": "2026-09-10T14:34:40.811808234Z",
   "custom": {}
 }
