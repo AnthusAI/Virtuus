@@ -3,7 +3,7 @@
   "title": "Roll out Kanbus #264 agent provenance and CONTRIBUTING_AGENT template",
   "description": "Sync CONTRIBUTING_AGENT.template.md from Kanbus develop d44e9a05, regenerate CONTRIBUTING_AGENT.md, refresh AGENTS.md Kanbus section and git policy (dev integration branch). Ref: Kanbus #264.",
   "type": "chore",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -24,13 +24,13 @@
     }
   ],
   "created_at": "2026-09-10T14:34:17.097780170Z",
-  "updated_at": "2026-09-10T14:34:38.149627830Z",
-  "closed_at": null,
+  "updated_at": "2026-09-10T14:34:48.794263507Z",
+  "closed_at": "2026-09-10T14:34:48.794234400Z",
   "agent": {
     "platform": "cursor",
     "model": "composer-2.5"
   },
-  "right_now_summary": "A PR updates agent provenance files and AGENTS.md; the commit still awaits push.",
-  "right_now_updated_at": "2026-09-10T14:34:40.811808234Z",
+  "right_now_summary": "A PR adds the agent template, regenerates CONTRIBUTING_AGENT.md, and updates AGENTS.md and git policy.",
+  "right_now_updated_at": "2026-09-10T14:34:52.721374053Z",
   "custom": {}
 }
