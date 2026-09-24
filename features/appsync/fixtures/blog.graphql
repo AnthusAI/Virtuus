@@ -1,3 +1,9 @@
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum ModelSortDirection {
   ASC
   DESC
@@ -5,7 +11,7 @@ enum ModelSortDirection {
 
 input ModelBlogFilterInput {
   id: ModelIDInput
-  name: ModelStringInput
+  title: ModelStringInput
   createdAt: ModelStringInput
   updatedAt: ModelStringInput
   and: [ModelBlogFilterInput]
@@ -110,6 +116,7 @@ input ModelIntInput {
 input ModelPostFilterInput {
   id: ModelIDInput
   title: ModelStringInput
+  status: ModelStringInput
   content: ModelStringInput
   blogId: ModelIDInput
   createdAt: ModelStringInput
@@ -124,6 +131,11 @@ input CreatePostInput {
   title: String!
   content: String!
   blogId: ID!
+  status: PostStatus
+}
+
+input ModelPostConditionInput {
+  title: ModelStringInput
 }
 
 input UpdatePostInput {
@@ -139,15 +151,31 @@ input DeletePostInput {
 
 input CreateBlogInput {
   id: ID
-  name: String!
+  title: String!
 }
 
 input UpdateBlogInput {
   id: ID!
-  name: String
+  title: String
 }
 
 input DeleteBlogInput {
+  id: ID!
+}
+
+input CreateCommentInput {
+  id: ID
+  postId: ID
+  content: String!
+}
+
+input UpdateCommentInput {
+  id: ID!
+  postId: ID
+  content: String
+}
+
+input DeleteCommentInput {
   id: ID!
 }
 
@@ -158,7 +186,7 @@ type ModelPostConnection {
 
 type Blog {
   id: ID!
-  name: String!
+  title: String!
   posts(filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
   createdAt: AWSDateTime!
   updatedAt: AWSDateTime!
@@ -169,7 +197,9 @@ type Post {
   title: String!
   content: String!
   blogId: ID!
+  status: PostStatus
   blog: Blog
+  comments(filter: ModelCommentFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelCommentConnection
   createdAt: AWSDateTime!
   updatedAt: AWSDateTime!
 }
@@ -179,8 +209,10 @@ type Query {
   listBlogs(filter: ModelBlogFilterInput, limit: Int, nextToken: String): ModelBlogConnection
   getPost(id: ID!): Post
   listPosts(filter: ModelPostFilterInput, limit: Int, nextToken: String): ModelPostConnection
-  postsByBlog(blogId: ID!, createdAt: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
-  postsByBlogStatus(blogId: ID!, statusCreatedAt: ModelPostPostsByBlogStatusCompositeKeyConditionInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlog(blogId: ID!, createdAt: ModelStringKeyConditionInput, filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlogStatus(blogId: ID!, statusCreatedAt: ModelPostPostsByBlogStatusCompositeKeyConditionInput, filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  getComment(id: ID!): Comment
+  listComments(filter: ModelCommentFilterInput, limit: Int, nextToken: String): ModelCommentConnection
   commentsByPost(postId: ID!, filter: ModelCommentFilterInput, limit: Int, nextToken: String): ModelCommentConnection
 }
 
@@ -193,14 +225,18 @@ type Mutation {
   createBlog(input: CreateBlogInput!): Blog
   updateBlog(input: UpdateBlogInput!): Blog
   deleteBlog(input: DeleteBlogInput!): Blog
-  createPost(input: CreatePostInput!): Post
+  createPost(input: CreatePostInput!, condition: ModelPostConditionInput): Post
   updatePost(input: UpdatePostInput!): Post
   deletePost(input: DeletePostInput!): Post
+  createComment(input: CreateCommentInput!): Comment
+  updateComment(input: UpdateCommentInput!): Comment
+  deleteComment(input: DeleteCommentInput!): Comment
 }
 
 type Comment {
   id: ID!
   postId: ID!
+  post: Post
   content: String!
   createdAt: AWSDateTime!
   updatedAt: AWSDateTime!

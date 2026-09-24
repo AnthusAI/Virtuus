@@ -28,10 +28,45 @@ pub enum ScalarValidationError {
     InvalidAWSIPAddress,
 }
 
+/// Whether a `YYYY-MM-DD` string (already shape-checked) names a real day.
+fn is_calendar_date(date: &str) -> bool {
+    let number = |range: std::ops::Range<usize>| date[range].parse::<u32>().unwrap_or(0);
+    let (year, month, day) = (number(0..4), number(5..7), number(8..10));
+    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days = match month {
+        2 if leap => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        1..=12 => 31,
+        _ => 0,
+    };
+    (1..=days).contains(&day)
+}
+
+/// A scalar validator: `Ok` when the value is valid.
+pub type ScalarValidatorFn = fn(&str) -> Result<(), ScalarValidationError>;
+
 /// Validator for AWS AppSync custom scalars.
 pub struct AwsScalarValidator;
 
 impl AwsScalarValidator {
+    /// The validator for an AWS scalar, or None when `name` is not one.
+    pub fn for_scalar(name: &str) -> Option<ScalarValidatorFn> {
+        let validate: ScalarValidatorFn = match name {
+            "AWSDateTime" => Self::validate_aws_datetime,
+            "AWSDate" => Self::validate_aws_date,
+            "AWSTime" => Self::validate_aws_time,
+            "AWSTimestamp" => Self::validate_aws_timestamp,
+            "AWSJSON" => Self::validate_awsjson,
+            "AWSEmail" => Self::validate_aws_email,
+            "AWSURL" => Self::validate_awsurl,
+            "AWSPhone" => Self::validate_aws_phone,
+            "AWSIPAddress" => Self::validate_aws_ip_address,
+            _ => return None,
+        };
+        Some(validate)
+    }
+
     /// Validates an AWSDateTime value.
     /// Format: ISO 8601 datetime (e.g., "2026-09-24T12:34:56Z" or "2026-09-24T12:34:56+00:00")
     pub fn validate_aws_datetime(value: &str) -> Result<(), ScalarValidationError> {
@@ -43,7 +78,7 @@ impl AwsScalarValidator {
             })
         }
 
-        if get_datetime_regex().is_match(value) {
+        if get_datetime_regex().is_match(value) && is_calendar_date(&value[..10]) {
             Ok(())
         } else {
             Err(ScalarValidationError::InvalidAWSDateTime)
@@ -58,7 +93,7 @@ impl AwsScalarValidator {
             REGEX.get_or_init(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap())
         }
 
-        if get_date_regex().is_match(value) {
+        if get_date_regex().is_match(value) && is_calendar_date(&value[..10]) {
             Ok(())
         } else {
             Err(ScalarValidationError::InvalidAWSDate)

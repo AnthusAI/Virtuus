@@ -3,11 +3,13 @@
 //! Parses AppSync SDL and builds a dynamic GraphQL schema that can be introspected
 //! to verify it matches the input SDL exactly (after normalization).
 
-use async_graphql::dynamic::{Field, FieldFuture, InputValue, Object, Schema, TypeRef};
+use async_graphql::dynamic::{Field, FieldFuture, InputValue, Object, Scalar, Schema, TypeRef};
 use async_graphql_parser::parse_schema;
 use async_graphql_parser::types::{BaseType, Type};
 use std::collections::BTreeMap;
 use thiserror::Error;
+
+use crate::scalars::AwsScalarValidator;
 
 #[derive(Debug, Error)]
 pub enum SchemaBuildError {
@@ -15,20 +17,10 @@ pub enum SchemaBuildError {
     ParseError(String),
     #[error("Failed to build schema: {0}")]
     BuildError(String),
-    #[error("Introspection mismatch: {0}")]
-    IntrospectionMismatch(String),
-    #[error("SDL must define a Query type")]
-    MissingQuery,
-}
-
-/// A trait for normalizing schema definitions for comparison.
-pub trait SdlNormalization {
-    /// Normalize the SDL by removing directives and sorting types/fields.
-    fn normalize(&self) -> String;
 }
 
 /// Converts a parsed SDL Type to an async-graphql TypeRef.
-pub fn convert_type(ty: &Type) -> TypeRef {
+fn convert_type(ty: &Type) -> TypeRef {
     match &ty.base {
         BaseType::Named(name) => {
             let base = TypeRef::named(name.to_string());
@@ -50,6 +42,18 @@ pub fn convert_type(ty: &Type) -> TypeRef {
     }
 }
 
+/// A scalar type. AWS scalars reject input values their validator refuses.
+fn scalar_type(name: &str) -> Scalar {
+    let scalar = Scalar::new(name);
+    match AwsScalarValidator::for_scalar(name) {
+        Some(validate) => scalar.validator(move |value| match value {
+            async_graphql::Value::String(text) => validate(text).is_ok(),
+            other => validate(&other.to_string()).is_ok(),
+        }),
+        None => scalar,
+    }
+}
+
 /// Builds a complete dynamic GraphQL schema from an AppSync SDL string.
 ///
 /// # Arguments
@@ -61,6 +65,19 @@ pub fn convert_type(ty: &Type) -> TypeRef {
 /// # Errors
 /// Returns `SchemaBuildError` if SDL parsing or schema building fails
 pub fn build_schema(sdl: &str) -> Result<Schema, SchemaBuildError> {
+    build_schema_with(sdl, &mut |_, field_name, field_type| {
+        Field::new(field_name, field_type, |_| {
+            FieldFuture::new(async { Ok(None::<()>) })
+        })
+    })
+}
+
+/// Builds the schema from SDL, asking `make_field(type, field, type_ref)` for
+/// each object field's resolver. Arguments are added from the SDL afterwards.
+pub(crate) fn build_schema_with(
+    sdl: &str,
+    make_field: &mut dyn FnMut(&str, &str, TypeRef) -> Field,
+) -> Result<Schema, SchemaBuildError> {
     let document = parse_schema(sdl).map_err(|e| SchemaBuildError::ParseError(e.to_string()))?;
 
     let mut query_type: Option<Object> = None;
@@ -86,9 +103,7 @@ pub fn build_schema(sdl: &str) -> Result<Schema, SchemaBuildError> {
                         let field_name = field.node.name.to_string();
                         let field_type = convert_type(&field.node.ty.node);
 
-                        let mut field_def = Field::new(field_name, field_type, |_| {
-                            FieldFuture::new(async { Ok(None::<()>) })
-                        });
+                        let mut field_def = make_field(&type_name, &field_name, field_type);
 
                         // Add arguments
                         for arg in &field.node.arguments {
@@ -129,8 +144,7 @@ pub fn build_schema(sdl: &str) -> Result<Schema, SchemaBuildError> {
                     enums.insert(type_name, enum_def);
                 }
                 async_graphql_parser::types::TypeKind::Scalar => {
-                    let scalar = async_graphql::dynamic::Scalar::new(&type_name);
-                    scalars.insert(type_name, scalar);
+                    scalars.insert(type_name.clone(), scalar_type(&type_name));
                 }
                 _ => {
                     // Interface, Union, etc. are not yet fully handled
@@ -152,12 +166,9 @@ pub fn build_schema(sdl: &str) -> Result<Schema, SchemaBuildError> {
         "AWSIPAddress",
     ];
     for aws_scalar in aws_scalars {
-        if !scalars.contains_key(aws_scalar) {
-            scalars.insert(
-                aws_scalar.to_string(),
-                async_graphql::dynamic::Scalar::new(aws_scalar),
-            );
-        }
+        scalars
+            .entry(aws_scalar.to_string())
+            .or_insert_with(|| scalar_type(aws_scalar));
     }
 
     // Set up the Query type (required)

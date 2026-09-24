@@ -19,18 +19,18 @@ Feature: AppSync SDL to dynamic GraphQL schema
     Given the blog SDL
     When I build the schema
     Then the schema has these types: Blog, Post, Query, Mutation, Subscription
-    And the Blog type has fields: id, name, posts, createdAt, updatedAt
-    And the Post type has fields: id, title, content, blogId, blog, createdAt, updatedAt
+    And the Blog type has fields: id, title, posts, createdAt, updatedAt
+    And the Post type has fields: id, title, content, blogId, status, blog, comments, createdAt, updatedAt
 
   Scenario: Schema contains all input types from SDL
     Given the blog SDL
     When I build the schema
-    Then the schema has these input types: CreateBlogInput, UpdateBlogInput, DeleteBlogInput, CreatePostInput, UpdatePostInput, DeletePostInput, ModelBlogFilterInput, ModelPostFilterInput
+    Then the schema has these input types: CreateBlogInput, UpdateBlogInput, DeleteBlogInput, CreatePostInput, UpdatePostInput, DeletePostInput, ModelBlogFilterInput, ModelPostFilterInput, ModelPostConditionInput
 
   Scenario: Schema contains all enum types from SDL
     Given the blog SDL
     When I build the schema
-    Then the schema has these enum types: ModelSortDirection, ModelAttributeTypes
+    Then the schema has these enum types: PostStatus, ModelSortDirection, ModelAttributeTypes
 
   Scenario: AWS scalars are defined as custom scalars
     Given the blog SDL
