@@ -38,8 +38,8 @@ check-rust:
 	cd rust && cargo test -p virtuus-amplify
 	cd rust && cargo test -p virtuus-appsync
 	cd rust && cargo tarpaulin --skip-clean -p virtuus --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs" --exclude-files "crates/*"
-	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --exclude-files 'crates/virtuus-appsync/*' --fail-under 100
-	cd rust && cargo tarpaulin --skip-clean -p virtuus-appsync --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --fail-under 100
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files '*/tests/*' --fail-under 100
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-appsync --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files '*/tests/*' --fail-under 100
 
 coverage-rust:
 	cd rust && cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"
