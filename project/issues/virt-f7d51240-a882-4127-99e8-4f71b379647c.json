@@ -15,9 +15,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "8fefd7fa-89e0-4ae0-b878-fdd03cde503d",
+      "author": "home",
+      "text": "Added (storage-lead): the crate currently carries 16 `#[allow(dead_code)]` on the contract structs' fields. This task reads those fields (tables, describe) and must **remove every `#[allow(dead_code)]`**. Delete any field nothing uses. Also prefix every cargo command with `CARGO_TARGET_DIR=/Users/home/Projects/Virtuus/rust/target` (the disk is tight; share the main checkout's build dir).",
+      "created_at": "2026-09-24T10:11:57.634849Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T06:31:23.716458Z",
-  "updated_at": "2026-09-24T06:31:31.383556Z",
+  "updated_at": "2026-09-24T10:11:57.634871Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
