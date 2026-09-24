@@ -2841,16 +2841,8 @@ mod tests {
     fn cache_check_reports_without_refreshing() {
         let dir = temp_dir("cache_check");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -2862,11 +2854,7 @@ mod tests {
         .unwrap();
         table.load_from_dir(None);
         let before = table.count(None, None);
-        fs::write(
-            &dir.join("user-2.json"),
-            json!({"id": "user-2"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-2.json"), json!({"id": "user-2"}).to_string()).unwrap();
         let summary = table.check();
         assert_eq!(summary.added, 1);
         assert_eq!(table.count(None, None), before);
@@ -2946,11 +2934,7 @@ mod tests {
     fn cache_auto_refresh_can_be_disabled() {
         let dir = temp_dir("cache_auto");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -2962,11 +2946,7 @@ mod tests {
         .unwrap();
         table.set_auto_refresh(false);
         table.load_from_dir(None);
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         let initial_ids: Vec<String> = table
             .scan()
             .iter()
@@ -2990,11 +2970,7 @@ mod tests {
     fn cache_on_refresh_hook_receives_summary() {
         let dir = temp_dir("cache_hook");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -3010,11 +2986,7 @@ mod tests {
             calls_clone.lock().unwrap().push(summary.clone());
         }));
         table.load_from_dir(None);
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         table.refresh();
         assert!(!calls.lock().unwrap().is_empty());
         let last = calls.lock().unwrap().last().cloned().unwrap();

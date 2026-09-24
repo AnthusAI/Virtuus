@@ -67,6 +67,7 @@ Feature: Errors are values
     When I try to execute a malformed query and catch it as ValueError
     Then the error should be caught successfully as a ValueError
 
+  @python-only
   Scenario: Load schema from YAML with belongs_to association and query with include
     Given a temporary YAML schema with tables "users" and "posts" and belongs_to association
     When I load the python database from that schema
@@ -77,6 +78,7 @@ Feature: Errors are values
       """
     Then the result should include the related author
 
+  @python-only
   Scenario: Load schema from YAML with has_many association and query with include
     Given a temporary YAML schema with tables "users" and "posts" and has_many association
     When I load the python database from that schema
@@ -87,6 +89,7 @@ Feature: Errors are values
       """
     Then the result should include the related posts
 
+  @python-only
   Scenario: Query with include returns None when related record missing
     Given a temporary YAML schema with tables "users" and "posts" and belongs_to association
     When I load the python database from that schema
@@ -97,6 +100,7 @@ Feature: Errors are values
       """
     Then the result author field should be None
 
+  @python-only
   Scenario: Query scan with include returns related records
     Given a temporary YAML schema with tables "users" and "posts" and belongs_to association
     When I load the python database from that schema
@@ -107,6 +111,7 @@ Feature: Errors are values
       """
     Then the scan result should include posts with related authors
 
+  @python-only
   Scenario: Query with nested empty include on single belongs_to association
     Given a temporary YAML schema with tables "users" and "posts" and belongs_to association
     When I load the python database from that schema

@@ -1185,14 +1185,12 @@ tables:
                 .get("id"),
             Some(&json!("u1"))
         );
-        assert!(
-            db.resolve_association("users", "posts", "u1")
-                .unwrap()
-                .as_array()
-                .unwrap()
-                .len()
-                >= 1
-        );
+        assert!(!db
+            .resolve_association("users", "posts", "u1")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .is_empty());
         assert!(db
             .resolve_association("users", "jobs", "u1")
             .unwrap()
@@ -1381,9 +1379,9 @@ tables:
     #[test]
     fn project_and_record_matches_helpers_work() {
         let value = json!({"a":1,"b":2});
-        assert_eq!(project(&value, &vec![json!("a")]), json!({"a":1}));
+        assert_eq!(project(&value, &[json!("a")]), json!({"a":1}));
         assert_eq!(
-            project(&Value::String("x".into()), &vec![json!("a")]),
+            project(&Value::String("x".into()), &[json!("a")]),
             Value::String("x".into())
         );
         assert_eq!(project(&value, &Vec::new()), value);

@@ -31,9 +31,12 @@ coverage-python: build-rust
 
 check-rust:
 	cd rust && cargo fmt --check
-	cd rust && cargo clippy -- -D warnings
-	cd rust && cargo test --lib
-	cd rust && CUCUMBER_FILTER_TAGS='not @python-only and not @bench' cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"
+	cd rust && cargo clippy -p virtuus --all-targets -- -D warnings
+	cd rust && cargo clippy -p virtuus-amplify --all-targets -- -D warnings
+	cd rust && cargo test -p virtuus --lib
+	cd rust && cargo test -p virtuus-amplify
+	cd rust && cargo tarpaulin --skip-clean -p virtuus --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs" --exclude-files "crates/*"
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --fail-under 100
 
 coverage-rust:
 	cd rust && cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"
