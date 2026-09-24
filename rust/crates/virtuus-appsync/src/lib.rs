@@ -4,9 +4,11 @@
 //! and builds an `async_graphql::dynamic::Schema` that matches the input schema exactly.
 //! AWS scalars are supported with validation, and AWS directives are declared and ignored.
 
+pub mod router;
 pub mod scalars;
 pub mod schema;
 
+pub use router::{router, ApiKeyAuth};
 pub use scalars::{AwsScalarValidator, ScalarValidationError};
 pub use schema::{build_schema, normalize_sdl, SchemaBuildError, SdlNormalization};
 

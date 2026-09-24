@@ -26,7 +26,7 @@ pub trait SdlNormalization {
 }
 
 /// Converts a parsed SDL Type to an async-graphql TypeRef.
-fn convert_type(ty: &Type) -> TypeRef {
+pub fn convert_type(ty: &Type) -> TypeRef {
     match &ty.base {
         BaseType::Named(name) => {
             let base = TypeRef::named(name.to_string());
