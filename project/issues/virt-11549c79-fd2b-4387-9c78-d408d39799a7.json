@@ -8,9 +8,7 @@
   "assignee": null,
   "creator": null,
   "parent": "virt-8f8638bc-900f-470a-b722-8e511a588777",
-  "labels": [
-    "ready-for-review"
-  ],
+  "labels": [],
   "dependencies": [
     {
       "target": "virt-ff014452-d4c2-4326-89b0-5bea7bfb202c",
@@ -62,7 +60,7 @@
     }
   ],
   "created_at": "2026-09-24T04:45:38.094908Z",
-  "updated_at": "2026-09-24T15:13:35.627617Z",
+  "updated_at": "2026-09-24T18:23:26.510606Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
