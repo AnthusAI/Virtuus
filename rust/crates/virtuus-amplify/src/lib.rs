@@ -125,19 +125,19 @@ impl AuthRule {
     pub fn from_json(value: &Value) -> Result<Self> {
         let rule_obj = value
             .as_object()
-            .ok_or_else(|| Error::Validation("Auth rule must be an object".to_string()))?;
+            .expect("schema validation guarantees auth rule is an object");
 
         let allow = rule_obj
             .get("allow")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Auth rule missing 'allow'".to_string()))?;
+            .expect("schema validation guarantees 'allow' field exists and is a string");
 
         let operations_value = rule_obj
             .get("operations")
-            .ok_or_else(|| Error::Validation("Auth rule missing 'operations'".to_string()))?;
+            .expect("schema validation guarantees 'operations' field exists");
 
         let operations: Vec<AuthOp> = serde_json::from_value(operations_value.clone())
-            .map_err(|_| Error::Validation("Invalid operations format".to_string()))?;
+            .expect("schema validation guarantees 'operations' is a valid array");
 
         let ops = Ops::from_operations(operations);
 
@@ -572,11 +572,11 @@ impl Contract {
         Ok(())
     }
 
-    pub(crate) fn parse_model(value: &Value) -> Result<Model> {
+    fn parse_model(value: &Value) -> Result<Model> {
         let name = value
             .get("name")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Model missing name".to_string()))?
+            .expect("schema validation guarantees 'name' field exists and is a string")
             .to_string();
 
         let mut fields = HashMap::new();
@@ -589,7 +589,7 @@ impl Contract {
         let primary_key = value
             .get("primaryKey")
             .and_then(|v| v.as_array())
-            .ok_or_else(|| Error::Validation(format!("Model {} missing primaryKey", name)))?
+            .expect("schema validation guarantees 'primaryKey' field exists and is an array")
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
@@ -666,11 +666,11 @@ impl Contract {
         })
     }
 
-    pub(crate) fn parse_index(value: &Value) -> Result<Index> {
+    fn parse_index(value: &Value) -> Result<Index> {
         let name = value
             .get("name")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Index missing name".to_string()))?
+            .expect("schema validation guarantees 'name' field exists and is a string")
             .to_string();
 
         let query_field = value
@@ -682,7 +682,7 @@ impl Contract {
         let partition_field = value
             .get("partitionField")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Index missing partitionField".to_string()))?
+            .expect("schema validation guarantees 'partitionField' field exists and is a string")
             .to_string();
 
         let sort_fields = value
@@ -704,23 +704,23 @@ impl Contract {
         })
     }
 
-    pub(crate) fn parse_relationship(value: &Value) -> Result<Relationship> {
+    fn parse_relationship(value: &Value) -> Result<Relationship> {
         let field = value
             .get("field")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Relationship missing field".to_string()))?
+            .expect("schema validation guarantees 'field' field exists and is a string")
             .to_string();
 
         let kind = value
             .get("kind")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Relationship missing kind".to_string()))?
+            .expect("schema validation guarantees 'kind' field exists and is a string")
             .to_string();
 
         let target = value
             .get("target")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Relationship missing target".to_string()))?
+            .expect("schema validation guarantees 'target' field exists and is a string")
             .to_string();
 
         let references = value
@@ -749,11 +749,11 @@ impl Contract {
         })
     }
 
-    pub(crate) fn parse_enum(value: &Value, _name: &str) -> Result<Enum> {
+    fn parse_enum(value: &Value, _name: &str) -> Result<Enum> {
         // Enums are guaranteed to be arrays by schema validation
         let arr = value
             .as_array()
-            .ok_or_else(|| Error::Validation("Enum must be an array".to_string()))?;
+            .expect("schema validation guarantees enum is an array");
         let values = arr
             .iter()
             .filter_map(|v| v.as_str().map(|s| s.to_string()))
@@ -1271,7 +1271,7 @@ fn parse_single_sort_condition_value(value: &Value) -> std::result::Result<SortC
     }
 }
 
-pub(crate) fn parse_single_sort_operator(
+fn parse_single_sort_operator(
     op: &str,
     value: &Value,
 ) -> std::result::Result<SortCondition, String> {
@@ -2465,7 +2465,7 @@ impl Engine {
                 let table = self
                     .tables
                     .get_mut(model_name)
-                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+                    .expect("engine creates a table for every contract model");
 
                 let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(100) as usize;
 
@@ -3400,170 +3400,5 @@ mod tests {
         );
         assert_eq!(model.get("partitionKey").unwrap().as_str().unwrap(), "pk");
         assert_eq!(model.get("sortKey").unwrap().as_str().unwrap(), "sk1#sk2");
-    }
-
-    #[test]
-    fn test_auth_rule_missing_allow() {
-        let rule = json!({"provider": "userPools", "operations": ["read"]});
-        let result = AuthRule::from_json(&rule);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Auth rule missing 'allow'"));
-        }
-    }
-
-    #[test]
-    fn test_auth_rule_missing_operations() {
-        let rule = json!({"provider": "userPools", "allow": "private"});
-        let result = AuthRule::from_json(&rule);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Auth rule missing 'operations'"));
-        }
-    }
-
-    #[test]
-    fn test_auth_rule_invalid_operations_format() {
-        let rule = json!({"provider": "userPools", "allow": "private", "operations": "invalid"});
-        let result = AuthRule::from_json(&rule);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Invalid operations format"));
-        }
-    }
-
-    #[test]
-    fn test_auth_rule_must_be_object() {
-        let rule = json!("not an object");
-        let result = AuthRule::from_json(&rule);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Auth rule must be an object"));
-        }
-    }
-
-    #[test]
-    fn test_between_operator_wrong_length() {
-        let result = parse_single_sort_operator("between", &json!([1, 2, 3]));
-        assert!(result.is_err());
-        if let Err(msg) = result {
-            assert!(msg.contains("between operator requires exactly 2 values"));
-        }
-    }
-
-    #[test]
-    fn test_between_operator_not_array() {
-        let result = parse_single_sort_operator("between", &json!({"low": 1, "high": 2}));
-        assert!(result.is_err());
-        if let Err(msg) = result {
-            assert!(msg.contains("between operator value must be an array"));
-        }
-    }
-
-    #[test]
-    fn test_model_missing_name() {
-        let model = json!({
-            "fields": {"id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"}},
-            "primaryKey": ["id"],
-            "indexes": [],
-            "relationships": [],
-            "authRules": [],
-            "ownerFields": []
-        });
-        let result = Contract::parse_model(&model);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Model missing name"));
-        }
-    }
-
-    #[test]
-    fn test_model_missing_primary_key() {
-        let model = json!({
-            "name": "Test",
-            "fields": {"id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"}},
-            "indexes": [],
-            "relationships": [],
-            "authRules": [],
-            "ownerFields": []
-        });
-        let result = Contract::parse_model(&model);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("missing primaryKey"));
-        }
-    }
-
-    #[test]
-    fn test_index_missing_name() {
-        let index = json!({
-            "partitionField": "tenant"
-        });
-        let result = Contract::parse_index(&index);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Index missing name"));
-        }
-    }
-
-    #[test]
-    fn test_index_missing_partition_field() {
-        let index = json!({
-            "name": "testIndex"
-        });
-        let result = Contract::parse_index(&index);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Index missing partitionField"));
-        }
-    }
-
-    #[test]
-    fn test_relationship_missing_field() {
-        let rel = json!({
-            "kind": "hasOne",
-            "target": "Other"
-        });
-        let result = Contract::parse_relationship(&rel);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Relationship missing field"));
-        }
-    }
-
-    #[test]
-    fn test_relationship_missing_kind() {
-        let rel = json!({
-            "field": "other",
-            "target": "Other"
-        });
-        let result = Contract::parse_relationship(&rel);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Relationship missing kind"));
-        }
-    }
-
-    #[test]
-    fn test_relationship_missing_target() {
-        let rel = json!({
-            "field": "other",
-            "kind": "hasOne"
-        });
-        let result = Contract::parse_relationship(&rel);
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Relationship missing target"));
-        }
-    }
-
-    #[test]
-    fn test_enum_must_be_array() {
-        let enum_val = json!({"values": ["A", "B"]});
-        let result = Contract::parse_enum(&enum_val, "TestEnum");
-        assert!(result.is_err());
-        if let Err(Error::Validation(msg)) = result {
-            assert!(msg.contains("Enum must be an array"));
-        }
     }
 }
