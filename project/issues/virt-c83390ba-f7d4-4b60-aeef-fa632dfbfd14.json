@@ -3,7 +3,7 @@
   "title": "Filters and key conditions (DynamoDB rules)",
   "description": "1. Filters: `eq ne lt le gt ge between beginsWith contains notContains attributeExists size`, combined with `and`, `or` and `not`.\n   - `contains` on a list checks membership.\n   - `ne` matches a missing field; any other comparison against a missing field is false.\n2. Key conditions on index sort keys: `eq lt le gt ge between beginsWith`; composite sort keys take a key object.\n3. Both work in `list` and in index queries (`op` = the `queryField`).\n4. Specs: every operator, missing-field cases, nested `and`/`or`/`not`, composite sort-key conditions.\n\nPart of the `virtuus-amplify` crate (`rust/crates/virtuus-amplify`; workspace member; `@rust-only` specs in `features/amplify/`; cucumber runner in the crate; 100% coverage). Semantics: `~/Projects/Ripple/design/storage.md` **§2.2**, matching Amplify/AppSync behaviour exactly.\n- **Contract format:** `~/Projects/Ripple/contract/contract.schema.json` (vendor a copy into the crate).\n- **Fixture:** `features/amplify/fixtures/blog.contract.json`, hand-written in that format and shared by V8 and V9. It has `Blog`; `Post` with owner auth, an enum `status`, a customType `meta`, a hasMany `comments` and an index `postsByBlog` (partition `blogId`, sort `createdAt`); `Comment` with belongsTo `post`; and `Tag` with a composite identifier `[\"postId\", \"name\"]`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -15,9 +15,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "8dc6ee1e-2571-433a-8107-fff32bfb6cd1",
+      "author": "home",
+      "text": "WIP: Filters and key conditions (V8c)\n\nCOMPLETED:\n✓ Created filters.feature (@rust-only) with 20+ comprehensive test scenarios covering:\n  - All filter operators: eq, ne, lt, le, gt, ge, between, beginsWith, contains, notContains, attributeExists, size\n  - DynamoDB semantics: ne matches missing fields, other comparisons on missing fields are false\n  - Combined conditions with and, or, not (including nested)\n  - Composite conditions across multiple fields\n  - Index queries with key conditions (partition + sort key)\n  - Filter + index query combinations\n\nTEST SCENARIOS (from filters.feature):\n- Single operator tests (eq, ne, lt, le, gt, ge, between, beginsWith, contains, notContains, attributeExists, size)\n- Missing field behavior (ne matches, others are false)\n- Logical operators (and, or, not, nested combinations)\n- Index queries (postsByBlog, commentsByPostStatus with composite sort keys)\n- Filters on index queries\n\nIMPLEMENTATION NEEDED:\n1. **Step definitions** in cucumber.rs:\n   - \"I list all {model} with:\" - parse filter JSON and execute list with filters\n   - \"I query {model} by {index} with:\" - parse key conditions and execute index query\n   - Result assertions for filtered/queried data\n\n2. **Engine::list()** operation:\n   - Accept optional  parameter\n   - Parse filter expressions (eq, ne, lt, le, gt, ge, between, beginsWith, contains, notContains, attributeExists, size)\n   - Handle and/or/not combinations\n   - Apply DynamoDB rules for missing fields\n   - Return filtered results\n\n3. **Engine::query()** operation for index queries:\n   - Accept partition key and optional key condition on sort key\n   - Support key condition operators: eq, lt, le, gt, ge, between, beginsWith\n   - Handle composite sort keys (e.g., status#createdAt)\n   - Support optional filter on results\n   - Maintain sort order\n\n4. **Filter evaluation logic**:\n   - Recursive evaluation of nested and/or/not\n   - Type-specific comparisons (string, numeric, list, boolean)\n   - List membership for contains operator\n   - Size operator for string/list lengths\n\n5. **Key condition logic**:\n   - Parse sort key conditions\n   - Support composite sort key objects like {\"status\": \"DRAFT\", \"createdAt\": {\"gt\": \"...\"}}\n   - Convert to comparison on composite attribute (status#createdAt)\n\nARCHITECTURE:\n- Add Filter and KeyCondition types to lib.rs\n- Implement FilterEvaluator trait/function\n- Extend Engine::call() to support list and query operations\n- Wire through to table queries with filter predicates\n\nNEXT STEPS:\n1. Implement filter parsing and evaluation logic\n2. Add list operation to Engine\n3. Add query operation to Engine for index queries\n4. Implement step definitions\n5. Run gate to verify 100% coverage\n\nThis is ready for implementation - feature file is complete and comprehensive.",
+      "created_at": "2026-09-24T13:17:09.885361Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Haiku 4.5",
+        "name": "storage-V8c-start"
+      }
+    }
+  ],
   "created_at": "2026-09-24T04:45:37.769210Z",
-  "updated_at": "2026-09-24T04:45:48.663553Z",
+  "updated_at": "2026-09-24T13:17:09.885389Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
