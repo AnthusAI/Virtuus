@@ -49,7 +49,12 @@ Feature: Contract loading, tables and indexes
             "name": "Tag",
             "partitionKey": "postId",
             "sortKey": "name",
-            "indexes": []
+            "indexes": [
+              {
+                "name": "tagsByName",
+                "partitionKey": "name"
+              }
+            ]
           },
           {
             "name": "Vote",

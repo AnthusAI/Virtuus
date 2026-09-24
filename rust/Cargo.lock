@@ -2909,6 +2909,7 @@ dependencies = [
 name = "virtuus-amplify"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "chrono",
  "cucumber",
  "jsonschema",
