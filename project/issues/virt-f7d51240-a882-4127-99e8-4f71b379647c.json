@@ -1,0 +1,30 @@
+{
+  "id": "virt-f7d51240-a882-4127-99e8-4f71b379647c",
+  "title": "virtuus-amplify: tables, composite sort attributes, describe(), 100% coverage (split from V8a)",
+  "description": "Split from virt-31bd02 (V8a). Scope: **tables, indexes, composite sort attributes, `describe()`, and 100% coverage.** Blocked by the validation sub-task; start from its accepted state. The work is in the worktree `~/Projects/Virtuus-crates` (branch `feature/amplify-crates`). Run kbs from `~/Projects/Virtuus`.\n\n1. **Keys.**\n   - 1 identifier field → the table partition key.\n   - 2 fields → partition + sort.\n   - More than 2 fields → partition = the first, and the sort attribute is **named** `fields[1..].join(\"#\")` (Amplify's convention).\n2. **Indexes.**\n   - One GSI per contract index, named by its `queryField`.\n   - With 0 or 1 sort fields, the sort attribute is that field.\n   - With more than 1 sort field, the sort attribute is named `sortFields.join(\"#\")`, so `commentsByPostAndStatus` sorts on `status#createdAt`. Each index gets its own attribute; there is never a shared `__sort`.\n   - Implicit hasMany indexes on the child: for each hasMany relationship with `implicit: true`, add the `childIndex` on the target, with partition = `references` and no sort, unless an explicit index with that name already exists.\n   - Add a `///` doc on `Engine`: composite sort attributes are synthetic and are populated by writes (V8b) as `v1#v2`.\n3. **`describe() -> serde_json::Value`, deterministic** (BTreeMap / sorted). For each table: `{\"name\", \"partitionKey\", \"sortKey\"?, \"indexes\": [{\"name\", \"partitionKey\", \"sortKey\"?, \"implicit\"}]}`. The indexes are sorted by name, and it reports exactly the attribute names the tables use.\n4. **Specs in `features/amplify/contract.feature`:**\n   - `Scenario: The blog contract opens into these tables`, using `Then the engine description is:` with the **full expected JSON** docstring, compared by equality;\n   - `Scenario: The Apricitus contract opens`, using `Then the engine has tables:` (a table of all 11 model names) and `Then the tables have these indexes:` (model | comma-separated index names, **every** model, including the implicit ones);\n   - `Then table \"Verdict\" has partition \"candidateId\" and sort \"judge\"`.\n   \n   Delete the old vague steps (\"has a Tag table with composite key\", \"the contract is valid\").\n5. **100% line coverage** from real paths. Delete branches that can't be reached; don't write tests that call private helpers just to touch lines.\n\n**Gate** (run it; paste the real output). From `~/Projects/Virtuus-crates/rust`, with `export PATH=$HOME/.cargo/bin:$PATH`:\n`cargo fmt --check && cargo clippy -p virtuus-amplify --all-targets -- -D warnings && cargo test -p virtuus-amplify && cargo tarpaulin -p virtuus-amplify --fail-under 100`",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2e1ef887-2b5e-4837-9626-2a795c9b762a",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-a5dfd7f4-d363-499e-82cb-2ddae2be4e01",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T06:31:23.716458Z",
+  "updated_at": "2026-09-24T06:31:31.383556Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

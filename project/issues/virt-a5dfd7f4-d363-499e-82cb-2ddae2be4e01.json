@@ -1,0 +1,25 @@
+{
+  "id": "virt-a5dfd7f4-d363-499e-82cb-2ddae2be4e01",
+  "title": "virtuus-amplify: compile, fixture, contract validation (split from V8a)",
+  "description": "Split from virt-31bd02 (V8a) after two failed reviews. Scope: **the crate compiles, the fixture is right, and contracts are validated.** The work is in the worktree `~/Projects/Virtuus-crates` (branch `feature/amplify-crates`). Run kbs from `~/Projects/Virtuus`.\n\nCurrent state: `rust/crates/virtuus-amplify/src/lib.rs` **does not compile**. `cargo build -p virtuus-amplify` gives 4 errors: an unresolved `jsonschema::Draft202012`, two type mismatches, and a use of the moved `sorted_models`. Start by making it compile.\n\n1. **Validation with the `jsonschema` crate (0.18)** against `include_str!(\"../contract/contract.schema.json\")`: `jsonschema::JSONSchema::options().with_draft(jsonschema::Draft::Draft202012).compile(&schema)`. Check the crate docs in `~/.cargo/registry/src/*/jsonschema-0.18*/` if the API differs. Collect **every** error as `\"<instance_path>: <message>\"` in one `Error::Validation`. There must be no hand-rolled key checks.\n2. **Semantic checks** after the schema passes. Each is an `Error::Validation` naming the model and field:\n   - a primaryKey field not in `fields`;\n   - an index partition or sort field not in `fields`;\n   - a relationship `target` that isn't a model;\n   - a field of kind `enum`/`customType`/`model` whose `type` isn't a defined enum, customType or model.\n3. **Fixture `features/amplify/fixtures/blog.contract.json`**, valid against the schema. Per the schema, an Enum is an array of strings and a CustomType is a map of name → Field; the Apricitus `FileRef` shows the shape. It must contain everything in the V8 fixture spec:\n   - `Blog`;\n   - `Post` with owner auth (`ownerFields: [\"owner\"]` and an owner authRule), an enum field `status` (enum `PostStatus`), a customType field **`meta` (customType `PostMeta` with `summary: String`, `wordCount: Int`)**, a hasMany `comments`, and an index `postsByBlog` (partition `blogId`, sort `[\"createdAt\"]`);\n   - `Comment` with belongsTo `post`, a `status` field, and an index `commentsByPostAndStatus` (partition `postId`, sort `[\"status\", \"createdAt\"]`);\n   - `Tag` with the composite identifier `[\"postId\", \"name\"]`.\n   \n   Don't remove anything the spec requires.\n4. **The spec `features/amplify/contract.feature`**, the part for this task: `Scenario: The blog and Apricitus fixtures are valid contracts`, plus a `Scenario Outline: An invalid contract is rejected` with an Examples table of *case* | *message fragment*. The cases are:\n   - a missing `models`;\n   - an enum that isn't an array;\n   - a primaryKey field that doesn't exist;\n   - an index on a missing field;\n   - a relationship to an unknown model;\n   - a field of an unknown customType.\n   \n   Each case builds its invalid contract by mutating the blog fixture in the step: JSON-pointer remove/replace. Assert `Validation` and that the message contains the fragment. Leave any other scenarios in the file alone for now.\n5. **Don't install npm packages anywhere in Virtuus.** For the Ajv check, use Ripple's copy: `cd ~/Projects/Ripple/web && node -e \"const A=require('ajv/dist/2020').default,f=require('fs');const v=new A({allErrors:true,strict:false}).compile(JSON.parse(f.readFileSync('../contract/contract.schema.json')));const d=JSON.parse(f.readFileSync('/Users/home/Projects/Virtuus-crates/features/amplify/fixtures/blog.contract.json'));console.log(v(d)?'valid':JSON.stringify(v.errors))\"`\n\n**Gate** (run it; don't predict it). From `~/Projects/Virtuus-crates/rust`, with `export PATH=$HOME/.cargo/bin:$PATH`:\n`cargo fmt --check && cargo clippy -p virtuus-amplify --all-targets -- -D warnings && cargo test -p virtuus-amplify`\nplus the Ajv command. Coverage is the next sub-task's job, but don't add unreachable code. Paste the real outputs.",
+  "type": "sub-task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2e1ef887-2b5e-4837-9626-2a795c9b762a",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T06:31:23.677914Z",
+  "updated_at": "2026-09-24T06:31:49.118225Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

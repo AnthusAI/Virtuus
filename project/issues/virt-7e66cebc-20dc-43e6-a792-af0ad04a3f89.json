@@ -1,0 +1,30 @@
+{
+  "id": "virt-7e66cebc-20dc-43e6-a792-af0ad04a3f89",
+  "title": "CLI, HTTP server and PyO3 error mapping; final acceptance",
+  "description": "1. `rust/src/bin/virtuus.rs`: CLI errors print `error: <kind>: <message>` and exit 1. The HTTP server answers 400 with `{\"error\": {\"kind\", \"message\"}}`. Remove `catch_unwind` where it's no longer needed.\n2. `rust/src/python.rs` (PyO3): map every `Error` variant to the matching `virtuus.errors` exception class. With the Rust backend (`VIRTUUS_BACKEND=rust`), Python code sees exactly the same exceptions as with the pure-Python backend.\n3. Acceptance: `grep -nE \"panic!|\\.expect\\(|\\.unwrap\\(\\)\" rust/src/{table,database,gsi,sort,search}.rs` shows none outside `#[cfg(test)]`. Justify any remaining ones in a comment, e.g. an infallible `unwrap` on a value just checked.\n4. `make check` fully green; paste the summary.\n\n**Keep `make check` green after this sub-task.** That means 100% coverage in both languages and parity. Changing a public signature means updating every caller, test and spec step that used it.\n**Errors:** use `crate::error::{Error, Result}` (`rust/src/error.rs`) and `virtuus.errors` (`python/src/virtuus/errors.py`). The Python backend raises the matching exception class; the message names the thing (table, index, file path, field).\n**Specs:** `features/errors/errors.feature`. Each scenario drives the *real* public API in both languages; no simulated errors. After an error, assert the database still answers a normal query.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2ee9d543-1fa9-436a-872c-7517ff47a9b7",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-05a5f24a-3565-4c8b-b1d0-5fa7ea1dff9e",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T05:08:44.718442Z",
+  "updated_at": "2026-09-24T05:08:44.894739Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

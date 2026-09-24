@@ -19,9 +19,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "33b2ef65-9d1c-4fee-b35c-425d96c06b65",
+      "author": "home",
+      "text": "**Resequenced (storage lead, 2026-09-24):** to shorten the critical path, `virtuus-amplify` is built now, in parallel with the core chain (V2–V7).\n- **Where:** a second worktree `~/Projects/Virtuus-crates` on branch `feature/amplify-crates` (off `feature/amplify-engine` @ 6c058dd). Write code there. Run all `kbs` commands from `~/Projects/Virtuus` (the main checkout) so issue files don't diverge between branches.\n- **Builds on today's core API:** `Table::new`/`put`/`get`/`delete`/`scan`/`add_gsi`/`query_gsi`, in memory (`directory: None`) or on a folder. Where the core still panics, validate inputs *before* calling core, so the engine returns errors, never panics. The Result-returning APIs are adopted when the branches merge.\n- **V8d changes:** pagination is implemented **inside** `virtuus-amplify` rather than reusing V5. Sort the candidate keys (primary key for `list`; sort key then primary key for index queries), and make `nextToken` an opaque base64url of `{v:1, model, op, lastKey, argsHash}` that continues strictly after `lastKey`. When the core's ordered indexes (V4) and key tokens (V5) land, the internals can switch over without changing behaviour.\n- **Gate in the worktree:** `cd rust && cargo fmt --check && cargo clippy -p virtuus-amplify -- -D warnings && cargo test -p virtuus-amplify && cargo tarpaulin -p virtuus-amplify --fail-under 100`. The full `make check` runs at merge time.\n- **Contract format:** vendor `~/Projects/Ripple/contract/contract.schema.json` (normative). For a realistic second fixture, also copy `~/Projects/Ripple/contract/apricitus.contract.json` into `features/amplify/fixtures/`.",
+      "created_at": "2026-09-24T06:00:27.452705Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T04:45:37.613844Z",
-  "updated_at": "2026-09-24T04:45:48.367989Z",
+  "updated_at": "2026-09-24T06:00:27.452727Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
