@@ -586,7 +586,11 @@ fn check_operation_succeeds(world: &mut AppWorld) {
         panic!("Expected success but got error: {}", error);
     }
     if let Some(ref errors) = world.last_operation_errors {
-        eprintln!("Operation returned errors: {:?}", errors);
+        assert!(
+            errors.is_empty(),
+            "Expected success but got errors: {:?}",
+            errors
+        );
     }
 }
 

@@ -13,10 +13,20 @@ Feature: Filters and key conditions
     Given these Post records exist:
       """
       [
-        {"id": "p1", "blogId": "b1", "title": "Post One", "status": "DRAFT", "views": 0, "rating": 4.5, "tags": ["featured", "popular"]},
-        {"id": "p2", "blogId": "b1", "title": "Post Two", "status": "PUBLISHED", "views": 100, "rating": 3.8, "tags": ["news"]},
-        {"id": "p3", "blogId": "b1", "title": "Another Draft", "status": "DRAFT", "views": 50, "tags": []},
-        {"id": "p4", "blogId": "b1", "title": "Archived Post", "status": "ARCHIVED", "views": 200, "tags": ["featured", "archive"]}
+        {"id": "p1", "blogId": "b1", "title": "Post One", "status": "DRAFT", "views": 0, "rating": 4.5, "tags": ["featured", "popular"], "createdAt": "2026-01-15T10:00:00Z"},
+        {"id": "p2", "blogId": "b1", "title": "Post Two", "status": "PUBLISHED", "views": 100, "rating": 3.8, "tags": ["news"], "createdAt": "2026-01-20T10:00:00Z"},
+        {"id": "p3", "blogId": "b1", "title": "Another Draft", "status": "DRAFT", "views": 50, "tags": [], "createdAt": "2026-02-01T10:00:00Z"},
+        {"id": "p4", "blogId": "b1", "title": "Archived Post", "status": "ARCHIVED", "views": 200, "tags": ["featured", "archive"], "createdAt": "2026-03-10T10:00:00Z"}
+      ]
+      """
+    Given these Tag records exist:
+      """
+      [
+        {"postId": "p1", "name": "featured", "value": "yes"},
+        {"postId": "p1", "name": "popular", "value": "yes"},
+        {"postId": "p2", "name": "news", "value": "yes"},
+        {"postId": "p4", "name": "featured", "value": "yes"},
+        {"postId": "p4", "name": "archive", "value": "yes"}
       ]
       """
 
@@ -187,9 +197,9 @@ Feature: Filters and key conditions
     Then the operation succeeds
 
   Scenario: Index query with composite sort key condition (eq on first field)
-    When I query Comment by commentsByPostStatus with:
+    When I query Post by postsByBlogStatus with:
       """
-      {"key": {"postId": "c1", "status": {"eq": "DRAFT"}}}
+      {"key": {"blogId": "b1", "eq": {"status": "DRAFT"}}}
       """
     Then the operation succeeds
 
@@ -404,16 +414,14 @@ Feature: Filters and key conditions
       """
       {"filter": {"views": {"between": []}}}
       """
-    Then the operation succeeds
-    Then the result data contains exactly these ids []
+    Then the operation has validation error
 
   Scenario: between with single value array
     When I list all Post with:
       """
       {"filter": {"views": {"between": [50]}}}
       """
-    Then the operation succeeds
-    Then the result data contains exactly these ids []
+    Then the operation has validation error
 
   Scenario: attributeExists with string operand (not bool)
     When I list all Post with:
@@ -553,5 +561,275 @@ Feature: Filters and key conditions
     When I query Post by postsByBlogStatus with:
       """
       {"key": {"blogId": "b1", "beginsWith": {"status": 123}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Single sort key between
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"blogId": "b1", "createdAt": {"between": ["2026-01-01", "2026-12-31"]}}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p1", "p2", "p3", "p4"]
+
+  Scenario: Composite sort key between
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "between": [{"status": "DRAFT", "createdAt": "2026-01-01"}, {"status": "DRAFT", "createdAt": "2026-12-31"}]}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p1", "p3"]
+
+  Scenario: List with no filter
+    When I list all Post with:
+      """
+      {}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p1", "p2", "p3", "p4"]
+
+  Scenario: Contains with number value on string field
+    When I list all Post with:
+      """
+      {"filter": {"title": {"contains": 5}}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids []
+
+  Scenario: NotContains with number value on string field
+    When I list all Post with:
+      """
+      {"filter": {"title": {"notContains": 5}}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids []
+
+  Scenario: Composite key with two operators
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "status": {"eq": "DRAFT", "lt": "PUBLISHED"}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Composite key with empty object
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "status": {}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Composite key with unknown operator
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "ne": {"status": "DRAFT"}}}
+      """
+    Then the operation has validation error
+
+  Scenario: List filter with index query semantics
+    When I list all Post with:
+      """
+      {"filter": {"status": {"eq": "DRAFT"}}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p1", "p3"]
+
+  Scenario: Index query with filter invalid
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "eq": {"status": "DRAFT"}}, "filter": {"views": {"frobnicate": 1}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter with empty object
+    When I list all Post with:
+      """
+      {"filter": {}}
+      """
+    Then the operation has validation error
+
+  Scenario: Key condition with unknown sort operator
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "superduper": {"status": "DRAFT"}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Sort key with multiple operators
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"blogId": "b1", "createdAt": {"eq": "2026-01-01", "gt": "2026-01-02"}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Sort key condition with empty object
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"blogId": "b1", "createdAt": {}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Sort key condition not an object
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"blogId": "b1", "createdAt": "not-an-object"}}
+      """
+    Then the operation has validation error
+
+  Scenario: Size operator with multiple conditions
+    When I list all Post with:
+      """
+      {"filter": {"tags": {"size": {"eq": 2, "gt": 1}}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Size operator with non-object condition
+    When I list all Post with:
+      """
+      {"filter": {"tags": {"size": "invalid"}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Field condition with non-object value
+    When I list all Post with:
+      """
+      {"filter": {"status": "DRAFT"}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter value that is not an object
+    When I list all Post with:
+      """
+      {"filter": "not-an-object"}
+      """
+    Then the operation has validation error
+
+  Scenario: Key condition that is not an object
+    When I query Post by postsByBlog with:
+      """
+      {"key": "not-an-object"}
+      """
+    Then the operation has validation error
+
+  Scenario: Composite between with non-string bound field
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "between": [{"status": "DRAFT", "createdAt": 123}, {"status": "DRAFT", "createdAt": 456}]}}
+      """
+    Then the operation has validation error
+
+  Scenario: Composite between with empty first bound
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "between": [{}, {"status": "DRAFT", "createdAt": "2026-12-31"}]}}
+      """
+    Then the operation has validation error
+
+
+  Scenario: Filter mixing field condition with and operator
+    When I list all Post with:
+      """
+      {"filter": {"views": {"gt": 1}, "and": [{"title": {"beginsWith": "P"}}]}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p2"]
+
+  Scenario: Single sort key with beginsWith
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"blogId": "b1", "createdAt": {"beginsWith": "2026-01"}}}
+      """
+    Then the operation succeeds
+
+  Scenario: Composite between with only leading field bounds
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "between": [{"status": "DRAFT"}, {"status": "PUBLISHED"}]}}
+      """
+    Then the operation succeeds
+    Then the result data contains exactly these ids ["p1", "p3"]
+
+  # Validation error rows for uncovered lines
+  Scenario Outline: Invalid key conditions
+    When I query <model> by <index> with:
+      """
+      <request>
+      """
+    Then the operation has validation error
+
+    Examples:
+      | model | index                | request |
+      | Post  | postsByBlog          | {"key": {}} |
+      | Post  | postsByBlog          | {"key": {"blogId": "b1", "createdAt": {}}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "status": 5}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "between": ["a", "b"]}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "between": {"status": "DRAFT"}}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "eq": "DRAFT"}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "eq": {}}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "gt": {}}} |
+      | Post  | postsByBlog          | {"key": {"blogId": "b1", "createdAt": {"ne": "x"}}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "between": [{"status": "A"}, {"status": 5}]}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "between": [{"status": "A"}, "b"]}} |
+      | Post  | postsByBlogStatus    | {"key": {"blogId": "b1", "ne": {"status": "DRAFT"}}} |
+
+  Scenario: Query index with no sort fields
+    When I query Tag by tagsByName with:
+      """
+      {"key": {"name": "featured"}}
+      """
+    Then the operation succeeds
+
+  Scenario: Between with single-element array
+    When I list all Post with:
+      """
+      {"filter": {"views": {"between": [1]}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Index query without key argument
+    When I query Post by postsByBlog with:
+      """
+      {}
+      """
+    Then the operation has validation error
+
+  Scenario: Index query with missing partition field in key
+    When I query Post by postsByBlog with:
+      """
+      {"key": {"createdAt": "2026-01-01"}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter with and not being an array
+    When I list all Post with:
+      """
+      {"filter": {"and": "not-an-array"}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter with or not being an array
+    When I list all Post with:
+      """
+      {"filter": {"or": "not-an-array"}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter with between not exactly 2 elements
+    When I list all Post with:
+      """
+      {"filter": {"views": {"between": [1, 2, 3]}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Filter with between having non-array value
+    When I list all Post with:
+      """
+      {"filter": {"views": {"between": 5}}}
+      """
+    Then the operation has validation error
+
+  Scenario: Composite key with two operator keys
+    When I query Post by postsByBlogStatus with:
+      """
+      {"key": {"blogId": "b1", "ne": {"status": "DRAFT"}, "eq": {"status": "PUBLISHED"}}}
       """
     Then the operation has validation error

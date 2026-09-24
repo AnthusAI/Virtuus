@@ -531,54 +531,55 @@ enum Op {
 fn parse_filter(filter: &Value) -> std::result::Result<Filter, String> {
     match filter {
         Value::Object(obj) => {
-            // Check for logical operators
-            if let Some(Value::Array(conditions)) = obj.get("and") {
-                let mut parsed = Vec::new();
-                for cond in conditions {
-                    parsed.push(parse_filter(cond)?);
+            // Single-pass parsing: iterate once and match each key
+            let mut parts: Vec<Filter> = Vec::new();
+
+            for (key, value) in obj.iter() {
+                match key.as_str() {
+                    "and" => {
+                        if let Value::Array(conditions) = value {
+                            let mut parsed = Vec::new();
+                            for cond in conditions {
+                                parsed.push(parse_filter(cond)?);
+                            }
+                            parts.push(Filter::And(parsed));
+                        } else {
+                            return Err("and must be an array".to_string());
+                        }
+                    }
+                    "or" => {
+                        if let Value::Array(conditions) = value {
+                            let mut parsed = Vec::new();
+                            for cond in conditions {
+                                parsed.push(parse_filter(cond)?);
+                            }
+                            parts.push(Filter::Or(parsed));
+                        } else {
+                            return Err("or must be an array".to_string());
+                        }
+                    }
+                    "not" => {
+                        parts.push(Filter::Not(Box::new(parse_filter(value)?)));
+                    }
+                    field_name => {
+                        // Regular field condition
+                        let field_ops = parse_condition(value)?;
+                        parts.push(Filter::Field(field_name.to_string(), field_ops));
+                    }
                 }
-                return Ok(Filter::And(parsed));
             }
 
-            if let Some(Value::Array(conditions)) = obj.get("or") {
-                let mut parsed = Vec::new();
-                for cond in conditions {
-                    parsed.push(parse_filter(cond)?);
-                }
-                return Ok(Filter::Or(parsed));
-            }
-
-            if let Some(not_cond) = obj.get("not") {
-                return Ok(Filter::Not(Box::new(parse_filter(not_cond)?)));
-            }
-
-            // Parse field conditions
-            let mut ops = Vec::new();
-            for (field_name, condition) in obj.iter() {
-                if matches!(field_name.as_str(), "and" | "or" | "not") {
-                    continue;
-                }
-
-                let field_ops = parse_condition(condition)?;
-                ops.push((field_name.clone(), field_ops));
-            }
-
-            if ops.is_empty() {
+            if parts.is_empty() {
                 return Err(
                     "Filter object must contain at least one field or logical operator".to_string(),
                 );
             }
 
-            // If multiple fields, combine with And
-            if ops.len() == 1 {
-                let (field, field_ops) = ops.into_iter().next().unwrap();
-                Ok(Filter::Field(field, field_ops))
+            // Return single part directly, or combine multiple parts with And
+            if parts.len() == 1 {
+                Ok(parts.into_iter().next().unwrap())
             } else {
-                let mut filters = Vec::new();
-                for (field, field_ops) in ops {
-                    filters.push(Filter::Field(field, field_ops));
-                }
-                Ok(Filter::And(filters))
+                Ok(Filter::And(parts))
             }
         }
         _ => Err("Filter must be an object".to_string()),
@@ -603,12 +604,12 @@ fn parse_condition(condition: &Value) -> std::result::Result<Vec<Op>, String> {
                             if bounds.len() == 2 {
                                 Op::Between(bounds[0].clone(), bounds[1].clone())
                             } else {
-                                // Invalid bounds count; store a marker to fail evaluation
-                                Op::Between(Value::Null, Value::Null)
+                                // Invalid bounds count is a validation error
+                                return Err("between requires a 2-element array".to_string());
                             }
                         } else {
-                            // Non-array value; store a marker to fail evaluation
-                            Op::Between(Value::Null, Value::Null)
+                            // Non-array value is a validation error
+                            return Err("between requires a 2-element array".to_string());
                         }
                     }
                     "beginsWith" => {
@@ -802,53 +803,78 @@ fn compare_values(a: &Value, b: &Value) -> Option<std::cmp::Ordering> {
 
 /// Parse key condition for index queries into SortCondition.
 fn parse_key_condition(
-    key_obj: &Value,
+    key_arg: Option<&Value>,
     index: &Index,
-) -> std::result::Result<Option<SortCondition>, String> {
-    if index.sort_fields.is_empty() {
-        return Ok(None);
-    }
-
-    match key_obj {
-        Value::Object(key_map) => {
-            if key_map.is_empty() {
-                return Err("Key condition object must not be empty".to_string());
-            }
-
-            // Get the sort field name(s) we expect
-            if index.sort_fields.len() == 1 {
-                // Single sort field case
-                let sort_field = &index.sort_fields[0];
-                if let Some(sort_value) = key_map.get(sort_field) {
-                    parse_single_sort_condition_value(sort_value).map(Some)
-                } else {
-                    // No sort key condition provided
-                    Ok(None)
-                }
-            } else {
-                // Composite sort key case
-                parse_composite_key_condition(key_map, &index.sort_fields).map(Some)
-            }
+) -> std::result::Result<(Value, Option<SortCondition>), String> {
+    // Validate key is provided and is an object
+    let key_obj = match key_arg {
+        Some(key) => key,
+        None => {
+            return Err(format!(
+                "Index query requires partition key {}",
+                index.partition_field()
+            ));
         }
-        _ => Err("Key condition must be an object".to_string()),
+    };
+
+    let key_map = match key_obj {
+        Value::Object(map) => map,
+        _ => {
+            return Err("Index query requires a key object".to_string());
+        }
+    };
+
+    // Validate partition field is present
+    let partition = match key_map.get(index.partition_field()) {
+        Some(val) => val.clone(),
+        None => {
+            return Err(format!(
+                "Index query requires partition key {}",
+                index.partition_field()
+            ));
+        }
+    };
+
+    if index.sort_fields.is_empty() {
+        return Ok((partition, None));
     }
+
+    // Parse sort condition from key_map
+    let sort_condition = if index.sort_fields.len() == 1 {
+        // Single sort field case
+        let sort_field = &index.sort_fields[0];
+        if let Some(sort_value) = key_map.get(sort_field) {
+            Some(parse_single_sort_condition_value(sort_value)?)
+        } else {
+            // No sort key condition provided
+            None
+        }
+    } else {
+        // Composite sort key case
+        Some(parse_composite_key_condition(
+            key_map,
+            &index.sort_fields,
+            index.partition_field(),
+        )?)
+    };
+
+    Ok((partition, sort_condition))
 }
 
 fn parse_single_sort_condition_value(value: &Value) -> std::result::Result<SortCondition, String> {
     match value {
         Value::Object(op_map) => {
             // Must have exactly one operator entry
-            if op_map.len() != 1 {
-                return Err("Sort key condition must have exactly one operator".to_string());
+            if op_map.is_empty() {
+                return Err("Sort key condition object must not be empty".to_string());
             }
-            if let Some((op, op_value)) = op_map.iter().next() {
-                parse_single_sort_operator(op, op_value)
-            } else {
-                Err("Sort key condition object is empty".to_string())
+            match (op_map.len(), op_map.iter().next()) {
+                (1, Some((op, op_value))) => parse_single_sort_operator(op, op_value),
+                _ => Err("Sort key condition must have exactly one operator".to_string()),
             }
         }
-        // Plain value means "eq"
-        _ => Ok(SortCondition::Eq(value.clone())),
+        // Bare values are not allowed - must be wrapped in {op: value}
+        _ => Err("Sort key condition must be an object with an operator".to_string()),
     }
 }
 
@@ -886,122 +912,27 @@ fn parse_single_sort_operator(
 fn parse_composite_key_condition(
     key_map: &serde_json::Map<String, Value>,
     sort_fields: &[String],
+    partition_field: &str,
 ) -> std::result::Result<SortCondition, String> {
-    // Detect operator-based format: look for known operators as top-level keys
-    let valid_operators = ["eq", "lt", "le", "gt", "ge", "between", "beginsWith"];
-    let mut operator_based_op: Option<&str> = None;
+    // Find the operator key (any key that isn't a sort field or partition field)
+    let mut op_key: Option<&str> = None;
+    let mut op_value: Option<&Value> = None;
 
-    for key in key_map.keys() {
-        if valid_operators.contains(&key.as_str()) {
-            operator_based_op = Some(key);
-            break;
+    for (key, value) in key_map.iter() {
+        if !sort_fields.contains(&key.to_string()) && key != partition_field {
+            if op_key.is_some() {
+                return Err("exactly one sort key operator".to_string());
+            }
+            op_key = Some(key);
+            op_value = Some(value);
         }
     }
 
-    if let Some(op) = operator_based_op {
-        // Operator-based format: {"partition": "...", "operator": {"field": "value", ...}}
-        if let Some(op_value) = key_map.get(op) {
-            if let Value::Object(fields) = op_value {
-                return parse_composite_operator_format(op, fields, sort_fields);
-            } else {
-                return Err(format!("Operator {} requires an object value", op));
-            }
-        } else {
-            return Err(format!("Operator {} has no value", op));
-        }
-    }
-
-    // Field-based format: {"partition": "...", "field1": {"op": "value"}, ...}
-    // First, collect field values for each sort field
-    let mut field_values: Vec<Option<Value>> = sort_fields.iter().map(|_| None).collect();
-    let mut operator: Option<String> = None;
-
-    for (i, field) in sort_fields.iter().enumerate() {
-        if let Some(value) = key_map.get(field) {
-            match value {
-                Value::Object(op_map) if op_map.len() == 1 => {
-                    // This is an operator like {"lt": "value"}
-                    let (op_name, op_val) = op_map.iter().next().unwrap();
-                    if operator.is_none() {
-                        operator = Some(op_name.clone());
-                    } else if operator.as_ref() != Some(&op_name.to_string()) {
-                        return Err("All sort key operators must be the same".to_string());
-                    }
-                    field_values[i] = Some(op_val.clone());
-                }
-                Value::Object(op_map) if op_map.is_empty() => {
-                    return Err(format!("Sort field {} has empty operator object", field));
-                }
-                Value::Object(_) => {
-                    return Err(format!("Sort field {} has multiple operators", field));
-                }
-                // Plain value means eq operator
-                _ => {
-                    if operator.is_none() {
-                        operator = Some("eq".to_string());
-                    } else if operator.as_ref() != Some(&"eq".to_string()) {
-                        return Err("Mixed operator and value syntax for sort fields".to_string());
-                    }
-                    field_values[i] = Some(value.clone());
-                }
-            }
-        }
-    }
-
-    let op = operator.ok_or("No sort key operator specified")?;
-
-    match op.as_str() {
-        "eq" => {
-            // eq requires all fields to be provided
-            let values: std::result::Result<Vec<String>, String> = field_values
-                .iter()
-                .enumerate()
-                .map(|(i, v)| {
-                    if let Some(Value::String(s)) = v {
-                        Ok(s.clone())
-                    } else if v.is_none() {
-                        Err(format!(
-                            "eq requires all sort key fields, missing {}",
-                            sort_fields[i]
-                        ))
-                    } else {
-                        Err(format!("Sort field {} must be a string", sort_fields[i]))
-                    }
-                })
-                .collect();
-            let composite_value = values?.join("#");
-            Ok(SortCondition::Eq(Value::String(composite_value)))
-        }
-        "lt" | "le" | "gt" | "ge" | "beginsWith" => {
-            // Other operators allow partial prefixes
-            let mut values = Vec::new();
-            for (i, v) in field_values.iter().enumerate() {
-                if let Some(Value::String(s)) = v {
-                    values.push(s.clone());
-                } else if v.is_some() {
-                    return Err(format!("Sort field {} must be a string", sort_fields[i]));
-                } else {
-                    // End of prefix
-                    break;
-                }
-            }
-            if values.is_empty() {
-                return Err("Comparison operators require at least one sort key field".to_string());
-            }
-
-            let composite_value = values.join("#");
-            match op.as_str() {
-                "lt" => Ok(SortCondition::Lt(Value::String(composite_value))),
-                "le" => Ok(SortCondition::Lte(Value::String(composite_value))),
-                "gt" => Ok(SortCondition::Gt(Value::String(composite_value))),
-                "ge" => Ok(SortCondition::Gte(Value::String(composite_value))),
-                "beginsWith" => Ok(SortCondition::BeginsWith(composite_value)),
-                _ => unreachable!(),
-            }
-        }
-        "between" => {
-            // between requires a special format with [lower, upper] bounds
-            if let Some(Value::Array(bounds)) = key_map.get("between") {
+    if let Some(op) = op_key {
+        let op_value = op_value.unwrap();
+        // Handle between specially - it has array value, not object
+        if op == "between" {
+            if let Value::Array(bounds) = op_value {
                 if bounds.len() != 2 {
                     return Err("between requires exactly 2 bounds".to_string());
                 }
@@ -1009,6 +940,7 @@ fn parse_composite_key_condition(
                 let mut lower_values = Vec::new();
                 let mut upper_values = Vec::new();
 
+                // Parse lower bound
                 if let Value::Object(lower_fields) = &bounds[0] {
                     for field in sort_fields {
                         if let Some(v) = lower_fields.get(field) {
@@ -1025,6 +957,7 @@ fn parse_composite_key_condition(
                     return Err("between bounds must be objects".to_string());
                 }
 
+                // Parse upper bound
                 if let Value::Object(upper_fields) = &bounds[1] {
                     for field in sort_fields {
                         if let Some(v) = upper_fields.get(field) {
@@ -1045,16 +978,25 @@ fn parse_composite_key_condition(
                     return Err("between requires at least one field in each bound".to_string());
                 }
 
-                Ok(SortCondition::Between(
+                return Ok(SortCondition::Between(
                     Value::String(lower_values.join("#")),
                     Value::String(upper_values.join("#")),
-                ))
+                ));
             } else {
-                Err("between operator requires a 'between' key with array value".to_string())
+                return Err("between operator requires an array value".to_string());
             }
         }
-        _ => Err(format!("Unknown sort operator: {}", op)),
+
+        // Other operators: expect object value
+        if let Value::Object(fields) = op_value {
+            return parse_composite_operator_format(op, fields, sort_fields);
+        } else {
+            return Err(format!("Operator {} requires an object value", op));
+        }
     }
+
+    // No operator found - error
+    Err("No sort key operator specified".to_string())
 }
 
 fn parse_composite_operator_format(
@@ -1062,63 +1004,54 @@ fn parse_composite_operator_format(
     fields: &serde_json::Map<String, Value>,
     sort_fields: &[String],
 ) -> std::result::Result<SortCondition, String> {
-    match op {
-        "eq" => {
-            // eq with partial fields: collect what we have
-            let mut values = Vec::new();
-            for field in sort_fields {
-                if let Some(Value::String(v)) = fields.get(field) {
-                    values.push(v.clone());
-                } else if fields.contains_key(field) {
-                    return Err(format!("Sort field {} must be a string", field));
-                } else {
-                    // Missing field: end of provided prefix
-                    break;
-                }
-            }
-
-            if values.is_empty() {
-                return Err("eq requires at least one sort key field".to_string());
-            }
-
-            // Store as Eq with partial value - the query will handle matching
-            Ok(SortCondition::Eq(Value::String(values.join("#"))))
-        }
-        "lt" | "le" | "gt" | "ge" | "beginsWith" => {
-            // These operators allow partial prefixes
-            let mut values = Vec::new();
-            for field in sort_fields {
-                if let Some(Value::String(v)) = fields.get(field) {
-                    values.push(v.clone());
-                } else if fields.contains_key(field) {
-                    return Err(format!("Sort field {} must be a string", field));
-                } else {
-                    // End of prefix
-                    break;
-                }
-            }
-            if values.is_empty() {
-                return Err("Comparison operators require at least one sort key field".to_string());
-            }
-
-            let composite_value = values.join("#");
-            match op {
-                "lt" => Ok(SortCondition::Lt(Value::String(composite_value))),
-                "le" => Ok(SortCondition::Lte(Value::String(composite_value))),
-                "gt" => Ok(SortCondition::Gt(Value::String(composite_value))),
-                "ge" => Ok(SortCondition::Gte(Value::String(composite_value))),
-                "beginsWith" => Ok(SortCondition::BeginsWith(composite_value)),
-                _ => unreachable!(),
-            }
-        }
-        "between" => {
-            // between requires a special format with [lower, upper] bounds - but in this format
-            // it would be: {"between": {"lower": {...}, "upper": {...}}} or just {"between": [{...}, {...}]}
-            // For now, return an error since the between format for operator-based isn't clear
-            Err("between in operator-based format is not yet supported".to_string())
-        }
-        _ => Err(format!("Unknown sort operator: {}", op)),
+    // Parse operator string into enum to ensure exhaustive matching
+    enum CompositeOp {
+        Eq,
+        Lt,
+        Lte,
+        Gt,
+        Gte,
+        BeginsWith,
     }
+
+    let op_enum = match op {
+        "eq" => CompositeOp::Eq,
+        "lt" => CompositeOp::Lt,
+        "le" => CompositeOp::Lte,
+        "gt" => CompositeOp::Gt,
+        "ge" => CompositeOp::Gte,
+        "beginsWith" => CompositeOp::BeginsWith,
+        _ => return Err(format!("Unknown sort operator: {}", op)),
+    };
+
+    // Collect values from fields
+    let mut values = Vec::new();
+    for field in sort_fields {
+        if let Some(Value::String(v)) = fields.get(field) {
+            values.push(v.clone());
+        } else if fields.contains_key(field) {
+            return Err(format!("Sort field {} must be a string", field));
+        } else {
+            // End of prefix
+            break;
+        }
+    }
+
+    if values.is_empty() {
+        return Err("Operator requires at least one sort key field".to_string());
+    }
+
+    let composite_value = values.join("#");
+
+    // Match exhaustively on enum
+    Ok(match op_enum {
+        CompositeOp::Eq => SortCondition::Eq(Value::String(composite_value)),
+        CompositeOp::Lt => SortCondition::Lt(Value::String(composite_value)),
+        CompositeOp::Lte => SortCondition::Lte(Value::String(composite_value)),
+        CompositeOp::Gt => SortCondition::Gt(Value::String(composite_value)),
+        CompositeOp::Gte => SortCondition::Gte(Value::String(composite_value)),
+        CompositeOp::BeginsWith => SortCondition::BeginsWith(composite_value),
+    })
 }
 
 /// Storage-less or file-backed engine for Amplify-shaped operations.
@@ -1375,28 +1308,19 @@ impl Engine {
                     .get_mut(model_name)
                     .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
 
-                let partition = args
-                    .get("key")
-                    .and_then(|k| k.get(index.partition_field()))
-                    .cloned()
-                    .unwrap_or(Value::Null);
-
-                // Parse sort condition if there's a sort key
-                let sort_condition = if let Some(key_obj) = args.get("key") {
-                    match parse_key_condition(key_obj, index) {
-                        Ok(sc) => sc,
-                        Err(msg) => {
-                            return Ok((
-                                Value::Null,
-                                Some(vec![json!({
-                                    "errorType": "ValidationException",
-                                    "message": msg
-                                })]),
-                            ));
-                        }
+                // Parse key condition (validates key, partition, and sort)
+                let (partition, sort_condition) = match parse_key_condition(args.get("key"), index)
+                {
+                    Ok(result) => result,
+                    Err(msg) => {
+                        return Ok((
+                            Value::Null,
+                            Some(vec![json!({
+                                "errorType": "ValidationException",
+                                "message": msg
+                            })]),
+                        ));
                     }
-                } else {
-                    None
                 };
 
                 let sort_direction = args
@@ -1952,7 +1876,6 @@ mod tests {
         let result = Contract::from_json(json);
         assert!(result.is_err());
         if let Err(Error::Validation(msg)) = result {
-            eprintln!("Actual error message: {}", msg);
             assert!(
                 msg.contains("Missing required field")
                     || msg.contains("required")
@@ -2175,7 +2098,6 @@ mod tests {
         let result = Contract::from_json(json);
         assert!(result.is_err());
         if let Err(Error::Validation(msg)) = result {
-            eprintln!("Enum error: {}", msg);
             assert!(
                 msg.contains("must be an array") || msg.contains("Type") || msg.contains("type")
             );

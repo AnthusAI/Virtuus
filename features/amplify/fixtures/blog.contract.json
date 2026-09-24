@@ -84,7 +84,9 @@
         "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
       },
       "primaryKey": ["postId", "name"],
-      "indexes": [],
+      "indexes": [
+        {"name": "tagsByName", "queryField": "tagsByName", "partitionField": "name", "sortFields": [], "sortArgument": null}
+      ],
       "relationships": [],
       "authRules": [],
       "ownerFields": []
