@@ -18,14 +18,8 @@ Feature: Contract loading, tables and indexes
             "primaryKey": "id",
             "indexes": [
               {
-                "name": "commentsByPostStatus",
-                "partitionKey": "postId",
-                "sortKey": "status#createdAt"
-              },
-              {
                 "name": "commentsByPost",
-                "partitionKey": "postId",
-                "implicit": true
+                "partitionKey": "postId"
               }
             ]
           },
@@ -53,6 +47,11 @@ Feature: Contract loading, tables and indexes
               {
                 "name": "tagsByName",
                 "partitionKey": "name"
+              },
+              {
+                "name": "tagsByPost",
+                "partitionKey": "postId",
+                "implicit": true
               }
             ]
           },
