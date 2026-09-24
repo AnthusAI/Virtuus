@@ -120,6 +120,114 @@ fn load_mutated_blog_contract(
     }
 }
 
+#[when(regex = "^I try to query a non-existent model \"([^\"]+)\" with operation \"([^\"]+)\"$")]
+fn when_query_unknown_model(world: &mut AppWorld, model: String, operation: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, &operation, &json!({}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I try to create in non-existent model \"([^\"]+)\"$")]
+fn when_create_unknown_model(world: &mut AppWorld, model: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, "create", &json!({"id": "test"}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I try to get from non-existent model \"([^\"]+)\" with pk \"([^\"]+)\"$")]
+fn when_get_unknown_model(world: &mut AppWorld, model: String, pk: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, "get", &json!({"id": pk}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I try to update in non-existent model \"([^\"]+)\"$")]
+fn when_update_unknown_model(world: &mut AppWorld, model: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, "update", &json!({"id": "test"}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I try to delete from non-existent model \"([^\"]+)\"$")]
+fn when_delete_unknown_model(world: &mut AppWorld, model: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, "delete", &json!({"id": "test"}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I try to list from non-existent model \"([^\"]+)\"$")]
+fn when_list_unknown_model(world: &mut AppWorld, model: String) {
+    if let Some(engine) = &mut world.engine {
+        match engine.call(&model, "list", &json!({}), &world.identity) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
 #[when("I open the engine")]
 fn open_engine(world: &mut AppWorld) {
     if let Some(contract) = world.contract.clone() {
