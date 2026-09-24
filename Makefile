@@ -20,11 +20,11 @@ build-rust:
 check-python: build-rust
 	cd python && $(PYTHON) -m black --check .
 	cd python && $(PYTHON) -m ruff check .
-	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks
+	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks --tags=-rust-only
 	cd python && $(PYTHON) -m coverage report --include "src/virtuus/*" --fail-under=100
 
 coverage-python: build-rust
-	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks
+	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks --tags=-rust-only
 	cd python && $(PYTHON) -m coverage report --include "src/virtuus/*" --fail-under=100
 
 # ── Rust ────────────────────────────────────────────────────────────────────

@@ -39,9 +39,9 @@ def extract_feature_steps() -> list[str]:
     steps: list[str] = []
     for path in sorted(REPO_ROOT.glob("features/**/*.feature")):
         lines = path.read_text().splitlines()
-        # Skip python-only features from parity enforcement.
-        # If a tag line preceding the Feature contains "python-only",
-        # we treat the whole file as out-of-scope for Rust parity.
+        # Skip python-only and rust-only features from parity enforcement.
+        # If a tag line preceding the Feature contains "python-only" or "rust-only",
+        # we treat the whole file as out-of-scope for parity.
         before_feature = []
         for line in lines:
             stripped = line.strip()
@@ -49,7 +49,7 @@ def extract_feature_steps() -> list[str]:
                 break
             if stripped:
                 before_feature.append(stripped)
-        if any("python-only" in tag for tag in before_feature):
+        if any("python-only" in tag or "rust-only" in tag for tag in before_feature):
             continue
 
         for line in lines:

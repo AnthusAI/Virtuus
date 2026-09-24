@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+#[cfg(feature = "parallel")]
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -741,20 +742,42 @@ impl Table {
             }
             search_loaded = self.load_search_index_if_fresh(&dir, &current_manifest);
         }
-        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = paths
-            .par_iter()
-            .map(|path| {
-                let data = fs::read_to_string(path).expect("read file");
-                let record: Value = serde_json::from_str(&data).expect("parse json");
-                let mtime = fs::metadata(path)
-                    .ok()
-                    .and_then(|meta| meta.modified().ok());
-                let name = path
-                    .file_name()
-                    .map(|value| value.to_string_lossy().to_string());
-                (record, name, mtime)
-            })
-            .collect();
+        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = {
+            #[cfg(feature = "parallel")]
+            {
+                paths
+                    .par_iter()
+                    .map(|path| {
+                        let data = fs::read_to_string(path).expect("read file");
+                        let record: Value = serde_json::from_str(&data).expect("parse json");
+                        let mtime = fs::metadata(path)
+                            .ok()
+                            .and_then(|meta| meta.modified().ok());
+                        let name = path
+                            .file_name()
+                            .map(|value| value.to_string_lossy().to_string());
+                        (record, name, mtime)
+                    })
+                    .collect()
+            }
+            #[cfg(not(feature = "parallel"))]
+            {
+                paths
+                    .iter()
+                    .map(|path| {
+                        let data = fs::read_to_string(path).expect("read file");
+                        let record: Value = serde_json::from_str(&data).expect("parse json");
+                        let mtime = fs::metadata(path)
+                            .ok()
+                            .and_then(|meta| meta.modified().ok());
+                        let name = path
+                            .file_name()
+                            .map(|value| value.to_string_lossy().to_string());
+                        (record, name, mtime)
+                    })
+                    .collect()
+            }
+        };
         for (record, name, _) in parsed {
             self.insert_record_from_load(record.clone(), !search_loaded);
             if let (Some(name), Some(key)) = (name, self.extract_key_silent(&record)) {

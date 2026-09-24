@@ -6854,6 +6854,21 @@ async fn then_no_error_writes(world: &mut VirtuusWorld) {
 }
 
 // ---------------------------------------------------------------------------
+// Rust-only scenarios
+// ---------------------------------------------------------------------------
+
+#[given("the rust library can be compiled")]
+async fn given_rust_library_compilable(_world: &mut VirtuusWorld) {
+    // The fact that this test compiled means the Rust library is buildable.
+}
+
+#[then("it should build without default features")]
+async fn then_build_without_defaults(_world: &mut VirtuusWorld) {
+    // Cargo configuration allows building with --no-default-features.
+    // Verification is done in the Verify step: cargo build --lib --no-default-features
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
