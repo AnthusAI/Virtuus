@@ -3,7 +3,7 @@
   "title": "Query and mutation resolvers bound through the contract",
   "description": "1. Root fields are bound by name, using the contract: `get<Model>`, `list<Models>`, each index `queryField`, and `create`/`update`/`delete<Model>` with `input` (the `condition` argument is accepted and ignored in v1).\n2. Arguments map to `OpRequest`: `filter` (`Model<X>FilterInput`), `limit`, `nextToken`, `sortDirection` and sort-key conditions.\n3. The selection set maps to `selectionSet`.\n4. Specs: the \"mutation then query\" scenario, a list with a filter, an index query with DESC order, pagination over GraphQL.\n\nPart of the `virtuus-appsync` crate (`rust/crates/virtuus-appsync`; `@rust-only` specs in `features/appsync/`; 100% coverage). Design: `~/Projects/Ripple/design/storage.md` **§3.1** (`virtuus-appsync`) and **§4**.\n- **Stack:** axum and async-graphql's **dynamic** schema (`async_graphql::dynamic`), built at startup from an AppSync SDL string and the contract, resolving onto `virtuus_amplify::Engine::call`.\n- **API:** `pub fn router(engine: Arc<Engine>, sdl: &str, contract: &Contract, auth: ApiKeyAuth) -> axum::Router`, serving `POST /graphql`.\n- **Fixture:** `features/appsync/fixtures/blog.graphql`, hand-written in AppSync's generated style for the `blog` contract: `getPost`, `listPosts(filter, limit, nextToken)`, `postsByBlog(blogId, createdAt, sortDirection, filter, limit, nextToken)`, `createPost(input, condition)`, `updatePost`, `deletePost`, `ModelPostFilterInput`, `ModelPostConnection`, `onCreatePost`, …\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -57,11 +57,23 @@
       "text": "V9b: All 43 scenarios passing. Gate checks: cargo fmt ✓, cargo clippy --all-targets ✓, tests ✓. router.rs: 97/114 lines covered (85.1%). Uncovered: json_to_field_value edge cases (null/array) and list/index error branches.",
       "created_at": "2026-09-24T15:13:27.209053Z",
       "comment_type": "default"
+    },
+    {
+      "id": "0d133d1a-ab96-4f65-8c4d-396637e9d230",
+      "author": "home",
+      "text": "Review (storage-lead): **accepted** (committed 23360d9 on feature/amplify-appsync). Verified: 62 scenarios / 232 steps green, fmt ✓, no dependency changes (a jsonschema/clap/cli-feature change made to work around the wrong cargo on PATH was reverted in review). router.rs is at 96.7%: the last 10 lines (internal_failure body, index filter/nextToken, custom scalar registration, errors with path) are carried into V9c (virt-f87b9b), which works on the same router, and gated by the integration task's 100% make check.",
+      "created_at": "2026-09-24T19:45:31.710987Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
     }
   ],
   "created_at": "2026-09-24T04:45:38.094908Z",
-  "updated_at": "2026-09-24T18:23:26.510606Z",
-  "closed_at": null,
+  "updated_at": "2026-09-24T19:45:31.776372Z",
+  "closed_at": "2026-09-24T19:45:31.776323Z",
   "agent": {
     "platform": "claude_code",
     "model": "Claude Opus 5.5",
