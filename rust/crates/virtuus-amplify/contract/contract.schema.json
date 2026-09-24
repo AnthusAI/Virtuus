@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Apricitus Contract Schema",
-  "description": "Schema for apricitus.contract.json describing data models, enums, custom types, and storage paths",
+  "title": "Apricity Contract Schema",
+  "description": "Schema for apricity.contract.json describing data models, enums, custom types, and storage paths",
   "type": "object",
   "required": [
     "version",

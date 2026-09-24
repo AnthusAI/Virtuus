@@ -1,3 +1,4 @@
+use cucumber::gherkin;
 use cucumber::{given, then, when, World};
 use virtuus_amplify::{Contract, Engine, EngineOptions};
 
@@ -27,14 +28,14 @@ fn load_blog_contract(world: &mut AppWorld) {
     }
 }
 
-#[given("an apricitus contract")]
-fn load_apricitus_contract(world: &mut AppWorld) {
+#[given("an apricity contract")]
+fn load_apricity_contract(world: &mut AppWorld) {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let path = format!(
-        "{}/../../../features/amplify/fixtures/apricitus.contract.json",
+        "{}/../../../features/amplify/fixtures/apricity.contract.json",
         manifest_dir
     );
-    let json = std::fs::read_to_string(&path).expect("Failed to read apricitus fixture");
+    let json = std::fs::read_to_string(&path).expect("Failed to read apricity fixture");
 
     match Contract::from_json(&json) {
         Ok(contract) => {
@@ -109,7 +110,7 @@ fn load_mutated_blog_contract(
 #[when("I open the engine")]
 fn open_engine(world: &mut AppWorld) {
     if let Some(contract) = world.contract.clone() {
-        match Engine::open(None, contract, EngineOptions::default()) {
+        match Engine::open(None, contract, EngineOptions) {
             Ok(engine) => {
                 world.engine = Some(engine);
             }
@@ -223,6 +224,217 @@ fn check_error_message_double(world: &mut AppWorld, expected: String) {
         error_msg,
         expected
     );
+}
+
+#[then("the engine description is:")]
+fn check_engine_description(world: &mut AppWorld, step: &gherkin::Step) {
+    if let Some(engine) = &world.engine {
+        let expected_str = step.docstring().expect("Expected docstring");
+        let expected: serde_json::Value =
+            serde_json::from_str(expected_str).expect("Failed to parse expected JSON");
+        let actual = engine.describe();
+
+        assert_eq!(
+            actual,
+            expected,
+            "Engine description does not match.\nExpected:\n{}\n\nActual:\n{}",
+            serde_json::to_string_pretty(&expected).unwrap_or_default(),
+            serde_json::to_string_pretty(&actual).unwrap_or_default()
+        );
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then("the engine has tables:")]
+fn check_engine_tables(world: &mut AppWorld, step: &gherkin::Step) {
+    if let Some(engine) = &world.engine {
+        let tables_str = step.docstring().expect("Expected docstring");
+        let expected_tables: Vec<&str> = tables_str.split(',').map(|s| s.trim()).collect();
+
+        let description = engine.describe();
+        let tables = description.get("tables").unwrap().as_array().unwrap();
+        let actual_tables: Vec<&str> = tables
+            .iter()
+            .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
+            .collect();
+
+        let mut actual_sorted = actual_tables.clone();
+        actual_sorted.sort();
+        let mut expected_sorted = expected_tables.clone();
+        expected_sorted.sort();
+
+        assert_eq!(
+            actual_sorted, expected_sorted,
+            "Table names do not match. Expected: {:?}, Actual: {:?}",
+            expected_sorted, actual_sorted
+        );
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then(regex = "^the tables have these indexes:$")]
+fn check_tables_indexes(world: &mut AppWorld, step: &gherkin::Step) {
+    if let Some(engine) = &world.engine {
+        let table_str = step.docstring().expect("Expected docstring");
+        let lines: Vec<&str> = table_str.lines().collect();
+
+        let description = engine.describe();
+        let tables = description.get("tables").unwrap().as_array().unwrap();
+
+        // Parse the table
+        for line in lines {
+            if line.trim().is_empty() {
+                continue;
+            }
+
+            let parts: Vec<&str> = line.split('|').map(|s| s.trim()).collect();
+            if parts.len() < 2 {
+                continue;
+            }
+
+            let model_name = parts[0];
+            let expected_indexes: Vec<&str> = parts[1].split(',').map(|s| s.trim()).collect();
+
+            let model_table = tables
+                .iter()
+                .find(|t| t.get("name").and_then(|n| n.as_str()) == Some(model_name))
+                .unwrap_or_else(|| panic!("Model {} not found", model_name));
+
+            let indexes = model_table.get("indexes").unwrap().as_array().unwrap();
+            let mut actual_indexes: Vec<String> = indexes
+                .iter()
+                .filter_map(|i| {
+                    i.get("name")
+                        .and_then(|n| n.as_str())
+                        .map(|s| s.to_string())
+                })
+                .collect();
+            actual_indexes.sort();
+            let mut expected_sorted: Vec<String> =
+                expected_indexes.iter().map(|s| s.to_string()).collect();
+            expected_sorted.sort();
+
+            assert_eq!(
+                actual_indexes, expected_sorted,
+                "Indexes for model {} do not match. Expected: {:?}, Actual: {:?}",
+                model_name, expected_sorted, actual_indexes
+            );
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then(regex = "^table \"([^\"]+)\" has partition \"([^\"]+)\" and sort \"([^\"]+)\"$")]
+fn check_table_partition_sort(
+    world: &mut AppWorld,
+    table_name: String,
+    partition: String,
+    sort: String,
+) {
+    if let Some(engine) = &world.engine {
+        let description = engine.describe();
+        let tables = description.get("tables").unwrap().as_array().unwrap();
+
+        let table = tables
+            .iter()
+            .find(|t| t.get("name").and_then(|n| n.as_str()) == Some(&table_name))
+            .unwrap_or_else(|| panic!("Table {} not found", table_name));
+
+        let actual_partition = table
+            .get("partitionKey")
+            .and_then(|v| v.as_str())
+            .unwrap_or_else(|| panic!("partitionKey not found for table {}", table_name));
+
+        let actual_sort = table
+            .get("sortKey")
+            .and_then(|v| v.as_str())
+            .unwrap_or_else(|| panic!("sortKey not found for table {}", table_name));
+
+        assert_eq!(
+            actual_partition, partition,
+            "Partition key mismatch for table {}",
+            table_name
+        );
+        assert_eq!(
+            actual_sort, sort,
+            "Sort key mismatch for table {}",
+            table_name
+        );
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when("I put these Post records:")]
+fn put_post_records(world: &mut AppWorld, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        let json_str = step.docstring().expect("Expected JSON docstring");
+        let records: Vec<serde_json::Value> =
+            serde_json::from_str(json_str).expect("Failed to parse records JSON");
+
+        if let Some(table) = engine.table_mut("Post") {
+            for record in records {
+                table.put(record);
+            }
+        } else {
+            panic!("Post table not found");
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then(regex = "^querying postsByBlog for blogId \"([^\"]+)\" returns ids \\[(.+)\\]$")]
+fn query_posts_by_blog(world: &mut AppWorld, blog_id: String, expected_ids_str: String) {
+    if let Some(engine) = &mut world.engine {
+        // First verify the table and GSI exist using the immutable accessor
+        let table = engine.table("Post");
+        assert!(
+            table.is_some(),
+            "Post table should be accessible via engine.table()"
+        );
+
+        let table = table.unwrap();
+        assert!(
+            table.gsis().contains_key("postsByBlog"),
+            "postsByBlog index should exist on Post table"
+        );
+
+        // Now query the GSI using the mutable accessor
+        if let Some(table_mut) = engine.table_mut("Post") {
+            let blog_id_value = serde_json::json!(blog_id);
+            let results = table_mut.query_gsi("postsByBlog", &blog_id_value, None, false);
+
+            let result_ids: Vec<String> = results
+                .iter()
+                .filter_map(|record| {
+                    record
+                        .get("id")
+                        .and_then(|id| id.as_str())
+                        .map(|s| s.to_string())
+                })
+                .collect();
+
+            // Parse expected ids from step parameter
+            let expected_ids: Vec<String> = expected_ids_str
+                .split(',')
+                .map(|s| s.trim().trim_matches('"').to_string())
+                .collect();
+
+            assert_eq!(
+                result_ids, expected_ids,
+                "Query results don't match. Got {:?}, expected {:?}",
+                result_ids, expected_ids
+            );
+        } else {
+            panic!("Post table not found");
+        }
+    } else {
+        panic!("No engine loaded");
+    }
 }
 
 #[tokio::main]

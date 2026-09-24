@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use thiserror::Error;
+use virtuus::table::Table;
 
 /// Contract validation and loading errors.
 #[derive(Debug, Error)]
@@ -28,15 +29,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// A data contract describing models, indexes, and relationships.
 #[derive(Debug, Clone)]
 pub struct Contract {
-    #[allow(dead_code)]
-    version: String,
     models: HashMap<String, Model>,
     enums: HashMap<String, Enum>,
     custom_types: HashMap<String, CustomType>,
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct Model {
     name: String,
     fields: HashMap<String, Field>,
@@ -46,17 +44,12 @@ pub struct Model {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct Field {
-    name: String,
     field_type: String,
-    is_required: bool,
-    is_array: bool,
     kind: String,
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct Index {
     name: String,
     query_field: String,
@@ -65,7 +58,6 @@ pub struct Index {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct Relationship {
     field: String,
     kind: String,
@@ -76,17 +68,10 @@ pub struct Relationship {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct Enum {
-    name: String,
-    values: Vec<String>,
-}
+pub struct Enum;
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub struct CustomType {
-    name: String,
-}
+pub struct CustomType;
 
 impl Contract {
     /// Load and validate a contract from JSON string.
@@ -117,21 +102,14 @@ impl Contract {
         let mut custom_types = HashMap::new();
         if let Some(types_obj) = value.get("customTypes").and_then(|v| v.as_object()) {
             for (name, _type_val) in types_obj {
-                custom_types.insert(name.clone(), CustomType { name: name.clone() });
+                custom_types.insert(name.clone(), CustomType);
             }
         }
 
         // Semantic validation
         Self::validate_semantics(&models, &enums, &custom_types)?;
 
-        let version = value
-            .get("version")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown")
-            .to_string();
-
         Ok(Contract {
-            version,
             models,
             enums,
             custom_types,
@@ -287,27 +265,11 @@ impl Contract {
     }
 
     fn parse_field(value: &Value) -> Result<Field> {
-        let name = value
-            .get("name")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| Error::Validation("Field missing name".to_string()))?
-            .to_string();
-
         let field_type = value
             .get("type")
             .and_then(|v| v.as_str())
             .unwrap_or("String")
             .to_string();
-
-        let is_required = value
-            .get("isRequired")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        let is_array = value
-            .get("isArray")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
 
         let kind = value
             .get("kind")
@@ -315,13 +277,7 @@ impl Contract {
             .unwrap_or("scalar")
             .to_string();
 
-        Ok(Field {
-            name,
-            field_type,
-            is_required,
-            is_array,
-            kind,
-        })
+        Ok(Field { field_type, kind })
     }
 
     fn parse_index(value: &Value) -> Result<Index> {
@@ -407,25 +363,9 @@ impl Contract {
         })
     }
 
-    fn parse_enum(value: &Value, name: &str) -> Result<Enum> {
-        // Enums are stored as arrays of strings (the enum name is the map key)
-        let values = value
-            .as_array()
-            .ok_or_else(|| {
-                Error::Validation(format!(
-                    "Enum '{}' must be an array of strings, not an object or other type",
-                    name
-                ))
-            })?
-            .iter()
-            .filter_map(|v| v.as_str())
-            .map(|s| s.to_string())
-            .collect();
-
-        Ok(Enum {
-            name: name.to_string(),
-            values,
-        })
+    fn parse_enum(_value: &Value, _name: &str) -> Result<Enum> {
+        // Enums are validated by the JSON schema to be arrays, so no additional validation needed here
+        Ok(Enum)
     }
 
     /// Get the models in this contract.
@@ -446,25 +386,21 @@ impl Contract {
 
 impl Model {
     /// Get the model name.
-    #[allow(dead_code)]
     pub fn name(&self) -> &str {
         &self.name
     }
 
     /// Get the primary key fields.
-    #[allow(dead_code)]
     pub fn primary_key(&self) -> &[String] {
         &self.primary_key
     }
 
     /// Get the indexes.
-    #[allow(dead_code)]
     pub fn indexes(&self) -> &[Index] {
         &self.indexes
     }
 
     /// Get the relationships.
-    #[allow(dead_code)]
     pub fn relationships(&self) -> &[Relationship] {
         &self.relationships
     }
@@ -494,13 +430,11 @@ impl Index {
 
 impl Relationship {
     /// Get the field name.
-    #[allow(dead_code)]
     pub fn field(&self) -> &str {
         &self.field
     }
 
     /// Get the relationship kind (hasMany, belongsTo, etc).
-    #[allow(dead_code)]
     pub fn kind(&self) -> &str {
         &self.kind
     }
@@ -516,7 +450,6 @@ impl Relationship {
     }
 
     /// Is this an implicit relationship?
-    #[allow(dead_code)]
     pub fn is_implicit(&self) -> bool {
         self.implicit
     }
@@ -528,23 +461,14 @@ impl Relationship {
 }
 
 /// Engine options.
-pub struct EngineOptions {
-    /// Whether to enforce authorization rules.
-    pub enforce_auth: bool,
-}
-
-impl Default for EngineOptions {
-    fn default() -> Self {
-        EngineOptions { enforce_auth: true }
-    }
-}
+pub struct EngineOptions;
 
 /// Storage-less or file-backed engine for Amplify-shaped operations.
+/// Composite sort attributes are synthetic and will be populated by writes (V8b) as `v1#v2`.
 #[derive(Debug)]
 pub struct Engine {
     contract: Contract,
-    #[allow(dead_code)]
-    tables: HashMap<String, virtuus::table::Table>,
+    tables: BTreeMap<String, Table>,
 }
 
 impl Engine {
@@ -555,9 +479,10 @@ impl Engine {
         _options: EngineOptions,
     ) -> Result<Self> {
         // Create one table per model
-        let mut tables_temp: HashMap<String, virtuus::table::Table> = HashMap::new();
+        let mut tables: BTreeMap<String, Table> = BTreeMap::new();
+
         for (model_name, model) in contract.models() {
-            let primary_key = &model.primary_key();
+            let primary_key = model.primary_key();
 
             // Handle composite/compound primary keys
             let pk_sort_key_name: Option<String>;
@@ -585,7 +510,7 @@ impl Engine {
                 }
             };
 
-            let mut table = virtuus::table::Table::new(
+            let mut table = Table::new(
                 model_name,
                 pk,
                 partition,
@@ -594,58 +519,78 @@ impl Engine {
                 virtuus::table::ValidationMode::Error,
             );
 
-            // Add GSIs for explicit indexes
+            // Add GSIs for explicit indexes, registered by queryField
             for index in model.indexes() {
                 let index_sort_key_name: Option<String>;
-                let sort_key = if index.sort_fields.is_empty() {
+                let sort_key = if index.sort_fields().is_empty() {
                     None
-                } else if index.sort_fields.len() == 1 {
-                    Some(index.sort_fields[0].as_str())
+                } else if index.sort_fields().len() == 1 {
+                    Some(index.sort_fields()[0].as_str())
                 } else {
                     // Multiple sort fields: use joined name as the attribute name
-                    index_sort_key_name = Some(index.sort_fields.join("#"));
+                    index_sort_key_name = Some(index.sort_fields().join("#"));
                     index_sort_key_name.as_deref()
                 };
+                // Register GSI by queryField, not by name
                 table.add_gsi(index.query_field(), index.partition_field(), sort_key);
             }
 
-            tables_temp.insert(model_name.to_string(), table);
+            tables.insert(model_name.to_string(), table);
         }
 
         // Add implicit indexes from hasMany relationships
         // These indexes are on the child table, keyed by the foreign key
+        // Only add if no explicit index with that queryField already exists
         for model in contract.models().values() {
             for rel in model.relationships() {
-                if rel.kind == "hasMany" && rel.implicit {
+                if rel.kind() == "hasMany" && rel.is_implicit() {
                     // Add the index to the child table (referenced model)
-                    if let Some(table) = tables_temp.get_mut(rel.target()) {
+                    if let Some(table) = tables.get_mut(rel.target()) {
                         if let Some(child_index) = rel.child_index() {
-                            table.add_gsi(child_index, rel.references(), None);
+                            // Check if an explicit index with this queryField already exists on the TARGET model
+                            let target_model = contract.models().get(rel.target()).unwrap();
+                            let has_explicit = target_model
+                                .indexes()
+                                .iter()
+                                .any(|idx| idx.query_field() == child_index);
+                            if !has_explicit {
+                                table.add_gsi(child_index, rel.references(), None);
+                            }
                         }
                     }
                 }
             }
         }
 
-        Ok(Engine {
-            contract,
-            tables: tables_temp,
-        })
+        Ok(Engine { contract, tables })
+    }
+
+    /// Get a table by model name.
+    pub fn table(&self, model: &str) -> Option<&Table> {
+        self.tables.get(model)
+    }
+
+    /// Get a mutable table by model name.
+    pub fn table_mut(&mut self, model: &str) -> Option<&mut Table> {
+        self.tables.get_mut(model)
     }
 
     /// Describe the engine's tables and indexes.
+    /// Computed from the constructed tables, not the contract.
     pub fn describe(&self) -> Value {
         let mut result = serde_json::Map::new();
         let mut tables_array = Vec::new();
 
-        // Use BTreeMap for deterministic ordering
-        let sorted_models: BTreeMap<_, _> = self.contract.models().iter().collect();
-
-        for (model_name, model) in &sorted_models {
+        // Iterate through tables in sorted order (BTreeMap is ordered)
+        for (model_name, table) in &self.tables {
             let mut table_info = serde_json::Map::new();
-            table_info.insert("name".to_string(), Value::String((*model_name).clone()));
+            table_info.insert("name".to_string(), Value::String(model_name.clone()));
 
-            let primary_key = &model.primary_key();
+            // Get primary key info from the table
+            // Determine if we have a primary key or partition/sort keys
+            let model = self.contract.models().get(model_name).unwrap();
+            let primary_key = model.primary_key();
+
             if primary_key.len() == 1 {
                 table_info.insert(
                     "primaryKey".to_string(),
@@ -666,60 +611,67 @@ impl Engine {
                 );
             }
 
-            // Indexes - sort by name for determinism
+            // Get indexes from the actual table
+            // Sort by: explicit indexes first (by contract order), then implicit indexes
             let mut indexes_array = Vec::new();
-            let mut sorted_indexes = model.indexes().to_vec();
-            sorted_indexes.sort_by(|a, b| a.name().cmp(b.name()));
+            let mut gsi_entries: Vec<_> = table.gsis().keys().cloned().collect();
 
-            for index in sorted_indexes {
-                let mut idx_info = serde_json::Map::new();
-                idx_info.insert("name".to_string(), Value::String(index.name().to_string()));
-                idx_info.insert(
-                    "queryField".to_string(),
-                    Value::String(index.query_field().to_string()),
-                );
-                idx_info.insert(
-                    "partitionField".to_string(),
-                    Value::String(index.partition_field().to_string()),
-                );
-                idx_info.insert(
-                    "sortFields".to_string(),
-                    Value::Array(
-                        index
-                            .sort_fields()
-                            .iter()
-                            .map(|s| Value::String(s.clone()))
-                            .collect(),
-                    ),
-                );
-                indexes_array.push(Value::Object(idx_info));
-            }
+            // Sort so that explicit indexes come first, then implicit, and within each group sort alphabetically
+            gsi_entries.sort_by_key(|name| {
+                let is_explicit = model.indexes().iter().any(|idx| idx.query_field() == name);
+                // (is_implicit ? 1 : 0, name) ensures explicit (false/0) come before implicit (true/1)
+                (!is_explicit, name.clone())
+            });
 
-            // Implicit indexes from OTHER models' hasMany relationships that reference this model
-            for (other_model_name, other_model) in &sorted_models {
-                for rel in other_model.relationships() {
-                    if rel.kind == "hasMany" && rel.implicit && rel.target() == model_name.as_str()
-                    {
-                        if let Some(child_index) = rel.child_index() {
-                            let mut idx_info = serde_json::Map::new();
-                            idx_info
-                                .insert("name".to_string(), Value::String(child_index.to_string()));
-                            idx_info.insert(
-                                "queryField".to_string(),
-                                Value::String(child_index.to_string()),
-                            );
-                            idx_info.insert(
-                                "partitionField".to_string(),
-                                Value::String(rel.references().to_string()),
-                            );
-                            idx_info.insert("implicit".to_string(), Value::Bool(true));
-                            idx_info.insert(
-                                "from".to_string(),
-                                Value::String((*other_model_name).clone()),
-                            );
-                            indexes_array.push(Value::Object(idx_info));
+            for gsi_name in gsi_entries {
+                if let Some(gsi) = table.gsis().get(&gsi_name) {
+                    let mut idx_info = serde_json::Map::new();
+                    idx_info.insert("name".to_string(), Value::String(gsi_name.clone()));
+                    idx_info.insert(
+                        "partitionKey".to_string(),
+                        Value::String(gsi.partition_key().to_string()),
+                    );
+
+                    if let Some(sort_key) = gsi.sort_key() {
+                        idx_info.insert("sortKey".to_string(), Value::String(sort_key.to_string()));
+                    }
+
+                    // Check if this is an implicit index by checking:
+                    // 1. Is there an explicit index with this queryField in the contract for this model?
+                    // 2. If not, is it created by a hasMany relationship?
+                    let is_explicit = model
+                        .indexes()
+                        .iter()
+                        .any(|idx| idx.query_field() == gsi_name);
+
+                    let mut is_implicit = false;
+                    if !is_explicit {
+                        // Check if this index was created by an implicit hasMany relationship
+                        for other_model in self.contract.models().values() {
+                            for rel in other_model.relationships() {
+                                if rel.kind() == "hasMany"
+                                    && rel.is_implicit()
+                                    && rel.target() == model_name
+                                {
+                                    if let Some(child_index) = rel.child_index() {
+                                        if child_index == gsi_name {
+                                            is_implicit = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if is_implicit {
+                                break;
+                            }
                         }
                     }
+
+                    if is_implicit {
+                        idx_info.insert("implicit".to_string(), Value::Bool(true));
+                    }
+
+                    indexes_array.push(Value::Object(idx_info));
                 }
             }
 
@@ -837,8 +789,8 @@ mod tests {
         }"#;
 
         let contract = Contract::from_json(json).expect("Failed to parse contract");
-        let engine = Engine::open(None, contract.clone(), EngineOptions::default())
-            .expect("Failed to open engine");
+        let engine =
+            Engine::open(None, contract.clone(), EngineOptions).expect("Failed to open engine");
         let description = engine.describe();
         assert!(description.get("tables").is_some());
 
@@ -859,6 +811,10 @@ mod tests {
         // Test enum accessors
         let enums = contract.enums();
         assert!(enums.contains_key("Status"));
+
+        // Test custom type accessors
+        let custom_types = contract.custom_types();
+        assert!(custom_types.is_empty());
     }
 
     #[test]
@@ -1214,5 +1170,44 @@ mod tests {
         if let Err(Error::Validation(msg)) = result {
             assert!(msg.contains("undefined customType"));
         }
+    }
+
+    #[test]
+    fn test_composite_key_with_three_fields() {
+        let json = r#"{
+            "version": "test_v1",
+            "models": {
+                "CompositeModel": {
+                    "name": "CompositeModel",
+                    "fields": {
+                        "pk": {"name": "pk", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+                        "sk1": {"name": "sk1", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+                        "sk2": {"name": "sk2", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"}
+                    },
+                    "primaryKey": ["pk", "sk1", "sk2"],
+                    "indexes": [],
+                    "relationships": [],
+                    "authRules": [],
+                    "ownerFields": []
+                }
+            },
+            "enums": {},
+            "customTypes": {},
+            "authRules": {},
+            "storage": { "paths": [] }
+        }"#;
+
+        let contract = Contract::from_json(json).expect("Failed to parse contract");
+        let engine = Engine::open(None, contract, EngineOptions).expect("Failed to open engine");
+        let description = engine.describe();
+        let tables = description.get("tables").unwrap().as_array().unwrap();
+        let model = &tables[0];
+
+        assert_eq!(
+            model.get("name").unwrap().as_str().unwrap(),
+            "CompositeModel"
+        );
+        assert_eq!(model.get("partitionKey").unwrap().as_str().unwrap(), "pk");
+        assert_eq!(model.get("sortKey").unwrap().as_str().unwrap(), "sk1#sk2");
     }
 }
