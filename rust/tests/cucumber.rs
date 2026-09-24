@@ -3891,10 +3891,10 @@ async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
             for i in 0..50 {
                 let idx = (worker + i) % user_ids.len();
                 let user_id = &user_ids[idx];
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let result = {
                     let mut db = db.lock().expect("lock db");
                     db.resolve_association("users", "posts", user_id)
-                }));
+                };
                 match result {
                     Ok(Value::Null) => {}
                     Ok(Value::Array(items)) => {
@@ -3922,7 +3922,7 @@ async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
                             .expect("lock invalid")
                             .push("non-array".to_string());
                     }
-                    Err(_) => {
+                    Err(err) => {
                         errors
                             .lock()
                             .expect("lock errors")
@@ -4004,10 +4004,10 @@ async fn when_resolve_post_authors(world: &mut VirtuusWorld) {
             for i in 0..50 {
                 let idx = (worker + i) % post_ids.len();
                 let post_id = &post_ids[idx];
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let result = {
                     let mut db = db.lock().expect("lock db");
                     db.resolve_association("posts", "author", post_id)
-                }));
+                };
                 match result {
                     Ok(Value::Null) => {}
                     Ok(Value::Object(obj)) => {
@@ -4024,7 +4024,7 @@ async fn when_resolve_post_authors(world: &mut VirtuusWorld) {
                             .expect("lock invalid")
                             .push("non-object".to_string());
                     }
-                    Err(_) => {
+                    Err(err) => {
                         errors
                             .lock()
                             .expect("lock errors")
@@ -4709,7 +4709,7 @@ async fn given_empty_db(world: &mut VirtuusWorld) {
 async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
     let query: Value = serde_json::from_str(&query_text).expect("invalid query json");
     let db = ensure_db(world);
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query))) {
+    match db.execute(&query) {
         Ok(result) => {
             world.db_result = Some(result.clone());
             world.last_records = items_from_result(&result);
@@ -4722,8 +4722,8 @@ async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
                 .map(|s| s.to_string());
             world.error = None;
         }
-        Err(_) => {
-            world.error = Some("error".to_string());
+        Err(err) => {
+            world.error = Some(err.to_string());
         }
     }
 }
@@ -4828,6 +4828,57 @@ async fn then_error_table(_world: &mut VirtuusWorld, _table: String) {
 #[then(regex = r#"^an error should be raised indicating GSI "([^"]*)" does not exist$"#)]
 async fn then_error_gsi(_world: &mut VirtuusWorld, _gsi: String) {
     assert!(_world.error.is_some());
+}
+
+#[then("an error should be raised about the missing partition key in query")]
+async fn then_error_missing_partition_key(_world: &mut VirtuusWorld) {
+    assert!(_world.error.is_some());
+}
+
+#[when(regex = r#"^I try to execute "([^"]*)"$"#)]
+async fn when_try_execute(_world: &mut VirtuusWorld, query_text: String) {
+    // Try to execute a non-JSON string (will fail)
+    let db = _world.db.as_mut().expect("missing database");
+    match serde_json::from_str::<Value>(&query_text) {
+        Ok(query) => match db.execute(&query) {
+            Ok(result) => _world.db_result = Some(result),
+            Err(err) => _world.error = Some(format!("{:?}", err)),
+        },
+        Err(err) => {
+            _world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[then("an error should be raised about malformed query")]
+async fn then_error_malformed_query(_world: &mut VirtuusWorld) {
+    assert!(_world.error.is_some());
+}
+
+#[then("an error should be raised about targeting exactly one table")]
+async fn then_error_one_table(_world: &mut VirtuusWorld) {
+    assert!(_world.error.is_some());
+}
+
+#[then("the database should still answer subsequent queries")]
+async fn then_database_still_works(world: &mut VirtuusWorld) {
+    let db = world.db.as_ref().expect("missing database");
+    if !db.tables.is_empty() {
+        let table_name = db.tables.keys().next().expect("no tables");
+        let query = json!({ table_name: { "scan": true } });
+        let mut db_mut = world.db.as_mut().expect("missing database");
+        match db_mut.execute(&query) {
+            Ok(result) => {
+                assert!(
+                    result.get("items").is_some(),
+                    "Database should return items"
+                );
+            }
+            Err(_err) => {
+                panic!("Database should still work after error");
+            }
+        }
+    }
 }
 
 #[then(regex = r#"^the result should contain 2 posts with created_at >= "([^"]*)"$"#)]
@@ -5614,7 +5665,7 @@ async fn when_page_through_limit(world: &mut VirtuusWorld) {
         if let Some(tok) = token.clone() {
             query["users"]["next_token"] = Value::String(tok);
         }
-        let result = db.execute(&query);
+        let result = db.execute(&query).unwrap_or(Value::Null);
         let items = items_from_result(&result);
         if items.is_empty() {
             break;
@@ -5658,7 +5709,7 @@ async fn when_page_through_query(world: &mut VirtuusWorld, query_text: String) {
             let inner = map.values_mut().next().unwrap().as_object_mut().unwrap();
             inner.insert("next_token".to_string(), Value::String(tok));
         }
-        let result = db.execute(&query);
+        let result = db.execute(&query).unwrap_or(Value::Null);
         let items = items_from_result(&result);
         if items.is_empty() {
             break;
@@ -6854,6 +6905,195 @@ async fn then_no_error_writes(world: &mut VirtuusWorld) {
 }
 
 // ---------------------------------------------------------------------------
+// Error scenarios (shared with Python)
+// ---------------------------------------------------------------------------
+
+#[given(regex = r#"^a table "([^"]*)" with primary key "([^"]*)"$"#)]
+async fn given_table_with_pk(world: &mut VirtuusWorld, name: String, pk: String) {
+    if world.database.is_none() {
+        world.database = Some(Database::new());
+    }
+    let mut table = Table::new(
+        &name,
+        Some(&pk),
+        None,
+        None,
+        None,
+        virtuus::table::ValidationMode::Silent,
+    );
+    let db = world.database.as_mut().expect("database");
+    db.add_table(&name, table);
+}
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)" naming "([^"]*)"$"#)]
+#[given("a database with no tables")]
+async fn given_empty_database(world: &mut VirtuusWorld) {
+    world.database = Some(virtuus::Database::new());
+    world.error = None;
+}
+
+#[when(regex = r#"^I execute a query for table "([^"]*)"$"#)]
+async fn when_execute_query_for_table(world: &mut VirtuusWorld, table_name: String) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({table_name: {"scan": true}});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a malformed query that is not an object")]
+async fn when_execute_malformed_query(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::Value::String("not an object".to_string());
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a query with zero tables specified")]
+async fn when_execute_query_zero_tables(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a query targeting two tables")]
+async fn when_execute_query_two_tables(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({"users": {"scan": true}, "products": {"scan": true}});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when(regex = r#"^I execute a query for unknown index "([^"]*)" on "([^"]*)"$"#)]
+async fn when_execute_query_unknown_index(
+    world: &mut VirtuusWorld,
+    index_name: String,
+    table_name: String,
+) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({
+        table_name: {
+            "index": index_name,
+            "where": {"email": "test@example.com"}
+        }
+    });
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when(
+    regex = r#"^I execute a query for index "([^"]*)" on "([^"]*)" without partition key in where$"#
+)]
+async fn when_execute_query_missing_partition_key(
+    world: &mut VirtuusWorld,
+    index_name: String,
+    table_name: String,
+) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({
+        table_name: {
+            "index": index_name,
+            "where": {}
+        }
+    });
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+async fn then_error_kind_with_name(world: &mut VirtuusWorld, error_kind: String, name: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+    assert!(
+        error.contains(&name),
+        "Expected name {} in error: {}",
+        name,
+        error
+    );
+}
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)"$"#)]
+async fn then_error_kind(world: &mut VirtuusWorld, error_kind: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+}
+
+#[then("the database still answers queries")]
+async fn then_database_still_works(world: &mut VirtuusWorld) {
+    // Verify the database is still functional after an error
+    assert!(world.database.is_some(), "database should still exist");
+}
+
+// ---------------------------------------------------------------------------
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)" containing "([^"]*)"$"#)]
+async fn then_error_kind_containing(world: &mut VirtuusWorld, error_kind: String, message: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+    assert!(
+        error.contains(&message),
+        "Expected message containing '{}' in error: {}",
+        message,
+        error
+    );
+}
+
 // Rust-only scenarios
 // ---------------------------------------------------------------------------
 

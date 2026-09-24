@@ -9,6 +9,7 @@ import yaml
 from behave import given, then, when, use_step_matcher
 
 from virtuus import Database, Table
+from virtuus.errors import UnknownTableError, UnknownIndexError
 
 
 def _ensure_db(context) -> Database:
@@ -314,6 +315,18 @@ def step_execute(context, query_text):
         context.previous_token = context.result["next_token"]
 
 
+@when('I try to execute "{query_text}"')
+def step_try_execute(context, query_text):
+    db = _ensure_db(context)
+    try:
+        # Try to execute a non-JSON string (will fail JSON parsing)
+        result = db.execute(query_text)
+        _store_result(context, result)
+        context.error = None
+    except Exception as exc:  # noqa: BLE001
+        context.error = exc
+
+
 @when("I call describe on the database")
 def step_call_describe(context):
     context.result = _ensure_db(context).describe()
@@ -496,14 +509,55 @@ def step_result_user_record(context, user_id):
 
 @then('an error should be raised indicating table "{table}" does not exist')
 def step_error_missing_table(context, table):
-    assert isinstance(context.error, KeyError)
+    assert isinstance(context.error, (KeyError, UnknownTableError)), f"Expected KeyError or UnknownTableError, got {type(context.error)}: {context.error}"
     assert table in str(context.error)
 
 
 @then('an error should be raised indicating GSI "{gsi}" does not exist')
 def step_error_missing_gsi(context, gsi):
-    assert isinstance(context.error, KeyError)
+    assert isinstance(context.error, (KeyError, UnknownIndexError)), f"Expected KeyError or UnknownIndexError, got {type(context.error)}: {context.error}"
     assert gsi in str(context.error)
+
+
+@then("an error should be raised about the missing partition key in query")
+def step_error_missing_partition_key(context):
+    from virtuus.errors import ValidationError
+
+    assert isinstance(context.error, (ValueError, ValidationError)), f"Expected ValueError or ValidationError, got {type(context.error)}: {context.error}"
+    assert "partition" in str(context.error).lower() or "missing" in str(context.error).lower()
+
+
+@then("an error should be raised about malformed query")
+def step_error_malformed_query(context):
+    from virtuus.errors import ValidationError
+
+    assert context.error is not None, "Expected an error but got none"
+    assert isinstance(context.error, (TypeError, ValidationError)), f"Expected TypeError or ValidationError, got {type(context.error)}: {context.error}"
+
+
+@then("an error should be raised about targeting exactly one table")
+def step_error_one_table(context):
+    from virtuus.errors import ValidationError
+
+    assert isinstance(context.error, (ValueError, ValidationError)), f"Expected ValueError or ValidationError, got {type(context.error)}: {context.error}"
+    assert "exactly one table" in str(context.error).lower() or "one table" in str(context.error).lower()
+
+
+@then("the database should still answer subsequent queries")
+def step_database_still_works(context):
+    db = _ensure_db(context)
+    # Try to query the existing table to verify database is still functional
+    if hasattr(context, "db") and context.db:
+        try:
+            # Use a simple query to verify the database still works
+            tables = list(context.db.tables.keys())
+            if tables:
+                # Try to query the first available table
+                table_name = tables[0]
+                result = context.db.execute({table_name: {"scan": True}})
+                assert "items" in result, "Database should still return results after error"
+        except Exception as exc:
+            assert False, f"Database should still work after error, but got: {exc}"
 
 
 @then("the result should include {first} and {second}")

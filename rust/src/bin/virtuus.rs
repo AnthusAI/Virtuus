@@ -167,8 +167,9 @@ fn run_query(
         Value::Object(directive),
     )]));
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query)))
-        .map_err(|err| format!("query failed: {}", panic_message(err)))?;
+    let result = db
+        .execute(&query)
+        .map_err(|err| format!("query failed: {}", err))?;
 
     let output = if let Some(items) = result.get("items") {
         items.clone()
@@ -238,15 +239,12 @@ fn handle_connection(
             let text = String::from_utf8_lossy(&request.body);
             match serde_json::from_str::<Value>(&text) {
                 Ok(query) => {
-                    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        let mut db = state.lock().expect("db lock");
-                        db.execute(&query)
-                    }));
-                    match result {
+                    let mut db = state.lock().expect("db lock");
+                    match db.execute(&query) {
                         Ok(value) => value,
                         Err(err) => {
                             status = 400;
-                            json!({ "error": panic_message(err) })
+                            json!({ "error": { "kind": format!("{:?}", err).split('(').next().unwrap_or("Error"), "message": err.to_string() } })
                         }
                     }
                 }

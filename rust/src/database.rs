@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use serde_json::{json, Value};
 use serde_yaml::Value as YamlValue;
 
+use crate::error::{Error, Result};
 use crate::sort::SortCondition;
 use crate::table::{Association, Table};
 
@@ -264,17 +265,23 @@ impl Database {
     }
 
     /// Execute a query dictionary against the database.
-    pub fn execute(&mut self, query: &Value) -> Value {
-        let map = query.as_object().expect("query must be object");
+    pub fn execute(&mut self, query: &Value) -> Result<Value> {
+        let map = query.as_object().ok_or(Error::Validation {
+            message: "query must be object".to_string(),
+        })?;
         if map.len() != 1 {
-            panic!("query must target exactly one table");
+            return Err(Error::Validation {
+                message: "query must target exactly one table".to_string(),
+            });
         }
         let (table_name, directive) = map.iter().next().unwrap();
         let directive = directive.as_object().cloned().unwrap_or_default();
-        let table = self
-            .tables
-            .get_mut(table_name.as_str())
-            .unwrap_or_else(|| panic!("table \"{}\" does not exist", table_name));
+        let table =
+            self.tables
+                .get_mut(table_name.as_str())
+                .ok_or_else(|| Error::UnknownTable {
+                    name: table_name.to_string(),
+                })?;
 
         if let Some(pk_value) = directive.get("pk") {
             let pk_str = match pk_value.as_str() {
@@ -324,11 +331,11 @@ impl Database {
                 let items = result["items"].as_array().cloned().unwrap_or_default();
                 let mut enriched = Vec::new();
                 for item in items {
-                    enriched.push(self.apply_includes(table_name, item, Some(includes)));
+                    enriched.push(self.apply_includes(table_name, item, Some(includes))?);
                 }
                 result["items"] = Value::Array(enriched);
             }
-            return result;
+            return Ok(result);
         }
 
         let mut records: Vec<Value> =
@@ -341,11 +348,14 @@ impl Database {
                 let gsi = table
                     .gsis()
                     .get(index_name)
-                    .unwrap_or_else(|| panic!("GSI \"{}\" does not exist", index_name));
+                    .ok_or_else(|| Error::UnknownIndex {
+                        table: table_name.to_string(),
+                        name: index_name.to_string(),
+                    })?;
                 let partition_field = gsi.partition_key();
-                let partition_value = where_map
-                    .get(partition_field)
-                    .unwrap_or_else(|| panic!("missing partition key in where"));
+                let partition_value = where_map.get(partition_field).ok_or(Error::Validation {
+                    message: "missing partition key in where".to_string(),
+                })?;
                 let sort_condition = directive.get("sort").and_then(build_sort_condition);
                 let descending = directive
                     .get("sort_direction")
@@ -394,11 +404,11 @@ impl Database {
             let items = result["items"].as_array().cloned().unwrap_or_default();
             let mut enriched = Vec::new();
             for item in items {
-                enriched.push(self.apply_includes(table_name, item, Some(includes)));
+                enriched.push(self.apply_includes(table_name, item, Some(includes))?);
             }
             result["items"] = Value::Array(enriched);
         }
-        result
+        Ok(result)
     }
 
     /// Access a table mutably.
@@ -412,7 +422,12 @@ impl Database {
     }
 
     /// Resolve an association for a record within the database.
-    pub fn resolve_association(&mut self, table: &str, association: &str, pk: &str) -> Value {
+    pub fn resolve_association(
+        &mut self,
+        table: &str,
+        association: &str,
+        pk: &str,
+    ) -> crate::error::Result<Value> {
         let assoc = match self
             .tables
             .get(table)
@@ -420,11 +435,11 @@ impl Database {
             .cloned()
         {
             Some(a) => a,
-            None => return Value::Null,
+            None => return Ok(Value::Null),
         };
         let record = match self.tables.get(table).and_then(|t| t.get(pk, None)) {
             Some(record) => record,
-            None => return Value::Null,
+            None => return Ok(Value::Null),
         };
         match assoc {
             Association::BelongsTo {
@@ -433,36 +448,36 @@ impl Database {
             } => {
                 let fk_value = match record.get(&foreign_key) {
                     Some(value) => value,
-                    None => return Value::Null,
+                    None => return Ok(Value::Null),
                 };
                 let fk_str = match fk_value.as_str() {
                     Some(s) => s.to_string(),
                     None => fk_value.to_string(),
                 };
-                let target = self
-                    .tables
-                    .get_mut(&target_table)
-                    .expect("target table not found");
-                target.get(&fk_str, None).unwrap_or(Value::Null)
+                let target = self.tables.get_mut(&target_table).ok_or_else(|| {
+                    crate::error::Error::UnknownTable {
+                        name: target_table.clone(),
+                    }
+                })?;
+                Ok(target.get(&fk_str, None).unwrap_or(Value::Null))
             }
             Association::HasMany {
                 target_table,
                 index,
             } => {
                 let table_ref = self.tables.get(table).unwrap();
-                let field = table_ref
-                    .key_field()
-                    .expect("key field missing")
-                    .to_string();
-                let key_value = record
-                    .get(&field)
-                    .cloned()
-                    .expect("record missing key field");
-                let target = self
-                    .tables
-                    .get_mut(&target_table)
-                    .expect("target table not found");
-                Value::Array(target.query_gsi(&index, &key_value, None, false))
+                // table always has a key field by construction (enforced in Table::new)
+                let field = table_ref.key_field().unwrap().to_string();
+                // record retrieved from table always has its key field
+                let key_value = record.get(&field).cloned().unwrap();
+                let target = self.tables.get_mut(&target_table).ok_or_else(|| {
+                    crate::error::Error::UnknownTable {
+                        name: target_table.clone(),
+                    }
+                })?;
+                Ok(Value::Array(
+                    target.query_gsi(&index, &key_value, None, false),
+                ))
             }
             Association::HasManyThrough {
                 through_table,
@@ -471,19 +486,16 @@ impl Database {
                 target_foreign_key,
             } => {
                 let table_ref = self.tables.get(table).unwrap();
-                let field = table_ref
-                    .key_field()
-                    .expect("key field missing")
-                    .to_string();
-                let key_value = record
-                    .get(&field)
-                    .cloned()
-                    .expect("record missing key field");
+                // table always has a key field by construction (enforced in Table::new)
+                let field = table_ref.key_field().unwrap().to_string();
+                // record retrieved from table always has its key field
+                let key_value = record.get(&field).cloned().unwrap();
                 let assignments = {
-                    let through = self
-                        .tables
-                        .get_mut(&through_table)
-                        .expect("through table not found");
+                    let through = self.tables.get_mut(&through_table).ok_or_else(|| {
+                        crate::error::Error::UnknownTable {
+                            name: through_table.clone(),
+                        }
+                    })?;
                     through.query_gsi(&through_index, &key_value, None, false)
                 };
                 let mut related = Vec::new();
@@ -504,7 +516,7 @@ impl Database {
                         related.push(record);
                     }
                 }
-                Value::Array(related)
+                Ok(Value::Array(related))
             }
         }
     }
@@ -514,12 +526,12 @@ impl Database {
         table_name: &str,
         record: Value,
         includes: Option<&serde_json::Map<String, Value>>,
-    ) -> Value {
+    ) -> crate::error::Result<Value> {
         let Some(include_map) = includes else {
-            return record;
+            return Ok(record);
         };
         if record.is_null() {
-            return record;
+            return Ok(record);
         }
         let mut enriched = record;
         let (association_defs, key_field) = {
@@ -535,7 +547,7 @@ impl Database {
             .map(|s| s.to_string())
             .unwrap_or_default();
         for (assoc_name, assoc_directive) in include_map {
-            let related = self.resolve_association(table_name, assoc_name, &pk);
+            let related = self.resolve_association(table_name, assoc_name, &pk)?;
             let target_table = association_defs
                 .get(assoc_name)
                 .map(|d| match d {
@@ -559,7 +571,7 @@ impl Database {
                             .get("include")
                             .and_then(|v| v.as_object())
                             .cloned();
-                        item = self.apply_includes(&target_table, item, nested.as_ref());
+                        item = self.apply_includes(&target_table, item, nested.as_ref())?;
                     }
                     items.push(item);
                 }
@@ -574,12 +586,12 @@ impl Database {
                         .get("include")
                         .and_then(|v| v.as_object())
                         .cloned();
-                    item = self.apply_includes(&target_table, item, nested.as_ref());
+                    item = self.apply_includes(&target_table, item, nested.as_ref())?;
                 }
                 enriched[assoc_name] = item;
             }
         }
-        enriched
+        Ok(enriched)
     }
 }
 
@@ -655,7 +667,7 @@ mod tests {
         let mut users = table_with_pk("users");
         users.put(json!({"id":"user-1","name":"Alice"}));
         db.add_table("users", users);
-        let result = db.execute(&json!({"users": {"pk": "user-1"}}));
+        let result = db.execute(&json!({"users": {"pk": "user-1"}})).unwrap();
         assert_eq!(result.get("id"), Some(&json!("user-1")));
     }
 
@@ -673,7 +685,9 @@ mod tests {
         scores.put(json!({"user_id":"u1","id":"a","value":1}));
         scores.put(json!({"user_id":"u1","id":"b","value":2}));
         db.add_table("scores", scores);
-        let result = db.execute(&json!({"scores": {"pk": "u1", "sort": "b"}}));
+        let result = db
+            .execute(&json!({"scores": {"pk": "u1", "sort": "b"}}))
+            .unwrap();
         assert_eq!(result.get("value"), Some(&json!(2)));
     }
 
@@ -686,31 +700,35 @@ mod tests {
         posts.put(json!({"id":"p2","user_id":"u1"}));
         posts.put(json!({"id":"p3","user_id":"u2"}));
         db.add_table("posts", posts);
-        let result = db.execute(
-            &json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "limit": 1}}),
-        );
+        let result = db
+            .execute(
+                &json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "limit": 1}}),
+            )
+            .unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 1);
         assert!(result.get("next_token").is_some());
     }
 
     #[test]
-    #[should_panic]
     fn execute_requires_existing_gsi() {
         let mut db = Database::new();
         let posts = table_with_pk("posts");
         db.add_table("posts", posts);
-        db.execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}}}));
+        assert!(db
+            .execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}}}))
+            .is_err());
     }
 
     #[test]
-    #[should_panic]
     fn execute_requires_partition_in_where() {
         let mut db = Database::new();
         let mut posts = table_with_pk("posts");
         posts.add_gsi("by_user", "user_id", None);
         db.add_table("posts", posts);
-        db.execute(&json!({"posts": {"index": "by_user", "where": {}}}));
+        assert!(db
+            .execute(&json!({"posts": {"index": "by_user", "where": {}}}))
+            .is_err());
     }
 
     #[test]
@@ -743,7 +761,7 @@ mod tests {
         posts.put(json!({"id":"p1","user_id":"u1"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let result = db.execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "include": {"author": {}}}}));
+        let result = db.execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "include": {"author": {}}}})).unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(
             items[0].get("author").and_then(|a| a.get("name")),
@@ -915,14 +933,16 @@ tables:
         posts.put(json!({"id":"p3","user_id":"u1","title":"Alpha Beta","status":"inactive"}));
         db.add_table("posts", posts);
 
-        let result = db.execute(&json!({"posts": {
-            "search": "alpha beta",
-            "where": {"status": "active"},
-            "fields": ["id", "title", "user_id"],
-            "include": {"author": {}},
-            "limit": 1,
-            "next_token": "0"
-        }}));
+        let result = db
+            .execute(&json!({"posts": {
+                "search": "alpha beta",
+                "where": {"status": "active"},
+                "fields": ["id", "title", "user_id"],
+                "include": {"author": {}},
+                "limit": 1,
+                "next_token": "0"
+            }}))
+            .unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 1);
         assert!(result.get("next_token").is_some());
@@ -959,16 +979,17 @@ tables:
         let mut users = table_with_pk("users");
         users.put(json!({"id":1,"name":"Bob","role":"admin"}));
         db.add_table("users", users);
-        let result = db.execute(&json!({"users": {"pk": 1, "fields": ["name"]}}));
+        let result = db
+            .execute(&json!({"users": {"pk": 1, "fields": ["name"]}}))
+            .unwrap();
         assert_eq!(result, json!({"name":"Bob"}));
     }
 
     #[test]
-    #[should_panic]
     fn execute_requires_single_table() {
         let mut db = Database::new();
         db.add_table("users", table_with_pk("users"));
-        db.execute(&json!({"users": {}, "posts": {}}));
+        assert!(db.execute(&json!({"users": {}, "posts": {}})).is_err());
     }
 
     #[test]
@@ -979,7 +1000,9 @@ tables:
         items.put(json!({"id":"b","kind":"keep"}));
         items.put(json!({"id":"c","kind":"drop"}));
         db.add_table("items", items);
-        let first_page = db.execute(&json!({"items": {"where": {"kind":"keep"}, "limit": 1}}));
+        let first_page = db
+            .execute(&json!({"items": {"where": {"kind":"keep"}, "limit": 1}}))
+            .unwrap();
         assert_eq!(
             first_page
                 .get("items")
@@ -994,9 +1017,9 @@ tables:
             .as_str()
             .unwrap()
             .to_string();
-        let second_page = db.execute(
-            &json!({"items": {"where": {"kind":"keep"}, "limit": 1, "next_token": token}}),
-        );
+        let second_page = db
+            .execute(&json!({"items": {"where": {"kind":"keep"}, "limit": 1, "next_token": token}}))
+            .unwrap();
         assert_eq!(
             second_page
                 .get("items")
@@ -1015,7 +1038,7 @@ tables:
         posts.put(json!({"id":"p1","user_id":"u1","created_at":1,"title":"old"}));
         posts.put(json!({"id":"p2","user_id":"u1","created_at":2,"title":"new"}));
         db.add_table("posts", posts);
-        let result = db.execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "sort_direction": "desc", "fields": ["title"]}}));
+        let result = db.execute(&json!({"posts": {"index": "by_user", "where": {"user_id": "u1"}, "sort_direction": "desc", "fields": ["title"]}})).unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items[0], json!({"title":"new"}));
     }
@@ -1032,7 +1055,9 @@ tables:
         posts.put(json!({"id":"p1","user_id":"u1","title":"Hello","body":"body"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let result = db.execute(&json!({"users": {"include": {"posts": {"fields": ["title"]}}}}));
+        let result = db
+            .execute(&json!({"users": {"include": {"posts": {"fields": ["title"]}}}}))
+            .unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         let user = &items[0];
         assert_eq!(
@@ -1071,11 +1096,14 @@ tables:
         db.add_table("jobs", jobs);
 
         assert_eq!(
-            db.resolve_association("posts", "author", "p1").get("id"),
+            db.resolve_association("posts", "author", "p1")
+                .unwrap()
+                .get("id"),
             Some(&json!("u1"))
         );
         assert!(
             db.resolve_association("users", "posts", "u1")
+                .unwrap()
                 .as_array()
                 .unwrap()
                 .len()
@@ -1083,6 +1111,7 @@ tables:
         );
         assert!(db
             .resolve_association("users", "jobs", "u1")
+            .unwrap()
             .as_array()
             .unwrap()
             .is_empty());
@@ -1099,10 +1128,14 @@ tables:
         db.add_table("users", users);
         db.add_table("posts", posts);
         assert_eq!(
-            db.resolve_association("posts", "author", "missing"),
+            db.resolve_association("posts", "author", "missing")
+                .unwrap(),
             Value::Null
         );
-        assert_eq!(db.resolve_association("posts", "author", "p1"), Value::Null);
+        assert_eq!(
+            db.resolve_association("posts", "author", "p1").unwrap(),
+            Value::Null
+        );
     }
 
     #[test]
@@ -1115,7 +1148,7 @@ tables:
         posts.put(json!({"id":"p1","user_id":1}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let author = db.resolve_association("posts", "author", "p1");
+        let author = db.resolve_association("posts", "author", "p1").unwrap();
         assert_eq!(author.get("name"), Some(&json!("Alice")));
     }
 
@@ -1130,7 +1163,7 @@ tables:
         posts.put(json!({"id":"p1","user_id":1}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let related = db.resolve_association("users", "posts", "1");
+        let related = db.resolve_association("users", "posts", "1").unwrap();
         assert_eq!(related.as_array().unwrap().len(), 1);
 
         let mut jobs = table_with_pk("jobs");
@@ -1146,7 +1179,7 @@ tables:
         db.add_table("jobs", jobs);
         db.add_table("assignments", assignments);
         db.add_table("workers", workers);
-        let through = db.resolve_association("jobs", "workers", "j1");
+        let through = db.resolve_association("jobs", "workers", "j1").unwrap();
         assert_eq!(through.as_array().unwrap().len(), 1);
     }
 
@@ -1163,7 +1196,8 @@ tables:
         db.add_table("users", users);
         db.add_table("posts", posts);
         let result = db
-            .execute(&json!({"posts": {"pk": "p1", "include": {"author": {"fields": ["name"]}}}}));
+            .execute(&json!({"posts": {"pk": "p1", "include": {"author": {"fields": ["name"]}}}}))
+            .unwrap();
         assert_eq!(
             result.get("author").and_then(|a| a.get("name")),
             Some(&json!("Alice"))
@@ -1183,9 +1217,11 @@ tables:
         posts.put(json!({"id":"p1","user_id":"u1","title":"Hello"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let result = db.execute(
-            &json!({"posts": {"pk": "p1", "include": {"author": {"include": {"posts": {}}}}}}),
-        );
+        let result = db
+            .execute(
+                &json!({"posts": {"pk": "p1", "include": {"author": {"include": {"posts": {}}}}}}),
+            )
+            .unwrap();
         let author = result.get("author").unwrap();
         assert!(author.get("posts").is_some());
     }
@@ -1201,9 +1237,13 @@ tables:
         posts.put(json!({"id":"p1","user_id":"u1","title":"Hello","body":"b"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let missing = db.execute(&json!({"posts": {"pk": "missing", "include": {"author": {}}}}));
+        let missing = db
+            .execute(&json!({"posts": {"pk": "missing", "include": {"author": {}}}}))
+            .unwrap();
         assert!(missing.is_null());
-        let nested = db.execute(&json!({"users": {"include": {"posts": {"include": {}}}}}));
+        let nested = db
+            .execute(&json!({"users": {"include": {"posts": {"include": {}}}}}))
+            .unwrap();
         let items = nested.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(
             items[0]
@@ -1221,7 +1261,9 @@ tables:
         let mut users = table_with_pk("users");
         users.put(json!({"id":"u1","name":"Alice"}));
         db.add_table("users", users);
-        let result = db.execute(&json!({"users": {"include": {"unknown": {}}}}));
+        let result = db
+            .execute(&json!({"users": {"include": {"unknown": {}}}}))
+            .unwrap();
         let items = result.get("items").and_then(|v| v.as_array()).unwrap();
         assert!(items[0].get("unknown").is_some());
     }
@@ -1240,7 +1282,9 @@ tables:
         db.add_table("jobs", jobs);
         db.add_table("assignments", assignments);
         db.add_table("workers", workers);
-        let result = db.execute(&json!({"jobs": {"pk": "j1", "include": {"workers": {}}}}));
+        let result = db
+            .execute(&json!({"jobs": {"pk": "j1", "include": {"workers": {}}}}))
+            .unwrap();
         assert_eq!(
             result
                 .get("workers")
@@ -1306,5 +1350,48 @@ tables:
             Some(SortCondition::Contains(_))
         ));
         assert!(build_sort_condition(&json!({"unknown": "x"})).is_none());
+    }
+
+    #[test]
+    fn execute_unknown_table_returns_error() {
+        let mut db = Database::new();
+        let result = db.execute(&json!({"products": {"pk": "x"}}));
+        assert!(matches!(result, Err(Error::UnknownTable { name }) if name == "products"));
+    }
+
+    #[test]
+    fn resolve_association_missing_target_table_returns_error() {
+        let mut db = Database::new();
+        let mut posts = table_with_pk("posts");
+        posts.add_belongs_to("author", "users", "user_id");
+        posts.put(json!({"id": "p1", "user_id": "u1"}));
+        db.add_table("posts", posts);
+        // Don't add the "users" table - resolve_association should return an error
+        let result = db.resolve_association("posts", "author", "p1");
+        assert!(matches!(result, Err(Error::UnknownTable { name }) if name == "users"));
+    }
+
+    #[test]
+    fn resolve_association_has_many_missing_target_table_returns_error() {
+        let mut db = Database::new();
+        let mut users = table_with_pk("users");
+        users.add_has_many("posts", "posts", "by_user");
+        users.put(json!({"id": "u1"}));
+        db.add_table("users", users);
+        // Don't add the "posts" table - resolve_association should return an error
+        let result = db.resolve_association("users", "posts", "u1");
+        assert!(matches!(result, Err(Error::UnknownTable { name }) if name == "posts"));
+    }
+
+    #[test]
+    fn resolve_association_missing_through_table_returns_error() {
+        let mut db = Database::new();
+        let mut jobs = table_with_pk("jobs");
+        jobs.add_has_many_through("workers", "assignments", "by_job", "workers", "worker_id");
+        jobs.put(json!({"id": "j1"}));
+        db.add_table("jobs", jobs);
+        // Don't add the "assignments" table - resolve_association should return an error
+        let result = db.resolve_association("jobs", "workers", "j1");
+        assert!(matches!(result, Err(Error::UnknownTable { name }) if name == "assignments"));
     }
 }

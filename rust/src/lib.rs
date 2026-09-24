@@ -3,11 +3,13 @@
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod database;
+pub mod error;
 pub mod gsi;
 pub mod search;
 pub mod sort;
 pub mod table;
 pub use database::Database;
+pub use error::{Error, Result};
 pub use gsi::Gsi;
 pub use search::SearchIndex;
 pub use sort::SortCondition;

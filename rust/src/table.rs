@@ -9,6 +9,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use rayon::prelude::*;
 use serde_json::Value;
 
+use crate::error::{Error, Result};
 use crate::gsi::Gsi;
 use crate::search::SearchIndex;
 use crate::sort::SortCondition;
@@ -1011,11 +1012,11 @@ impl Table {
         &self,
         dir: &Path,
         manifest: &HashMap<String, SystemTime>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let index_path = self.search_index_path(dir);
         let manifest_path = self.search_manifest_path(dir);
         let index_dir = self.search_index_dir(dir);
-        fs::create_dir_all(&index_dir).map_err(|err| err.to_string())?;
+        fs::create_dir_all(&index_dir).map_err(|err| Error::from(err.to_string()))?;
         let Some(index) = &self.search_index else {
             return Ok(());
         };
@@ -1029,11 +1030,12 @@ impl Table {
         manifest_path: &Path,
         index: &SearchIndex,
         manifest: &HashMap<String, SystemTime>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         index.persist(index_path)?;
         let current_manifest = manifest_to_epoch_millis(manifest);
-        let data = serde_json::to_string(&current_manifest).map_err(|err| err.to_string())?;
-        fs::write(manifest_path, data).map_err(|err| err.to_string())?;
+        let data =
+            serde_json::to_string(&current_manifest).map_err(|err| Error::from(err.to_string()))?;
+        fs::write(manifest_path, data).map_err(|err| Error::from(err.to_string()))?;
         Ok(())
     }
 
@@ -2562,7 +2564,7 @@ mod tests {
         users.put(json!({"id": "user-1", "name": "Alice"}));
         db.add_table("posts", posts);
         db.add_table("users", users);
-        let result = db.resolve_association("posts", "author", "post-1");
+        let result = db.resolve_association("posts", "author", "post-1").unwrap();
         assert_eq!(result["id"], "user-1");
     }
 
@@ -2593,7 +2595,7 @@ mod tests {
         users.put(json!({"id": "user-1"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let result = db.resolve_association("users", "posts", "user-1");
+        let result = db.resolve_association("users", "posts", "user-1").unwrap();
         let array = result.as_array().unwrap();
         assert_eq!(array.len(), 2);
         let ids: Vec<String> = array
@@ -2647,7 +2649,7 @@ mod tests {
         db.add_table("job_assignments", assignments);
         db.add_table("workers", workers);
 
-        let result = db.resolve_association("jobs", "workers", "job-1");
+        let result = db.resolve_association("jobs", "workers", "job-1").unwrap();
         let array = result.as_array().unwrap();
         let ids: Vec<String> = array
             .iter()
