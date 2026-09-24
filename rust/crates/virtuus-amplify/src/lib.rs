@@ -38,6 +38,9 @@ pub enum Error {
 
     #[error("Internal error: {0}")]
     Internal(String),
+
+    #[error("Storage error: {0}")]
+    Storage(#[from] virtuus::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -1505,7 +1508,7 @@ impl Engine {
                 sort,
                 model_directory,
                 virtuus::table::ValidationMode::Silent,
-            );
+            )?;
 
             // Add GSIs for explicit indexes, registered by queryField
             for index in model.indexes() {
