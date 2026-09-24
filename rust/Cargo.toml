@@ -49,3 +49,6 @@ cucumber = "0.21"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 assert-json-diff = "2.0"
 filetime = "0.2"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tarpaulin_include)"] }

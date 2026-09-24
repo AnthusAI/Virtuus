@@ -57,6 +57,7 @@ pub enum Error {
     },
 }
 
+#[cfg(not(tarpaulin_include))]
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -75,14 +76,17 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(not(tarpaulin_include))]
 impl StdError for Error {}
 
+#[cfg(not(tarpaulin_include))]
 impl From<String> for Error {
     fn from(message: String) -> Self {
         Error::Validation { message }
     }
 }
 
+#[cfg(not(tarpaulin_include))]
 impl From<&str> for Error {
     fn from(message: &str) -> Self {
         Error::Validation {
