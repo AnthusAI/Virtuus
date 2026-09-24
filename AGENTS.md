@@ -5,10 +5,19 @@
 Use Kanbus for task management.
 Why: Kanbus task management is MANDATORY here; every task must live in Kanbus.
 When: Create/update the Kanbus task before coding; close it only after the change lands.
-How: See CONTRIBUTING_AGENT.md for the Kanbus workflow, hierarchy, status rules, priorities, command examples, and the sins to avoid. Never inspect project/ or issue JSON directly (including with cat or jq); use Kanbus commands only.
-Performance: Prefer kanbusr (Rust) when available; kanbus (Python) is equivalent but slower.
-Warning: Editing project/ directly is a sin against The Way. Do not read or write anything in project/; work only through Kanbus.
-Git workflow: This repo uses Git Flow. Do development work on `dev` and only merge to `main` for releases.
+How: See CONTRIBUTING_AGENT.md for the Kanbus workflow, hierarchy, status rules, priorities, command examples, and the mistakes to avoid. Never inspect project/ or issue JSON directly (including with cat or jq); use Kanbus commands only.
+Performance: Prefer kbs (Rust) when available; kanbus (Python) is equivalent but slower.
+Warning: Editing project/ directly violates The Way. Do not read or write anything in project/; work only through Kanbus.
+Git / PR policy: Rules for product-code commits, branch names, pull requests, and human approval live in this repository's AGENTS.md (outside this Kanbus section). CONTRIBUTING_AGENT.md covers Kanbus board mechanics such as `kbs commit`; follow AGENTS.md for product code and git workflow.
+
+## Git workflow and pull requests
+
+This repository uses Git Flow with **`dev` as the integration branch** (not `develop`). Do day-to-day development on `dev` and open pull requests targeting `dev`. Merge to **`main` only for releases**.
+
+- Branch feature work from `dev` (for example `cursor/<description>-<suffix>` or team conventions).
+- Keep `make check` green before you push product-code changes.
+- After Kanbus board updates, run `kbs commit` and push `project/issues/` to the branch your team uses for shared board state (typically `dev`).
+- Do not commit secrets or bypass review requirements defined by repository settings.
 
 ## Code quality standards
 
