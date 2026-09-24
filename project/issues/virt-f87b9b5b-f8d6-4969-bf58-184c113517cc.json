@@ -3,7 +3,7 @@
   "title": "Relationship fields (connections and belongsTo)",
   "description": "1. Resolve hasMany fields as `Model<X>Connection` with arguments, and belongsTo fields as objects, through `Engine::call`.\n2. Spec: `getPost { comments(limit: 2) { items { body } nextToken } }` and `getComment { post { title } }`.\n\nPart of the `virtuus-appsync` crate (`rust/crates/virtuus-appsync`; `@rust-only` specs in `features/appsync/`; 100% coverage). Design: `~/Projects/Ripple/design/storage.md` **§3.1** (`virtuus-appsync`) and **§4**.\n- **Stack:** axum and async-graphql's **dynamic** schema (`async_graphql::dynamic`), built at startup from an AppSync SDL string and the contract, resolving onto `virtuus_amplify::Engine::call`.\n- **API:** `pub fn router(engine: Arc<Engine>, sdl: &str, contract: &Contract, auth: ApiKeyAuth) -> axum::Router`, serving `POST /graphql`.\n- **Fixture:** `features/appsync/fixtures/blog.graphql`, hand-written in AppSync's generated style for the `blog` contract: `getPost`, `listPosts(filter, limit, nextToken)`, `postsByBlog(blogId, createdAt, sortDirection, filter, limit, nextToken)`, `createPost(input, condition)`, `updatePost`, `deletePost`, `ModelPostFilterInput`, `ModelPostConnection`, `onCreatePost`, …\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -37,8 +37,8 @@
     }
   ],
   "created_at": "2026-09-24T04:45:38.154571Z",
-  "updated_at": "2026-09-24T20:56:59.130091Z",
-  "closed_at": null,
+  "updated_at": "2026-09-24T22:38:42.017241Z",
+  "closed_at": "2026-09-24T22:38:42.017211Z",
   "agent": {
     "platform": "claude_code",
     "model": "Claude Opus 5.5",
