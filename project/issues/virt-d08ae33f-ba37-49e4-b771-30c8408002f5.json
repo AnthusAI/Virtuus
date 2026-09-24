@@ -3,7 +3,7 @@
   "title": "Schema loading and table construction errors",
   "description": "Replace the panics while loading a YAML schema (`database.rs` about lines 76–251: read, invalid YAML, table name, table config, GSI name/config/partition key, association type/target/foreign_key/index/through) and while building tables (`table.rs`: `primary_key or partition_key is required` ~141, `use either` ~144, `sort_key is required` ~147, `ValidationMode::Error` ~1180, `invalid PK characters` ~1226, `search is not configured` ~571, `GSI does not exist` in `query_gsi` ~551).\n- `Database::from_schema(...) -> Result<Database>`\n- `Table::new(...) -> Result<Table>`\n- `put(...) -> Result<()>`\n- `query_gsi(...) -> Result<Vec<Value>>`\n- `search(...) -> Result<Vec<Value>>`\n- Errors: unreadable schema file → `Io{path}`; invalid YAML → `Parse{path}`; a missing or ill-typed config field → `Validation{message}` naming the table and field; an unknown GSI → `UnknownIndex`.\n- Scenarios in `features/errors/errors.feature` for each, in both languages.\n\n**Keep `make check` green after this sub-task.** That means 100% coverage in both languages and parity. Changing a public signature means updating every caller, test and spec step that used it.\n**Errors:** use `crate::error::{Error, Result}` (`rust/src/error.rs`) and `virtuus.errors` (`python/src/virtuus/errors.py`). The Python backend raises the matching exception class; the message names the thing (table, index, file path, field).\n**Specs:** `features/errors/errors.feature`. Each scenario drives the *real* public API in both languages; no simulated errors. After an error, assert the database still answers a normal query.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 1,
   "assignee": null,
   "creator": null,
@@ -99,11 +99,23 @@
         "model": "Claude Haiku 4.5",
         "name": "storage-V2b-rust"
       }
+    },
+    {
+      "id": "d0aab5e2-7c3f-41d9-bbe7-3360a5a7069a",
+      "author": "home",
+      "text": "Review (storage-lead): **accepted.** Re-run by me: make check exit 0; behave 233 passed; Python TOTAL 902/0 = 100%; Rust 1390/1390 = 100%; parity OK, 445 steps; @python-only count 1 (the ValueError back-compat scenario only). The parity checker scopes tags to their own scenario. PyO3 → virtuus.errors class mapping is carried to V2d (virt-7e66ce). Committed bd5738a on feature/amplify-engine.",
+      "created_at": "2026-09-24T14:27:31.400135Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
     }
   ],
   "created_at": "2026-09-24T05:08:44.466682Z",
-  "updated_at": "2026-09-24T12:31:39.903136Z",
-  "closed_at": null,
+  "updated_at": "2026-09-24T14:27:31.446279Z",
+  "closed_at": "2026-09-24T14:27:31.446239Z",
   "agent": {
     "platform": "claude_code",
     "model": "Claude Opus 5.5",

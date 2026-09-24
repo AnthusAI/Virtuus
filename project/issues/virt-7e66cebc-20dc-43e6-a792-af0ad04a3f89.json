@@ -15,9 +15,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "7a0ff7d5-3b38-4ab7-a290-5be9c398d351",
+      "author": "home",
+      "text": "Note from the V2b review (storage-lead): rust/src/python.rs currently maps Error variants to the built-in PyOSError, PyValueError and PyKeyError. This task must map them to the `virtuus.errors` classes (IoError, ParseError, ValidationError, UnknownTableError, UnknownIndexError, …) with the same messages as the pure-Python backend, so that both backends raise identical exception types. Test it by running the error scenarios with VIRTUUS_BACKEND=rust.",
+      "created_at": "2026-09-24T14:12:37.045997Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T05:08:44.718442Z",
-  "updated_at": "2026-09-24T05:08:44.894739Z",
+  "updated_at": "2026-09-24T14:12:37.046013Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",

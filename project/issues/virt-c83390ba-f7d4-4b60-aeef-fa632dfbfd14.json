@@ -3,7 +3,7 @@
   "title": "Filters and key conditions (DynamoDB rules)",
   "description": "1. Filters: `eq ne lt le gt ge between beginsWith contains notContains attributeExists size`, combined with `and`, `or` and `not`.\n   - `contains` on a list checks membership.\n   - `ne` matches a missing field; any other comparison against a missing field is false.\n2. Key conditions on index sort keys: `eq lt le gt ge between beginsWith`; composite sort keys take a key object.\n3. Both work in `list` and in index queries (`op` = the `queryField`).\n4. Specs: every operator, missing-field cases, nested `and`/`or`/`not`, composite sort-key conditions.\n\nPart of the `virtuus-amplify` crate (`rust/crates/virtuus-amplify`; workspace member; `@rust-only` specs in `features/amplify/`; cucumber runner in the crate; 100% coverage). Semantics: `~/Projects/Ripple/design/storage.md` **§2.2**, matching Amplify/AppSync behaviour exactly.\n- **Contract format:** `~/Projects/Ripple/contract/contract.schema.json` (vendor a copy into the crate).\n- **Fixture:** `features/amplify/fixtures/blog.contract.json`, hand-written in that format and shared by V8 and V9. It has `Blog`; `Post` with owner auth, an enum `status`, a customType `meta`, a hasMany `comments` and an index `postsByBlog` (partition `blogId`, sort `createdAt`); `Comment` with belongsTo `post`; and `Tag` with a composite identifier `[\"postId\", \"name\"]`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -27,11 +27,35 @@
         "model": "Claude Haiku 4.5",
         "name": "storage-V8c-start"
       }
+    },
+    {
+      "id": "bbaaaef7-d7d4-49a0-abc7-76eaa8501b58",
+      "author": "home",
+      "text": "Review round 1 (storage-lead): 117 scenarios green; coverage 97.2%. The three changed expectations were correct (checked against the fixture data). Remaining: (1) composite sort-key conditions in the real AppSync format `{\"<op>\": {\"status\": …, \"createdAt\": …}}` / `between: [{…},{…}]` on the joined `v1#v2` attribute, with a leading prefix allowed for beginsWith and comparisons; this corrects my earlier description of the format; (2) invalid conditions and unknown operators → `ValidationException` in `errors`, not Internal or false; (3) 100% coverage. Apricity itself has no composite sort keys, but the generic crate must handle them correctly.",
+      "created_at": "2026-09-24T13:44:05.419006Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    },
+    {
+      "id": "26892460-fa4c-4aad-8a84-4049c6119c2b",
+      "author": "home",
+      "text": "Review (storage-lead): **accepted.** Re-run by me: fmt ✓, clippy --all-targets ✓, 179 scenarios / 1054 steps ✓, crate tarpaulin 880/880 = 100%. Parse-then-evaluate with typed Filter/Op/SortCondition; AppSync composite key format only; every malformed input → ValidationException, via one validation point. I tightened 'the operation succeeds' to fail on returned errors, which exposed one falsely-passing scenario, since fixed. Committed on feature/amplify-crates.",
+      "created_at": "2026-09-24T15:50:29.640156Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
     }
   ],
   "created_at": "2026-09-24T04:45:37.769210Z",
-  "updated_at": "2026-09-24T13:17:09.885389Z",
-  "closed_at": null,
+  "updated_at": "2026-09-24T15:50:29.704434Z",
+  "closed_at": "2026-09-24T15:50:29.704403Z",
   "agent": {
     "platform": "claude_code",
     "model": "Claude Opus 5.5",

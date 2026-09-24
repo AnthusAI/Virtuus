@@ -3,7 +3,7 @@
   "title": "AppSync error envelopes and API-key auth",
   "description": "1. Errors are `{ message, errorType, errorInfo, path, locations }`, with data `null` at the failing field, as AppSync does.\n2. `x-api-key` maps to a configured `Identity`. A missing or wrong key gives HTTP 401 with AppSync's `UnauthorizedException` body.\n3. `Unauthorized` from the engine gives `errorType: \"Unauthorized\"`.\n4. Specs: duplicate create, an unauthorized update, a missing API key.\n\nPart of the `virtuus-appsync` crate (`rust/crates/virtuus-appsync`; `@rust-only` specs in `features/appsync/`; 100% coverage). Design: `~/Projects/Ripple/design/storage.md` **§3.1** (`virtuus-appsync`) and **§4**.\n- **Stack:** axum and async-graphql's **dynamic** schema (`async_graphql::dynamic`), built at startup from an AppSync SDL string and the contract, resolving onto `virtuus_amplify::Engine::call`.\n- **API:** `pub fn router(engine: Arc<Engine>, sdl: &str, contract: &Contract, auth: ApiKeyAuth) -> axum::Router`, serving `POST /graphql`.\n- **Fixture:** `features/appsync/fixtures/blog.graphql`, hand-written in AppSync's generated style for the `blog` contract: `getPost`, `listPosts(filter, limit, nextToken)`, `postsByBlog(blogId, createdAt, sortDirection, filter, limit, nextToken)`, `createPost(input, condition)`, `updatePost`, `deletePost`, `ModelPostFilterInput`, `ModelPostConnection`, `onCreatePost`, …\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "sub-task",
-  "status": "open",
+  "status": "in_progress",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -15,9 +15,17 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "11cd859a-f189-42ac-b175-441e36861020",
+      "author": "home",
+      "text": "V9d started: API-key auth infrastructure in place. Added ApiKeyAuth struct, updated router() signature, added x-api-key header checking with 401/UnauthorizedException response. Error envelope response format updated to include errorType field. Test scenarios for auth and error cases added but marked @wip pending step definitions and engine error handling implementation. Gate checks: fmt ✓, clippy --all-targets ✓, tests ✓ (43/43 passing).",
+      "created_at": "2026-09-24T15:16:01.979555Z",
+      "comment_type": "default"
+    }
+  ],
   "created_at": "2026-09-24T04:45:38.212482Z",
-  "updated_at": "2026-09-24T04:45:49.572182Z",
+  "updated_at": "2026-09-24T15:16:01.979576Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
