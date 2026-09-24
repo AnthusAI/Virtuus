@@ -9,7 +9,17 @@ Feature: Contract loading, tables and indexes
       {
         "tables": [
           {
+            "name": "Article",
+            "primaryKey": "id",
+            "indexes": []
+          },
+          {
             "name": "Blog",
+            "primaryKey": "id",
+            "indexes": []
+          },
+          {
+            "name": "Catalog",
             "primaryKey": "id",
             "indexes": []
           },
@@ -38,6 +48,21 @@ Feature: Contract loading, tables and indexes
                 "sortKey": "status#createdAt"
               }
             ]
+          },
+          {
+            "name": "Private",
+            "primaryKey": "id",
+            "indexes": []
+          },
+          {
+            "name": "Public",
+            "primaryKey": "id",
+            "indexes": []
+          },
+          {
+            "name": "Restricted",
+            "primaryKey": "id",
+            "indexes": []
           },
           {
             "name": "Tag",

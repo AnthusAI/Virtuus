@@ -4,7 +4,7 @@ use regex::Regex;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use uuid::Uuid;
-use virtuus_amplify::{Contract, Engine, EngineOptions};
+use virtuus_amplify::{Contract, Engine, EngineOptions, Identity};
 
 #[derive(World, Debug, Default)]
 pub struct AppWorld {
@@ -19,6 +19,7 @@ pub struct AppWorld {
     selection_set: Option<Vec<String>>,
     relationship_args: Option<Value>,
     stored_next_tokens: std::collections::HashMap<String, String>,
+    identity: Identity,
 }
 
 #[given("a blog contract")]
@@ -122,7 +123,7 @@ fn load_mutated_blog_contract(
 #[when("I open the engine")]
 fn open_engine(world: &mut AppWorld) {
     if let Some(contract) = world.contract.clone() {
-        match Engine::open(None, contract, EngineOptions) {
+        match Engine::open(None, contract, EngineOptions { enforce_auth: true }) {
             Ok(engine) => {
                 world.engine = Some(engine);
             }
@@ -133,12 +134,23 @@ fn open_engine(world: &mut AppWorld) {
     }
 }
 
+#[given("I open the engine")]
+fn given_open_engine(world: &mut AppWorld) {
+    open_engine(world);
+}
+
 #[given(regex = "^a (\\w+) exists with:$")]
 fn given_resource_exists(world: &mut AppWorld, model: String, step: &gherkin::Step) {
     // First ensure engine is open
     if world.engine.is_none() {
         if let Some(contract) = world.contract.clone() {
-            match Engine::open(None, contract, EngineOptions) {
+            match Engine::open(
+                None,
+                contract,
+                EngineOptions {
+                    enforce_auth: false,
+                },
+            ) {
                 Ok(engine) => {
                     world.engine = Some(engine);
                 }
@@ -157,7 +169,7 @@ fn given_resource_exists(world: &mut AppWorld, model: String, step: &gherkin::St
 
         world.last_model = Some(model.clone());
 
-        match engine.call(&model, "create", &input) {
+        match engine.call(&model, "create", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -500,7 +512,7 @@ fn create_resource(world: &mut AppWorld, model: String, step: &gherkin::Step) {
 
         world.last_model = Some(model.clone());
 
-        match engine.call(&model, "create", &input) {
+        match engine.call(&model, "create", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -524,7 +536,7 @@ fn get_resource(world: &mut AppWorld, model: String, id: String) {
 
         let input = json!({"id": id});
 
-        match engine.call(&model, "get", &input) {
+        match engine.call(&model, "get", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -547,7 +559,7 @@ fn update_resource(world: &mut AppWorld, model: String, step: &gherkin::Step) {
 
         world.last_model = Some(model.clone());
 
-        match engine.call(&model, "update", &input) {
+        match engine.call(&model, "update", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -569,7 +581,7 @@ fn delete_resource(world: &mut AppWorld, model: String, id: String) {
 
         let input = json!({"id": id});
 
-        match engine.call(&model, "delete", &input) {
+        match engine.call(&model, "delete", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -594,35 +606,6 @@ fn check_operation_succeeds(world: &mut AppWorld) {
             errors.is_empty(),
             "Expected success but got errors: {:?}",
             errors
-        );
-    }
-}
-
-#[then("the operation fails with errorType")]
-fn check_operation_fails_with_error_type(world: &mut AppWorld) {
-    if world.error.is_none() && world.last_operation_errors.is_none() {
-        panic!("Expected operation to fail but it succeeded");
-    }
-}
-
-#[then(regex = "^the operation fails with errorType \"([^\"]+)\"$")]
-fn check_operation_fails_with_specific_error(world: &mut AppWorld, error_type: String) {
-    if let Some(ref errors) = world.last_operation_errors {
-        let found = errors.iter().any(|e| {
-            if let Some(et) = e.get("errorType").and_then(|v| v.as_str()) {
-                et == error_type
-            } else {
-                false
-            }
-        });
-        if !found {
-            panic!("Expected error type '{}' but got: {:?}", error_type, errors);
-        }
-    } else {
-        panic!(
-            "Expected operation to fail with error type '{}' but got: {}",
-            error_type,
-            world.error.as_ref().unwrap_or(&"unknown".to_string())
         );
     }
 }
@@ -942,7 +925,7 @@ fn check_result_composite_field(world: &mut AppWorld, field: String, prefix: Str
 fn when_call_operation(world: &mut AppWorld, operation: String) {
     if let Some(engine) = &mut world.engine {
         // Try to call an unknown operation on a valid model - this should fail
-        match engine.call("Blog", &operation, &json!({})) {
+        match engine.call("Blog", &operation, &json!({}), &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -970,7 +953,7 @@ fn when_get_vote(world: &mut AppWorld, post_id: String, user_id: String, kind: S
             "kind": kind
         });
 
-        match engine.call("Vote", "get", &pk) {
+        match engine.call("Vote", "get", &pk, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -1004,7 +987,13 @@ fn open_engine_with_temp_dir(world: &mut AppWorld) {
         // For now, we'll leak it to keep it alive for the test
         let _ = Box::leak(Box::new(temp_dir));
 
-        match Engine::open(Some(dir_path), contract, EngineOptions) {
+        match Engine::open(
+            Some(dir_path),
+            contract,
+            EngineOptions {
+                enforce_auth: false,
+            },
+        ) {
             Ok(engine) => {
                 world.engine = Some(engine);
                 world.error = None;
@@ -1023,7 +1012,13 @@ fn reopen_engine(world: &mut AppWorld) {
 
     if let Some(contract) = world.contract.clone() {
         if let Some(dir) = &world.directory {
-            match Engine::open(Some(dir.clone()), contract, EngineOptions) {
+            match Engine::open(
+                Some(dir.clone()),
+                contract,
+                EngineOptions {
+                    enforce_auth: false,
+                },
+            ) {
                 Ok(engine) => {
                     world.engine = Some(engine);
                     world.error = None;
@@ -1071,7 +1066,7 @@ fn given_records_exist(world: &mut AppWorld, model: String, step: &gherkin::Step
         if let Some(content) = &step.docstring {
             if let Ok(records) = serde_json::from_str::<Vec<Value>>(content) {
                 for record in records {
-                    if let Err(e) = engine.call(&model, "create", &record) {
+                    if let Err(e) = engine.call(&model, "create", &record, &world.identity) {
                         world.error = Some(e.to_string());
                         panic!("Failed to create record: {}", e);
                     }
@@ -1090,7 +1085,7 @@ fn when_list_with(world: &mut AppWorld, model: String, step: &gherkin::Step) {
     if let Some(engine) = &mut world.engine {
         if let Some(content) = &step.docstring {
             if let Ok(args) = serde_json::from_str::<Value>(content) {
-                match engine.call(&model, "list", &args) {
+                match engine.call(&model, "list", &args, &world.identity) {
                     Ok((data, errors)) => {
                         world.last_operation_data = Some(data);
                         world.last_operation_errors = errors;
@@ -1114,7 +1109,7 @@ fn when_query_index(world: &mut AppWorld, model: String, index: String, step: &g
     if let Some(engine) = &mut world.engine {
         if let Some(content) = &step.docstring {
             if let Ok(args) = serde_json::from_str::<Value>(content) {
-                match engine.call(&model, &index, &args) {
+                match engine.call(&model, &index, &args, &world.identity) {
                     Ok((data, errors)) => {
                         world.last_operation_data = Some(data);
                         world.last_operation_errors = errors;
@@ -1355,7 +1350,7 @@ fn when_list_with_previous_token(world: &mut AppWorld, entity_type: String, step
             // Always add/override the nextToken
             params["nextToken"] = Value::String(token.clone());
 
-            match engine.call(&entity_type, "list", &params) {
+            match engine.call(&entity_type, "list", &params, &world.identity) {
                 Ok((data, errors)) => {
                     world.last_operation_data = Some(data);
                     world.last_operation_errors = errors;
@@ -1394,7 +1389,7 @@ fn when_collect_all_pages(world: &mut AppWorld, entity_type: String, step: &gher
                     current_params["nextToken"] = Value::String(token);
                 }
 
-                match engine.call(&entity_type, "list", &current_params) {
+                match engine.call(&entity_type, "list", &current_params, &world.identity) {
                     Ok((data, errors)) => {
                         world.last_operation_data = Some(data.clone());
                         world.last_operation_errors = errors;
@@ -1451,7 +1446,7 @@ fn when_query_with_previous_token(
             // Always add/override the nextToken
             params["nextToken"] = Value::String(token.clone());
 
-            match engine.call(&entity_type, index_name.as_str(), &params) {
+            match engine.call(&entity_type, index_name.as_str(), &params, &world.identity) {
                 Ok((data, errors)) => {
                     world.last_operation_data = Some(data);
                     world.last_operation_errors = errors;
@@ -1513,7 +1508,7 @@ fn get_with_selection_set(world: &mut AppWorld, model: String, id: String, step:
         }
         input["selectionSet"] = json!(selection_set);
 
-        match engine.call(&model, "get", &input) {
+        match engine.call(&model, "get", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -1564,7 +1559,7 @@ fn get_with_selection_and_relationship_args(
         }
         input["selectionSet"] = json!(selection_set);
 
-        match engine.call(&model, "get", &input) {
+        match engine.call(&model, "get", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -1628,7 +1623,7 @@ fn get_with_stored_next_token(
         }
         input["selectionSet"] = json!(selection_set);
 
-        match engine.call(&model, "get", &input) {
+        match engine.call(&model, "get", &input, &world.identity) {
             Ok((data, errors)) => {
                 world.last_operation_data = Some(data);
                 world.last_operation_errors = errors;
@@ -1844,6 +1839,114 @@ fn assert_nested_has_field(world: &mut AppWorld, path: String, field: String) {
         }
     } else {
         panic!("No result data");
+    }
+}
+
+#[when(regex = "^I switch to user \"([^\"]+)\" with sub \"([^\"]+)\" and username \"([^\"]+)\"$")]
+fn switch_to_user(world: &mut AppWorld, _name: String, sub: String, username: String) {
+    world.identity = Identity::user(sub, username, vec![]);
+}
+
+#[when(
+    regex = "^I switch to user \"([^\"]+)\" with sub \"([^\"]+)\" and username \"([^\"]+)\" in groups \\[(.+)\\]$"
+)]
+fn switch_to_user_with_groups(
+    world: &mut AppWorld,
+    _name: String,
+    sub: String,
+    username: String,
+    groups_str: String,
+) {
+    let groups: Vec<String> = groups_str
+        .split(',')
+        .map(|s| s.trim().trim_matches('"').to_string())
+        .collect();
+    world.identity = Identity::user(sub, username, groups);
+}
+
+#[when("I switch to apiKey")]
+fn switch_to_api_key(world: &mut AppWorld) {
+    world.identity = Identity::ApiKey;
+}
+
+#[when("I open the engine with enforce_auth disabled")]
+fn open_engine_without_auth(world: &mut AppWorld) {
+    if let Some(contract) = world.contract.clone() {
+        match Engine::open(
+            None,
+            contract,
+            EngineOptions {
+                enforce_auth: false,
+            },
+        ) {
+            Ok(engine) => {
+                world.engine = Some(engine);
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    }
+}
+
+#[when("I open the engine with authorization enabled")]
+fn open_engine_with_auth(world: &mut AppWorld) {
+    if let Some(contract) = world.contract.clone() {
+        match Engine::open(None, contract, EngineOptions { enforce_auth: true }) {
+            Ok(engine) => {
+                world.engine = Some(engine);
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    }
+}
+
+#[then(regex = "^the result\\.owner is \"([^\"]+)\"$")]
+fn check_result_owner(world: &mut AppWorld, expected_owner: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(owner) = data.get("owner").and_then(|v| v.as_str()) {
+            assert_eq!(owner, expected_owner, "owner mismatch");
+        } else {
+            panic!("Result data does not have owner field");
+        }
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result\\.author is \"([^\"]+)\"$")]
+fn check_result_author(world: &mut AppWorld, expected_author: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(author) = data.get("author").and_then(|v| v.as_str()) {
+            assert_eq!(author, expected_author, "author mismatch");
+        } else {
+            panic!("Result data does not have author field");
+        }
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the operation fails with errorType \"([^\"]+)\"$")]
+fn check_operation_fails_with_error_type(world: &mut AppWorld, expected_error_type: String) {
+    if let Some(ref errors) = world.last_operation_errors {
+        let error_type_found = errors.iter().any(|e| {
+            e.get("errorType")
+                .and_then(|v| v.as_str())
+                .map(|et| et == expected_error_type)
+                .unwrap_or(false)
+        });
+        assert!(
+            error_type_found,
+            "No error with errorType '{}' found in errors: {:?}",
+            expected_error_type, errors
+        );
+    } else if world.last_operation_data == Some(Value::Null) {
+        panic!("Operation failed with null data but no errors recorded");
+    } else {
+        panic!("Operation did not fail");
     }
 }
 
