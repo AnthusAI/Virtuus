@@ -11,6 +11,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 jsonschema = { version = "0.18", features = ["draft202012"] }
 thiserror = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+url = "2"
 
 [[test]]
 name = "cucumber"
@@ -21,3 +24,5 @@ path = "tests/cucumber.rs"
 cucumber = "0.21"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 regex = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+tempfile = "3"

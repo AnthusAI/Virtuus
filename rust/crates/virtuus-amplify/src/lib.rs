@@ -2,10 +2,12 @@
 //!
 //! V8b populates composite sort attributes on write with v1#v2 format.
 
-use serde_json::Value;
+use chrono::Utc;
+use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use thiserror::Error;
+use uuid::Uuid;
 use virtuus::table::Table;
 
 /// Contract validation and loading errors.
@@ -47,6 +49,7 @@ pub struct Model {
 pub struct Field {
     field_type: String,
     kind: String,
+    is_required: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -68,7 +71,9 @@ pub struct Relationship {
 }
 
 #[derive(Debug, Clone)]
-pub struct Enum;
+pub struct Enum {
+    values: Vec<String>,
+}
 
 #[derive(Debug, Clone)]
 pub struct CustomType;
@@ -277,7 +282,16 @@ impl Contract {
             .unwrap_or("scalar")
             .to_string();
 
-        Ok(Field { field_type, kind })
+        let is_required = value
+            .get("isRequired")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        Ok(Field {
+            field_type,
+            kind,
+            is_required,
+        })
     }
 
     fn parse_index(value: &Value) -> Result<Index> {
@@ -363,9 +377,16 @@ impl Contract {
         })
     }
 
-    fn parse_enum(_value: &Value, _name: &str) -> Result<Enum> {
-        // Enums are validated by the JSON schema to be arrays, so no additional validation needed here
-        Ok(Enum)
+    fn parse_enum(value: &Value, _name: &str) -> Result<Enum> {
+        // Enums are guaranteed to be arrays by schema validation
+        let arr = value
+            .as_array()
+            .ok_or_else(|| Error::Validation("Enum must be an array".to_string()))?;
+        let values = arr
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        Ok(Enum { values })
     }
 
     /// Get the models in this contract.
@@ -460,8 +481,23 @@ impl Relationship {
     }
 }
 
+impl Enum {
+    /// Get the enum values.
+    pub fn values(&self) -> &[String] {
+        &self.values
+    }
+}
+
 /// Engine options.
 pub struct EngineOptions;
+
+/// Operation result containing data, errors, and optional pagination token.
+#[derive(Debug, Clone)]
+pub struct OpResult {
+    pub data: Value,
+    pub errors: Option<Vec<Value>>,
+    pub next_token: Option<String>,
+}
 
 /// Storage-less or file-backed engine for Amplify-shaped operations.
 /// Composite sort attributes are synthetic and will be populated by writes (V8b) as `v1#v2`.
@@ -510,12 +546,15 @@ impl Engine {
                 }
             };
 
+            // Create per-model directory if directory is provided
+            let model_directory = directory.as_ref().map(|d| d.join(model_name));
+
             let mut table = Table::new(
                 model_name,
                 pk,
                 partition,
                 sort,
-                directory.clone(),
+                model_directory,
                 virtuus::table::ValidationMode::Error,
             );
 
@@ -560,6 +599,11 @@ impl Engine {
                     }
                 }
             }
+        }
+
+        // Warm all tables to load existing records from disk
+        for table in tables.values_mut() {
+            table.warm();
         }
 
         Ok(Engine { contract, tables })
@@ -681,6 +725,451 @@ impl Engine {
 
         result.insert("tables".to_string(), Value::Array(tables_array));
         Value::Object(result)
+    }
+
+    /// Execute a CRUD operation on the engine.
+    /// Returns (data, errors) where data is the result and errors is optional list of operation errors.
+    pub fn call(
+        &mut self,
+        model_name: &str,
+        op: &str,
+        args: &Value,
+    ) -> Result<(Value, Option<Vec<Value>>)> {
+        let model = self
+            .contract
+            .models()
+            .get(model_name)
+            .ok_or_else(|| Error::Internal(format!("Unknown model: {}", model_name)))?
+            .clone();
+
+        let now = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+
+        match op {
+            "create" => {
+                let mut record = args.clone();
+                let mut errors = Vec::new();
+
+                // Validate required fields and types
+                if let Some(validation_errors) = self.validate_record(&record, &model, true) {
+                    errors.extend(validation_errors);
+                }
+
+                if !errors.is_empty() {
+                    return Ok((Value::Null, Some(errors)));
+                }
+
+                // Fill in auto-generated fields
+                if !record.get("id").is_some_and(|v| !v.is_null()) {
+                    record["id"] = Value::String(Uuid::new_v4().to_string());
+                }
+                record["createdAt"] = Value::String(now.clone());
+                record["updatedAt"] = Value::String(now.clone());
+                record["__typename"] = Value::String(model_name.to_string());
+
+                // Populate composite sort attributes (status#createdAt format)
+                self.populate_composite_sort_attributes(&mut record, &model)?;
+
+                // Check for duplicate (conditional put)
+                let (pk, sort) = self.extract_pk_parts(&record, &model);
+                let table = self
+                    .tables
+                    .get_mut(model_name)
+                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+
+                if table.get(&pk, sort.as_deref()).is_some() {
+                    let error = json!({
+                        "message": "An item with this id already exists",
+                        "errorType": "DynamoDB:ConditionalCheckFailedException"
+                    });
+                    return Ok((Value::Null, Some(vec![error])));
+                }
+
+                // Put the record
+                table.put(record.clone());
+
+                Ok((record, None))
+            }
+            "get" => {
+                let (pk, sort) = self.extract_pk_parts(args, &model);
+
+                let table = self
+                    .tables
+                    .get(model_name)
+                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+
+                if let Some(record) = table.get(&pk, sort.as_deref()) {
+                    Ok((record, None))
+                } else {
+                    Ok((Value::Null, None))
+                }
+            }
+            "update" => {
+                let mut errors = Vec::new();
+                let (pk, sort) = self.extract_pk_parts(args, &model);
+
+                // Get existing record
+                let table = self
+                    .tables
+                    .get(model_name)
+                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+
+                let existing = table.get(&pk, sort.as_deref());
+                if existing.is_none() {
+                    let error = json!({
+                        "message": "An item with this id does not exist",
+                        "errorType": "DynamoDB:ConditionalCheckFailedException"
+                    });
+                    return Ok((Value::Null, Some(vec![error])));
+                }
+
+                let mut record = existing.unwrap();
+
+                // Apply partial updates
+                if let Some(obj) = args.as_object() {
+                    for (key, value) in obj {
+                        if key == "id" || key.starts_with("__") {
+                            continue; // Skip id and system fields
+                        }
+                        if value.is_null() {
+                            // Remove the field
+                            if let Some(rec_obj) = record.as_object_mut() {
+                                rec_obj.remove(key);
+                            }
+                        } else {
+                            record[key] = value.clone();
+                        }
+                    }
+                }
+
+                // Update timestamp
+                record["updatedAt"] = Value::String(now.clone());
+
+                // Revalidate the updated record
+                if let Some(validation_errors) = self.validate_record(&record, &model, false) {
+                    errors.extend(validation_errors);
+                }
+
+                if !errors.is_empty() {
+                    return Ok((Value::Null, Some(errors)));
+                }
+
+                // Repopulate composite sort attributes
+                self.populate_composite_sort_attributes(&mut record, &model)?;
+
+                // Put the updated record
+                let table = self
+                    .tables
+                    .get_mut(model_name)
+                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+                table.put(record.clone());
+
+                Ok((record, None))
+            }
+            "delete" => {
+                let (pk, sort) = self.extract_pk_parts(args, &model);
+
+                let table = self
+                    .tables
+                    .get_mut(model_name)
+                    .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
+
+                if let Some(record) = table.get(&pk, sort.as_deref()) {
+                    table.delete(&pk, sort.as_deref());
+                    Ok((record, None))
+                } else {
+                    let error = json!({
+                        "message": "An item with this id does not exist",
+                        "errorType": "DynamoDB:ConditionalCheckFailedException"
+                    });
+                    Ok((Value::Null, Some(vec![error])))
+                }
+            }
+            _ => Err(Error::Internal(format!("Unknown operation: {}", op))),
+        }
+    }
+
+    /// Validate a record against the model schema.
+    fn validate_record(
+        &self,
+        record: &Value,
+        model: &Model,
+        is_create: bool,
+    ) -> Option<Vec<Value>> {
+        let mut errors = Vec::new();
+
+        // Check required fields
+        for (field_name, field) in &model.fields {
+            // Skip relationship fields and system fields
+            if field.kind == "model" || field_name.starts_with("__") {
+                continue;
+            }
+
+            // Check required fields
+            if field.is_required && is_create {
+                let value = record.get(field_name);
+                if value.is_none() || value.is_some_and(|v| v.is_null()) {
+                    // Skip auto-filled fields
+                    if field_name != "id"
+                        && field_name != "createdAt"
+                        && field_name != "updatedAt"
+                        && field_name != "owner"
+                    {
+                        errors.push(json!({
+                            "message": format!("Field '{}' is required", field_name),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                }
+            }
+
+            // Validate enum values
+            if field.kind == "enum" {
+                if let Some(value) = record.get(field_name) {
+                    if !value.is_null() {
+                        if let Some(value_str) = value.as_str() {
+                            // Get the enum values from the contract
+                            if let Some(enum_values) = self.get_enum_values(&field.field_type) {
+                                if !enum_values.contains(&value_str.to_string()) {
+                                    errors.push(json!({
+                                        "message": format!(
+                                            "Field '{}' must be one of enum values {:?}",
+                                            field_name, enum_values
+                                        ),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            }
+                        } else {
+                            errors.push(json!({
+                                "message": format!("Field '{}' must be a string for enum type", field_name),
+                                "errorType": "ValidationException"
+                            }));
+                        }
+                    }
+                }
+            }
+
+            // Validate AWS scalar types
+            if let Some(value) = record.get(field_name) {
+                if !value.is_null() {
+                    #[allow(clippy::collapsible_match)]
+                    match field.field_type.as_str() {
+                        "AWSDateTime" => {
+                            if let Some(dt_str) = value.as_str() {
+                                if chrono::DateTime::parse_from_rfc3339(dt_str).is_err() {
+                                    errors.push(json!({
+                                        "message": format!(
+                                            "Field '{}' must be a valid AWSDateTime (RFC 3339 datetime)",
+                                            field_name
+                                        ),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            } else {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a string", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "AWSDate" => {
+                            if let Some(date_str) = value.as_str() {
+                                if date_str.chars().count() != 10
+                                    || date_str.chars().nth(4) != Some('-')
+                                    || date_str.chars().nth(7) != Some('-')
+                                {
+                                    errors.push(json!({
+                                        "message": format!(
+                                            "Field '{}' must be a valid AWSDate (YYYY-MM-DD)",
+                                            field_name
+                                        ),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            } else {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a string", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "AWSJSON" => {
+                            if let Some(json_str) = value.as_str() {
+                                if serde_json::from_str::<Value>(json_str).is_err() {
+                                    errors.push(json!({
+                                        "message": format!(
+                                            "Field '{}' must be a valid AWSJSON string",
+                                            field_name
+                                        ),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            } else {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a string", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "AWSEmail" => {
+                            if let Some(email_str) = value.as_str() {
+                                let at_count = email_str.chars().filter(|c| *c == '@').count();
+                                let parts: Vec<&str> = email_str.split('@').collect();
+                                if at_count != 1 || parts[0].is_empty() || parts[1].is_empty() {
+                                    errors.push(json!({
+                                        "message": format!("Field '{}' must be a valid AWSEmail", field_name),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            } else {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a string", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "AWSURL" => {
+                            if let Some(url_str) = value.as_str() {
+                                if url::Url::parse(url_str).is_err() {
+                                    errors.push(json!({
+                                        "message": format!("Field '{}' must be a valid AWSURL", field_name),
+                                        "errorType": "ValidationException"
+                                    }));
+                                }
+                            } else {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a string", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "Int" => {
+                            if !value.is_i64() && !value.is_u64() {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be an integer", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "Float" => {
+                            if !value.is_f64() && !value.is_i64() && !value.is_u64() {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a number", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "Boolean" => {
+                            if !value.is_boolean() {
+                                errors.push(json!({
+                                    "message": format!("Field '{}' must be a boolean", field_name),
+                                    "errorType": "ValidationException"
+                                }));
+                            }
+                        }
+                        "String" if !value.is_string() => {
+                            errors.push(json!({
+                                "message": format!("Field '{}' must be a string", field_name),
+                                "errorType": "ValidationException"
+                            }));
+                        }
+                        "String" => {}
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+        if errors.is_empty() {
+            None
+        } else {
+            Some(errors)
+        }
+    }
+
+    /// Get enum values from the contract.
+    fn get_enum_values(&self, enum_name: &str) -> Option<Vec<String>> {
+        self.contract
+            .enums()
+            .get(enum_name)
+            .map(|e| e.values().to_vec())
+    }
+
+    /// Extract partition key and sort key from a record.
+    fn extract_pk_parts(&self, record: &Value, model: &Model) -> (String, Option<String>) {
+        let pk = model.primary_key();
+        if pk.len() == 1 {
+            let pk_value = record
+                .get(&pk[0])
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            (pk_value, None)
+        } else {
+            // Composite key: partition is first, sort is rest
+            let partition = record
+                .get(&pk[0])
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let sort_parts: Vec<String> = pk[1..]
+                .iter()
+                .map(|key| {
+                    record
+                        .get(key)
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .unwrap_or_default()
+                })
+                .collect();
+            // sort_parts is guaranteed to have at least one element since pk[1..] is non-empty
+            let sort = Some(sort_parts.join("#"));
+            (partition, sort)
+        }
+    }
+
+    /// Populate composite sort attributes (e.g., status#createdAt).
+    fn populate_composite_sort_attributes(&self, record: &mut Value, model: &Model) -> Result<()> {
+        // Check primary key for composite sort
+        if model.primary_key().len() > 2 {
+            let sort_key_name = model.primary_key()[1..].join("#");
+            let sort_parts: Vec<String> = model.primary_key()[1..]
+                .iter()
+                .map(|key| {
+                    record
+                        .get(key)
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .unwrap_or_default()
+                })
+                .collect();
+            if !sort_parts.is_empty() {
+                record[&sort_key_name] = Value::String(sort_parts.join("#"));
+            }
+        }
+
+        // Check indexes for composite sort attributes
+        for index in model.indexes() {
+            if index.sort_fields().len() > 1 {
+                let sort_attr_name = index.sort_fields().join("#");
+                let sort_parts: Vec<String> = index
+                    .sort_fields()
+                    .iter()
+                    .map(|key| {
+                        record
+                            .get(key)
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default()
+                    })
+                    .collect();
+                if !sort_parts.is_empty() {
+                    record[&sort_attr_name] = Value::String(sort_parts.join("#"));
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

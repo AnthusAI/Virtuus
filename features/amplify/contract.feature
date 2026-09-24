@@ -50,6 +50,12 @@ Feature: Contract loading, tables and indexes
             "partitionKey": "postId",
             "sortKey": "name",
             "indexes": []
+          },
+          {
+            "name": "Vote",
+            "partitionKey": "postId",
+            "sortKey": "userId#kind",
+            "indexes": []
           }
         ]
       }

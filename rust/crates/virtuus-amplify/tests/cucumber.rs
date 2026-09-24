@@ -1,5 +1,9 @@
 use cucumber::gherkin;
 use cucumber::{given, then, when, World};
+use regex::Regex;
+use serde_json::{json, Value};
+use std::path::PathBuf;
+use uuid::Uuid;
 use virtuus_amplify::{Contract, Engine, EngineOptions};
 
 #[derive(World, Debug, Default)]
@@ -7,6 +11,10 @@ pub struct AppWorld {
     contract: Option<Contract>,
     engine: Option<Engine>,
     error: Option<String>,
+    last_operation_data: Option<Value>,
+    last_operation_errors: Option<Vec<Value>>,
+    last_model: Option<String>,
+    directory: Option<PathBuf>,
 }
 
 #[given("a blog contract")]
@@ -113,6 +121,49 @@ fn open_engine(world: &mut AppWorld) {
         match Engine::open(None, contract, EngineOptions) {
             Ok(engine) => {
                 world.engine = Some(engine);
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    }
+}
+
+#[given(regex = "^a (\\w+) exists with:$")]
+fn given_resource_exists(world: &mut AppWorld, model: String, step: &gherkin::Step) {
+    // First ensure engine is open
+    if world.engine.is_none() {
+        if let Some(contract) = world.contract.clone() {
+            match Engine::open(None, contract, EngineOptions) {
+                Ok(engine) => {
+                    world.engine = Some(engine);
+                }
+                Err(e) => {
+                    world.error = Some(e.to_string());
+                    return;
+                }
+            }
+        }
+    }
+
+    // Now create the record
+    if let Some(engine) = &mut world.engine {
+        let json_str = step.docstring().expect("Expected JSON docstring");
+        let input: Value = serde_json::from_str(json_str).expect("Failed to parse input JSON");
+
+        world.last_model = Some(model.clone());
+
+        match engine.call(&model, "create", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+                // Assertion: given step should succeed
+                if let Some(ref errs) = world.last_operation_errors {
+                    if !errs.is_empty() {
+                        world.error = Some(format!("Given step failed: {:?}", errs));
+                    }
+                }
             }
             Err(e) => {
                 world.error = Some(e.to_string());
@@ -437,12 +488,511 @@ fn query_posts_by_blog(world: &mut AppWorld, blog_id: String, expected_ids_str: 
     }
 }
 
+#[when(regex = "^I create a (\\w+) with:$")]
+fn create_resource(world: &mut AppWorld, model: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        let json_str = step.docstring().expect("Expected JSON docstring");
+        let input: Value = serde_json::from_str(json_str).expect("Failed to parse input JSON");
+
+        world.last_model = Some(model.clone());
+
+        match engine.call(&model, "create", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+                world.last_operation_data = None;
+                world.last_operation_errors = None;
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I get the (\\w+) with id \"([^\"]+)\"$")]
+fn get_resource(world: &mut AppWorld, model: String, id: String) {
+    if let Some(engine) = &mut world.engine {
+        world.last_model = Some(model.clone());
+
+        let input = json!({"id": id});
+
+        match engine.call(&model, "get", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I update the (\\w+) with:$")]
+fn update_resource(world: &mut AppWorld, model: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        let json_str = step.docstring().expect("Expected JSON docstring");
+        let input: Value = serde_json::from_str(json_str).expect("Failed to parse input JSON");
+
+        world.last_model = Some(model.clone());
+
+        match engine.call(&model, "update", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I delete the (\\w+) with id \"([^\"]+)\"$")]
+fn delete_resource(world: &mut AppWorld, model: String, id: String) {
+    if let Some(engine) = &mut world.engine {
+        world.last_model = Some(model.clone());
+
+        let input = json!({"id": id});
+
+        match engine.call(&model, "delete", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then("the operation succeeds")]
+fn check_operation_succeeds(world: &mut AppWorld) {
+    if let Some(ref error) = world.error {
+        panic!("Expected success but got error: {}", error);
+    }
+}
+
+#[then("the operation fails with errorType")]
+fn check_operation_fails_with_error_type(world: &mut AppWorld) {
+    if world.error.is_none() && world.last_operation_errors.is_none() {
+        panic!("Expected operation to fail but it succeeded");
+    }
+}
+
+#[then(regex = "^the operation fails with errorType \"([^\"]+)\"$")]
+fn check_operation_fails_with_specific_error(world: &mut AppWorld, error_type: String) {
+    if let Some(ref errors) = world.last_operation_errors {
+        let found = errors.iter().any(|e| {
+            if let Some(et) = e.get("errorType").and_then(|v| v.as_str()) {
+                et == error_type
+            } else {
+                false
+            }
+        });
+        if !found {
+            panic!("Expected error type '{}' but got: {:?}", error_type, errors);
+        }
+    } else {
+        panic!(
+            "Expected operation to fail with error type '{}' but got: {}",
+            error_type,
+            world.error.as_ref().unwrap_or(&"unknown".to_string())
+        );
+    }
+}
+
+#[then(regex = "^the operation fails with error containing \"([^\"]+)\"$")]
+fn check_operation_fails_with_message(world: &mut AppWorld, substring: String) {
+    if let Some(ref errors) = world.last_operation_errors {
+        let found = errors.iter().any(|e| {
+            if let Some(msg) = e.get("message").and_then(|v| v.as_str()) {
+                msg.to_lowercase().contains(&substring.to_lowercase())
+            } else {
+                false
+            }
+        });
+        if !found {
+            panic!(
+                "Expected error message containing '{}' but got: {:?}",
+                substring, errors
+            );
+        }
+    } else if let Some(ref err) = world.error {
+        assert!(
+            err.to_lowercase().contains(&substring.to_lowercase()),
+            "Expected error containing '{}' but got: {}",
+            substring,
+            err
+        );
+    } else {
+        panic!(
+            "Expected operation to fail with message containing '{}' but it succeeded",
+            substring
+        );
+    }
+}
+
+#[then("the result data has a uuid id")]
+fn check_result_has_uuid_id(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(id_str) = data.get("id").and_then(|v| v.as_str()) {
+            // Try to parse as UUID
+            match Uuid::parse_str(id_str) {
+                Ok(_) => {} // Valid UUID
+                Err(_) => panic!("Expected UUID but got: {}", id_str),
+            }
+        } else {
+            panic!("Result data does not have id field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data id is \"([^\"]+)\"$")]
+fn check_result_id(world: &mut AppWorld, expected_id: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(id_str) = data.get("id").and_then(|v| v.as_str()) {
+            assert_eq!(id_str, expected_id, "ID mismatch");
+        } else {
+            panic!("Result data does not have id field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data has __typename \"([^\"]+)\"$")]
+fn check_result_typename(world: &mut AppWorld, expected_type: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(type_str) = data.get("__typename").and_then(|v| v.as_str()) {
+            assert_eq!(type_str, expected_type, "__typename mismatch");
+        } else {
+            panic!("Result data does not have __typename field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("the result data has createdAt in ISO-8601 with milliseconds")]
+fn check_result_created_at(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(created_at) = data.get("createdAt").and_then(|v| v.as_str()) {
+            // Check ISO-8601 format with milliseconds: YYYY-MM-DDTHH:MM:SS.sssZ
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z?$")
+                .expect("Failed to compile regex");
+            assert!(
+                re.is_match(created_at),
+                "createdAt not in ISO-8601 with milliseconds format: {}",
+                created_at
+            );
+        } else {
+            panic!("Result data does not have createdAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("the result data has updatedAt in ISO-8601 with milliseconds")]
+fn check_result_updated_at(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(updated_at) = data.get("updatedAt").and_then(|v| v.as_str()) {
+            // Check ISO-8601 format with milliseconds: YYYY-MM-DDTHH:MM:SS.sssZ
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z?$")
+                .expect("Failed to compile regex");
+            assert!(
+                re.is_match(updated_at),
+                "updatedAt not in ISO-8601 with milliseconds format: {}",
+                updated_at
+            );
+        } else {
+            panic!("Result data does not have updatedAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data status is \"([^\"]+)\"$")]
+fn check_result_status(world: &mut AppWorld, expected_status: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(status) = data.get("status").and_then(|v| v.as_str()) {
+            assert_eq!(status, expected_status, "status mismatch");
+        } else {
+            panic!("Result data does not have status field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data postId is \"([^\"]+)\"$")]
+fn check_result_postid(world: &mut AppWorld, expected: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(value) = data.get("postId").and_then(|v| v.as_str()) {
+            assert_eq!(value, expected, "postId mismatch");
+        } else {
+            panic!("Result data does not have postId field or it's not a string");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data name is \"([^\"]+)\"$")]
+fn check_result_name(world: &mut AppWorld, expected: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(value) = data.get("name").and_then(|v| v.as_str()) {
+            assert_eq!(value, expected, "name mismatch");
+        } else {
+            panic!("Result data does not have name field or it's not a string");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data title is \"([^\"]+)\"$")]
+fn check_result_title(world: &mut AppWorld, expected: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(value) = data.get("title").and_then(|v| v.as_str()) {
+            assert_eq!(value, expected, "title mismatch");
+        } else {
+            panic!("Result data does not have title field or it's not a string");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data field \"([^\"]+)\" is \"([^\"]+)\"$")]
+fn check_result_field(world: &mut AppWorld, field: String, expected: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(value) = data.get(&field).and_then(|v| v.as_str()) {
+            assert_eq!(value, expected, "{} mismatch", field);
+        } else {
+            panic!(
+                "Result data does not have {} field or it's not a string",
+                field
+            );
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("the result data is null")]
+fn check_result_data_null(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if !data.is_null() {
+            panic!("Expected result data to be null but got: {:?}", data);
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("there are no errors")]
+fn check_no_errors(world: &mut AppWorld) {
+    if let Some(ref errors) = world.last_operation_errors {
+        if !errors.is_empty() {
+            panic!("Expected no errors but got: {:?}", errors);
+        }
+    }
+}
+
+#[then("the result data status is null or missing")]
+fn check_result_status_null_or_missing(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(status) = data.get("status") {
+            assert!(
+                status.is_null(),
+                "Expected status to be null but got: {:?}",
+                status
+            );
+        }
+        // If missing, that's fine too
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result data has (.+) as \"([^\"]+)\" followed by ISO-8601$")]
+fn check_result_composite_field(world: &mut AppWorld, field: String, prefix: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(value) = data.get(&field).and_then(|v| v.as_str()) {
+            assert!(
+                value.starts_with(&prefix),
+                "Expected {} to start with '{}' but got: {}",
+                field,
+                prefix,
+                value
+            );
+            // Check the rest is ISO-8601 datetime
+            let rest = &value[prefix.len()..];
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z?$")
+                .expect("Failed to compile regex");
+            assert!(
+                re.is_match(rest),
+                "{} second part not in ISO-8601 format: {}",
+                field,
+                rest
+            );
+        } else {
+            panic!("Result data does not have {} field", field);
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[when(regex = "^I call operation \"([^\"]+)\"$")]
+fn when_call_operation(world: &mut AppWorld, operation: String) {
+    if let Some(engine) = &mut world.engine {
+        // Try to call an unknown operation on a valid model - this should fail
+        match engine.call("Blog", &operation, &json!({})) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+                world.last_operation_data = None;
+                world.last_operation_errors = Some(vec![json!({"message": e.to_string()})]);
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(
+    regex = "^I get the Vote with keys postId \"([^\"]+)\" and userId \"([^\"]+)\" and kind \"([^\"]+)\"$"
+)]
+fn when_get_vote(world: &mut AppWorld, post_id: String, user_id: String, kind: String) {
+    if let Some(engine) = &mut world.engine {
+        let pk = json!({
+            "postId": post_id,
+            "userId": user_id,
+            "kind": kind
+        });
+
+        match engine.call("Vote", "get", &pk) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then("the operation fails")]
+fn check_operation_fails(world: &mut AppWorld) {
+    assert!(
+        world.error.is_some() || world.last_operation_errors.is_some(),
+        "Expected operation to fail"
+    );
+}
+
+#[when("I open the engine with a temporary directory")]
+fn open_engine_with_temp_dir(world: &mut AppWorld) {
+    if let Some(contract) = world.contract.clone() {
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp directory");
+        let dir_path = temp_dir.path().to_path_buf();
+        world.directory = Some(dir_path.clone());
+
+        // Keep the temp directory alive by storing it in a static or returning it
+        // For now, we'll leak it to keep it alive for the test
+        let _ = Box::leak(Box::new(temp_dir));
+
+        match Engine::open(Some(dir_path), contract, EngineOptions) {
+            Ok(engine) => {
+                world.engine = Some(engine);
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    }
+}
+
+#[when("I close and reopen the engine")]
+fn reopen_engine(world: &mut AppWorld) {
+    // Drop the current engine to ensure everything is flushed
+    world.engine = None;
+
+    if let Some(contract) = world.contract.clone() {
+        if let Some(dir) = &world.directory {
+            match Engine::open(Some(dir.clone()), contract, EngineOptions) {
+                Ok(engine) => {
+                    world.engine = Some(engine);
+                    world.error = None;
+                }
+                Err(e) => {
+                    world.error = Some(e.to_string());
+                }
+            }
+        } else {
+            world.error = Some("No directory set for reopening".to_string());
+        }
+    }
+}
+
+#[then("the storage directory has per-model folders")]
+fn check_model_folders(world: &mut AppWorld) {
+    if let Some(dir) = &world.directory {
+        let blog_path = dir.join("Blog");
+        let post_path = dir.join("Post");
+        let vote_path = dir.join("Vote");
+
+        assert!(
+            blog_path.exists(),
+            "Blog folder should exist at {:?}",
+            blog_path
+        );
+        assert!(
+            post_path.exists(),
+            "Post folder should exist at {:?}",
+            post_path
+        );
+        assert!(
+            vote_path.exists(),
+            "Vote folder should exist at {:?}",
+            vote_path
+        );
+    } else {
+        panic!("No directory set");
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let features_path = format!(
-        "{}/../../../features/amplify/contract.feature",
-        manifest_dir
-    );
+    let features_path = format!("{}/../../../features/amplify", manifest_dir);
     AppWorld::run(&features_path).await;
 }
