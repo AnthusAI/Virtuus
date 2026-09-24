@@ -15,9 +15,17 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "cff265a8-d3d4-4c98-b0ea-e7b523e6844e",
+      "author": "home",
+      "text": "Setting task to in_progress - starting V9c implementation",
+      "created_at": "2026-09-24T19:45:54.480639Z",
+      "comment_type": "default"
+    }
+  ],
   "created_at": "2026-09-24T04:45:38.154571Z",
-  "updated_at": "2026-09-24T04:45:49.465181Z",
+  "updated_at": "2026-09-24T19:45:54.480663Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
