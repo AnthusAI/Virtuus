@@ -1,0 +1,375 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Apricitus Contract Schema",
+  "description": "Schema for apricitus.contract.json describing data models, enums, custom types, and storage paths",
+  "type": "object",
+  "required": [
+    "version",
+    "models",
+    "enums",
+    "customTypes",
+    "authRules",
+    "storage"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Contract version hash (16 hex characters)"
+    },
+    "models": {
+      "type": "object",
+      "description": "Data models keyed by name",
+      "additionalProperties": {
+        "$ref": "#/$defs/Model"
+      }
+    },
+    "enums": {
+      "type": "object",
+      "description": "Enumerations keyed by name",
+      "additionalProperties": {
+        "$ref": "#/$defs/Enum"
+      }
+    },
+    "customTypes": {
+      "type": "object",
+      "description": "Custom types (non-model types) keyed by name",
+      "additionalProperties": {
+        "$ref": "#/$defs/CustomType"
+      }
+    },
+    "authRules": {
+      "type": "object",
+      "description": "Authorization rules per model",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/AuthRule"
+        }
+      }
+    },
+    "storage": {
+      "$ref": "#/$defs/Storage"
+    }
+  },
+  "$defs": {
+    "Model": {
+      "type": "object",
+      "required": [
+        "name",
+        "fields",
+        "primaryKey",
+        "indexes",
+        "relationships",
+        "authRules",
+        "ownerFields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Model name"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Fields keyed by name",
+          "additionalProperties": {
+            "$ref": "#/$defs/Field"
+          }
+        },
+        "primaryKey": {
+          "type": "array",
+          "description": "Primary key field names",
+          "items": {
+            "type": "string"
+          }
+        },
+        "indexes": {
+          "type": "array",
+          "description": "Secondary indexes",
+          "items": {
+            "$ref": "#/$defs/Index"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "description": "Model relationships",
+          "items": {
+            "$ref": "#/$defs/Relationship"
+          }
+        },
+        "authRules": {
+          "type": "array",
+          "description": "Authorization rules for this model",
+          "items": {
+            "$ref": "#/$defs/AuthRule"
+          }
+        },
+        "ownerFields": {
+          "type": "array",
+          "description": "Fields that store owner identity for owner-based auth",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Field": {
+      "type": "object",
+      "required": [
+        "name",
+        "type",
+        "isRequired",
+        "isArray",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name"
+        },
+        "type": {
+          "type": "string",
+          "description": "Field type name (scalar, model, enum, or custom type)"
+        },
+        "isRequired": {
+          "type": "boolean",
+          "description": "Whether field is required"
+        },
+        "isArray": {
+          "type": "boolean",
+          "description": "Whether field is an array"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "scalar",
+            "enum",
+            "model",
+            "customType"
+          ],
+          "description": "Field kind: scalar (builtin type), enum (enumeration), model (relationship to model), or customType (non-model type)"
+        }
+      }
+    },
+    "Index": {
+      "type": "object",
+      "required": [
+        "name",
+        "queryField",
+        "partitionField",
+        "sortFields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Index name"
+        },
+        "queryField": {
+          "type": "string",
+          "description": "GraphQL query field name"
+        },
+        "partitionField": {
+          "type": "string",
+          "description": "Partition key field"
+        },
+        "sortFields": {
+          "type": "array",
+          "description": "Sort key fields in order",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sortArgument": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Primary sort argument name (first sort field)"
+        }
+      }
+    },
+    "Relationship": {
+      "type": "object",
+      "required": [
+        "field",
+        "kind",
+        "target",
+        "references"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Relationship field name"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "hasMany",
+            "belongsTo",
+            "hasOne"
+          ],
+          "description": "Relationship kind"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target model name"
+        },
+        "references": {
+          "type": "string",
+          "description": "Foreign key field in target model"
+        },
+        "childIndex": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Query field for hasMany relationships"
+        },
+        "implicit": {
+          "type": "boolean",
+          "description": "Whether relationship is implicit (no index)"
+        }
+      }
+    },
+    "AuthRule": {
+      "type": "object",
+      "required": [
+        "provider",
+        "allow",
+        "operations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "userPools",
+            "apiKey",
+            "iam",
+            "oidc",
+            "lambda"
+          ],
+          "description": "Authorization provider"
+        },
+        "allow": {
+          "type": "string",
+          "enum": [
+            "owner",
+            "groups",
+            "public",
+            "private",
+            "custom"
+          ],
+          "description": "Authorization type"
+        },
+        "operations": {
+          "type": "array",
+          "description": "Allowed operations",
+          "items": {
+            "type": "string",
+            "enum": [
+              "create",
+              "read",
+              "update",
+              "delete"
+            ]
+          }
+        },
+        "ownerField": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Field storing owner identity (for owner auth)"
+        },
+        "identityClaim": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Claim to use for owner identity"
+        },
+        "groupClaim": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Claim name for group membership"
+        },
+        "groups": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "List of authorized groups",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Enum": {
+      "type": "array",
+      "description": "Enumeration values",
+      "items": {
+        "type": "string"
+      }
+    },
+    "CustomType": {
+      "type": "object",
+      "description": "Custom type fields keyed by name",
+      "additionalProperties": {
+        "$ref": "#/$defs/Field"
+      }
+    },
+    "StoragePath": {
+      "type": "object",
+      "required": [
+        "path",
+        "readable",
+        "writable"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Storage path pattern"
+        },
+        "readable": {
+          "type": "array",
+          "description": "Groups that can read from this path",
+          "items": {
+            "type": "string"
+          }
+        },
+        "writable": {
+          "type": "array",
+          "description": "Groups that can write to this path",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Storage": {
+      "type": "object",
+      "required": [
+        "paths"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "description": "Storage access rules",
+          "items": {
+            "$ref": "#/$defs/StoragePath"
+          }
+        }
+      }
+    }
+  }
+}
