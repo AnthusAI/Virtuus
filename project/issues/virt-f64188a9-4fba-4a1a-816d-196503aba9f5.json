@@ -22,10 +22,22 @@
         "model": "Claude Opus 5.5",
         "name": "storage-lead"
       }
+    },
+    {
+      "id": "4777c829-74b4-44e7-8537-0dde650fbbc0",
+      "author": "home",
+      "text": "**PR scope (storage-lead, 2026-09-24).** The user asked for this feature to be finished and a PR opened into `develop`, so Apricity can move on. The first PR is **the Amplify-compatible engine**: what Apricity needs to run locally.\n\n**In this PR:**\n- V1 (virt-cdf828, done), V2a (virt-2a94a1, done), V2b (virt-d08ae3): typed errors.\n- V8a–V8f: `virtuus-amplify` (contract, tables, CRUD, filters and key conditions, pagination, selectionSet and relationships, identity and auth).\n- V9a–V9d: `virtuus-appsync` (the SDL schema, resolvers, relationship fields, error envelopes and API-key auth).\n- Integration (virt-c9fc1a): `feature/amplify-crates` and `feature/amplify-appsync` are merged into `feature/amplify-engine`; both crates join the workspace, and `make check` runs their tests and 100% coverage.\n\n**Follow-up PRs (not blocking Apricity's local backends):** V2c, V2d (the remaining error mapping), V3 (Storage trait), V4 (index performance), V5 (core key tokens; V8d implements its own), V6 (lock and change log), V7 (virtuus-blobs; Apricity uses its own FsFiles meanwhile), V10 (realtime), V11 (0.6.0 release prep).\n\n**Build discipline:** at most two concurrent build agents, `CARGO_BUILD_JOBS=2` each (the machine had to be rebooted after heavier parallel builds).",
+      "created_at": "2026-09-24T13:05:39.690465Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
     }
   ],
   "created_at": "2026-09-24T04:45:01.767543Z",
-  "updated_at": "2026-09-24T04:46:37.288803Z",
+  "updated_at": "2026-09-24T13:05:39.690493Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",

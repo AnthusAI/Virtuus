@@ -1,7 +1,7 @@
 {
   "id": "virt-c9fc1a92-c060-48b7-b0a7-9c29b3790f1b",
   "title": "Integrate amplify crates into feature/amplify-engine; make check covers them; docs (PR prep)",
-  "description": "",
+  "description": "Integrate the Amplify-engine work for the PR into `develop` (scope: the comment on epic virt-f64188).\n\n1. The lead merges `feature/amplify-crates` and `feature/amplify-appsync` into `feature/amplify-engine`, resolving conflicts in `rust/Cargo.toml` members and `Cargo.lock`.\n2. `rust/Cargo.toml`: `[workspace] members = [\".\", \"crates/virtuus-amplify\", \"crates/virtuus-appsync\"]`.\n3. The Makefile `check-rust` also runs, for each crate: `cargo clippy -p <crate> --all-targets -- -D warnings`, `cargo test -p <crate>`, and `cargo tarpaulin -p <crate> --exclude-files 'src/*' --fail-under 100`.\n4. `tools/check_spec_parity.py` treats `features/amplify/` and `features/appsync/` as `@rust-only` (they are tagged) and still passes.\n5. README / docs: a short section on the two crates (what they are, and how Apricity uses them), in the repo's doc style.\n6. `make check PYTHON=$PWD/.venv/bin/python` exits 0 on the merged branch. Paste the summary.",
   "type": "task",
   "status": "open",
   "priority": 1,
@@ -12,7 +12,7 @@
   "dependencies": [],
   "comments": [],
   "created_at": "2026-09-24T13:05:22.472918Z",
-  "updated_at": "2026-09-24T13:05:22.472969Z",
+  "updated_at": "2026-09-24T13:05:39.716468Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
