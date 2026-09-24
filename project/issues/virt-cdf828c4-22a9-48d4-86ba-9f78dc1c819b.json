@@ -3,17 +3,42 @@
   "title": "Foundations: @rust-only specs, workspace, optional dependencies",
   "description": "Prepare the codebase for the new work **without changing behaviour**.\n\n## Steps\n1. `tools/check_spec_parity.py`: steps used only by features or scenarios tagged `@rust-only` count for Rust only (mirror the existing `@python-only` handling).\n2. `Makefile`: behave runs (`check-python`, `coverage-python`) exclude `@rust-only` (`--tags=-rust-only`, or the syntax of the installed behave). Rust keeps `CUCUMBER_FILTER_TAGS='not @python-only and not @bench'`.\n3. Add a tiny `features/smoke/rust_only.feature` tagged `@rust-only` (e.g. \"the library builds without default features\" or a trivial table check) with a Rust step, to prove the tag works.\n4. `rust/Cargo.toml`: make it a workspace root as well: `[workspace] members = [\".\"]`, `resolver = \"2\"`. Later crates go in `rust/crates/<name>` and are added to `members`.\n5. `rayon` optional behind a default feature `parallel`, with a sequential fallback everywhere it's used.\n6. `clap` optional behind a default feature `cli`; the `virtuus` binary gets `required-features = [\"cli\"]`.\n\n## Acceptance\n- `make check` green, and existing behaviour unchanged.\n- `cargo build --lib --no-default-features` and `cargo build --lib --no-default-features --target wasm32-wasip1` both succeed (`rustup target add wasm32-wasip1` if needed).\n- The `@rust-only` scenario runs in Rust and is skipped by behave and by the parity check.\n\n## Verify\n```\nexport PATH=$HOME/.cargo/bin:$PATH\nmake check PYTHON=$PWD/.venv/bin/python\ncd rust && cargo build --lib --no-default-features && cargo build --lib --no-default-features --target wasm32-wasip1\n```\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
   "type": "task",
-  "status": "open",
+  "status": "closed",
   "priority": 1,
   "assignee": null,
   "creator": null,
   "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "64ba484b-ac08-44a0-aba0-ea34ce1bbcf4",
+      "author": "home",
+      "text": "✅ All changes complete and verified.\n\nVerification results:\n- Python behave: 824 steps passed, 0 failed, 2 skipped (rust-only scenario skipped)\n- Python coverage: 100%\n- Rust: 168 lib tests passed, 100% coverage = 1326/1326 lines\n- Parity: OK — 418 steps in both languages, 5 pending\n- cargo build --lib --no-default-features: SUCCESS\n- cargo build --lib --no-default-features --target wasm32-wasip1: SUCCESS\n\nChanges made:\n1. ✅ tools/check_spec_parity.py: Added @rust-only tag handling (skips from parity)\n2. ✅ Makefile: Added --tags=-rust-only to Python behave runs\n3. ✅ features/smoke/rust_only.feature: Created @rust-only scenario\n4. ✅ rust/Cargo.toml: Added workspace, made rayon/clap optional\n5. ✅ rust/src/table.rs: Made rayon usage conditional with #[cfg(feature = \"parallel\")]\n6. ✅ rust/tests/cucumber.rs: Added Rust step definitions for rust-only scenario\n\nNo behavior changed. Ready for review.",
+      "created_at": "2026-09-24T04:54:24.348817Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Haiku 4.5",
+        "name": "storage-V1"
+      }
+    },
+    {
+      "id": "0719fcbf-4ddd-4ed9-8f37-a94427056b7a",
+      "author": "home",
+      "text": "Review: accepted. Re-ran make check: green (tarpaulin 100% 1326/1326, parity OK 418), no-default-features build OK natively and for wasm32-wasip1. Notes: parity skips @rust-only at feature level (same as the existing @python-only rule); the parallel/sequential load branches duplicate the closure body, which V3's storage rewrite will fold into one function.",
+      "created_at": "2026-09-24T04:57:11.724894Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T04:45:02.038103Z",
-  "updated_at": "2026-09-24T04:45:47.017917Z",
-  "closed_at": null,
+  "updated_at": "2026-09-24T04:57:11.790560Z",
+  "closed_at": "2026-09-24T04:57:11.790529Z",
   "agent": {
     "platform": "claude_code",
     "model": "Claude Opus 5.5",

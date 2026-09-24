@@ -10,9 +10,22 @@
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "3e63e500-16cb-4088-947b-5e72a7a819a3",
+      "author": "home",
+      "text": "Baseline before any work (2026-09-24, develop @ 128c3c0, branch feature/amplify-engine): make check-python green (824 behave steps, 100% coverage, 868 stmts), make check-parity OK (418 steps both languages, 5 pending), make check-rust green (fmt, clippy -D warnings, 168 lib tests, tarpaulin 100% = 1325/1325 lines). Toolchain notes: use PATH=$HOME/.cargo/bin:$PATH (rustfmt/clippy/cargo-tarpaulin installed there); Python dev env is .venv at the repo root (git-excluded locally): make check PYTHON=$PWD/.venv/bin/python.",
+      "created_at": "2026-09-24T04:46:37.288781Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T04:45:01.767543Z",
-  "updated_at": "2026-09-24T04:45:46.251166Z",
+  "updated_at": "2026-09-24T04:46:37.288803Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
