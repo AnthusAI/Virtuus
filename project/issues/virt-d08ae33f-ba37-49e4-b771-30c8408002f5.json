@@ -15,9 +15,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "71d0c714-a344-449f-a0f0-b58658ed72a8",
+      "author": "home",
+      "text": "Added scope (storage-lead), carried from V2a (virt-2a94a1): **include-resolution errors with parity.** An association whose target table (BelongsTo/HasMany) or through table (HasManyThrough) isn't registered must give `UnknownTable` naming that table when a query includes it, in both languages. Today Rust returns `Error::UnknownTable` (covered only by unit tests in database.rs), while Python's `_python/database.py` ~217 does `self.tables[target_table]  # pragma: no cover` → KeyError. Fix Python: raise `UnknownTableError` and remove the pragma. Add two scenarios to `features/errors/errors.feature` that drive the public API (register a table with an association to a missing table, then run a query with `include`). Assert the error and that the database still answers. The Rust unit tests can then go, since the scenarios cover the paths.",
+      "created_at": "2026-09-24T10:09:10.852452Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T05:08:44.466682Z",
-  "updated_at": "2026-09-24T05:08:44.805726Z",
+  "updated_at": "2026-09-24T10:09:10.852469Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
