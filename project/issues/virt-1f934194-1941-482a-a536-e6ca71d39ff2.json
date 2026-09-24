@@ -1,0 +1,30 @@
+{
+  "id": "virt-1f934194-1941-482a-a536-e6ca71d39ff2",
+  "title": "Prepare 0.6.0 (not published)",
+  "description": "1. Versions to 0.6.0 in `rust/Cargo.toml` (it currently says 0.5.0 while 0.5.1 is released), the new crates, and `python/pyproject.toml`.\n2. CHANGELOG: breaking changes (the `Result`/errors API, the token format) and the new features (storage, multi-process safety, blobs, amplify, appsync).\n3. README sections on storage, `virtuus-amplify` and `virtuus-appsync`, with short examples.\n4. `make check` green.\n5. **No tag, no publish, no push.** The user decides those.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 3,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-2eb8280c-561d-46bf-9a98-a177cae666f9",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:38.311043Z",
+  "updated_at": "2026-09-24T04:45:49.784140Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

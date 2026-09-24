@@ -1,0 +1,25 @@
+{
+  "id": "virt-7f914f24-41c2-465b-a3ed-02efb1a17667",
+  "title": "Live changes over AppSync's realtime protocol",
+  "description": "As a web app using `observeQuery` and `onCreate`, I want the local server to speak AppSync's realtime WebSocket protocol.\n\n```gherkin\nFeature: Realtime subscriptions\n  Scenario: A subscriber hears a create\n    Given a WebSocket client subscribed to onCreatePost\n    When another client creates a Post titled \"Hi\"\n    Then the subscriber receives a \"data\" message whose title is \"Hi\"\n```",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:02.012175Z",
+  "updated_at": "2026-09-24T04:45:46.943102Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

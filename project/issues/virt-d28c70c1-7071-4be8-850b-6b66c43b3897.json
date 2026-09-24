@@ -1,0 +1,25 @@
+{
+  "id": "virt-d28c70c1-7071-4be8-850b-6b66c43b3897",
+  "title": "Operations shaped like Amplify Gen2",
+  "description": "As an app that runs against AWS Amplify or local files, I want local operations that behave exactly like Amplify's `client.models.X` (`get`, `list`, list by index, `create`, `update`, `delete`, `{data, errors, nextToken}`).\n\n```gherkin\nFeature: Amplify-shaped operations\n  Background:\n    Given an engine opened on the contract fixture \"blog\" as user \"u1\"\n\n  Scenario: Create fills in id, timestamps and owner\n    When I call create on \"Post\" with {\"title\": \"Hi\"}\n    Then data has a generated \"id\", \"createdAt\" and \"updatedAt\", and \"owner\" is \"u1\"\n\n  Scenario: Creating an existing id fails conditionally\n    Given a \"Post\" with id \"p1\"\n    When I call create on \"Post\" with {\"id\": \"p1\", \"title\": \"Again\"}\n    Then data is null and errors[0].errorType is \"DynamoDB:ConditionalCheckFailedException\"\n\n  Scenario: The limit applies before the filter, as in DynamoDB\n    Given \"Post\" records \"p0\" to \"p9\" where \"p0\", \"p3\", \"p6\", \"p9\" have \"draft\" true\n    When I list \"Post\" with filter {\"draft\": {\"eq\": true}} and limit 5\n    Then the first page holds \"p0\", \"p3\" and nextToken is not null\n    And collecting every page returns \"p0\", \"p3\", \"p6\", \"p9\"\n```",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:01.958689Z",
+  "updated_at": "2026-09-24T04:45:46.768997Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

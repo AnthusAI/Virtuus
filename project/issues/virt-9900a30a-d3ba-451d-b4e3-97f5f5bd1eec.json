@@ -1,0 +1,25 @@
+{
+  "id": "virt-9900a30a-d3ba-451d-b4e3-97f5f5bd1eec",
+  "title": "Library lock and conditional writes across processes",
+  "description": "1. `Storage::lock(name)` really locks: `FsStorage` uses `fs4` file locks on `.virtuus/lock` (Rust) and `fcntl.flock` (Python). `MemoryStorage` uses a mutex.\n2. Every write (put and delete) holds the lock.\n3. Add a conditional create, `put_if_absent` (Rust) / `put(record, if_absent=True)` (Python), that fails with `ConditionalCheckFailed` when the key exists, atomically across processes.\n4. Specs: the \"Concurrent writers lose nothing\" and \"Only one conditional create wins\" scenarios in `features/concurrency/multiprocess.feature`.\n   - Rust spawns helper processes: a small binary `src/bin/virtuus-test-writer.rs` (exclude it from coverage like `src/bin/virtuus.rs`), or re-invoke the test binary.\n   - Python uses `multiprocessing`.\n\n**Verify:** `make check PYTHON=$PWD/.venv/bin/python`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-3cfeb3e8-bf69-4e06-a519-09a2eef93c80",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.379582Z",
+  "updated_at": "2026-09-24T04:45:47.972261Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

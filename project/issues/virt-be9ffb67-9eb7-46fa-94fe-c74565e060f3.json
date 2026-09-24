@@ -1,0 +1,30 @@
+{
+  "id": "virt-be9ffb67-9eb7-46fa-94fe-c74565e060f3",
+  "title": "Pagination: limit before filter, nextToken, sortDirection",
+  "description": "1. `limit` defaults to 100 and is applied **before** the filter, as in DynamoDB, so a page can be short or empty while `nextToken` is not null.\n2. `nextToken` reuses V5's key tokens.\n3. `sortDirection` (ASC or DESC) on index queries; `list` is ordered by primary key.\n4. Specs: the \"limit applies before the filter\" scenario from the story, collecting every page, an empty page with a non-null token, DESC order, and an invalid token.\n\nPart of the `virtuus-amplify` crate (`rust/crates/virtuus-amplify`; workspace member; `@rust-only` specs in `features/amplify/`; cucumber runner in the crate; 100% coverage). Semantics: `~/Projects/Ripple/design/storage.md` **§2.2**, matching Amplify/AppSync behaviour exactly.\n- **Contract format:** `~/Projects/Ripple/contract/contract.schema.json` (vendor a copy into the crate).\n- **Fixture:** `features/amplify/fixtures/blog.contract.json`, hand-written in that format and shared by V8 and V9. It has `Blog`; `Post` with owner auth, an enum `status`, a customType `meta`, a hasMany `comments` and an index `postsByBlog` (partition `blogId`, sort `createdAt`); `Comment` with belongsTo `post`; and `Tag` with a composite identifier `[\"postId\", \"name\"]`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2e1ef887-2b5e-4837-9626-2a795c9b762a",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-c83390ba-f7d4-4b60-aeef-fa632dfbfd14",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.824112Z",
+  "updated_at": "2026-09-24T04:45:48.846571Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

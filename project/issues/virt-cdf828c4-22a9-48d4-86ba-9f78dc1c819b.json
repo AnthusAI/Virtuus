@@ -1,0 +1,25 @@
+{
+  "id": "virt-cdf828c4-22a9-48d4-86ba-9f78dc1c819b",
+  "title": "Foundations: @rust-only specs, workspace, optional dependencies",
+  "description": "Prepare the codebase for the new work **without changing behaviour**.\n\n## Steps\n1. `tools/check_spec_parity.py`: steps used only by features or scenarios tagged `@rust-only` count for Rust only (mirror the existing `@python-only` handling).\n2. `Makefile`: behave runs (`check-python`, `coverage-python`) exclude `@rust-only` (`--tags=-rust-only`, or the syntax of the installed behave). Rust keeps `CUCUMBER_FILTER_TAGS='not @python-only and not @bench'`.\n3. Add a tiny `features/smoke/rust_only.feature` tagged `@rust-only` (e.g. \"the library builds without default features\" or a trivial table check) with a Rust step, to prove the tag works.\n4. `rust/Cargo.toml`: make it a workspace root as well: `[workspace] members = [\".\"]`, `resolver = \"2\"`. Later crates go in `rust/crates/<name>` and are added to `members`.\n5. `rayon` optional behind a default feature `parallel`, with a sequential fallback everywhere it's used.\n6. `clap` optional behind a default feature `cli`; the `virtuus` binary gets `required-features = [\"cli\"]`.\n\n## Acceptance\n- `make check` green, and existing behaviour unchanged.\n- `cargo build --lib --no-default-features` and `cargo build --lib --no-default-features --target wasm32-wasip1` both succeed (`rustup target add wasm32-wasip1` if needed).\n- The `@rust-only` scenario runs in Rust and is skipped by behave and by the parity check.\n\n## Verify\n```\nexport PATH=$HOME/.cargo/bin:$PATH\nmake check PYTHON=$PWD/.venv/bin/python\ncd rust && cargo build --lib --no-default-features && cargo build --lib --no-default-features --target wasm32-wasip1\n```\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:02.038103Z",
+  "updated_at": "2026-09-24T04:45:47.017917Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

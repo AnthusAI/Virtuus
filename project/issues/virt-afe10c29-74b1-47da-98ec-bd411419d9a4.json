@@ -1,0 +1,30 @@
+{
+  "id": "virt-afe10c29-74b1-47da-98ec-bd411419d9a4",
+  "title": "Storage trait: FsStorage and MemoryStorage in both languages",
+  "description": "Replace the hard-wired filesystem access with a `Storage` trait (design §3.1).\n\n## Steps\n1. Specs first: `features/storage/memory_storage.feature` and `fs_storage.feature` (story \"Storage is pluggable\", plus list, stat, delete and search-index persistence through storage).\n2. Rust `rust/src/storage.rs` with the trait from design §3.1: `list`, `read`, `write_atomic`, `delete`, `stat`, `lock` (a no-op guard is fine for now; V6a implements real locking) and `local_path`, plus the `Entry`, `Meta` and `LockGuard` types.\n   - `FsStorage` (atomic temp file + rename, which is what exists today).\n   - `MemoryStorage` (a `Mutex<BTreeMap<String, (Vec<u8>, Meta)>>`).\n3. `Table` holds an `Arc<dyn Storage>`. Keep `Table::new(..., directory, ...)`, which means `FsStorage`, and add `Table::with_storage(...)`. `Database::from_schema_with_storage(...)`. The search index files (`.virtuus/index/...`) also go through storage.\n4. Python: `python/src/virtuus/_python/storage.py` with the same two classes. `Table` and `Database` accept `storage=`.\n\n## Acceptance\n- `make check` green.\n- `grep -nE \"std::fs|fs::\" rust/src/{table,database,search}.rs` shows nothing. All filesystem access lives in `storage.rs`.\n\n## Verify\n`make check PYTHON=$PWD/.venv/bin/python`, plus the grep above.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-2ee9d543-1fa9-436a-872c-7517ff47a9b7",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.095018Z",
+  "updated_at": "2026-09-24T04:45:47.306310Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

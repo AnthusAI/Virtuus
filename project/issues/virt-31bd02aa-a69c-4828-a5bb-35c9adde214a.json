@@ -1,0 +1,25 @@
+{
+  "id": "virt-31bd02aa-a69c-4828-a5bb-35c9adde214a",
+  "title": "Contract loading, tables and indexes",
+  "description": "1. `Contract::from_json(&str) -> Result<Contract>`, validated against the vendored `contract.schema.json`.\n2. `Engine::open(storage, contract, EngineOptions { enforce_auth }) -> Result<Engine>` creates:\n   - one table per model; its key is `id` or the identifier, composite identifiers map to partition + sort, and more than two fields means the sort key is the rest joined with `#`;\n   - one index per contract index, named by its `queryField`;\n   - the implicit indexes for hasMany foreign keys.\n3. `Engine::describe()` lists them.\n4. Specs: opening the fixture creates the expected tables and indexes; an invalid contract gives a `Validation` error.\n\nPart of the `virtuus-amplify` crate (`rust/crates/virtuus-amplify`; workspace member; `@rust-only` specs in `features/amplify/`; cucumber runner in the crate; 100% coverage). Semantics: `~/Projects/Ripple/design/storage.md` **§2.2**, matching Amplify/AppSync behaviour exactly.\n- **Contract format:** `~/Projects/Ripple/contract/contract.schema.json` (vendor a copy into the crate).\n- **Fixture:** `features/amplify/fixtures/blog.contract.json`, hand-written in that format and shared by V8 and V9. It has `Blog`; `Post` with owner auth, an enum `status`, a customType `meta`, a hasMany `comments` and an index `postsByBlog` (partition `blogId`, sort `createdAt`); `Comment` with belongsTo `post`; and `Tag` with a composite identifier `[\"postId\", \"name\"]`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2e1ef887-2b5e-4837-9626-2a795c9b762a",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.657777Z",
+  "updated_at": "2026-09-24T04:45:48.472909Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

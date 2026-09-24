@@ -1,0 +1,25 @@
+{
+  "id": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "title": "Amplify-compatible engine (for Apricitus storage)",
+  "description": "Make Virtuus the embeddable engine behind Apricitus's local backends (design: `~/Projects/Ripple/design/storage.md` §3.1; Apricitus initiative `apricitus-e70662`): pluggable storage, errors as values, key-based pagination, multi-process safety with a change log, and three new crates: `virtuus-blobs` (files), `virtuus-amplify` (operations shaped like Amplify Gen2's `client.models.X`) and `virtuus-appsync` (a GraphQL server answering AppSync's schema).\n\n## Definition of done\n- `make check` green: lint, specs in both languages, 100% coverage, parity.\n- New crates live in the Cargo workspace under `rust/crates/`, each with `@rust-only` specs at 100% coverage.\n- 0.6.0 prepared on `develop` (CHANGELOG, versions, docs). Not published or tagged without the user.\n\nBranch: `feature/amplify-engine` off `develop`.",
+  "type": "epic",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:01.767543Z",
+  "updated_at": "2026-09-24T04:45:46.251166Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}
