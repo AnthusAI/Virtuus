@@ -15,6 +15,7 @@ pub struct AppWorld {
     last_operation_errors: Option<Vec<Value>>,
     last_model: Option<String>,
     directory: Option<PathBuf>,
+    last_next_token: Option<String>,
 }
 
 #[given("a blog contract")]
@@ -1068,7 +1069,7 @@ fn when_query_index(world: &mut AppWorld, model: String, index: String, step: &g
 #[then(regex = "^the result data has exactly (\\d+) record with id \"([^\"]+)\"$")]
 fn then_result_data_has_one_record(world: &mut AppWorld, count: usize, id: String) {
     assert_eq!(count, 1, "Count must be 1 for single record check");
-    if let Some(Value::Array(records)) = &world.last_operation_data {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
         assert_eq!(records.len(), 1, "Expected exactly 1 record");
         if let Some(Value::Object(record)) = records.first() {
             if let Some(Value::String(record_id)) = record.get("id") {
@@ -1090,7 +1091,7 @@ fn then_result_data_contains_ids(world: &mut AppWorld, ids_str: String) {
         .split(',')
         .map(|s| s.trim().trim_matches('"'))
         .collect();
-    if let Some(Value::Array(records)) = &world.last_operation_data {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
         let actual_ids: Vec<String> = records
             .iter()
             .filter_map(|r| {
@@ -1126,7 +1127,7 @@ fn then_result_data_contains_ids(world: &mut AppWorld, ids_str: String) {
 
 #[then(regex = "^the result data contains exactly these ids \\[\\]$")]
 fn then_result_data_empty(world: &mut AppWorld) {
-    if let Some(Value::Array(records)) = &world.last_operation_data {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
         assert_eq!(
             records.len(),
             0,
@@ -1154,6 +1155,277 @@ fn then_operation_has_validation_error(world: &mut AppWorld) {
         panic!("Expected ValidationException error but got: {:?}", errors);
     } else {
         panic!("Expected operation to have validation error but got none");
+    }
+}
+
+#[then(regex = "^the result has exactly (\\d+) item with id \"([^\"]+)\"$")]
+fn then_result_has_item(world: &mut AppWorld, count: usize, id: String) {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
+        assert_eq!(
+            records.len(),
+            count,
+            "Expected {} items but got {}",
+            count,
+            records.len()
+        );
+        if count > 0 {
+            let ids: Vec<String> = records
+                .iter()
+                .filter_map(|r| {
+                    if let Value::Object(obj) = r {
+                        obj.get("id")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            assert!(ids.contains(&id), "Expected to find id {}", id);
+        }
+    } else {
+        panic!("Expected result data to be available");
+    }
+}
+
+#[then(regex = "^the result has exactly (\\d+) items?$")]
+fn then_result_has_count(world: &mut AppWorld, count: usize) {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
+        assert_eq!(
+            records.len(),
+            count,
+            "Expected {} items but got {}",
+            count,
+            records.len()
+        );
+    } else {
+        panic!("Expected result data to be available");
+    }
+}
+
+#[then(regex = "^the result contains exactly these ids \\[([^\\]]+)\\]$")]
+fn then_result_contains_ids(world: &mut AppWorld, ids_str: String) {
+    let expected_ids: Vec<&str> = ids_str
+        .split(',')
+        .map(|s| s.trim().trim_matches('"'))
+        .collect();
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
+        let actual_ids: Vec<String> = records
+            .iter()
+            .filter_map(|r| {
+                if let Value::Object(obj) = r {
+                    obj.get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            actual_ids.len(),
+            expected_ids.len(),
+            "Expected {} ids but got {}",
+            expected_ids.len(),
+            actual_ids.len()
+        );
+        for (i, expected_id) in expected_ids.iter().enumerate() {
+            assert_eq!(
+                actual_ids[i], *expected_id,
+                "Expected id {} at position {}",
+                expected_id, i
+            );
+        }
+    } else {
+        panic!("Expected result data to be available");
+    }
+}
+
+#[then(regex = "^the result contains exactly these ids \\[\\]$")]
+fn then_result_contains_empty_ids(world: &mut AppWorld) {
+    if let Some(records) = world.last_operation_data.as_ref().and_then(get_items_array) {
+        assert_eq!(
+            records.len(),
+            0,
+            "Expected 0 items but got {}",
+            records.len()
+        );
+    } else {
+        panic!("Expected result data to be available");
+    }
+}
+
+#[then("the nextToken is null")]
+fn then_next_token_is_null(world: &mut AppWorld) {
+    if let Some(token) = world.last_operation_data.as_ref().and_then(get_next_token) {
+        assert!(token.is_none(), "Expected nextToken to be null");
+    } else {
+        panic!("Expected result to have nextToken field");
+    }
+}
+
+#[then("the nextToken is not null")]
+fn then_next_token_is_not_null(world: &mut AppWorld) {
+    if let Some(token) = world.last_operation_data.as_ref().and_then(get_next_token) {
+        assert!(token.is_some(), "Expected nextToken to be non-null");
+        world.last_next_token = token;
+    } else {
+        panic!("Expected result to have nextToken field");
+    }
+}
+
+#[when(regex = "^I list all ([A-Za-z]+) with the previous nextToken:?$")]
+fn when_list_with_previous_token(world: &mut AppWorld, entity_type: String, step: &gherkin::Step) {
+    if let Some(token) = &world.last_next_token {
+        if let Some(engine) = &mut world.engine {
+            // Get parameters from docstring if provided, otherwise use just the token
+            let mut params = if let Some(content) = &step.docstring {
+                serde_json::from_str::<Value>(content).expect("Failed to parse parameters")
+            } else {
+                json!({})
+            };
+
+            // Always add/override the nextToken
+            params["nextToken"] = Value::String(token.clone());
+
+            match engine.call(&entity_type, "list", &params) {
+                Ok((data, errors)) => {
+                    world.last_operation_data = Some(data);
+                    world.last_operation_errors = errors;
+                    world.error = None;
+                }
+                Err(e) => {
+                    world.error = Some(e.to_string());
+                }
+            }
+        } else {
+            panic!("No engine loaded");
+        }
+    } else {
+        panic!("No previous nextToken available");
+    }
+}
+
+#[when(regex = "^I collect all pages of ([A-Za-z]+) with:$")]
+fn when_collect_all_pages(world: &mut AppWorld, entity_type: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        if let Some(content) = &step.docstring {
+            let params: Value = serde_json::from_str(content).expect("Failed to parse parameters");
+
+            // Collect all items across pages
+            let mut all_items = Vec::new();
+            let mut next_token: Option<String> = None;
+            let mut seen_tokens = std::collections::HashSet::new();
+
+            for page in 0.. {
+                assert!(
+                    page < 1000,
+                    "collecting pages did not terminate after 1000 pages"
+                );
+                let mut current_params = params.clone();
+                if let Some(token) = next_token {
+                    current_params["nextToken"] = Value::String(token);
+                }
+
+                match engine.call(&entity_type, "list", &current_params) {
+                    Ok((data, errors)) => {
+                        world.last_operation_data = Some(data.clone());
+                        world.last_operation_errors = errors;
+                        world.error = None;
+
+                        if let Some(records) = get_items_array(&data) {
+                            all_items.extend(records);
+                        }
+
+                        match get_next_token(&data).flatten() {
+                            Some(token) => {
+                                assert!(
+                                    seen_tokens.insert(token.clone()),
+                                    "nextToken repeated; pagination is not advancing: {token}"
+                                );
+                                next_token = Some(token);
+                            }
+                            None => break,
+                        }
+                    }
+                    Err(e) => {
+                        world.error = Some(e.to_string());
+                        break;
+                    }
+                }
+            }
+
+            // Store the collected items as the result
+            world.last_operation_data = Some(Value::Array(all_items));
+        } else {
+            panic!("No docstring in step");
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I query ([A-Za-z]+) by ([A-Za-z]+) with the previous nextToken:?$")]
+fn when_query_with_previous_token(
+    world: &mut AppWorld,
+    entity_type: String,
+    index_name: String,
+    step: &gherkin::Step,
+) {
+    if let Some(token) = &world.last_next_token {
+        if let Some(engine) = &mut world.engine {
+            // Get parameters from docstring if provided
+            let mut params = if let Some(content) = &step.docstring {
+                serde_json::from_str::<Value>(content).expect("Failed to parse parameters")
+            } else {
+                json!({})
+            };
+
+            // Always add/override the nextToken
+            params["nextToken"] = Value::String(token.clone());
+
+            match engine.call(&entity_type, index_name.as_str(), &params) {
+                Ok((data, errors)) => {
+                    world.last_operation_data = Some(data);
+                    world.last_operation_errors = errors;
+                    world.error = None;
+                }
+                Err(e) => {
+                    world.error = Some(e.to_string());
+                }
+            }
+        } else {
+            panic!("No engine loaded");
+        }
+    } else {
+        panic!("No previous nextToken available");
+    }
+}
+
+/// Extract items array from paginated or direct response
+fn get_items_array(data: &Value) -> Option<Vec<Value>> {
+    match data {
+        Value::Object(obj) => {
+            // Paginated response: {"items": [...], "nextToken": ...}
+            obj.get("items").and_then(|v| v.as_array()).cloned()
+        }
+        Value::Array(arr) => {
+            // Direct array response (for backward compatibility)
+            Some(arr.clone())
+        }
+        _ => None,
+    }
+}
+
+/// Extract nextToken from paginated response
+fn get_next_token(data: &Value) -> Option<Option<String>> {
+    match data {
+        Value::Object(obj) => Some(
+            obj.get("nextToken")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+        ),
+        _ => None,
     }
 }
 

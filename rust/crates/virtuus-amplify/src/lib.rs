@@ -2,6 +2,8 @@
 //!
 //! V8b populates composite sort attributes on write with v1#v2 format.
 
+use base64::engine::general_purpose;
+use base64::Engine as _;
 use chrono::Utc;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
@@ -28,6 +30,108 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+/// Encode a value as a base64url-encoded JSON token.
+fn encode_token(value: &Value) -> String {
+    let json_str = value.to_string();
+    general_purpose::URL_SAFE_NO_PAD.encode(json_str.as_bytes())
+}
+
+/// Decode a base64url-encoded JSON token to a value.
+fn decode_token(token: &str) -> std::result::Result<Value, String> {
+    let decoded = general_purpose::URL_SAFE_NO_PAD
+        .decode(token)
+        .map_err(|_| "Invalid token encoding".to_string())?;
+    let json_str = String::from_utf8(decoded).map_err(|_| "Invalid token UTF-8".to_string())?;
+    serde_json::from_str(&json_str).map_err(|_| "Invalid token JSON".to_string())
+}
+
+/// Extract key field values from a record.
+fn key_of(record: &Value, fields: &[String]) -> Vec<Value> {
+    fields
+        .iter()
+        .map(|f| record.get(f).cloned().unwrap_or(Value::Null))
+        .collect()
+}
+
+/// Compare two keys lexicographically, with proper value ordering.
+fn cmp_keys(a: &[Value], b: &[Value]) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    for (av, bv) in a.iter().zip(b.iter()) {
+        if let Some(cmp) = compare_values(av, bv) {
+            if cmp != Ordering::Equal {
+                return cmp;
+            }
+        }
+    }
+    a.len().cmp(&b.len())
+}
+
+/// A decoded `nextToken`: the last evaluated key, as an object with every key field.
+type TokenKey = serde_json::Map<String, Value>;
+
+/// An operation response: `(data, errors)`.
+type OpResponse = (Value, Option<Vec<Value>>);
+
+/// Parse and validate nextToken parameter.
+/// Returns Option<Map> where Map is guaranteed to be a valid object with required key fields.
+fn parse_next_token(
+    args: &Value,
+    key_fields: &[String],
+) -> std::result::Result<Option<TokenKey>, OpResponse> {
+    if let Some(token_val) = args.get("nextToken") {
+        if token_val.is_null() {
+            // null means first page
+            return Ok(None);
+        }
+        if let Some(token_str) = token_val.as_str() {
+            match decode_token(token_str) {
+                Ok(key) => {
+                    // Validate token has required key fields and extract as Map
+                    if let Value::Object(key_obj) = key {
+                        for key_field in key_fields {
+                            if !key_obj.contains_key(key_field) {
+                                return Err((
+                                    Value::Null,
+                                    Some(vec![json!({
+                                        "errorType": "ValidationException",
+                                        "message": format!("Invalid token: missing field '{}'", key_field)
+                                    })]),
+                                ));
+                            }
+                        }
+                        Ok(Some(key_obj))
+                    } else {
+                        Err((
+                            Value::Null,
+                            Some(vec![json!({
+                                "errorType": "ValidationException",
+                                "message": "Invalid token: not a JSON object"
+                            })]),
+                        ))
+                    }
+                }
+                Err(msg) => Err((
+                    Value::Null,
+                    Some(vec![json!({
+                        "errorType": "ValidationException",
+                        "message": msg
+                    })]),
+                )),
+            }
+        } else {
+            Err((
+                Value::Null,
+                Some(vec![json!({
+                    "errorType": "ValidationException",
+                    "message": "nextToken must be a string"
+                })]),
+            ))
+        }
+    } else {
+        Ok(None)
+    }
+}
 
 /// A data contract describing models, indexes, and relationships.
 #[derive(Debug, Clone)]
@@ -447,6 +551,13 @@ impl Index {
     /// Get the sort fields.
     pub fn sort_fields(&self) -> &[String] {
         &self.sort_fields
+    }
+
+    /// Get the index key (partition field + sort fields).
+    pub fn index_key(&self) -> Vec<String> {
+        let mut key = vec![self.partition_field.clone()];
+        key.extend(self.sort_fields.clone());
+        key
     }
 }
 
@@ -1329,19 +1440,20 @@ impl Engine {
                     .map(|s| s == "DESC")
                     .unwrap_or(false);
 
-                let mut results = table.query_gsi(
-                    index.query_field(),
-                    &partition,
-                    sort_condition.as_ref(),
-                    sort_direction,
-                );
+                let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(100) as usize;
 
-                // Parse and apply filter if provided
-                if let Some(filter_val) = args.get("filter") {
+                let index_key = index.index_key();
+
+                // Parse and validate nextToken (checking index key fields)
+                let last_evaluated_key = match parse_next_token(args, &index_key) {
+                    Ok(key) => key,
+                    Err((data, errors)) => return Ok((data, errors)),
+                };
+
+                // Parse filter if provided
+                let parsed_filter = if let Some(filter_val) = args.get("filter") {
                     match parse_filter(filter_val) {
-                        Ok(parsed_filter) => {
-                            results.retain(|record| evaluate_filter_typed(&parsed_filter, record));
-                        }
+                        Ok(f) => Some(f),
                         Err(msg) => {
                             return Ok((
                                 Value::Null,
@@ -1352,9 +1464,85 @@ impl Engine {
                             ));
                         }
                     }
+                } else {
+                    None
+                };
+
+                // Get all matching results from the index (already sorted by query_gsi)
+                let all_results: Vec<Value> = table.query_gsi(
+                    index.query_field(),
+                    &partition,
+                    sort_condition.as_ref(),
+                    sort_direction,
+                );
+
+                // Find start index based on lek and sort direction
+                let start_index = if let Some(lek_obj) = &last_evaluated_key {
+                    // Build full lek key (index + primary)
+                    let mut lek_key_fields = index_key.clone();
+                    lek_key_fields.extend(model.primary_key.clone());
+                    let lek_key: Vec<Value> = lek_key_fields
+                        .iter()
+                        .map(|f| lek_obj.get(f).cloned().unwrap_or(Value::Null))
+                        .collect();
+
+                    all_results
+                        .iter()
+                        .position(|r| {
+                            let r_key = key_of(r, &lek_key_fields);
+                            if sort_direction {
+                                // DESC: strictly less than lek
+                                cmp_keys(&r_key, &lek_key) == std::cmp::Ordering::Less
+                            } else {
+                                // ASC: strictly greater than lek
+                                cmp_keys(&r_key, &lek_key) == std::cmp::Ordering::Greater
+                            }
+                        })
+                        .unwrap_or(all_results.len())
+                } else {
+                    0
+                };
+
+                // Take limit records from start index, then filter them
+                let end_index = std::cmp::min(start_index + limit, all_results.len());
+                let taken_records = &all_results[start_index..end_index];
+                let mut items = Vec::new();
+                let mut last_read_key: Option<Value> = None;
+
+                for record in taken_records {
+                    // Include both index key and primary key for uniqueness
+                    let mut full_key = serde_json::Map::new();
+                    for k in index_key.iter() {
+                        full_key.insert(k.clone(), record.get(k).cloned().unwrap_or(Value::Null));
+                    }
+                    for k in model.primary_key.iter() {
+                        full_key.insert(k.clone(), record.get(k).cloned().unwrap_or(Value::Null));
+                    }
+                    last_read_key = Some(Value::Object(full_key));
+
+                    // Apply filter
+                    if let Some(ref f) = &parsed_filter {
+                        if !evaluate_filter_typed(f, record) {
+                            continue;
+                        }
+                    }
+
+                    items.push(record.clone());
                 }
 
-                return Ok((Value::Array(results), None));
+                // Generate nextToken if we read exactly limit items (even if no more records exist)
+                let next_token = if end_index - start_index == limit {
+                    last_read_key.map(|k| encode_token(&k))
+                } else {
+                    None
+                };
+
+                let result = json!({
+                    "items": items,
+                    "nextToken": next_token
+                });
+
+                return Ok((result, None));
             }
         }
 
@@ -1504,9 +1692,17 @@ impl Engine {
                     .get_mut(model_name)
                     .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
 
-                let mut results = Vec::new();
+                let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(100) as usize;
 
-                // Parse and apply filter if provided
+                let primary_key = &model.primary_key;
+
+                // Parse and validate nextToken
+                let last_evaluated_key = match parse_next_token(args, primary_key) {
+                    Ok(key) => key,
+                    Err((data, errors)) => return Ok((data, errors)),
+                };
+
+                // Parse filter if provided
                 let parsed_filter = if let Some(filter_val) = args.get("filter") {
                     match parse_filter(filter_val) {
                         Ok(f) => Some(f),
@@ -1524,18 +1720,66 @@ impl Engine {
                     None
                 };
 
-                // Scan all records in the table
-                for record in table.scan() {
-                    // Apply filter if provided
+                // Collect and sort all records by primary key
+                let mut records = table.scan();
+                records.sort_by(|a, b| {
+                    let a_key = key_of(a, primary_key);
+                    let b_key = key_of(b, primary_key);
+                    cmp_keys(&a_key, &b_key)
+                });
+
+                // Find start index: first record with key > lek
+                let start_index = if let Some(lek_obj) = &last_evaluated_key {
+                    let lek_key: Vec<Value> = primary_key
+                        .iter()
+                        .map(|f| lek_obj.get(f).cloned().unwrap_or(Value::Null))
+                        .collect();
+                    records
+                        .iter()
+                        .position(|r| {
+                            cmp_keys(&key_of(r, primary_key), &lek_key)
+                                == std::cmp::Ordering::Greater
+                        })
+                        .unwrap_or(records.len())
+                } else {
+                    0
+                };
+
+                // Take limit records from start index, then filter them
+                let end_index = std::cmp::min(start_index + limit, records.len());
+                let taken_records = &records[start_index..end_index];
+                let mut items = Vec::new();
+                let mut last_read_key: Option<Value> = None;
+
+                for record in taken_records {
+                    last_read_key = Some(json!(primary_key
+                        .iter()
+                        .map(|k| { (k.clone(), record.get(k).cloned().unwrap_or(Value::Null)) })
+                        .collect::<serde_json::Map<String, Value>>()));
+
+                    // Apply filter
                     if let Some(ref f) = &parsed_filter {
-                        if !evaluate_filter_typed(f, &record) {
+                        if !evaluate_filter_typed(f, record) {
                             continue;
                         }
                     }
-                    results.push(record);
+
+                    items.push(record.clone());
                 }
 
-                Ok((Value::Array(results), None))
+                // Generate nextToken if we read exactly limit items (even if no more records exist)
+                let next_token = if end_index - start_index == limit {
+                    last_read_key.map(|k| encode_token(&k))
+                } else {
+                    None
+                };
+
+                let result = json!({
+                    "items": items,
+                    "nextToken": next_token
+                });
+
+                Ok((result, None))
             }
             _ => Err(Error::Internal(format!("Unknown operation: {}", op))),
         }
