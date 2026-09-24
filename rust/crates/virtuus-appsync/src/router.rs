@@ -294,12 +294,8 @@ fn field_result(
                 "path": ctx.ctx.path_node,
                 "locations": [ctx.ctx.item.pos],
             });
-            ctx.ctx
-                .data_unchecked::<FieldErrors>()
-                .0
-                .lock()
-                .unwrap()
-                .push(entry);
+            let sink = &ctx.ctx.data_unchecked::<FieldErrors>().0;
+            sink.lock().unwrap().push(entry);
             None
         }
     }
