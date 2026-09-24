@@ -133,6 +133,36 @@ fn parse_next_token(
     }
 }
 
+/// Parse selectionSet from args; returns list of field paths or None if not specified.
+fn parse_selection_set(args: &Value) -> Option<Vec<String>> {
+    args.get("selectionSet")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
+        .filter(|v: &Vec<String>| !v.is_empty())
+}
+
+/// Return all scalar fields (default when no selectionSet is provided).
+fn filter_selection_default(record: &Value, _model: &Model) -> Value {
+    let mut result = serde_json::Map::new();
+
+    if let Some(obj) = record.as_object() {
+        for (field_name, value) in obj.iter() {
+            if field_name.starts_with("__") {
+                continue; // Skip system fields
+            }
+
+            // Include all non-system fields (including composite sort attributes)
+            result.insert(field_name.clone(), value.clone());
+        }
+    }
+
+    Value::Object(result)
+}
+
 /// A data contract describing models, indexes, and relationships.
 #[derive(Debug, Clone)]
 pub struct Contract {
@@ -1215,13 +1245,16 @@ impl Engine {
             // Create per-model directory if directory is provided
             let model_directory = directory.as_ref().map(|d| d.join(model_name));
 
+            // The Amplify engine validates records against the contract itself (required fields,
+            // types, enums), and DynamoDB GSIs are sparse: a record missing an index's key
+            // attributes is simply not in that index. Silent mode allows this sparse indexing.
             let mut table = Table::new(
                 model_name,
                 pk,
                 partition,
                 sort,
                 model_directory,
-                virtuus::table::ValidationMode::Error,
+                virtuus::table::ValidationMode::Silent,
             );
 
             // Add GSIs for explicit indexes, registered by queryField
@@ -1393,6 +1426,325 @@ impl Engine {
         Value::Object(result)
     }
 
+    /// Apply selectionSet filtering and resolve belongsTo and hasMany relationships.
+    fn apply_selection_with_relationships(
+        &self,
+        record: &Value,
+        model: &Model,
+        selection: &[String],
+        _args: &Value,
+    ) -> Result<Value> {
+        let mut result = serde_json::Map::new();
+
+        for path in selection {
+            if path == "*" {
+                return Ok(filter_selection_default(record, model));
+            }
+
+            if path.contains('.') {
+                // Dotted path like "blog.name" or "comments.*": resolve belongsTo or hasMany relationship
+                let parts: Vec<&str> = path.split('.').collect();
+                if parts.len() >= 2 {
+                    let rel_field = parts[0];
+                    let rel_path = parts[1..].join(".");
+
+                    // Find relationship definition
+                    if let Some(rel) = model.relationships.iter().find(|r| r.field == rel_field) {
+                        if rel.kind == "belongsTo" {
+                            // Fetch related record via foreign key
+                            if let Some(fk_value) = record.get(&rel.references) {
+                                let fk_str = fk_value.as_str().map(|s| s.to_string());
+                                if let Some(fk) = fk_str {
+                                    let target_model =
+                                        self.contract.models().get(&rel.target).cloned();
+                                    if let Some(tm) = target_model {
+                                        let target_table = self.tables.get(&rel.target);
+                                        if let Some(table) = target_table {
+                                            if let Some(related) = table.get(&fk, None) {
+                                                if rel_path == "*" {
+                                                    // Include all scalar fields of related model
+                                                    result.insert(
+                                                        rel_field.to_string(),
+                                                        filter_selection_default(&related, &tm),
+                                                    );
+                                                } else {
+                                                    // Nested field selection
+                                                    let empty_args =
+                                                        Value::Object(serde_json::Map::new());
+                                                    let nested = self
+                                                        .apply_selection_with_relationships(
+                                                            &related,
+                                                            &tm,
+                                                            &[rel_path],
+                                                            &empty_args,
+                                                        )?;
+                                                    result.insert(rel_field.to_string(), nested);
+                                                }
+                                            } else {
+                                                result.insert(rel_field.to_string(), Value::Null);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                result.insert(rel_field.to_string(), Value::Null);
+                            }
+                        } else if rel.kind == "hasMany" {
+                            // HasMany: return an empty connection for now (will be populated in call method)
+                            let conn = json!({
+                                "items": [],
+                                "nextToken": null
+                            });
+                            result.insert(rel_field.to_string(), conn);
+                        }
+                    }
+                }
+            } else {
+                // Simple field: include if scalar/enum/customType
+                if let Some(field) = model.fields.get(path) {
+                    if field.kind == "scalar" || field.kind == "enum" || field.kind == "customType"
+                    {
+                        if let Some(value) = record.get(path) {
+                            result.insert(path.clone(), value.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(Value::Object(result))
+    }
+
+    /// Populate hasMany relationships in a result object by querying child indexes.
+    fn populate_has_many_relationships(
+        &mut self,
+        mut result: Value,
+        record: &Value,
+        model: &Model,
+        selection: &[String],
+        args: &Value,
+    ) -> Result<Value> {
+        for path in selection {
+            if path.contains('.') {
+                let parts: Vec<&str> = path.split('.').collect();
+                if parts.len() >= 2 {
+                    let rel_field = parts[0];
+                    let rel_path = parts[1..].join(".");
+
+                    // Only handle hasMany relationships ending with ".*"
+                    if rel_path == "*" {
+                        if let Some(rel) = model.relationships.iter().find(|r| r.field == rel_field)
+                        {
+                            if rel.kind == "hasMany" {
+                                // Get the parent id
+                                if let Some(parent_id) = record.get(&model.primary_key[0]) {
+                                    // Build key query for the child index
+                                    let mut key_condition = serde_json::Map::new();
+                                    key_condition.insert(rel.references.clone(), parent_id.clone());
+
+                                    let mut query_args = json!({
+                                        "key": Value::Object(key_condition),
+                                    });
+
+                                    // Add relationshipArgs if provided
+                                    if let Some(rel_args_obj) = args.get("relationshipArgs") {
+                                        if let Some(field_args) = rel_args_obj.get(rel_field) {
+                                            if let Some(limit) = field_args.get("limit") {
+                                                query_args["limit"] = limit.clone();
+                                            }
+                                            if let Some(filter) = field_args.get("filter") {
+                                                query_args["filter"] = filter.clone();
+                                            }
+                                            if let Some(sort_dir) = field_args.get("sortDirection")
+                                            {
+                                                query_args["sortDirection"] = sort_dir.clone();
+                                            }
+                                            if let Some(next_token) = field_args.get("nextToken") {
+                                                query_args["nextToken"] = next_token.clone();
+                                            }
+                                        }
+                                    }
+
+                                    // Get the target model to find its primary key
+                                    if let Some(target_model) =
+                                        self.contract.models().get(&rel.target)
+                                    {
+                                        // Find the child index for this relationship
+                                        let child_index =
+                                            target_model.indexes().iter().find(|idx| {
+                                                idx.index_key().contains(&rel.references.clone())
+                                            });
+
+                                        if let Some(child_idx) = child_index {
+                                            // Execute the index query
+                                            let table = self.tables.get_mut(&rel.target).expect(
+                                                "Table should exist for relationship target",
+                                            );
+
+                                            // Parse key condition
+                                            let (partition, sort_condition) = parse_key_condition(
+                                                query_args.get("key"),
+                                                child_idx,
+                                            )
+                                            .expect(
+                                                "Key condition should parse for valid relationship",
+                                            );
+
+                                            let sort_direction = query_args
+                                                .get("sortDirection")
+                                                .and_then(|v| v.as_str())
+                                                .map(|s| s == "DESC")
+                                                .unwrap_or(false);
+
+                                            let limit = query_args
+                                                .get("limit")
+                                                .and_then(|v| v.as_u64())
+                                                .unwrap_or(100)
+                                                as usize;
+
+                                            let index_key = child_idx.index_key();
+
+                                            // Parse and validate nextToken
+                                            let last_evaluated_key =
+                                                parse_next_token(&query_args, &index_key)
+                                                    .ok()
+                                                    .and_then(|tuple| tuple);
+
+                                            // Parse filter if provided
+                                            let parsed_filter = if let Some(filter_val) =
+                                                query_args.get("filter")
+                                            {
+                                                parse_filter(filter_val).ok()
+                                            } else {
+                                                None
+                                            };
+
+                                            // Get all matching results from the index
+                                            let all_results: Vec<Value> = table.query_gsi(
+                                                child_idx.query_field(),
+                                                &partition,
+                                                sort_condition.as_ref(),
+                                                sort_direction,
+                                            );
+
+                                            // Find start index based on lek
+                                            let start_index =
+                                                if let Some(lek_obj) = &last_evaluated_key {
+                                                    let mut lek_key_fields = index_key.clone();
+                                                    lek_key_fields
+                                                        .extend(target_model.primary_key.clone());
+                                                    let lek_key: Vec<Value> = lek_key_fields
+                                                        .iter()
+                                                        .map(|f| {
+                                                            lek_obj
+                                                                .get(f)
+                                                                .cloned()
+                                                                .unwrap_or(Value::Null)
+                                                        })
+                                                        .collect();
+
+                                                    use std::cmp::Ordering;
+
+                                                    all_results
+                                                        .iter()
+                                                        .position(|r| {
+                                                            let r_key = key_of(r, &lek_key_fields);
+                                                            let cmp = cmp_keys(&r_key, &lek_key);
+                                                            if sort_direction {
+                                                                // DESC: strictly less than lek
+                                                                cmp == Ordering::Less
+                                                            } else {
+                                                                // ASC: strictly greater than lek
+                                                                cmp == Ordering::Greater
+                                                            }
+                                                        })
+                                                        .unwrap_or(0)
+                                                } else {
+                                                    0
+                                                };
+
+                                            // Apply filter and collect up to limit items
+                                            let mut items = Vec::new();
+                                            let mut last_record: Option<Value> = None;
+                                            let mut has_more = false;
+                                            for record in all_results.iter().skip(start_index) {
+                                                if items.len() >= limit {
+                                                    // We've collected enough items, check if there's one more
+                                                    if let Some(ref filter) = parsed_filter {
+                                                        if evaluate_filter_typed(filter, record) {
+                                                            has_more = true;
+                                                        }
+                                                    } else {
+                                                        has_more = true;
+                                                    }
+                                                    break;
+                                                }
+                                                if let Some(ref filter) = parsed_filter {
+                                                    if !evaluate_filter_typed(filter, record) {
+                                                        continue;
+                                                    }
+                                                }
+                                                items.push(record.clone());
+                                                last_record = Some(record.clone());
+                                            }
+
+                                            // Build nextToken only if we know there are more items
+                                            let next_token = if has_more {
+                                                last_record.as_ref().map(|r| {
+                                                    let mut lek_obj = serde_json::Map::new();
+                                                    for key_field in &index_key {
+                                                        if let Some(v) = r.get(key_field) {
+                                                            lek_obj.insert(
+                                                                key_field.clone(),
+                                                                v.clone(),
+                                                            );
+                                                        }
+                                                    }
+                                                    for pk_field in &target_model.primary_key {
+                                                        if let Some(v) = r.get(pk_field) {
+                                                            lek_obj.insert(
+                                                                pk_field.clone(),
+                                                                v.clone(),
+                                                            );
+                                                        }
+                                                    }
+                                                    encode_token(&Value::Object(lek_obj))
+                                                })
+                                            } else {
+                                                None
+                                            };
+
+                                            // Apply selectionSet to each item
+                                            let selected_items = items
+                                                .iter()
+                                                .map(|item| {
+                                                    filter_selection_default(item, target_model)
+                                                })
+                                                .collect::<Vec<_>>();
+
+                                            // Update result with connection
+                                            if let Some(result_obj) = result.as_object_mut() {
+                                                result_obj.insert(
+                                                    rel_field.to_string(),
+                                                    json!({
+                                                        "items": selected_items,
+                                                        "nextToken": next_token
+                                                    }),
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
     /// Execute a CRUD operation on the engine.
     /// Returns (data, errors) where data is the result and errors is optional list of operation errors.
     pub fn call(
@@ -1468,6 +1820,9 @@ impl Engine {
                     None
                 };
 
+                // Parse selectionSet if provided
+                let parsed_selection = parse_selection_set(args);
+
                 // Get all matching results from the index (already sorted by query_gsi)
                 let all_results: Vec<Value> = table.query_gsi(
                     index.query_field(),
@@ -1527,7 +1882,13 @@ impl Engine {
                         }
                     }
 
-                    items.push(record.clone());
+                    // Apply selectionSet filtering and resolve relationships
+                    let filtered = if let Some(sel) = parsed_selection.as_ref() {
+                        self.apply_selection_with_relationships(record, &model, sel, args)?
+                    } else {
+                        filter_selection_default(record, &model)
+                    };
+                    items.push(filtered);
                 }
 
                 // Generate nextToken if we read exactly limit items (even if no more records exist)
@@ -1564,8 +1925,24 @@ impl Engine {
                 if !record.get("id").is_some_and(|v| !v.is_null()) {
                     record["id"] = Value::String(Uuid::new_v4().to_string());
                 }
-                record["createdAt"] = Value::String(now.clone());
-                record["updatedAt"] = Value::String(now.clone());
+
+                // Handle createdAt: use provided value if present, otherwise generate
+                // (validation catches invalid datetime formats before reaching here)
+                let created_at = record
+                    .get("createdAt")
+                    .filter(|v| !v.is_null())
+                    .cloned()
+                    .unwrap_or_else(|| Value::String(now.clone()));
+                record["createdAt"] = created_at.clone();
+
+                // Handle updatedAt: use provided value if present, otherwise use createdAt
+                // (validation catches invalid datetime formats before reaching here)
+                let updated_at = record
+                    .get("updatedAt")
+                    .filter(|v| !v.is_null())
+                    .cloned()
+                    .unwrap_or_else(|| created_at.clone());
+                record["updatedAt"] = updated_at;
                 record["__typename"] = Value::String(model_name.to_string());
 
                 // Populate composite sort attributes (status#createdAt format)
@@ -1600,7 +1977,21 @@ impl Engine {
                     .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
 
                 if let Some(record) = table.get(&pk, sort.as_deref()) {
-                    Ok((record, None))
+                    // Apply selectionSet filtering and resolve relationships
+                    let selection = parse_selection_set(args);
+                    let mut result = if let Some(sel) = selection.clone() {
+                        self.apply_selection_with_relationships(&record, &model, &sel, args)?
+                    } else {
+                        filter_selection_default(&record, &model)
+                    };
+
+                    // Post-process to populate hasMany relationships
+                    if let Some(sel) = selection {
+                        result = self
+                            .populate_has_many_relationships(result, &record, &model, &sel, args)?;
+                    }
+
+                    Ok((result, None))
                 } else {
                     Ok((Value::Null, None))
                 }
@@ -1643,8 +2034,14 @@ impl Engine {
                     }
                 }
 
-                // Update timestamp
-                record["updatedAt"] = Value::String(now.clone());
+                // Update timestamp: use provided value if present, otherwise use now
+                // (validation catches invalid datetime formats before reaching here)
+                let updated_at = args
+                    .get("updatedAt")
+                    .filter(|v| !v.is_null())
+                    .cloned()
+                    .unwrap_or_else(|| Value::String(now.clone()));
+                record["updatedAt"] = updated_at;
 
                 // Revalidate the updated record
                 if let Some(validation_errors) = self.validate_record(&record, &model, false) {
@@ -1720,6 +2117,9 @@ impl Engine {
                     None
                 };
 
+                // Parse selectionSet if provided
+                let parsed_selection = parse_selection_set(args);
+
                 // Collect and sort all records by primary key
                 let mut records = table.scan();
                 records.sort_by(|a, b| {
@@ -1764,7 +2164,13 @@ impl Engine {
                         }
                     }
 
-                    items.push(record.clone());
+                    // Apply selectionSet filtering and resolve relationships
+                    let filtered = if let Some(sel) = parsed_selection.as_ref() {
+                        self.apply_selection_with_relationships(record, &model, sel, args)?
+                    } else {
+                        filter_selection_default(record, &model)
+                    };
+                    items.push(filtered);
                 }
 
                 // Generate nextToken if we read exactly limit items (even if no more records exist)

@@ -47,16 +47,19 @@
       ],
       "relationships": [
         {"field": "blog", "kind": "belongsTo", "target": "Blog", "references": "blogId", "implicit": false},
-        {"field": "comments", "kind": "hasMany", "target": "Comment", "references": "postId", "childIndex": "commentsByPost", "implicit": true}
+        {"field": "comments", "kind": "hasMany", "target": "Comment", "references": "postId", "childIndex": "commentsByPost", "implicit": true},
+        {"field": "tags", "kind": "hasMany", "target": "Tag", "references": "postId", "childIndex": "tagsByPost", "implicit": true}
       ],
-      "authRules": [{"provider": "userPools", "allow": "owner", "operations": ["create", "update", "delete"], "ownerField": "owner"}],
+      "authRules": [
+        {"provider": "userPools", "allow": "owner", "operations": ["create", "update", "delete"], "ownerField": "owner"}
+      ],
       "ownerFields": ["owner"]
     },
     "Comment": {
       "name": "Comment",
       "fields": {
         "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
-        "postId": {"name": "postId", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "postId": {"name": "postId", "type": "ID", "isRequired": false, "isArray": false, "kind": "scalar"},
         "post": {"name": "post", "type": "Post", "isRequired": false, "isArray": false, "kind": "model"},
         "content": {"name": "content", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
         "status": {"name": "status", "type": "PostStatus", "isRequired": false, "isArray": false, "kind": "enum"},
@@ -66,7 +69,7 @@
       },
       "primaryKey": ["id"],
       "indexes": [
-        {"name": "commentsByPostAndStatus", "queryField": "commentsByPostStatus", "partitionField": "postId", "sortFields": ["status", "createdAt"], "sortArgument": "status"}
+        {"name": "commentsByPost", "queryField": "commentsByPost", "partitionField": "postId", "sortFields": [], "sortArgument": null}
       ],
       "relationships": [
         {"field": "post", "kind": "belongsTo", "target": "Post", "references": "postId", "implicit": false}
@@ -107,9 +110,7 @@
       "ownerFields": []
     }
   },
-  "enums": {
-    "PostStatus": ["DRAFT", "PUBLISHED", "ARCHIVED"]
-  },
+  "enums": {"PostStatus": ["DRAFT", "PUBLISHED", "ARCHIVED"]},
   "customTypes": {
     "PostMeta": {
       "summary": {"name": "summary", "type": "String", "isRequired": false, "isArray": false, "kind": "scalar"},

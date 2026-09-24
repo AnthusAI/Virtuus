@@ -16,6 +16,9 @@ pub struct AppWorld {
     last_model: Option<String>,
     directory: Option<PathBuf>,
     last_next_token: Option<String>,
+    selection_set: Option<Vec<String>>,
+    relationship_args: Option<Value>,
+    stored_next_tokens: std::collections::HashMap<String, String>,
 }
 
 #[given("a blog contract")]
@@ -738,6 +741,70 @@ fn check_result_updated_at(world: &mut AppWorld) {
     }
 }
 
+#[then(regex = "^the result\\.createdAt is \"([^\"]+)\"$")]
+fn check_result_created_at_exact(world: &mut AppWorld, expected_value: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(created_at) = data.get("createdAt").and_then(|v| v.as_str()) {
+            assert_eq!(created_at, expected_value, "createdAt mismatch");
+        } else {
+            panic!("Result data does not have createdAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("the result.createdAt matches ISO-8601 timestamp")]
+fn check_result_created_at_format(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(created_at) = data.get("createdAt").and_then(|v| v.as_str()) {
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+                .expect("Failed to compile regex");
+            assert!(
+                re.is_match(created_at),
+                "createdAt not in ISO-8601 format: {}",
+                created_at
+            );
+        } else {
+            panic!("Result data does not have createdAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then("the result.updatedAt matches ISO-8601 timestamp")]
+fn check_result_updated_at_format(world: &mut AppWorld) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(updated_at) = data.get("updatedAt").and_then(|v| v.as_str()) {
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+                .expect("Failed to compile regex");
+            assert!(
+                re.is_match(updated_at),
+                "updatedAt not in ISO-8601 format: {}",
+                updated_at
+            );
+        } else {
+            panic!("Result data does not have updatedAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
+#[then(regex = "^the result\\.updatedAt is \"([^\"]+)\"$")]
+fn check_result_updated_at_exact(world: &mut AppWorld, expected_value: String) {
+    if let Some(ref data) = world.last_operation_data {
+        if let Some(updated_at) = data.get("updatedAt").and_then(|v| v.as_str()) {
+            assert_eq!(updated_at, expected_value, "updatedAt mismatch");
+        } else {
+            panic!("Result data does not have updatedAt field");
+        }
+    } else {
+        panic!("No operation result data");
+    }
+}
+
 #[then(regex = "^the result data status is \"([^\"]+)\"$")]
 fn check_result_status(world: &mut AppWorld, expected_status: String) {
     if let Some(ref data) = world.last_operation_data {
@@ -1426,6 +1493,357 @@ fn get_next_token(data: &Value) -> Option<Option<String>> {
                 .map(|s| s.to_string()),
         ),
         _ => None,
+    }
+}
+
+#[when(regex = "^I get the (\\w+) with id \"([^\"]+)\" and selectionSet:$")]
+fn get_with_selection_set(world: &mut AppWorld, model: String, id: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        world.last_model = Some(model.clone());
+
+        let selection_json = step.docstring().expect("Expected JSON docstring");
+        let selection_set: Vec<String> =
+            serde_json::from_str(selection_json).expect("Failed to parse selectionSet JSON");
+
+        world.selection_set = Some(selection_set.clone());
+
+        let mut input = json!({"id": id});
+        if let Some(args) = &world.relationship_args {
+            input["relationshipArgs"] = args.clone();
+        }
+        input["selectionSet"] = json!(selection_set);
+
+        match engine.call(&model, "get", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I get the (\\w+) with id \"([^\"]+)\" and selectionSet and relationshipArgs:$")]
+fn get_with_selection_and_relationship_args(
+    world: &mut AppWorld,
+    model: String,
+    id: String,
+    step: &gherkin::Step,
+) {
+    if let Some(engine) = &mut world.engine {
+        world.last_model = Some(model.clone());
+
+        let input_json = step.docstring().expect("Expected JSON docstring");
+        let input_obj: Value =
+            serde_json::from_str(input_json).expect("Failed to parse input JSON");
+
+        let selection_set: Vec<String> = input_obj["selectionSet"]
+            .as_array()
+            .expect("selectionSet must be an array")
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .expect("selectionSet items must be strings")
+                    .to_string()
+            })
+            .collect();
+
+        let relationship_args = input_obj.get("relationshipArgs").cloned();
+
+        world.selection_set = Some(selection_set.clone());
+        world.relationship_args = relationship_args.clone();
+
+        let mut input = json!({"id": id});
+        if let Some(args) = &relationship_args {
+            input["relationshipArgs"] = args.clone();
+        }
+        input["selectionSet"] = json!(selection_set);
+
+        match engine.call(&model, "get", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(
+    regex = "^I get the (\\w+) with id \"([^\"]+)\" and selectionSet and relationshipArgs with stored nextToken:$"
+)]
+fn get_with_stored_next_token(
+    world: &mut AppWorld,
+    model: String,
+    id: String,
+    step: &gherkin::Step,
+) {
+    if let Some(engine) = &mut world.engine {
+        world.last_model = Some(model.clone());
+
+        let input_json = step.docstring().expect("Expected JSON docstring");
+        let mut input_obj: Value =
+            serde_json::from_str(input_json).expect("Failed to parse input JSON");
+
+        let selection_set: Vec<String> = input_obj["selectionSet"]
+            .as_array()
+            .expect("selectionSet must be an array")
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .expect("selectionSet items must be strings")
+                    .to_string()
+            })
+            .collect();
+
+        // Add stored nextToken to relationshipArgs
+        if let Some(stored_token) = world.stored_next_tokens.get("comments") {
+            if let Some(rel_args) = input_obj.get_mut("relationshipArgs") {
+                if let Some(comments_args) = rel_args.get_mut("comments") {
+                    if let Some(obj) = comments_args.as_object_mut() {
+                        obj.insert("nextToken".to_string(), json!(stored_token));
+                    }
+                }
+            }
+        }
+
+        let relationship_args = input_obj.get("relationshipArgs").cloned();
+
+        world.selection_set = Some(selection_set.clone());
+        world.relationship_args = relationship_args.clone();
+
+        let mut input = json!({"id": id});
+        if let Some(args) = &relationship_args {
+            input["relationshipArgs"] = args.clone();
+        }
+        input["selectionSet"] = json!(selection_set);
+
+        match engine.call(&model, "get", &input) {
+            Ok((data, errors)) => {
+                world.last_operation_data = Some(data);
+                world.last_operation_errors = errors;
+                world.error = None;
+            }
+            Err(e) => {
+                world.error = Some(e.to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then("I store the nextToken for comments")]
+fn store_next_token_for_comments(world: &mut AppWorld) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        if let Some(Value::Object(comments)) = data.get("comments") {
+            if let Some(Value::String(token)) = comments.get("nextToken") {
+                world
+                    .stored_next_tokens
+                    .insert("comments".to_string(), token.clone());
+            }
+        }
+    }
+}
+
+#[then(regex = "^the result\\.([\\w.]+) has exactly (\\d+) record(?:s)?$")]
+fn assert_has_exactly_n_records(world: &mut AppWorld, path: String, count: usize) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let parts: Vec<&str> = path.split('.').collect();
+        let mut current = Value::Object(data.clone());
+
+        for part in parts {
+            if let Some(next) = current.get(part) {
+                current = next.clone();
+            } else {
+                panic!("Path {} not found in result", path);
+            }
+        }
+
+        if let Some(arr) = current.as_array() {
+            assert_eq!(
+                arr.len(),
+                count,
+                "Expected {} records, got {}",
+                count,
+                arr.len()
+            );
+        } else {
+            panic!("Expected array at path {}", path);
+        }
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result\\.([\\w.]+) has exactly (\\d+) records? with ids \\[(.*)\\]$")]
+fn assert_records_with_ids(world: &mut AppWorld, path: String, _count: usize, ids_str: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let parts: Vec<&str> = path.split('.').collect();
+        let mut current = Value::Object(data.clone());
+
+        for part in parts {
+            if let Some(next) = current.get(part) {
+                current = next.clone();
+            } else {
+                panic!("Path {} not found in result", path);
+            }
+        }
+
+        if let Some(arr) = current.as_array() {
+            let expected_ids: Vec<&str> = ids_str
+                .split(',')
+                .map(|s| s.trim().trim_matches('"'))
+                .collect();
+            let actual_ids: Vec<String> = arr
+                .iter()
+                .filter_map(|v| {
+                    v.get("id")
+                        .and_then(|id| id.as_str())
+                        .map(|s| s.to_string())
+                })
+                .collect();
+
+            assert_eq!(actual_ids, expected_ids, "IDs don't match");
+        } else {
+            panic!("Expected array at path {}", path);
+        }
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result has field \"([^\"]+)\"$")]
+fn assert_result_has_field(world: &mut AppWorld, field: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        assert!(
+            data.contains_key(&field),
+            "Field '{}' not found in result",
+            field
+        );
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result does not have field \"([^\"]+)\"$")]
+fn assert_result_does_not_have_field(world: &mut AppWorld, field: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        assert!(
+            !data.contains_key(&field),
+            "Field '{}' should not be in result",
+            field
+        );
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result\\.([\\w.]+) is null$")]
+fn assert_field_is_null(world: &mut AppWorld, path: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let parts: Vec<&str> = path.split('.').collect();
+        let mut current = Value::Object(data.clone());
+
+        for part in parts {
+            if let Some(next) = current.get(part) {
+                current = next.clone();
+            } else {
+                panic!("Path {} not found in result", path);
+            }
+        }
+
+        assert!(
+            current.is_null(),
+            "Expected null at path {}, got {:?}",
+            path,
+            current
+        );
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result\\.([\\w.]+) is not null$")]
+fn assert_field_is_not_null(world: &mut AppWorld, path: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let parts: Vec<&str> = path.split('.').collect();
+        let mut current = Value::Object(data.clone());
+
+        for part in parts {
+            if let Some(next) = current.get(part) {
+                current = next.clone();
+            } else {
+                panic!("Path {} not found in result", path);
+            }
+        }
+
+        assert!(!current.is_null(), "Expected non-null at path {}", path);
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then("the result has:")]
+fn assert_result_has(world: &mut AppWorld, step: &gherkin::Step) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let expected_str = step.docstring().expect("Expected JSON docstring");
+        let expected: Value =
+            serde_json::from_str(expected_str).expect("Failed to parse expected JSON");
+
+        if let Value::Object(expected_obj) = expected {
+            for (key, expected_val) in expected_obj {
+                let actual_val = data.get(&key).cloned().unwrap_or(Value::Null);
+                assert_eq!(
+                    actual_val, expected_val,
+                    "Field '{}' mismatch: expected {:?}, got {:?}",
+                    key, expected_val, actual_val
+                );
+            }
+        } else {
+            panic!("Expected JSON object in docstring");
+        }
+    } else {
+        panic!("No result data");
+    }
+}
+
+#[then(regex = "^the result\\.([\\w.]+) has field \"([^\"]+)\"$")]
+fn assert_nested_has_field(world: &mut AppWorld, path: String, field: String) {
+    if let Some(Value::Object(data)) = &world.last_operation_data {
+        let parts: Vec<&str> = path.split('.').collect();
+        let mut current = Value::Object(data.clone());
+
+        for part in parts {
+            if let Some(next) = current.get(part) {
+                current = next.clone();
+            } else {
+                panic!("Path {} not found in result", path);
+            }
+        }
+
+        if let Value::Object(obj) = current {
+            assert!(
+                obj.contains_key(&field),
+                "Field '{}' not found at path {}",
+                field,
+                path
+            );
+        } else {
+            panic!("Expected object at path {}", path);
+        }
+    } else {
+        panic!("No result data");
     }
 }
 
