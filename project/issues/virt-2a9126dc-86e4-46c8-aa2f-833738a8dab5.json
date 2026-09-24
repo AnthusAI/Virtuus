@@ -15,9 +15,22 @@
       "type": "blocked-by"
     }
   ],
-  "comments": [],
+  "comments": [
+    {
+      "id": "f88fcd8f-836d-4fcd-9777-f071b657ad92",
+      "author": "home",
+      "text": "Decision (storage-lead, from the Apricitus web data-layer review): **the owner-field value is `<sub>::<username>`**, which is what AppSync writes for Gen2 userPool owner auth. `Identity { sub, username, groups }` fills owner fields with exactly `format!(\"{sub}::{username}\")`. Owner checks match a record when its owner field equals that value (AppSync also accepts a bare `sub` for legacy data; accept both on read and write the `::` form). Clients query owner indexes (e.g. `cratesByOwner`) with that value. Add a scenario asserting the stored owner value after a create.",
+      "created_at": "2026-09-24T10:23:32.297133Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
   "created_at": "2026-09-24T04:45:37.936380Z",
-  "updated_at": "2026-09-24T04:45:48.988923Z",
+  "updated_at": "2026-09-24T10:23:32.297170Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
