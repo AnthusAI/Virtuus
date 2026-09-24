@@ -585,6 +585,9 @@ fn check_operation_succeeds(world: &mut AppWorld) {
     if let Some(ref error) = world.error {
         panic!("Expected success but got error: {}", error);
     }
+    if let Some(ref errors) = world.last_operation_errors {
+        eprintln!("Operation returned errors: {:?}", errors);
+    }
 }
 
 #[then("the operation fails with errorType")]
@@ -987,6 +990,166 @@ fn check_model_folders(world: &mut AppWorld) {
         );
     } else {
         panic!("No directory set");
+    }
+}
+
+#[given(regex = "^these (\\w+) records exist:$")]
+fn given_records_exist(world: &mut AppWorld, model: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        if let Some(content) = &step.docstring {
+            if let Ok(records) = serde_json::from_str::<Vec<Value>>(content) {
+                for record in records {
+                    if let Err(e) = engine.call(&model, "create", &record) {
+                        world.error = Some(e.to_string());
+                        panic!("Failed to create record: {}", e);
+                    }
+                }
+            } else {
+                panic!("Invalid JSON array in step");
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I list all (\\w+) with:$")]
+fn when_list_with(world: &mut AppWorld, model: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        if let Some(content) = &step.docstring {
+            if let Ok(args) = serde_json::from_str::<Value>(content) {
+                match engine.call(&model, "list", &args) {
+                    Ok((data, errors)) => {
+                        world.last_operation_data = Some(data);
+                        world.last_operation_errors = errors;
+                        world.error = None;
+                    }
+                    Err(e) => {
+                        world.error = Some(e.to_string());
+                    }
+                }
+            } else {
+                world.error = Some("Invalid JSON in step".to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[when(regex = "^I query (\\w+) by (\\w+) with:$")]
+fn when_query_index(world: &mut AppWorld, model: String, index: String, step: &gherkin::Step) {
+    if let Some(engine) = &mut world.engine {
+        if let Some(content) = &step.docstring {
+            if let Ok(args) = serde_json::from_str::<Value>(content) {
+                match engine.call(&model, &index, &args) {
+                    Ok((data, errors)) => {
+                        world.last_operation_data = Some(data);
+                        world.last_operation_errors = errors;
+                        world.error = None;
+                    }
+                    Err(e) => {
+                        world.error = Some(e.to_string());
+                    }
+                }
+            } else {
+                world.error = Some("Invalid JSON in step".to_string());
+            }
+        }
+    } else {
+        panic!("No engine loaded");
+    }
+}
+
+#[then(regex = "^the result data has exactly (\\d+) record with id \"([^\"]+)\"$")]
+fn then_result_data_has_one_record(world: &mut AppWorld, count: usize, id: String) {
+    assert_eq!(count, 1, "Count must be 1 for single record check");
+    if let Some(Value::Array(records)) = &world.last_operation_data {
+        assert_eq!(records.len(), 1, "Expected exactly 1 record");
+        if let Some(Value::Object(record)) = records.first() {
+            if let Some(Value::String(record_id)) = record.get("id") {
+                assert_eq!(record_id, &id, "Record id should match");
+            } else {
+                panic!("Record has no id field");
+            }
+        } else {
+            panic!("Expected record to be an object");
+        }
+    } else {
+        panic!("Expected result data to be an array of records");
+    }
+}
+
+#[then(regex = "^the result data contains exactly these ids \\[([^\\]]+)\\]$")]
+fn then_result_data_contains_ids(world: &mut AppWorld, ids_str: String) {
+    let expected_ids: Vec<&str> = ids_str
+        .split(',')
+        .map(|s| s.trim().trim_matches('"'))
+        .collect();
+    if let Some(Value::Array(records)) = &world.last_operation_data {
+        let actual_ids: Vec<String> = records
+            .iter()
+            .filter_map(|r| {
+                if let Value::Object(obj) = r {
+                    obj.get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        assert_eq!(
+            actual_ids.len(),
+            expected_ids.len(),
+            "Expected {} ids but got {}",
+            expected_ids.len(),
+            actual_ids.len()
+        );
+
+        for expected_id in &expected_ids {
+            assert!(
+                actual_ids.contains(&expected_id.to_string()),
+                "Expected to find id {} in results",
+                expected_id
+            );
+        }
+    } else {
+        panic!("Expected result data to be an array of records");
+    }
+}
+
+#[then(regex = "^the result data contains exactly these ids \\[\\]$")]
+fn then_result_data_empty(world: &mut AppWorld) {
+    if let Some(Value::Array(records)) = &world.last_operation_data {
+        assert_eq!(
+            records.len(),
+            0,
+            "Expected 0 records but got {}",
+            records.len()
+        );
+    } else {
+        panic!("Expected result data to be an array of records");
+    }
+}
+
+#[then("the operation has validation error")]
+fn then_operation_has_validation_error(world: &mut AppWorld) {
+    if let Some(errors) = &world.last_operation_errors {
+        if errors.is_empty() {
+            panic!("Expected operation to have validation error but got none");
+        }
+        for error in errors {
+            if let Some(error_type) = error.get("errorType") {
+                if error_type == "ValidationException" {
+                    return;
+                }
+            }
+        }
+        panic!("Expected ValidationException error but got: {:?}", errors);
+    } else {
+        panic!("Expected operation to have validation error but got none");
     }
 }
 
