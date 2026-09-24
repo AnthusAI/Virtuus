@@ -1954,5 +1954,8 @@ fn check_operation_fails_with_error_type(world: &mut AppWorld, expected_error_ty
 async fn main() {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let features_path = format!("{}/../../../features/amplify", manifest_dir);
-    AppWorld::run(&features_path).await;
+    AppWorld::cucumber()
+        .fail_on_skipped()
+        .run_and_exit(&features_path)
+        .await;
 }
