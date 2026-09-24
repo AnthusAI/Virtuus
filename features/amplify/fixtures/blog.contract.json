@@ -43,7 +43,7 @@
       "primaryKey": ["id"],
       "indexes": [
         {"name": "postsByBlogAndCreatedAt", "queryField": "postsByBlog", "partitionField": "blogId", "sortFields": ["createdAt"], "sortArgument": "createdAt"},
-        {"name": "postsByBlogAndStatus", "queryField": "postsByBlogStatus", "partitionField": "blogId", "sortFields": ["status", "createdAt"], "sortArgument": "status"}
+        {"name": "postsByBlogAndStatus", "queryField": "postsByBlogStatus", "partitionField": "blogId", "sortFields": ["status", "createdAt"], "sortArgument": "statusCreatedAt"}
       ],
       "relationships": [
         {"field": "blog", "kind": "belongsTo", "target": "Blog", "references": "blogId", "implicit": false},

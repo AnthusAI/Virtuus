@@ -1,6 +1,6 @@
 //! HTTP GraphQL router for AppSync SDL on Virtuus storage engine.
 
-use async_graphql::dynamic::{Field, FieldFuture, Object, Schema, TypeRef};
+use async_graphql::dynamic::{Field, FieldFuture, Object, Schema};
 use async_graphql::ErrorExtensions;
 use async_graphql_parser::parse_schema;
 use axum::{
@@ -38,20 +38,161 @@ fn json_to_field_value(v: Value) -> Option<async_graphql::dynamic::FieldValue<'s
 }
 
 /// Convert engine errors to a GraphQL error with AppSync errorType
-fn engine_error_to_graphql_error(errors: Option<Vec<Value>>) -> Option<async_graphql::Error> {
-    errors.as_ref().and_then(|errs| {
-        if errs.is_empty() {
-            None
-        } else {
-            let first = &errs[0];
-            let msg = first["message"].as_str().unwrap_or("error").to_string();
-            let ty = first["errorType"]
-                .as_str()
-                .unwrap_or("InternalFailure")
-                .to_string();
-            Some(async_graphql::Error::new(msg).extend_with(|_, e| e.set("errorType", ty)))
+/// Takes a non-empty slice of errors (caller must check is_empty first)
+fn engine_error_to_graphql_error(errors: &[Value]) -> async_graphql::Error {
+    let first = &errors[0];
+    let msg = first["message"].as_str().unwrap_or("error").to_string();
+    let ty = first["errorType"]
+        .as_str()
+        .unwrap_or("InternalFailure")
+        .to_string();
+    async_graphql::Error::new(msg).extend_with(|_, e| e.set("errorType", ty))
+}
+
+/// Acquire engine lock, recovering from poisoning if needed.
+/// Poisoning is safe here: each engine call leaves tables consistent, so
+/// we can extract and use the guard from a poisoned lock.
+fn acquire_engine_lock(engine: &Arc<Mutex<Engine>>) -> std::sync::MutexGuard<'_, Engine> {
+    engine
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+/// Convert engine operational errors to GraphQL errors
+fn internal_failure(e: impl std::fmt::Display) -> async_graphql::Error {
+    async_graphql::Error::new(format!("Engine error: {}", e))
+        .extend_with(|_, ext| ext.set("errorType", "InternalFailure"))
+}
+
+/// Build engine args based on operation type and GraphQL context
+fn build_engine_args(
+    op: &str,
+    sort_fields: Option<&[String]>,
+    ctx: &async_graphql::dynamic::ResolverContext,
+) -> Result<Value, async_graphql::Error> {
+    let mut args = json!({});
+
+    match op {
+        "get" => {
+            // Extract key fields (typically "id", or composite key fields) from top-level args
+            // GraphQL type system ensures these deserialize correctly
+            for (key, accessor) in ctx.args.iter() {
+                if key.as_str() != "condition" {
+                    args[key.as_str()] = accessor.deserialize::<Value>()?;
+                }
+            }
         }
-    })
+        "create" | "update" | "delete" => {
+            // Extract "input" argument - engine expects the full input object
+            // GraphQL type system ensures this deserializes correctly
+            if let Some(input_accessor) = ctx.args.get("input") {
+                return input_accessor.deserialize::<Value>();
+            }
+        }
+        "list" => {
+            // Extract filter, limit, nextToken
+            // GraphQL type system ensures these deserialize correctly
+            if let Some(filter_accessor) = ctx.args.get("filter") {
+                args["filter"] = filter_accessor.deserialize::<Value>()?;
+            }
+            if let Some(limit_accessor) = ctx.args.get("limit") {
+                let limit_val = limit_accessor.deserialize::<i32>()?;
+                if limit_val < 0 {
+                    return Err(async_graphql::Error::new("limit must be non-negative")
+                        .extend_with(|_, ext| ext.set("errorType", "BadRequest")));
+                }
+                args["limit"] = Value::Number((limit_val as u32).into());
+            }
+            if let Some(nexttoken_accessor) = ctx.args.get("nextToken") {
+                args["nextToken"] = Value::String(nexttoken_accessor.deserialize::<String>()?);
+            }
+        }
+        _ => {
+            // Index operation: build key conditions and list args
+            let mut key_obj = json!({});
+
+            // Extract filter, sortDirection, limit, nextToken
+            // GraphQL type system ensures these deserialize correctly
+            if let Some(filter_accessor) = ctx.args.get("filter") {
+                args["filter"] = filter_accessor.deserialize::<Value>()?;
+            }
+            // sortDirection is an enum - use enum_name() to read it
+            if let Some(sort_accessor) = ctx.args.get("sortDirection") {
+                args["sortDirection"] = Value::String(sort_accessor.enum_name()?.to_string());
+            }
+            if let Some(limit_accessor) = ctx.args.get("limit") {
+                let limit_val = limit_accessor.deserialize::<i32>()?;
+                if limit_val < 0 {
+                    return Err(async_graphql::Error::new("limit must be non-negative")
+                        .extend_with(|_, ext| ext.set("errorType", "BadRequest")));
+                }
+                args["limit"] = Value::Number((limit_val as u32).into());
+            }
+            if let Some(nexttoken_accessor) = ctx.args.get("nextToken") {
+                args["nextToken"] = Value::String(nexttoken_accessor.deserialize::<String>()?);
+            }
+
+            // Build key conditions from remaining arguments
+            // For composite sort fields, merge the operator into key
+            // For single sort fields, nest the condition
+            let (is_composite, composite_arg_name): (bool, Option<String>) =
+                if let Some(fields) = sort_fields {
+                    if fields.len() > 1 {
+                        // Composite: compute camelCase argument name (e.g., "statusCreatedAt" for ["status", "createdAt"])
+                        let mut arg_name = fields[0].to_string();
+                        for field in &fields[1..] {
+                            // Capitalize first letter of each field after the first
+                            if let Some(first_char) = field.chars().next() {
+                                arg_name.push_str(&format!(
+                                    "{}{}",
+                                    first_char.to_uppercase(),
+                                    &field[1..]
+                                ));
+                            }
+                        }
+                        (true, Some(arg_name))
+                    } else {
+                        (false, None)
+                    }
+                } else {
+                    (false, None)
+                };
+
+            for arg_name in ctx.args.keys() {
+                let arg_str = arg_name.as_str();
+                if arg_str == "filter"
+                    || arg_str == "sortDirection"
+                    || arg_str == "limit"
+                    || arg_str == "nextToken"
+                {
+                    continue;
+                }
+
+                if let Some(arg_value) = ctx.args.get(arg_name) {
+                    let val = arg_value.deserialize::<Value>()?;
+
+                    if is_composite && composite_arg_name.as_ref() == Some(&arg_str.to_string()) {
+                        // For composite sort fields, merge the operator and sort fields into key
+                        // val is {eq: {status: "...", createdAt: "..."}} or similar
+                        if let Some(obj) = val.as_object() {
+                            for (op_key, op_val) in obj {
+                                key_obj[op_key] = op_val.clone();
+                            }
+                        }
+                    } else {
+                        // For single sort fields or partition fields, nest the condition
+                        key_obj[arg_str] = val;
+                    }
+                }
+            }
+
+            if !key_obj.is_null() && key_obj.as_object().is_some_and(|o| !o.is_empty()) {
+                args["key"] = key_obj;
+            }
+        }
+    }
+
+    Ok(args)
 }
 
 #[derive(Clone)]
@@ -66,11 +207,44 @@ struct AppSyncState {
 pub fn router(
     engine: Arc<Mutex<Engine>>,
     sdl: &str,
-    _contract: &Contract,
+    contract: &Contract,
     auth: Option<ApiKeyAuth>,
 ) -> Result<Router, crate::schema::SchemaBuildError> {
     let document = parse_schema(sdl)
         .map_err(|e| crate::schema::SchemaBuildError::ParseError(e.to_string()))?;
+
+    // Build field binding map from contract: field_name → (model_name, operation)
+    // Initial bindings for CRUD and index operations
+    let mut field_bindings: BTreeMap<String, (String, String)> = BTreeMap::new();
+
+    // Get models from contract and build bindings
+    for (model_name, model) in contract.models() {
+        // CRUD operations: get, create, update, delete
+        field_bindings.insert(
+            format!("get{}", model_name),
+            (model_name.clone(), "get".to_string()),
+        );
+        field_bindings.insert(
+            format!("create{}", model_name),
+            (model_name.clone(), "create".to_string()),
+        );
+        field_bindings.insert(
+            format!("update{}", model_name),
+            (model_name.clone(), "update".to_string()),
+        );
+        field_bindings.insert(
+            format!("delete{}", model_name),
+            (model_name.clone(), "delete".to_string()),
+        );
+
+        // Index operations - get queryField from index definitions
+        for index in model.indexes() {
+            field_bindings.insert(
+                index.query_field().to_string(),
+                (model_name.clone(), index.query_field().to_string()),
+            );
+        }
+    }
 
     // Ensure all AWS scalars are registered
     let aws_scalars = [
@@ -98,7 +272,66 @@ pub fn router(
     let mut input_types: BTreeMap<String, async_graphql::dynamic::InputObject> = BTreeMap::new();
     let mut enums: BTreeMap<String, async_graphql::dynamic::Enum> = BTreeMap::new();
 
+    // Detect list operations by checking Query field return types (only if not already bound as index)
+    for definition in &document.definitions {
+        if let async_graphql_parser::types::TypeSystemDefinition::Type(type_def) = definition {
+            let type_def = &type_def.node;
+            if type_def.name.to_string() == "Query" {
+                if let async_graphql_parser::types::TypeKind::Object(obj_type) = &type_def.kind {
+                    for field in &obj_type.fields {
+                        let field_name = field.node.name.to_string();
+                        // Skip if already bound as an index operation
+                        if field_bindings.contains_key(&field_name) {
+                            continue;
+                        }
+
+                        // Get the base type name from the field's type by converting to string
+                        let return_type_str = field.node.ty.node.to_string();
+                        // Extract the base type name (without ! or [])
+                        let base_type = return_type_str
+                            .trim_end_matches('!')
+                            .trim_end_matches(']')
+                            .split('[')
+                            .next()
+                            .unwrap_or("");
+
+                        // Check if return type ends with "Connection"
+                        if base_type.starts_with("Model") && base_type.ends_with("Connection") {
+                            // Extract model name: "ModelPostConnection" -> "Post"
+                            if base_type.len() > 15 {
+                                // "Model" (5) + ModelName + "Connection" (10)
+                                let model_name = base_type[5..base_type.len() - 10].to_string();
+                                if !model_name.is_empty() {
+                                    field_bindings.insert(
+                                        field_name.clone(),
+                                        (model_name.clone(), "list".to_string()),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     let engine_clone = engine.clone();
+    let field_bindings_clone = field_bindings.clone();
+
+    // Build a map of index sort fields from the contract
+    // Key: (model_name, operation) -> Value: Vec<String> (sort field names)
+    let mut index_sort_fields: BTreeMap<(String, String), Vec<String>> = BTreeMap::new();
+    for (model_name, model) in contract.models() {
+        for index in model.indexes() {
+            let sort_fields: Vec<String> =
+                index.sort_fields().iter().map(|s| s.to_string()).collect();
+            index_sort_fields.insert(
+                (model_name.to_string(), index.query_field().to_string()),
+                sort_fields,
+            );
+        }
+    }
+    let index_sort_fields_clone = index_sort_fields.clone();
 
     // Process all type definitions
     for definition in &document.definitions {
@@ -115,247 +348,58 @@ pub fn router(
                         let field_name = field.node.name.to_string();
                         let field_type = convert_type(&field.node.ty.node);
 
-                        // For Query.get<Model>, Query.list<Model>, Query.index<Model> and Mutation.create/update/delete<Model> fields, bind to engine
-                        let field_def = if (type_name == "Query"
-                            && field_name.starts_with("list")
-                            && field_name.len() > 4)
-                            || (type_name == "Query"
-                                && field_name.starts_with("index")
-                                && field_name.len() > 5)
+                        // Check if this field is engine-bound using the contract bindings
+                        let field_def = if let Some((model_name, operation)) =
+                            field_bindings_clone.get(&field_name)
                         {
-                            let model_name = if let Some(stripped) = field_name.strip_prefix("list")
-                            {
-                                stripped.to_string()
-                            } else if let Some(stripped) = field_name.strip_prefix("index") {
-                                stripped.to_string()
-                            } else {
-                                unreachable!()
-                            };
                             let engine_for_field = engine_clone.clone();
+                            let model = model_name.clone();
+                            let op = operation.clone();
+                            let sort_fields = index_sort_fields_clone
+                                .get(&(model_name.clone(), operation.clone()))
+                                .cloned();
 
                             Field::new(field_name, field_type, move |ctx| {
                                 let engine = engine_for_field.clone();
-                                let model = model_name.clone();
+                                let model = model.clone();
+                                let op = op.clone();
+                                let sort_fields = sort_fields.clone();
 
                                 FieldFuture::new(async move {
-                                    // Build filter/pagination args from context
-                                    let mut args = json!({});
+                                    // Determine operation type
+                                    let is_list_op = op == "list";
+                                    let is_index_op = op != "get"
+                                        && op != "create"
+                                        && op != "update"
+                                        && op != "delete"
+                                        && op != "list";
 
-                                    // Extract filter if present
-                                    if let Some(filter_accessor) = ctx.args.get("filter") {
-                                        if let Ok(filter_val) =
-                                            filter_accessor.deserialize::<Value>()
-                                        {
-                                            args["filter"] = filter_val;
+                                    // Build engine args based on operation type
+                                    let args =
+                                        build_engine_args(&op, sort_fields.as_deref(), &ctx)?;
+
+                                    // Scope the lock tightly - drop before returning FieldValue
+                                    let (result, errors) = {
+                                        let mut eng = acquire_engine_lock(&engine);
+                                        eng.call(&model, &op, &args)
+                                    }
+                                    .map_err(internal_failure)?;
+                                    // Lock is now dropped
+
+                                    // Return error if engine reported any errors
+                                    if let Some(err_vec) = errors {
+                                        if !err_vec.is_empty() {
+                                            return Err(engine_error_to_graphql_error(&err_vec));
                                         }
                                     }
 
-                                    // Extract pagination args if present
-                                    if let Some(limit_accessor) = ctx.args.get("limit") {
-                                        if let Ok(limit_val) = limit_accessor.deserialize::<u32>() {
-                                            args["limit"] = Value::Number(limit_val.into());
-                                        }
-                                    }
-
-                                    if let Some(nexttoken_accessor) = ctx.args.get("nextToken") {
-                                        if let Ok(nexttoken_val) =
-                                            nexttoken_accessor.deserialize::<String>()
-                                        {
-                                            args["nextToken"] = Value::String(nexttoken_val);
-                                        }
-                                    }
-
-                                    let mut eng = match engine.lock() {
-                                        Ok(e) => e,
-                                        Err(_) => return Ok(None),
-                                    };
-
-                                    match eng.call(&model, "list", &args) {
-                                        Ok((records, errors)) => {
-                                            if let Some(err) = engine_error_to_graphql_error(errors)
-                                            {
-                                                Err(err)
-                                            } else if records.is_null() || !records.is_array() {
-                                                Ok(None)
-                                            } else {
-                                                Ok(json_to_field_value(records))
-                                            }
-                                        }
-                                        Err(_) => Ok(None),
-                                    }
-                                })
-                            })
-                        } else if type_name == "Query"
-                            && field_name.starts_with("get")
-                            && field_name.len() > 3
-                        {
-                            let model_name = field_name[3..].to_string();
-                            let engine_for_field = engine_clone.clone();
-
-                            Field::new(field_name, field_type, move |ctx| {
-                                let engine = engine_for_field.clone();
-                                let model = model_name.clone();
-
-                                FieldFuture::new(async move {
-                                    // Get the id argument
-                                    let id = ctx
-                                        .args
-                                        .get("id")
-                                        .and_then(|v| v.string().ok())
-                                        .map(|s| s.to_string());
-
-                                    let mut args = json!({});
-                                    if let Some(id_val) = id {
-                                        args["id"] = Value::String(id_val);
-                                    }
-
-                                    let mut eng = match engine.lock() {
-                                        Ok(e) => e,
-                                        Err(_) => return Ok(None),
-                                    };
-
-                                    match eng.call(&model, "get", &args) {
-                                        Ok((record, errors)) => {
-                                            if let Some(err) = engine_error_to_graphql_error(errors)
-                                            {
-                                                Err(err)
-                                            } else if record.is_null() {
-                                                Ok(None)
-                                            } else {
-                                                Ok(json_to_field_value(record))
-                                            }
-                                        }
-                                        Err(_) => Ok(None),
-                                    }
-                                })
-                            })
-                        } else if type_name == "Mutation"
-                            && field_name.starts_with("create")
-                            && field_name.len() > 6
-                        {
-                            let model_name = field_name[6..].to_string();
-                            let engine_for_field = engine_clone.clone();
-
-                            Field::new(field_name, field_type, move |ctx| {
-                                let engine = engine_for_field.clone();
-                                let model = model_name.clone();
-
-                                FieldFuture::new(async move {
-                                    // Extract the input argument - try to deserialize from ValueAccessor
-                                    let input = if let Some(input_accessor) = ctx.args.get("input")
-                                    {
-                                        // Try to deserialize as a Value using serde
-                                        match input_accessor.deserialize::<Value>() {
-                                            Ok(v) => v,
-                                            Err(_) => Value::Null,
-                                        }
+                                    // No errors - return result based on operation type
+                                    if is_list_op || is_index_op {
+                                        Ok(json_to_field_value(result))
+                                    } else if result.is_null() {
+                                        Ok(None)
                                     } else {
-                                        Value::Null
-                                    };
-
-                                    let mut eng = match engine.lock() {
-                                        Ok(e) => e,
-                                        Err(_) => return Ok(None),
-                                    };
-
-                                    match eng.call(&model, "create", &input) {
-                                        Ok((record, errors)) => {
-                                            if let Some(err) = engine_error_to_graphql_error(errors)
-                                            {
-                                                Err(err)
-                                            } else if record.is_null() {
-                                                Ok(None)
-                                            } else {
-                                                Ok(json_to_field_value(record))
-                                            }
-                                        }
-                                        Err(_) => Ok(None),
-                                    }
-                                })
-                            })
-                        } else if type_name == "Mutation"
-                            && field_name.starts_with("update")
-                            && field_name.len() > 6
-                        {
-                            let model_name = field_name[6..].to_string();
-                            let engine_for_field = engine_clone.clone();
-
-                            Field::new(field_name, field_type, move |ctx| {
-                                let engine = engine_for_field.clone();
-                                let model = model_name.clone();
-
-                                FieldFuture::new(async move {
-                                    // Extract the input argument
-                                    let input = if let Some(input_accessor) = ctx.args.get("input")
-                                    {
-                                        match input_accessor.deserialize::<Value>() {
-                                            Ok(v) => v,
-                                            Err(_) => Value::Null,
-                                        }
-                                    } else {
-                                        Value::Null
-                                    };
-
-                                    let mut eng = match engine.lock() {
-                                        Ok(e) => e,
-                                        Err(_) => return Ok(None),
-                                    };
-
-                                    match eng.call(&model, "update", &input) {
-                                        Ok((record, errors)) => {
-                                            if let Some(err) = engine_error_to_graphql_error(errors)
-                                            {
-                                                Err(err)
-                                            } else if record.is_null() {
-                                                Ok(None)
-                                            } else {
-                                                Ok(json_to_field_value(record))
-                                            }
-                                        }
-                                        Err(_) => Ok(None),
-                                    }
-                                })
-                            })
-                        } else if type_name == "Mutation"
-                            && field_name.starts_with("delete")
-                            && field_name.len() > 6
-                        {
-                            let model_name = field_name[6..].to_string();
-                            let engine_for_field = engine_clone.clone();
-
-                            Field::new(field_name, field_type, move |ctx| {
-                                let engine = engine_for_field.clone();
-                                let model = model_name.clone();
-
-                                FieldFuture::new(async move {
-                                    // Extract the input argument
-                                    let input = if let Some(input_accessor) = ctx.args.get("input")
-                                    {
-                                        match input_accessor.deserialize::<Value>() {
-                                            Ok(v) => v,
-                                            Err(_) => Value::Null,
-                                        }
-                                    } else {
-                                        Value::Null
-                                    };
-
-                                    let mut eng = match engine.lock() {
-                                        Ok(e) => e,
-                                        Err(_) => return Ok(None),
-                                    };
-
-                                    match eng.call(&model, "delete", &input) {
-                                        Ok((record, errors)) => {
-                                            if let Some(err) = engine_error_to_graphql_error(errors)
-                                            {
-                                                Err(err)
-                                            } else if record.is_null() {
-                                                Ok(None)
-                                            } else {
-                                                Ok(json_to_field_value(record))
-                                            }
-                                        }
-                                        Err(_) => Ok(None),
+                                        Ok(json_to_field_value(result))
                                     }
                                 })
                             })
@@ -365,14 +409,9 @@ pub fn router(
                             Field::new(field_name, field_type, move |ctx| {
                                 let name = name.clone();
                                 FieldFuture::new(async move {
-                                    if let Ok(parent) = ctx.parent_value.try_downcast_ref::<Value>()
-                                    {
-                                        let value =
-                                            parent.get(&name).cloned().unwrap_or(Value::Null);
-                                        Ok(json_to_field_value(value))
-                                    } else {
-                                        Ok(None)
-                                    }
+                                    let parent = ctx.parent_value.try_downcast_ref::<Value>()?;
+                                    let value = parent.get(&name).cloned().unwrap_or(Value::Null);
+                                    Ok(json_to_field_value(value))
                                 })
                             })
                         };
@@ -431,11 +470,7 @@ pub fn router(
     }
 
     // Ensure Query type exists
-    let query = query_type.unwrap_or_else(|| {
-        Object::new("Query").field(Field::new("_empty", TypeRef::named("String"), |_| {
-            FieldFuture::new(async { Ok(None::<async_graphql::Value>) })
-        }))
-    });
+    let query = query_type.ok_or(crate::schema::SchemaBuildError::MissingQuery)?;
 
     // Mutation type is optional
     let mutation = mutation_type;

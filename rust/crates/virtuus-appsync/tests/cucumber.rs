@@ -22,6 +22,7 @@ pub struct AppSyncWorld {
     api_key: Option<String>,
     include_api_key: bool,
     http_status: Option<u16>,
+    last_next_token: Option<String>,
 }
 
 #[given("the blog SDL")]
@@ -267,6 +268,25 @@ async fn send_with_correct_api_key(world: &mut AppSyncWorld, step: &gherkin::Ste
     send_graphql(world, docstring, api_key_ref).await;
 }
 
+#[when(regex = "^I send the GraphQL request using the previous nextToken:$")]
+async fn send_with_previous_token(world: &mut AppSyncWorld, step: &gherkin::Step) {
+    let docstring = step.docstring().map_or("", |v| v);
+    // Replace $nextToken placeholder with the captured token (raw, without extra quotes)
+    let query = if let Some(token) = &world.last_next_token {
+        docstring.replace("$nextToken", token)
+    } else {
+        world.error = Some("No previous nextToken captured".to_string());
+        return;
+    };
+    let api_key_opt = if world.include_api_key {
+        world.api_key.clone()
+    } else {
+        None
+    };
+    let api_key_ref = api_key_opt.as_deref();
+    send_graphql(world, &query, api_key_ref).await;
+}
+
 #[then(regex = "^the GraphQL response is:$")]
 async fn response_is(world: &mut AppSyncWorld, step: &gherkin::Step) {
     if let Some(error) = &world.error {
@@ -348,6 +368,197 @@ fn check_error_type(world: &mut AppSyncWorld, expected_type: String) {
         );
     } else {
         panic!("No response to check for error");
+    }
+}
+
+#[then("the GraphQL response data is null")]
+fn check_response_data_null(world: &mut AppSyncWorld) {
+    if let Some(response) = &world.response {
+        let data = response.get("data");
+        assert!(
+            data.is_none() || data.as_ref().map(|d| d.is_null()).unwrap_or(false),
+            "Expected data to be null, got {:?}",
+            data
+        );
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then(regex = "^the GraphQL response contains \"([^\"]+)\" = \"([^\"]+)\"$")]
+fn check_response_value(world: &mut AppSyncWorld, path: String, expected_value: String) {
+    if let Some(response) = &world.response {
+        let value = get_nested_value(response, &path);
+        assert_eq!(
+            value.as_deref(),
+            Some(expected_value.as_str()),
+            "Expected {} to be {}, got {:?}",
+            path,
+            expected_value,
+            value
+        );
+        // Capture nextToken if present in this response
+        if path.contains("nextToken") {
+            if let Some(token_value) = value {
+                if token_value != "null" {
+                    world.last_next_token = Some(token_value.to_string());
+                }
+            }
+        }
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then(regex = "^the GraphQL response contains \"([^\"]+)\" = \\[\\]$")]
+fn check_response_empty_array(world: &mut AppSyncWorld, path: String) {
+    if let Some(response) = &world.response {
+        let current = navigate_path(response, &path);
+        assert!(
+            current.is_some_and(|v| v.is_array() && v.as_array().is_some_and(|a| a.is_empty())),
+            "Expected {} to be an empty array, got {:?}",
+            path,
+            current
+        );
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then(regex = "^the GraphQL response contains \"([^\"]+)\" that is not null$")]
+fn check_response_not_null(world: &mut AppSyncWorld, path: String) {
+    if let Some(response) = &world.response {
+        let value = get_nested_value(response, &path);
+        assert!(
+            value.is_some() && value.as_ref().is_some_and(|v| v != "null"),
+            "Expected {} to be not null, but it was null or missing",
+            path
+        );
+        // Capture nextToken if this is a nextToken field
+        if path.contains("nextToken") {
+            if let Some(token_value) = value {
+                if token_value != "null" {
+                    world.last_next_token = Some(token_value.to_string());
+                }
+            }
+        }
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then(regex = "^the GraphQL response contains \"([^\"]+)\" = null$")]
+fn check_response_null(world: &mut AppSyncWorld, path: String) {
+    if let Some(response) = &world.response {
+        let value = get_nested_value(response, &path);
+        assert_eq!(
+            value.as_deref(),
+            None,
+            "Expected {} to be null, but got: {:?}",
+            path,
+            value
+        );
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then("the GraphQL response has an error without an errorType field")]
+fn check_error_without_type(world: &mut AppSyncWorld) {
+    if let Some(response) = &world.response {
+        let has_error = response
+            .get("errors")
+            .and_then(|e| e.as_array())
+            .is_some_and(|arr| !arr.is_empty());
+        assert!(has_error, "Expected response to have errors");
+
+        // Check that at least one error doesn't have errorType
+        let errors = response.get("errors").and_then(|e| e.as_array()).unwrap();
+        let has_error_without_type = errors.iter().any(|err| err.get("errorType").is_none());
+        assert!(
+            has_error_without_type,
+            "Expected at least one error without errorType, got: {:?}",
+            errors
+        );
+    } else {
+        panic!("No response to check");
+    }
+}
+
+#[then("the GraphQL response error has a path field")]
+fn check_error_has_path(world: &mut AppSyncWorld) {
+    if let Some(response) = &world.response {
+        let has_path = response
+            .get("errors")
+            .and_then(|e| e.as_array())
+            .is_some_and(|arr| {
+                arr.iter().any(|err| {
+                    err.get("path").is_some_and(|p| {
+                        p.is_array() && p.as_array().is_some_and(|a| !a.is_empty())
+                    })
+                })
+            });
+        assert!(has_path, "Expected at least one error to have a path field");
+    } else {
+        panic!("No response to check");
+    }
+}
+
+fn navigate_path<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
+    let parts: Vec<&str> = path.split('.').collect();
+    let mut current = value;
+
+    for part in parts {
+        if part.ends_with(']') && part.contains('[') {
+            // Handle array index like "items[0]"
+            let bracket_pos = part.find('[')?;
+            let field = &part[..bracket_pos];
+            let index_str = &part[bracket_pos + 1..part.len() - 1];
+            let index: usize = index_str.parse().ok()?;
+
+            current = &current[field];
+            current = current.as_array()?.get(index)?;
+        } else {
+            current = &current[part];
+            if current.is_null() {
+                return None;
+            }
+        }
+    }
+
+    Some(current)
+}
+
+fn get_nested_value(value: &Value, path: &str) -> Option<String> {
+    let parts: Vec<&str> = path.split('.').collect();
+    let mut current = value;
+
+    for part in parts {
+        if part.ends_with(']') && part.contains('[') {
+            // Handle array index like "items[0]"
+            let bracket_pos = part.find('[')?;
+            let field = &part[..bracket_pos];
+            let index_str = &part[bracket_pos + 1..part.len() - 1];
+            let index: usize = index_str.parse().ok()?;
+
+            current = &current[field];
+            current = current.as_array()?.get(index)?;
+        } else {
+            current = &current[part];
+            if current.is_null() {
+                return None;
+            }
+        }
+    }
+
+    // Return the string value
+    if current.is_null() {
+        None
+    } else if let Some(s) = current.as_str() {
+        Some(s.to_string())
+    } else {
+        // For non-string values, convert to JSON representation
+        Some(current.to_string())
     }
 }
 

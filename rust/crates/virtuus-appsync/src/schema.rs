@@ -17,6 +17,8 @@ pub enum SchemaBuildError {
     BuildError(String),
     #[error("Introspection mismatch: {0}")]
     IntrospectionMismatch(String),
+    #[error("SDL must define a Query type")]
+    MissingQuery,
 }
 
 /// A trait for normalizing schema definitions for comparison.

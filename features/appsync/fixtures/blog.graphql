@@ -45,6 +45,31 @@ input ModelStringInput {
   size: ModelSizeInput
 }
 
+input ModelStringKeyConditionInput {
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  between: [String]
+  beginsWith: String
+}
+
+input ModelPostPostsByBlogStatusCompositeKeyConditionInput {
+  eq: ModelPostPostsByBlogStatusCompositeKeyInput
+  le: ModelPostPostsByBlogStatusCompositeKeyInput
+  lt: ModelPostPostsByBlogStatusCompositeKeyInput
+  ge: ModelPostPostsByBlogStatusCompositeKeyInput
+  gt: ModelPostPostsByBlogStatusCompositeKeyInput
+  between: [ModelPostPostsByBlogStatusCompositeKeyInput]
+  beginsWith: ModelPostPostsByBlogStatusCompositeKeyInput
+}
+
+input ModelPostPostsByBlogStatusCompositeKeyInput {
+  status: String
+  createdAt: String
+}
+
 input ModelSizeInput {
   ne: Int
   eq: Int
@@ -154,7 +179,9 @@ type Query {
   listBlogs(filter: ModelBlogFilterInput, limit: Int, nextToken: String): ModelBlogConnection
   getPost(id: ID!): Post
   listPosts(filter: ModelPostFilterInput, limit: Int, nextToken: String): ModelPostConnection
-  postsByBlog(blogId: ID!, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlog(blogId: ID!, createdAt: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlogStatus(blogId: ID!, statusCreatedAt: ModelPostPostsByBlogStatusCompositeKeyConditionInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  commentsByPost(postId: ID!, filter: ModelCommentFilterInput, limit: Int, nextToken: String): ModelCommentConnection
 }
 
 type ModelBlogConnection {
@@ -169,6 +196,30 @@ type Mutation {
   createPost(input: CreatePostInput!): Post
   updatePost(input: UpdatePostInput!): Post
   deletePost(input: DeletePostInput!): Post
+}
+
+type Comment {
+  id: ID!
+  postId: ID!
+  content: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type ModelCommentConnection {
+  items: [Comment!]!
+  nextToken: String
+}
+
+input ModelCommentFilterInput {
+  id: ModelIDInput
+  postId: ModelIDInput
+  content: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelCommentFilterInput]
+  or: [ModelCommentFilterInput]
+  not: ModelCommentFilterInput
 }
 
 type Subscription {

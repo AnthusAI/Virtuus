@@ -69,7 +69,6 @@ Feature: Query and Mutation Resolvers
       {"data":{"getPost":null}}
       """
 
-  @wip
   Scenario: listPosts query returns an array of posts
     Given a blog engine
     And a Post exists with:
@@ -82,14 +81,13 @@ Feature: Query and Mutation Resolvers
       """
     When I send the GraphQL request:
       """
-      query { listPosts { items { id title } } }
+      query { listPosts { items { id title } nextToken } }
       """
     Then the GraphQL response is:
       """
-      {"data":{"listPosts":{"items":[{"id":"p5","title":"Post 1"},{"id":"p6","title":"Post 2"}]}}}
+      {"data":{"listPosts":{"items":[{"id":"p5","title":"Post 1"},{"id":"p6","title":"Post 2"}],"nextToken":null}}}
       """
 
-  @wip
   Scenario: listPosts query with filter returns filtered posts
     Given a blog engine
     And a Post exists with:
@@ -102,34 +100,120 @@ Feature: Query and Mutation Resolvers
       """
     When I send the GraphQL request:
       """
-      query { listPosts(filter: {blogId: {eq: "b1"}}) { items { id title } } }
+      query { listPosts(filter: {blogId: {eq: "b1"}}) { items { id title } nextToken } }
       """
     Then the GraphQL response is:
       """
-      {"data":{"listPosts":{"items":[{"id":"p7","title":"Post A"}]}}}
+      {"data":{"listPosts":{"items":[{"id":"p7","title":"Post A"}],"nextToken":null}}}
       """
 
-  @wip
   Scenario: postsByBlog index query with sortDirection
     Given a blog engine
     And a Post exists with:
       """
-      {"id":"p9","title":"Recent","blogId":"b1"}
+      {"id":"p9","title":"Recent","blogId":"b1","content":"{}","createdAt":"2026-09-24T10:00:00Z","updatedAt":"2026-09-24T10:00:00Z"}
       """
     And a Post exists with:
       """
-      {"id":"p10","title":"Older","blogId":"b1"}
+      {"id":"p10","title":"Older","blogId":"b1","content":"{}","createdAt":"2026-09-24T09:00:00Z","updatedAt":"2026-09-24T09:00:00Z"}
       """
     When I send the GraphQL request:
       """
-      query { postsByBlog(blogId: "b1", sortDirection: DESC) { items { id title } } }
+      query { postsByBlog(blogId: "b1", sortDirection: DESC) { items { id title } nextToken } }
       """
     Then the GraphQL response is:
       """
-      {"data":{"postsByBlog":{"items":[{"id":"p10","title":"Older"},{"id":"p9","title":"Recent"}]}}}
+      {"data":{"postsByBlog":{"items":[{"id":"p9","title":"Recent"},{"id":"p10","title":"Older"}],"nextToken":null}}}
       """
 
-  @wip
+  Scenario: postsByBlog index query with key condition
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p15","title":"Early","blogId":"b1","content":"{}","createdAt":"2026-09-24T08:00:00Z","updatedAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p16","title":"Late","blogId":"b1","content":"{}","createdAt":"2026-09-24T12:00:00Z","updatedAt":"2026-09-24T12:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlog(blogId: "b1", createdAt: {gt: "2026-09-24T09:30:00Z"}) { items { id title } nextToken } }
+      """
+    Then the GraphQL response contains "data.postsByBlog.items[0].id" = "p16"
+
+  Scenario: postsByBlogStatus composite key query
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p17","title":"Draft","blogId":"b1","status":"DRAFT","content":"{}","createdAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p18","title":"Published","blogId":"b1","status":"PUBLISHED","content":"{}","createdAt":"2026-09-24T09:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlogStatus(blogId: "b1", statusCreatedAt: {beginsWith: {status: "PUBLISHED"}}) { items { id title } nextToken } }
+      """
+    Then the GraphQL response is:
+      """
+      {"data":{"postsByBlogStatus":{"items":[{"id":"p18","title":"Published"}],"nextToken":null}}}
+      """
+
+  Scenario: postsByBlogStatus composite key with between operator
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p19","title":"Early","blogId":"b1","status":"PUBLISHED","content":"{}","createdAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p20","title":"Late","blogId":"b1","status":"PUBLISHED","content":"{}","createdAt":"2026-09-24T10:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlogStatus(blogId: "b1", statusCreatedAt: {between: [{status: "PUBLISHED", createdAt: "2026-09-24T07:00:00Z"}, {status: "PUBLISHED", createdAt: "2026-09-24T09:00:00Z"}]}) { items { id } } }
+      """
+    Then the GraphQL response contains "data.postsByBlogStatus.items[0].id" = "p19"
+
+  Scenario: postsByBlogStatus composite key with gt operator
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p21","title":"Early","blogId":"b1","status":"PUBLISHED","content":"{}","createdAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p22","title":"Late","blogId":"b1","status":"PUBLISHED","content":"{}","createdAt":"2026-09-24T10:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlogStatus(blogId: "b1", statusCreatedAt: {gt: {status: "PUBLISHED", createdAt: "2026-09-24T09:00:00Z"}}) { items { id } } }
+      """
+    Then the GraphQL response contains "data.postsByBlogStatus.items[0].id" = "p22"
+
+  Scenario: postsByBlog index query with filter, sortDirection, and limit
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p23","title":"First","blogId":"b1","content":"{}","createdAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p24","title":"Second","blogId":"b1","content":"{}","createdAt":"2026-09-24T09:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p25","title":"Third","blogId":"b1","content":"{}","createdAt":"2026-09-24T10:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlog(blogId: "b1", sortDirection: DESC, limit: 2) { items { id } } }
+      """
+    Then the GraphQL response contains "data.postsByBlog.items[0].id" = "p25"
+    And the GraphQL response contains "data.postsByBlog.items[1].id" = "p24"
+
   Scenario: listPosts query with pagination returns paginated results
     Given a blog engine
     And a Post exists with:
@@ -144,10 +228,20 @@ Feature: Query and Mutation Resolvers
       """
       query { listPosts(limit: 1) { items { id } nextToken } }
       """
-    Then the GraphQL response is:
+    Then the GraphQL response contains "data.listPosts.items[0].id" = "p11"
+    And the GraphQL response contains "data.listPosts.nextToken" that is not null
+    When I send the GraphQL request using the previous nextToken:
       """
-      {"data":{"listPosts":{"items":[{"id":"p11"}],"nextToken":null}}}
+      query { listPosts(limit: 1, nextToken: "$nextToken") { items { id } nextToken } }
       """
+    Then the GraphQL response contains "data.listPosts.items[0].id" = "p12"
+    And the GraphQL response contains "data.listPosts.nextToken" that is not null
+    When I send the GraphQL request using the previous nextToken:
+      """
+      query { listPosts(limit: 1, nextToken: "$nextToken") { items { id } nextToken } }
+      """
+    Then the GraphQL response contains "data.listPosts.items" = []
+    And the GraphQL response contains "data.listPosts.nextToken" = null
 
   Scenario: Request without API-key returns 401 Unauthorized
     Given a blog engine with API-key auth
@@ -208,8 +302,78 @@ Feature: Query and Mutation Resolvers
       {"data":null,"errors":[{"message":"An item with this id does not exist","errorType":"DynamoDB:ConditionalCheckFailedException","locations":[{"line":2,"column":12}]}]}
       """
 
+  Scenario: listPosts with invalid limit argument returns BadRequest
+    Given a blog engine
+    When I send the GraphQL request:
+      """
+      query { listPosts(limit: -1) { items { id } } }
+      """
+    Then the GraphQL response contains error with errorType "BadRequest"
+    And the GraphQL response data is null
+
+  Scenario: listPosts with invalid filter shape returns ValidationException
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p19","title":"Test","blogId":"b1","content":"{}"}
+      """
+    When I send the GraphQL request:
+      """
+      query { listPosts(filter: {title: {between: ["a"]}}) { items { id } } }
+      """
+    Then the GraphQL response contains error with errorType "ValidationException"
+
+  Scenario: Index query with filter, limit, and nextToken
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p26","title":"P26","blogId":"b1","content":"{}","createdAt":"2026-09-24T08:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p27","title":"P27","blogId":"b1","content":"{}","createdAt":"2026-09-24T09:00:00Z"}
+      """
+    And a Post exists with:
+      """
+      {"id":"p28","title":"P28","blogId":"b1","content":"{}","createdAt":"2026-09-24T10:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { postsByBlog(blogId: "b1", sortDirection: DESC, limit: 2) { items { id } nextToken } }
+      """
+    Then the GraphQL response contains "data.postsByBlog.items[0].id" = "p28"
+    And the GraphQL response contains "data.postsByBlog.items[1].id" = "p27"
+
+  Scenario: Index query with negative limit returns BadRequest
+    Given a blog engine
+    When I send the GraphQL request:
+      """
+      query { postsByBlog(blogId: "b1", limit: -1) { items { id } } }
+      """
+    Then the GraphQL response contains error with errorType "BadRequest"
+
+  Scenario: Index operation without sort fields
+    Given a blog engine
+    And a Post exists with:
+      """
+      {"id":"p29","title":"Post29","blogId":"b1","content":"{}"}
+      """
+    And a Comment exists with:
+      """
+      {"id":"c1","postId":"p29","content":"Great post","createdAt":"2026-09-24T10:00:00Z"}
+      """
+    When I send the GraphQL request:
+      """
+      query { commentsByPost(postId: "p29") { items { id content } } }
+      """
+    Then the GraphQL response contains "data.commentsByPost.items[0].id" = "c1"
+
   @wip
   Scenario: Create with invalid enum returns ValidationException
+    # Enum validation: GraphQL input coercion rejects invalid enum values before the engine sees them.
+    # The error comes from async-graphql's validation layer, not the engine.
+    # Expected data to be null/absent and error message naming the field and invalid value.
+    # Exact error format to be confirmed against AWS AppSync sandbox (task T31).
     Given a blog engine with enum constraints
     When I send the GraphQL request:
       """
