@@ -5,6 +5,7 @@
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
@@ -12,6 +13,16 @@ use thiserror::Error;
 use uuid::Uuid;
 use virtuus::table::Table;
 use virtuus::SortCondition;
+
+/// A typed authorization operation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthOp {
+    Create,
+    Read,
+    Update,
+    Delete,
+}
 
 /// Contract validation and loading errors.
 #[derive(Debug, Error)]
@@ -30,6 +41,204 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+/// Identity for authentication and authorization.
+#[derive(Debug, Clone)]
+pub enum Identity {
+    /// User identity with sub, username, and groups.
+    User {
+        sub: String,
+        username: String,
+        groups: Vec<String>,
+    },
+    /// API key identity for public/apiKey auth rules.
+    ApiKey,
+}
+
+impl Default for Identity {
+    fn default() -> Self {
+        Identity::User {
+            sub: "test-sub".to_string(),
+            username: "testuser".to_string(),
+            groups: vec![],
+        }
+    }
+}
+
+impl Identity {
+    /// Create a user identity with the given sub, username, and groups.
+    pub fn user(sub: impl Into<String>, username: impl Into<String>, groups: Vec<String>) -> Self {
+        Identity::User {
+            sub: sub.into(),
+            username: username.into(),
+            groups,
+        }
+    }
+
+    /// Get the owner value as `sub::username` format, or None for API key.
+    pub fn owner_value(&self) -> Option<String> {
+        match self {
+            Identity::User { sub, username, .. } => Some(format!("{}::{}", sub, username)),
+            Identity::ApiKey => None,
+        }
+    }
+
+    /// Check if this identity is in the given groups.
+    pub fn has_group(&self, group: &str) -> bool {
+        match self {
+            Identity::User { groups, .. } => groups.contains(&group.to_string()),
+            Identity::ApiKey => false,
+        }
+    }
+}
+
+/// Allowed operations for an authorization rule.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ops(Vec<AuthOp>);
+
+impl Ops {
+    /// Create a new Ops from a slice of operations.
+    pub fn from_operations(ops: Vec<AuthOp>) -> Self {
+        Ops(ops)
+    }
+
+    /// Check if an operation is allowed.
+    pub fn allows(&self, operation: AuthOp) -> bool {
+        self.0.contains(&operation)
+    }
+}
+
+/// Typed authorization rule.
+#[derive(Debug, Clone)]
+pub enum AuthRule {
+    Owner { owner_field: String, ops: Ops },
+    Groups { groups: Vec<String>, ops: Ops },
+    Private { ops: Ops },
+    Public { ops: Ops },
+}
+
+impl AuthRule {
+    /// Parse an authorization rule from JSON.
+    pub fn from_json(value: &Value) -> Result<Self> {
+        let rule_obj = value
+            .as_object()
+            .ok_or_else(|| Error::Validation("Auth rule must be an object".to_string()))?;
+
+        let allow = rule_obj
+            .get("allow")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| Error::Validation("Auth rule missing 'allow'".to_string()))?;
+
+        let operations_value = rule_obj
+            .get("operations")
+            .ok_or_else(|| Error::Validation("Auth rule missing 'operations'".to_string()))?;
+
+        let operations: Vec<AuthOp> = serde_json::from_value(operations_value.clone())
+            .map_err(|_| Error::Validation("Invalid operations format".to_string()))?;
+
+        let ops = Ops::from_operations(operations);
+
+        match allow {
+            "owner" => {
+                let owner_field = rule_obj
+                    .get("ownerField")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("owner")
+                    .to_string();
+                Ok(AuthRule::Owner { owner_field, ops })
+            }
+            "groups" => {
+                let groups = rule_obj
+                    .get("groups")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                Ok(AuthRule::Groups { groups, ops })
+            }
+            "private" | "authenticated" => Ok(AuthRule::Private { ops }),
+            "public" | "apiKey" => Ok(AuthRule::Public { ops }),
+            // The contract schema only permits "custom" beyond the arms above.
+            other => Err(Error::Validation(format!(
+                "{other} (lambda) authorization is not supported"
+            ))),
+        }
+    }
+}
+
+/// Check if an operation is allowed based on authorization rules.
+/// Returns true if any rule allows the operation.
+fn allowed(
+    auth_rules: &[AuthRule],
+    operation: AuthOp,
+    identity: &Identity,
+    record: Option<&Value>,
+) -> bool {
+    for rule in auth_rules {
+        if !rule.allows(operation) {
+            continue;
+        }
+
+        match rule {
+            AuthRule::Owner { owner_field, .. } => {
+                // For create, owner is allowed only if identity has an owner_value
+                if operation == AuthOp::Create {
+                    if identity.owner_value().is_some() {
+                        return true;
+                    }
+                } else {
+                    // For other ops, check if record's owner matches identity's owner value
+                    if let Some(rec) = record {
+                        if let Some(owner_value) = identity.owner_value() {
+                            if let Some(rec_owner) = rec.get(owner_field).and_then(|v| v.as_str()) {
+                                if rec_owner == owner_value {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            AuthRule::Groups { groups, .. } => {
+                // Check if identity is in any of the rule's groups
+                for group in groups {
+                    if identity.has_group(group) {
+                        return true;
+                    }
+                }
+            }
+            AuthRule::Private { .. } => {
+                // Any user identity is allowed
+                if matches!(identity, Identity::User { .. }) {
+                    return true;
+                }
+            }
+            AuthRule::Public { .. } => {
+                // Only API key identity is allowed
+                if matches!(identity, Identity::ApiKey) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
+
+impl AuthRule {
+    /// Check if this rule allows the given operation.
+    pub fn allows(&self, operation: AuthOp) -> bool {
+        match self {
+            AuthRule::Owner { ops, .. } => ops.allows(operation),
+            AuthRule::Groups { ops, .. } => ops.allows(operation),
+            AuthRule::Private { ops } => ops.allows(operation),
+            AuthRule::Public { ops } => ops.allows(operation),
+        }
+    }
+}
 
 /// Encode a value as a base64url-encoded JSON token.
 fn encode_token(value: &Value) -> String {
@@ -178,6 +387,8 @@ pub struct Model {
     primary_key: Vec<String>,
     indexes: Vec<Index>,
     relationships: Vec<Relationship>,
+    auth_rules: Vec<AuthRule>,
+    owner_fields: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -395,12 +606,35 @@ impl Contract {
             }
         }
 
+        let auth_rules = value
+            .get("authRules")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .map(AuthRule::from_json)
+                    .collect::<Result<Vec<_>>>()
+            })
+            .transpose()?
+            .unwrap_or_default();
+
+        let owner_fields = value
+            .get("ownerFields")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default();
+
         Ok(Model {
             name,
             fields,
             primary_key,
             indexes,
             relationships,
+            auth_rules,
+            owner_fields,
         })
     }
 
@@ -560,6 +794,16 @@ impl Model {
     pub fn relationships(&self) -> &[Relationship] {
         &self.relationships
     }
+
+    /// Get the authorization rules.
+    pub fn auth_rules(&self) -> &[AuthRule] {
+        &self.auth_rules
+    }
+
+    /// Get the owner field names.
+    pub fn owner_fields(&self) -> &[String] {
+        &self.owner_fields
+    }
 }
 
 impl Index {
@@ -631,7 +875,12 @@ impl Enum {
 }
 
 /// Engine options.
-pub struct EngineOptions;
+/// Engine options for authorization and behavior control.
+#[derive(Debug, Clone)]
+pub struct EngineOptions {
+    /// Whether to enforce authorization rules. If false (default), all operations are allowed.
+    pub enforce_auth: bool,
+}
 
 /// Operation result containing data, errors, and optional pagination token.
 #[derive(Debug, Clone)]
@@ -1201,6 +1450,7 @@ fn parse_composite_operator_format(
 pub struct Engine {
     contract: Contract,
     tables: BTreeMap<String, Table>,
+    options: EngineOptions,
 }
 
 impl Engine {
@@ -1208,7 +1458,7 @@ impl Engine {
     pub fn open(
         directory: Option<PathBuf>,
         contract: Contract,
-        _options: EngineOptions,
+        options: EngineOptions,
     ) -> Result<Self> {
         // Create one table per model
         let mut tables: BTreeMap<String, Table> = BTreeMap::new();
@@ -1305,7 +1555,11 @@ impl Engine {
             table.warm();
         }
 
-        Ok(Engine { contract, tables })
+        Ok(Engine {
+            contract,
+            tables,
+            options,
+        })
     }
 
     /// Get a table by model name.
@@ -1433,6 +1687,7 @@ impl Engine {
         model: &Model,
         selection: &[String],
         _args: &Value,
+        identity: &Identity,
     ) -> Result<Value> {
         let mut result = serde_json::Map::new();
 
@@ -1461,24 +1716,43 @@ impl Engine {
                                         let target_table = self.tables.get(&rel.target);
                                         if let Some(table) = target_table {
                                             if let Some(related) = table.get(&fk, None) {
-                                                if rel_path == "*" {
-                                                    // Include all scalar fields of related model
-                                                    result.insert(
-                                                        rel_field.to_string(),
-                                                        filter_selection_default(&related, &tm),
-                                                    );
+                                                // Check authorization for read
+                                                let can_read = if self.options.enforce_auth {
+                                                    allowed(
+                                                        tm.auth_rules(),
+                                                        AuthOp::Read,
+                                                        identity,
+                                                        Some(&related),
+                                                    )
                                                 } else {
-                                                    // Nested field selection
-                                                    let empty_args =
-                                                        Value::Object(serde_json::Map::new());
-                                                    let nested = self
-                                                        .apply_selection_with_relationships(
-                                                            &related,
-                                                            &tm,
-                                                            &[rel_path],
-                                                            &empty_args,
-                                                        )?;
-                                                    result.insert(rel_field.to_string(), nested);
+                                                    true
+                                                };
+
+                                                if can_read {
+                                                    if rel_path == "*" {
+                                                        // Include all scalar fields of related model
+                                                        result.insert(
+                                                            rel_field.to_string(),
+                                                            filter_selection_default(&related, &tm),
+                                                        );
+                                                    } else {
+                                                        // Nested field selection
+                                                        let empty_args =
+                                                            Value::Object(serde_json::Map::new());
+                                                        let nested = self
+                                                            .apply_selection_with_relationships(
+                                                                &related,
+                                                                &tm,
+                                                                &[rel_path],
+                                                                &empty_args,
+                                                                identity,
+                                                            )?;
+                                                        result
+                                                            .insert(rel_field.to_string(), nested);
+                                                    }
+                                                } else {
+                                                    result
+                                                        .insert(rel_field.to_string(), Value::Null);
                                                 }
                                             } else {
                                                 result.insert(rel_field.to_string(), Value::Null);
@@ -1523,6 +1797,7 @@ impl Engine {
         model: &Model,
         selection: &[String],
         args: &Value,
+        identity: &Identity,
     ) -> Result<Value> {
         for path in selection {
             if path.contains('.') {
@@ -1679,6 +1954,19 @@ impl Engine {
                                                     }
                                                     break;
                                                 }
+
+                                                // Check authorization for read
+                                                if self.options.enforce_auth
+                                                    && !allowed(
+                                                        target_model.auth_rules(),
+                                                        AuthOp::Read,
+                                                        identity,
+                                                        Some(record),
+                                                    )
+                                                {
+                                                    continue; // Skip records user cannot read
+                                                }
+
                                                 if let Some(ref filter) = parsed_filter {
                                                     if !evaluate_filter_typed(filter, record) {
                                                         continue;
@@ -1752,6 +2040,7 @@ impl Engine {
         model_name: &str,
         op: &str,
         args: &Value,
+        identity: &Identity,
     ) -> Result<(Value, Option<Vec<Value>>)> {
         let model = self
             .contract
@@ -1865,6 +2154,13 @@ impl Engine {
                 let mut last_read_key: Option<Value> = None;
 
                 for record in taken_records {
+                    // Check authorization for read
+                    if self.options.enforce_auth
+                        && !allowed(model.auth_rules(), AuthOp::Read, identity, Some(record))
+                    {
+                        continue; // Skip records user cannot read
+                    }
+
                     // Include both index key and primary key for uniqueness
                     let mut full_key = serde_json::Map::new();
                     for k in index_key.iter() {
@@ -1884,7 +2180,9 @@ impl Engine {
 
                     // Apply selectionSet filtering and resolve relationships
                     let filtered = if let Some(sel) = parsed_selection.as_ref() {
-                        self.apply_selection_with_relationships(record, &model, sel, args)?
+                        self.apply_selection_with_relationships(
+                            record, &model, sel, args, identity,
+                        )?
                     } else {
                         filter_selection_default(record, &model)
                     };
@@ -1921,6 +2219,17 @@ impl Engine {
                     return Ok((Value::Null, Some(errors)));
                 }
 
+                // Check authorization for create
+                if self.options.enforce_auth
+                    && !allowed(model.auth_rules(), AuthOp::Create, identity, None)
+                {
+                    let error = json!({
+                        "message": format!("Not Authorized to access create on type {}", model_name),
+                        "errorType": "Unauthorized"
+                    });
+                    return Ok((Value::Null, Some(vec![error])));
+                }
+
                 // Fill in auto-generated fields
                 if !record.get("id").is_some_and(|v| !v.is_null()) {
                     record["id"] = Value::String(Uuid::new_v4().to_string());
@@ -1944,6 +2253,36 @@ impl Engine {
                     .unwrap_or_else(|| created_at.clone());
                 record["updatedAt"] = updated_at;
                 record["__typename"] = Value::String(model_name.to_string());
+
+                // Handle owner fields: validate provided values and fill if needed
+                if let Some(owner_value) = identity.owner_value() {
+                    for owner_field in model.owner_fields() {
+                        let provided_owner = record
+                            .get(owner_field)
+                            .filter(|v| !v.is_null())
+                            .and_then(|v| v.as_str());
+
+                        // Check if a different owner was provided (spoofing attempt)
+                        if let Some(provided) = provided_owner {
+                            if provided != owner_value && self.options.enforce_auth {
+                                let error = json!({
+                                    "message": format!("Not Authorized to access create on type {}", model_name),
+                                    "errorType": "Unauthorized"
+                                });
+                                return Ok((Value::Null, Some(vec![error])));
+                            }
+                            // If enforce_auth is false, keep the provided owner (for migrations)
+                        } else {
+                            // Fill owner field if not provided
+                            if let Some(obj) = record.as_object_mut() {
+                                obj.insert(
+                                    owner_field.to_string(),
+                                    Value::String(owner_value.clone()),
+                                );
+                            }
+                        }
+                    }
+                }
 
                 // Populate composite sort attributes (status#createdAt format)
                 self.populate_composite_sort_attributes(&mut record, &model)?;
@@ -1977,18 +2316,32 @@ impl Engine {
                     .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
 
                 if let Some(record) = table.get(&pk, sort.as_deref()) {
+                    // Check authorization
+                    if self.options.enforce_auth
+                        && !allowed(model.auth_rules(), AuthOp::Read, identity, Some(&record))
+                    {
+                        let error = json!({
+                            "message": format!("Not Authorized to access read on type {}", model_name),
+                            "errorType": "Unauthorized"
+                        });
+                        return Ok((Value::Null, Some(vec![error])));
+                    }
+
                     // Apply selectionSet filtering and resolve relationships
                     let selection = parse_selection_set(args);
                     let mut result = if let Some(sel) = selection.clone() {
-                        self.apply_selection_with_relationships(&record, &model, &sel, args)?
+                        self.apply_selection_with_relationships(
+                            &record, &model, &sel, args, identity,
+                        )?
                     } else {
                         filter_selection_default(&record, &model)
                     };
 
                     // Post-process to populate hasMany relationships
                     if let Some(sel) = selection {
-                        result = self
-                            .populate_has_many_relationships(result, &record, &model, &sel, args)?;
+                        result = self.populate_has_many_relationships(
+                            result, &record, &model, &sel, args, identity,
+                        )?;
                     }
 
                     Ok((result, None))
@@ -2016,6 +2369,17 @@ impl Engine {
                 }
 
                 let mut record = existing.unwrap();
+
+                // Check authorization
+                if self.options.enforce_auth
+                    && !allowed(model.auth_rules(), AuthOp::Update, identity, Some(&record))
+                {
+                    let error = json!({
+                        "message": format!("Not Authorized to access update on type {}", model_name),
+                        "errorType": "Unauthorized"
+                    });
+                    return Ok((Value::Null, Some(vec![error])));
+                }
 
                 // Apply partial updates
                 if let Some(obj) = args.as_object() {
@@ -2073,6 +2437,17 @@ impl Engine {
                     .ok_or_else(|| Error::Internal(format!("Table not found: {}", model_name)))?;
 
                 if let Some(record) = table.get(&pk, sort.as_deref()) {
+                    // Check authorization
+                    if self.options.enforce_auth
+                        && !allowed(model.auth_rules(), AuthOp::Delete, identity, Some(&record))
+                    {
+                        let error = json!({
+                            "message": format!("Not Authorized to access delete on type {}", model_name),
+                            "errorType": "Unauthorized"
+                        });
+                        return Ok((Value::Null, Some(vec![error])));
+                    }
+
                     table.delete(&pk, sort.as_deref());
                     Ok((record, None))
                 } else {
@@ -2157,6 +2532,14 @@ impl Engine {
                         .map(|k| { (k.clone(), record.get(k).cloned().unwrap_or(Value::Null)) })
                         .collect::<serde_json::Map<String, Value>>()));
 
+                    // Check authorization for read
+                    // Check authorization for read
+                    if self.options.enforce_auth
+                        && !allowed(model.auth_rules(), AuthOp::Read, identity, Some(record))
+                    {
+                        continue;
+                    }
+
                     // Apply filter
                     if let Some(ref f) = &parsed_filter {
                         if !evaluate_filter_typed(f, record) {
@@ -2166,7 +2549,9 @@ impl Engine {
 
                     // Apply selectionSet filtering and resolve relationships
                     let filtered = if let Some(sel) = parsed_selection.as_ref() {
-                        self.apply_selection_with_relationships(record, &model, sel, args)?
+                        self.apply_selection_with_relationships(
+                            record, &model, sel, args, identity,
+                        )?
                     } else {
                         filter_selection_default(record, &model)
                     };
@@ -2580,8 +2965,14 @@ mod tests {
         }"#;
 
         let contract = Contract::from_json(json).expect("Failed to parse contract");
-        let engine =
-            Engine::open(None, contract.clone(), EngineOptions).expect("Failed to open engine");
+        let engine = Engine::open(
+            None,
+            contract.clone(),
+            EngineOptions {
+                enforce_auth: false,
+            },
+        )
+        .expect("Failed to open engine");
         let description = engine.describe();
         assert!(description.get("tables").is_some());
 
@@ -2988,7 +3379,14 @@ mod tests {
         }"#;
 
         let contract = Contract::from_json(json).expect("Failed to parse contract");
-        let engine = Engine::open(None, contract, EngineOptions).expect("Failed to open engine");
+        let engine = Engine::open(
+            None,
+            contract,
+            EngineOptions {
+                enforce_auth: false,
+            },
+        )
+        .expect("Failed to open engine");
         let description = engine.describe();
         let tables = description.get("tables").unwrap().as_array().unwrap();
         let model = &tables[0];

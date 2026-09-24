@@ -16,7 +16,10 @@
       "relationships": [
         {"field": "posts", "kind": "hasMany", "target": "Post", "references": "blogId", "childIndex": "postsByBlog", "implicit": true}
       ],
-      "authRules": [],
+      "authRules": [
+        {"provider": "userPools", "allow": "private", "operations": ["create", "update", "delete"]},
+        {"provider": "apiKey", "allow": "public", "operations": ["read"]}
+      ],
       "ownerFields": []
     },
     "Post": {
@@ -51,7 +54,7 @@
         {"field": "tags", "kind": "hasMany", "target": "Tag", "references": "postId", "childIndex": "tagsByPost", "implicit": true}
       ],
       "authRules": [
-        {"provider": "userPools", "allow": "owner", "operations": ["create", "update", "delete"], "ownerField": "owner"}
+        {"provider": "userPools", "allow": "owner", "operations": ["create", "read", "update", "delete"], "ownerField": "owner"}
       ],
       "ownerFields": ["owner"]
     },
@@ -74,7 +77,9 @@
       "relationships": [
         {"field": "post", "kind": "belongsTo", "target": "Post", "references": "postId", "implicit": false}
       ],
-      "authRules": [],
+      "authRules": [
+        {"provider": "userPools", "allow": "owner", "operations": ["create", "read", "update", "delete"], "ownerField": "owner"}
+      ],
       "ownerFields": ["owner"]
     },
     "Tag": {
@@ -104,6 +109,88 @@
         "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
       },
       "primaryKey": ["postId", "userId", "kind"],
+      "indexes": [],
+      "relationships": [],
+      "authRules": [],
+      "ownerFields": []
+    },
+    "Catalog": {
+      "name": "Catalog",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "title": {"name": "title", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "description": {"name": "description", "type": "String", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "createdAt": {"name": "createdAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
+      "indexes": [],
+      "relationships": [],
+      "authRules": [
+        {"provider": "userPools", "allow": "groups", "groups": ["members"], "operations": ["read"]},
+        {"provider": "userPools", "allow": "groups", "groups": ["curators"], "operations": ["create", "update", "delete"]}
+      ],
+      "ownerFields": []
+    },
+    "Article": {
+      "name": "Article",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "title": {"name": "title", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "author": {"name": "author", "type": "String", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "content": {"name": "content", "type": "String", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "createdAt": {"name": "createdAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
+      "indexes": [],
+      "relationships": [],
+      "authRules": [
+        {"provider": "userPools", "allow": "owner", "operations": ["create", "read", "update", "delete"], "ownerField": "author"}
+      ],
+      "ownerFields": ["author"]
+    },
+    "Public": {
+      "name": "Public",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "content": {"name": "content", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "createdAt": {"name": "createdAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
+      "indexes": [],
+      "relationships": [],
+      "authRules": [
+        {"provider": "apiKey", "allow": "public", "operations": ["create", "read"]}
+      ],
+      "ownerFields": []
+    },
+    "Private": {
+      "name": "Private",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "content": {"name": "content", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "createdAt": {"name": "createdAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
+      "indexes": [],
+      "relationships": [],
+      "authRules": [
+        {"provider": "userPools", "allow": "private", "operations": ["create", "read", "update", "delete"]}
+      ],
+      "ownerFields": []
+    },
+    "Restricted": {
+      "name": "Restricted",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "content": {"name": "content", "type": "String", "isRequired": true, "isArray": false, "kind": "scalar"},
+        "createdAt": {"name": "createdAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
       "indexes": [],
       "relationships": [],
       "authRules": [],
