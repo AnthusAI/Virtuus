@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/virtuus-amplify"]
+members = [".", "crates/virtuus-amplify", "crates/virtuus-appsync"]
 resolver = "2"
 
 [package]
