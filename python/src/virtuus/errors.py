@@ -44,7 +44,7 @@ class ConditionalCheckFailedError(VirtuusError):
     pass
 
 
-class ValidationError(VirtuusError):
+class ValidationError(VirtuusError, ValueError):
     """
     Raised when a validation error occurs.
 
@@ -55,7 +55,7 @@ class ValidationError(VirtuusError):
     pass
 
 
-class UnknownTableError(VirtuusError):
+class UnknownTableError(VirtuusError, KeyError):
     """
     Raised when an unknown table is referenced.
 
@@ -66,7 +66,7 @@ class UnknownTableError(VirtuusError):
     pass
 
 
-class UnknownIndexError(VirtuusError):
+class UnknownIndexError(VirtuusError, KeyError):
     """
     Raised when an unknown index is referenced.
 
@@ -90,7 +90,7 @@ class InvalidTokenError(VirtuusError):
     pass
 
 
-class IoError(VirtuusError):
+class IoError(VirtuusError, OSError):
     """
     Raised when an IO error occurs.
 
@@ -100,10 +100,21 @@ class IoError(VirtuusError):
     :type message: str
     """
 
-    pass
+    def __init__(self, path: str, message: str) -> None:
+        """
+        Initialize an IoError.
+
+        :param path: The path involved in the error.
+        :type path: str
+        :param message: The error message.
+        :type message: str
+        """
+        self.path = path
+        self.message = message
+        super().__init__(f"Io: {path}: {message}")
 
 
-class ParseError(VirtuusError):
+class ParseError(VirtuusError, ValueError):
     """
     Raised when a parse error occurs.
 
@@ -113,7 +124,18 @@ class ParseError(VirtuusError):
     :type message: str
     """
 
-    pass
+    def __init__(self, path: str, message: str) -> None:
+        """
+        Initialize a ParseError.
+
+        :param path: The path of the file being parsed.
+        :type path: str
+        :param message: The error message.
+        :type message: str
+        """
+        self.path = path
+        self.message = message
+        super().__init__(f"Parse: {path}: {message}")
 
 
 class LockedError(VirtuusError):

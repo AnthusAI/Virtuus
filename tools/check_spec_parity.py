@@ -52,13 +52,34 @@ def extract_feature_steps() -> list[str]:
         if any("python-only" in tag or "rust-only" in tag for tag in before_feature):
             continue
 
+        # Track tags for scenarios and scenarios outlines to skip python-only/rust-only.
+        # Accumulate @-prefixed lines into pending_tags until we hit a Scenario/Scenario Outline.
+        pending_tags = []
+        scenario_tags = []
         for line in lines:
             stripped = line.strip()
-            for kw in STEP_KEYWORDS:
-                if stripped.startswith(kw):
-                    text = stripped[len(kw) :].strip()
-                    if text and not text.startswith("|") and not text.startswith('"""'):
-                        steps.append(text)
+            # Accumulate tag lines
+            if stripped.startswith("@"):
+                pending_tags.append(stripped)
+            # When we see a scenario/outline, assign accumulated tags and reset pending
+            elif stripped.startswith(("Scenario:", "Scenario Outline:")):
+                scenario_tags = pending_tags
+                pending_tags = []
+            # Reset tags when we hit Rule or Examples (to avoid leaking tags across blocks)
+            elif stripped.startswith(("Rule:", "Examples:")):
+                scenario_tags = []
+                pending_tags = []
+            # For steps, skip if the current scenario has python-only or rust-only tag
+            else:
+                for kw in STEP_KEYWORDS:
+                    if stripped.startswith(kw):
+                        # Skip steps from python-only/rust-only scenarios
+                        if any("python-only" in tag or "rust-only" in tag for tag in scenario_tags):
+                            break
+                        text = stripped[len(kw) :].strip()
+                        if text and not text.startswith("|") and not text.startswith('"""'):
+                            steps.append(text)
+                        break
     return steps
 
 

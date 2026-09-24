@@ -135,10 +135,12 @@ class GSI:
         :type sort_direction: str
         :return: List of primary keys.
         :rtype: list[Any]
-        :raises ValueError: If sort_direction is not "asc" or "desc".
+        :raises ValidationError: If sort_direction is not "asc" or "desc".
         """
+        from virtuus.errors import ValidationError
+
         if sort_direction not in {"asc", "desc"}:
-            raise ValueError("sort_direction must be 'asc' or 'desc'")
+            raise ValidationError("sort_direction must be 'asc' or 'desc'")
         bucket = list(self._buckets.get(partition_value, []))
         if sort_condition is not None:
             bucket = [

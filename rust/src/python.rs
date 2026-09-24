@@ -2,18 +2,42 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use pyo3::exceptions::{PyKeyError, PyValueError};
+use pyo3::exceptions::{PyKeyError, PyOSError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList, PyType};
 use pyo3::PyCell;
 use pythonize::{depythonize, depythonize_bound, pythonize};
 use serde_json::Value;
 
+use crate::error::Error;
 use crate::gsi::Gsi;
 use crate::sort::{OrderedValue, SortCondition};
 use crate::table::{Association, ChangeSummary, Table, TableKey, ValidationMode};
 
 type TableRef = Arc<Mutex<Table>>;
+
+/// Convert a Rust Error to a Python exception
+fn error_to_py_err(err: Error) -> PyErr {
+    match err {
+        Error::Io { path, message } => PyOSError::new_err(format!("Io: {}: {}", path, message)),
+        Error::Parse { path, message } => {
+            PyValueError::new_err(format!("Parse: {}: {}", path, message))
+        }
+        Error::Validation { message } => PyValueError::new_err(format!("Validation: {}", message)),
+        Error::UnknownTable { name } => PyKeyError::new_err(format!("UnknownTable: {}", name)),
+        Error::UnknownIndex { table, name } => {
+            PyKeyError::new_err(format!("UnknownIndex: {} on {}", name, table))
+        }
+        Error::NotFound { message } => PyValueError::new_err(format!("NotFound: {}", message)),
+        Error::ConditionalCheckFailed { message } => {
+            PyValueError::new_err(format!("ConditionalCheckFailed: {}", message))
+        }
+        Error::InvalidToken { reason } => {
+            PyValueError::new_err(format!("InvalidToken: {}", reason))
+        }
+        Error::Locked { message } => PyValueError::new_err(format!("Locked: {}", message)),
+    }
+}
 
 #[pyclass(name = "GSI")]
 struct PyGsi {
@@ -1049,138 +1073,20 @@ impl PyDatabase {
         path: String,
         data_root: Option<String>,
     ) -> PyResult<Py<PyDatabase>> {
-        let content = std::fs::read_to_string(&path)
-            .map_err(|err| PyValueError::new_err(format!("failed to read schema: {err}")))?;
-        let schema: serde_yaml::Value = serde_yaml::from_str(&content)
-            .map_err(|err| PyValueError::new_err(format!("failed to parse schema: {err}")))?;
-        let schema_json = serde_json::to_value(schema).unwrap_or(Value::Null);
-        let mut db = PyDatabase::new();
-        let tables_conf = schema_json
-            .get("tables")
-            .and_then(|v| v.as_object())
-            .cloned()
-            .unwrap_or_default();
-        for (name, conf) in tables_conf {
-            let primary_key = conf.get("primary_key").and_then(|v| v.as_str());
-            let partition_key = conf.get("partition_key").and_then(|v| v.as_str());
-            let sort_key = conf.get("sort_key").and_then(|v| v.as_str());
-            let mut directory = conf
-                .get("directory")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string());
-            if let (Some(root), Some(dir)) = (data_root.as_ref(), directory.as_ref()) {
-                directory = Some(PathBuf::from(root).join(dir).to_string_lossy().to_string());
-            }
-            let table = Table::new(
-                &name,
-                primary_key,
-                partition_key,
-                sort_key,
-                directory.clone().map(PathBuf::from),
-                ValidationMode::Warn,
-            );
-            let table_ref = Arc::new(Mutex::new(table));
-            if let Some(storage) = conf.get("storage").and_then(|v| v.as_str()) {
-                let mut table = table_ref.lock().expect("lock table");
-                match storage {
-                    "memory" => table.set_storage_mode(crate::table::StorageMode::Memory),
-                    "index_only" => table.set_storage_mode(crate::table::StorageMode::IndexOnly),
-                    _ => {}
-                }
-            }
-            if let Some(search_conf) = conf.get("search").and_then(|v| v.as_object()) {
-                if let Some(fields_value) = search_conf.get("fields").and_then(|v| v.as_array()) {
-                    let fields: Vec<String> = fields_value
-                        .iter()
-                        .filter_map(|v| v.as_str())
-                        .map(|s| s.to_string())
-                        .collect();
-                    if !fields.is_empty() {
-                        let mut table = table_ref.lock().expect("lock table");
-                        table.set_search_fields(fields);
-                    }
-                }
-            }
-            if let Some(gsis) = conf.get("gsis").and_then(|v| v.as_object()) {
-                for (gsi_name, gsi_conf) in gsis {
-                    let partition_key = gsi_conf
-                        .get("partition_key")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-                    let sort_key = gsi_conf.get("sort_key").and_then(|v| v.as_str());
-                    let mut table = table_ref.lock().expect("lock table");
-                    table.add_gsi(gsi_name, partition_key, sort_key);
-                }
-            }
-            if let Some(assocs) = conf.get("associations").and_then(|v| v.as_object()) {
-                for (assoc_name, assoc_conf) in assocs {
-                    let kind = assoc_conf
-                        .get("type")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("");
-                    let mut table = table_ref.lock().expect("lock table");
-                    match kind {
-                        "belongs_to" => {
-                            let target_table = assoc_conf
-                                .get("table")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            let foreign_key = assoc_conf
-                                .get("foreign_key")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            table.add_belongs_to(assoc_name, target_table, foreign_key);
-                        }
-                        "has_many" => {
-                            let target_table = assoc_conf
-                                .get("table")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            let index = assoc_conf
-                                .get("index")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            table.add_has_many(assoc_name, target_table, index);
-                        }
-                        "has_many_through" => {
-                            let through_table = assoc_conf
-                                .get("through")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            let index = assoc_conf
-                                .get("index")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            let target_table = assoc_conf
-                                .get("table")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            let foreign_key = assoc_conf
-                                .get("foreign_key")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("");
-                            table.add_has_many_through(
-                                assoc_name,
-                                through_table,
-                                index,
-                                target_table,
-                                foreign_key,
-                            );
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            db.tables
-                .lock()
-                .expect("lock tables")
-                .insert(name, Arc::clone(&table_ref));
-            if directory.is_some() {
-                let mut table = table_ref.lock().expect("lock table");
-                table.load_from_dir(None);
-            }
+        let db = crate::Database::from_schema(
+            std::path::Path::new(&path),
+            data_root.as_ref().map(|r| std::path::Path::new(r)),
+        )
+        .map_err(error_to_py_err)?;
+
+        let mut py_db = PyDatabase::new();
+        for (name, table) in db.tables().iter() {
+            py_db
+                .tables
+                .insert(name.clone(), Arc::new(Mutex::new(table.clone())));
         }
-        Py::new(py, db)
+
+        Ok(Py::new(py, py_db)?)
     }
 }
 

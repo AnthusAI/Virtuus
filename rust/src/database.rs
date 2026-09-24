@@ -115,9 +115,15 @@ impl Database {
     }
 
     /// Load a database from a YAML schema file.
-    pub fn from_schema(path: &Path, data_root: Option<&Path>) -> Self {
-        let schema_text = fs::read_to_string(path).expect("failed to read schema");
-        let yaml: YamlValue = serde_yaml::from_str(&schema_text).expect("invalid yaml");
+    pub fn from_schema(path: &Path, data_root: Option<&Path>) -> Result<Self> {
+        let schema_text = fs::read_to_string(path).map_err(|e| Error::Io {
+            path: path.display().to_string(),
+            message: e.to_string(),
+        })?;
+        let yaml: YamlValue = serde_yaml::from_str(&schema_text).map_err(|e| Error::Parse {
+            path: path.display().to_string(),
+            message: e.to_string(),
+        })?;
         let tables = yaml
             .get("tables")
             .and_then(|t| t.as_mapping())
@@ -125,8 +131,12 @@ impl Database {
             .unwrap_or_default();
         let mut db = Database::new();
         for (name_value, conf_value) in tables {
-            let name = name_value.as_str().expect("table name must be string");
-            let conf = conf_value.as_mapping().expect("table conf must be mapping");
+            let name = name_value.as_str().ok_or_else(|| Error::Validation {
+                message: "table name must be string".to_string(),
+            })?;
+            let conf = conf_value.as_mapping().ok_or_else(|| Error::Validation {
+                message: format!("table '{}' config must be mapping", name),
+            })?;
             let primary_key = conf
                 .get(YamlValue::from("primary_key"))
                 .and_then(|v| v.as_str())
@@ -149,14 +159,15 @@ impl Database {
                         .unwrap_or_default();
                     base.join(d).to_string_lossy().to_string()
                 });
-            let mut table = Table::new(
+            let table = Table::new(
                 name,
                 primary_key.as_deref(),
                 partition_key.as_deref(),
                 sort_key.as_deref(),
                 directory.clone().map(PathBuf::from),
                 crate::table::ValidationMode::Warn,
-            );
+            )?;
+            let mut table = table;
             if let Some(storage) = conf
                 .get(YamlValue::from("storage"))
                 .and_then(|v| v.as_str())
@@ -190,12 +201,27 @@ impl Database {
                 .and_then(|v| v.as_mapping())
             {
                 for (gsi_name_value, gsi_conf_value) in gsis {
-                    let gsi_name = gsi_name_value.as_str().expect("gsi name");
-                    let gsi_conf = gsi_conf_value.as_mapping().expect("gsi conf mapping");
+                    let gsi_name = gsi_name_value.as_str().ok_or_else(|| Error::Validation {
+                        message: format!("GSI name must be string in table '{}'", name),
+                    })?;
+                    let gsi_conf =
+                        gsi_conf_value
+                            .as_mapping()
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "GSI '{}' config must be mapping in table '{}'",
+                                    gsi_name, name
+                                ),
+                            })?;
                     let partition = gsi_conf
                         .get(YamlValue::from("partition_key"))
                         .and_then(|v| v.as_str())
-                        .expect("gsi partition key");
+                        .ok_or_else(|| Error::Validation {
+                            message: format!(
+                                "GSI '{}' partition_key is required in table '{}'",
+                                gsi_name, name
+                            ),
+                        })?;
                     let sort = gsi_conf
                         .get(YamlValue::from("sort_key"))
                         .and_then(|v| v.as_str());
@@ -207,49 +233,105 @@ impl Database {
                 .and_then(|v| v.as_mapping())
             {
                 for (assoc_name_value, assoc_conf_value) in assocs {
-                    let assoc_name = assoc_name_value.as_str().expect("assoc name");
-                    let assoc_conf = assoc_conf_value.as_mapping().expect("assoc conf mapping");
+                    let assoc_name =
+                        assoc_name_value.as_str().ok_or_else(|| Error::Validation {
+                            message: format!("association name must be string in table '{}'", name),
+                        })?;
+                    let assoc_conf =
+                        assoc_conf_value
+                            .as_mapping()
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' config must be mapping in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                     let kind = assoc_conf
                         .get(YamlValue::from("type"))
                         .and_then(|v| v.as_str())
-                        .expect("association type");
+                        .ok_or_else(|| Error::Validation {
+                            message: format!(
+                                "association '{}' type is required in table '{}'",
+                                assoc_name, name
+                            ),
+                        })?;
                     if kind == "belongs_to" {
                         let target = assoc_conf
                             .get(YamlValue::from("table"))
                             .and_then(|v| v.as_str())
-                            .expect("target table");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' table is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         let fk = assoc_conf
                             .get(YamlValue::from("foreign_key"))
                             .and_then(|v| v.as_str())
-                            .expect("foreign_key");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' foreign_key is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         table.add_belongs_to(assoc_name, target, fk);
                     } else if kind == "has_many" {
                         let target = assoc_conf
                             .get(YamlValue::from("table"))
                             .and_then(|v| v.as_str())
-                            .expect("target table");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' table is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         let index = assoc_conf
                             .get(YamlValue::from("index"))
                             .and_then(|v| v.as_str())
-                            .expect("index");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' index is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         table.add_has_many(assoc_name, target, index);
                     } else if kind == "has_many_through" {
                         let through = assoc_conf
                             .get(YamlValue::from("through"))
                             .and_then(|v| v.as_str())
-                            .expect("through");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' through is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         let index = assoc_conf
                             .get(YamlValue::from("index"))
                             .and_then(|v| v.as_str())
-                            .expect("index");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' index is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         let target = assoc_conf
                             .get(YamlValue::from("table"))
                             .and_then(|v| v.as_str())
-                            .expect("target");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' table is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         let fk = assoc_conf
                             .get(YamlValue::from("foreign_key"))
                             .and_then(|v| v.as_str())
-                            .expect("foreign_key");
+                            .ok_or_else(|| Error::Validation {
+                                message: format!(
+                                    "association '{}' foreign_key is required in table '{}'",
+                                    assoc_name, name
+                                ),
+                            })?;
                         table.add_has_many_through(assoc_name, through, index, target, fk);
                     }
                 }
@@ -261,7 +343,7 @@ impl Database {
                 table.load_from_dir(None);
             }
         }
-        db
+        Ok(db)
     }
 
     /// Execute a query dictionary against the database.
@@ -658,7 +740,7 @@ mod tests {
     use serde_json::json;
 
     fn table_with_pk(name: &str) -> Table {
-        Table::new(name, Some("id"), None, None, None, ValidationMode::Silent)
+        Table::new(name, Some("id"), None, None, None, ValidationMode::Silent).unwrap()
     }
 
     #[test]
@@ -681,7 +763,8 @@ mod tests {
             Some("id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         scores.put(json!({"user_id":"u1","id":"a","value":1}));
         scores.put(json!({"user_id":"u1","id":"b","value":2}));
         db.add_table("scores", scores);
@@ -797,7 +880,7 @@ tables:
 "#;
         let schema_path = tmp.join("schema.yml");
         fs::write(&schema_path, schema).unwrap();
-        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path()));
+        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path())).unwrap();
         assert!(db.table_mut("users").unwrap().get("u1", None).is_some());
     }
 
@@ -850,7 +933,7 @@ tables:
 "#;
         let schema_path = tmp.join("schema_full.yml");
         fs::write(&schema_path, schema).unwrap();
-        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path()));
+        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path())).unwrap();
         let users = db.table_mut("users").unwrap();
         assert!(users.gsis().contains_key("by_email"));
         assert!(users.associations().contains(&"posts".to_string()));
@@ -875,7 +958,7 @@ tables:
 "#;
         let schema_path = tmp.join("schema.yml");
         fs::write(&schema_path, schema).unwrap();
-        let mut db = Database::from_schema(schema_path.as_path(), None);
+        let mut db = Database::from_schema(schema_path.as_path(), None).unwrap();
         assert!(db.table_mut("users").unwrap().get("u1", None).is_some());
     }
 
@@ -908,7 +991,7 @@ tables:
 "#;
         let schema_path = tmp.join("schema.yml");
         fs::write(&schema_path, schema).unwrap();
-        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path()));
+        let mut db = Database::from_schema(schema_path.as_path(), Some(tmp.as_path())).unwrap();
         let memory = db.table_mut("memory_table").unwrap();
         assert_eq!(memory.storage_mode(), StorageMode::Memory);
         assert_eq!(memory.search_fields(), &vec!["title".to_string()]);
@@ -963,7 +1046,8 @@ tables:
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let mut db = Database::new();
         db.add_table("items", table);
         db.warm();
@@ -1393,5 +1477,424 @@ tables:
         // Don't add the "assignments" table - resolve_association should return an error
         let result = db.resolve_association("jobs", "workers", "j1");
         assert!(matches!(result, Err(Error::UnknownTable { name }) if name == "assignments"));
+    }
+
+    #[test]
+    fn from_schema_nonexistent_file_returns_io_error() {
+        let result = Database::from_schema(
+            std::path::Path::new("/nonexistent/file/that/does/not/exist.yml"),
+            None,
+        );
+        assert!(matches!(result, Err(Error::Io { .. })));
+    }
+
+    #[test]
+    fn from_schema_invalid_yaml_returns_parse_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("invalid_schema.yml");
+        fs::write(&path, "invalid: yaml: content: [unclosed bracket").unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(result, Err(Error::Parse { .. })));
+    }
+
+    #[test]
+    fn from_schema_missing_table_key_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_no_tables.yml");
+        fs::write(&path, "someOtherKey: value").unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        // Should succeed since "tables" key is optional
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn from_schema_invalid_table_config_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_invalid_table.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users: "not a mapping"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("mapping")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_table_name_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_nameless_table.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  123: {primary_key: "id"}
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("string")
+        ));
+    }
+
+    #[test]
+    fn from_schema_invalid_gsi_config_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_invalid_gsi.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    gsis:
+      123: {partition_key: "email"}
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("GSI") && message.contains("string")
+        ));
+    }
+
+    #[test]
+    fn from_schema_invalid_association_config_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_invalid_assoc.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      123: {type: "belongs_to", table: "teams", foreign_key: "team_id"}
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("association") && message.contains("string")
+        ));
+    }
+
+    #[test]
+    fn from_schema_invalid_association_type_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_invalid_assoc_type.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      team_rel: "not a mapping"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("mapping")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_association_type_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_assoc_type.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      team_rel:
+        table: "teams"
+        foreign_key: "team_id"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("type") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_association_table_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_assoc_table.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      team_rel:
+        type: "belongs_to"
+        foreign_key: "team_id"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("table") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_belongs_to_foreign_key_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_fk.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      team_rel:
+        type: "belongs_to"
+        table: "teams"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("foreign_key") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_gsi_partition_key_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_gsi_pk.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    gsis:
+      by_email:
+        sort_key: "created_at"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("partition_key") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_invalid_gsi_config_structure_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_invalid_gsi_struct.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    gsis:
+      by_email: "not a mapping"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("mapping")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_table_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_has_many_table.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many"
+        index: "by_user"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("table") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_index_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_has_many_index.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many"
+        table: "posts"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("index") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_through_through_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_hmt_through.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many_through"
+        index: "by_user"
+        table: "posts"
+        foreign_key: "user_id"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("through") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_through_index_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_hmt_index.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many_through"
+        through: "assignments"
+        table: "posts"
+        foreign_key: "user_id"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("index") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_through_table_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_hmt_table.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many_through"
+        through: "assignments"
+        index: "by_user"
+        foreign_key: "user_id"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("table") && message.contains("required")
+        ));
+    }
+
+    #[test]
+    fn from_schema_missing_has_many_through_fk_returns_validation_error() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("schema_missing_hmt_fk.yml");
+        fs::write(
+            &path,
+            r#"
+tables:
+  users:
+    primary_key: "id"
+    associations:
+      posts:
+        type: "has_many_through"
+        through: "assignments"
+        index: "by_user"
+        table: "posts"
+"#,
+        )
+        .unwrap();
+        let result = Database::from_schema(&path, None);
+        let _ = fs::remove_file(&path);
+        assert!(matches!(
+            result,
+            Err(Error::Validation { message }) if message.contains("foreign_key") && message.contains("required")
+        ));
     }
 }

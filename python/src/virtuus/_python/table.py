@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, TypedDict
 
 from virtuus._python.gsi import GSI
+from virtuus.errors import UnknownIndexError, ValidationError
 
 
 @dataclass(frozen=True)
@@ -72,13 +73,13 @@ class Table:
         search_fields: Optional[list[str]] = None,
     ) -> None:
         if primary_key is None and partition_key is None:
-            raise ValueError("primary_key or partition_key is required")
+            raise ValidationError("primary_key or partition_key is required")
         if primary_key is not None and partition_key is not None:
-            raise ValueError("use either primary_key or partition_key")
+            raise ValidationError("use either primary_key or partition_key")
         if partition_key is not None and sort_key is None:
-            raise ValueError("sort_key is required for composite primary keys")
+            raise ValidationError("sort_key is required for composite primary keys")
         if validation not in {"silent", "warn", "error"}:
-            raise ValueError("validation must be silent, warn, or error")
+            raise ValidationError("validation must be silent, warn, or error")
         self.name = name
         self.primary_key = primary_key
         self.partition_key = partition_key
@@ -91,7 +92,7 @@ class Table:
         if storage_mode is None:
             storage_mode = "index_only" if directory is not None else "memory"
         if storage_mode not in {"memory", "index_only"}:
-            raise ValueError("storage must be memory or index_only")
+            raise ValidationError("storage must be memory or index_only")
         self.storage_mode = storage_mode
         self.search_fields = list(search_fields or [])
         # token -> set of PK strings (faster membership on build; persisted as lists)
@@ -460,7 +461,7 @@ class Table:
         self._maybe_refresh_before_query()
         gsi = self.gsis.get(name)
         if gsi is None:
-            raise KeyError(f"GSI {name} does not exist")
+            raise UnknownIndexError(f"UnknownIndex: {name} on {self.name}")
         result = []
         direction = "desc" if descending else "asc"
         for pk in gsi.query(partition_value, sort_condition, direction):
@@ -561,7 +562,7 @@ class Table:
         """
         target = directory or self.directory
         if target is None:
-            raise ValueError("directory is required")
+            raise ValidationError("directory is required")
         if not os.path.exists(target):
             return
         names = [name for name in os.listdir(target) if name.endswith(".json")]
@@ -662,7 +663,7 @@ class Table:
         if self.primary_key is not None:
             return pk
         if sort is None:
-            raise ValueError("sort key is required for composite primary keys")
+            raise ValidationError("sort key is required for composite primary keys")
         return TableKey(str(pk), str(sort))
 
     def _key_to_string(self, key: Any) -> str:
@@ -759,7 +760,7 @@ class Table:
         """
         self._maybe_refresh_before_query()
         if not self.search_fields or self.search_index is None:
-            raise ValueError("search is not configured")
+            raise ValidationError("search is not configured")
         tokens = sorted(set(_tokenize(query)))
         if not tokens:
             return []
@@ -802,7 +803,7 @@ class Table:
         if self.validation == "warn":
             self.warnings.append(message)
             return None
-        raise ValueError(message)
+        raise ValidationError(message)
 
     def _validate_gsi_fields(self, record: dict[str, Any]) -> None:
         for gsi in self.gsis.values():
@@ -845,7 +846,7 @@ class Table:
             parts = [str(pk)]
         for part in parts:
             if "/" in part or "\\" in part:
-                raise ValueError("invalid PK characters")
+                raise ValidationError("invalid PK characters")
 
     def _write_json_atomic(self, path: str, record: dict[str, Any]) -> None:
         directory = os.path.dirname(path)

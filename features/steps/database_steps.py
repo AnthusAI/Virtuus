@@ -102,6 +102,15 @@ def step_db_table_gsi(context, table, gsi, field, sort=None):
     table_ref.add_gsi(gsi, field, sort)
 
 
+@given(r'a database with a "([^"]+)" table and a "([^"]+)" table$')
+def step_db_with_two_tables(context, table1, table2):
+    _table(context, table1)
+    _table(context, table2)
+
+
+use_step_matcher("parse")
+
+
 @given('a database with a "users" table and no GSI named "by_foo"')
 def step_db_no_gsi(context):
     table = _table(context, "users")
@@ -915,6 +924,27 @@ def step_only_has_many(context):
     users.add_has_many("posts", "posts", "by_user")
     users.put({"id": "user-1"})
     posts.put({"id": "post-1", "user_id": "user-1"})
+
+
+@given(
+    'a {table} table with belongs_to "{assoc}" pointing to missing "{missing_table}" table'
+)
+def step_table_with_missing_belongs_to(context, table, assoc, missing_table):
+    """Create a table with belongs_to association to a missing table."""
+    table_ref = _table(context, table)
+    table_ref.add_belongs_to(assoc, missing_table, assoc + "_id")
+    table_ref.put({"id": "p1", assoc + "_id": "missing-user"})
+
+
+@given(
+    'a {table} table with has_many "{assoc}" pointing to missing "{missing_table}" table'
+)
+def step_table_with_missing_has_many(context, table, assoc, missing_table):
+    """Create a table with has_many association to a missing table."""
+    table_ref = _table(context, table)
+    table_ref.add_gsi("by_owner", "id")
+    table_ref.add_has_many(assoc, missing_table, "by_owner")
+    table_ref.put({"id": "u1"})
 
 
 def _write_schema(context, schema: dict[str, Any]) -> None:

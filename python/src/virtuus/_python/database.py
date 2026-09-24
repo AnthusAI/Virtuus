@@ -63,9 +63,18 @@ class Database:
         :type data_root: str | None
         :return: Initialized database.
         :rtype: Database
+        :raises IoError: If the file cannot be read.
+        :raises ParseError: If the YAML is invalid.
         """
-        with open(path, "r", encoding="utf-8") as handle:
-            schema = yaml.safe_load(handle) or {}
+        from virtuus.errors import IoError, ParseError
+
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                schema = yaml.safe_load(handle) or {}
+        except OSError as e:
+            raise IoError(path, str(e)) from e
+        except yaml.YAMLError as e:
+            raise ParseError(path, str(e)) from e
         tables_conf = schema.get("tables", {})
         db = cls()
         for name, conf in tables_conf.items():
