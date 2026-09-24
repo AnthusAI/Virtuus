@@ -1,0 +1,36 @@
+{
+  "id": "virt-4318a14e-1f5c-4a98-b0c1-89f21ee7315b",
+  "title": "Roll out Kanbus #264 agent provenance and CONTRIBUTING_AGENT template",
+  "description": "Sync CONTRIBUTING_AGENT.template.md from Kanbus develop d44e9a05, regenerate CONTRIBUTING_AGENT.md, refresh AGENTS.md Kanbus section and git policy (dev integration branch). Ref: Kanbus #264.",
+  "type": "chore",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-23d6d782-fa83-453a-b879-610bd205226b",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "1b734638-641f-4be4-a0ad-a92a12225b9c",
+      "author": "ubuntu",
+      "text": "PR opened: roll out template d44e9a05, regenerated CONTRIBUTING_AGENT.md, AGENTS.md Kanbus #264 section + dev git policy. SHA pending push.",
+      "created_at": "2026-09-10T14:34:38.149604214Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "cursor",
+        "model": "composer-2.5"
+      }
+    }
+  ],
+  "created_at": "2026-09-10T14:34:17.097780170Z",
+  "updated_at": "2026-09-10T14:34:48.794263507Z",
+  "closed_at": "2026-09-10T14:34:48.794234400Z",
+  "agent": {
+    "platform": "cursor",
+    "model": "composer-2.5"
+  },
+  "right_now_summary": "A PR adds the agent template, regenerates CONTRIBUTING_AGENT.md, and updates AGENTS.md and git policy.",
+  "right_now_updated_at": "2026-09-10T14:34:52.721374053Z",
+  "custom": {}
+}
