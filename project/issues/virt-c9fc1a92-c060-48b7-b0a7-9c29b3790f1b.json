@@ -10,9 +10,17 @@
   "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "b6d4a5f9-2cfb-4537-a0cb-6a35dc46a51e",
+      "author": "home",
+      "text": "Root rust/tests/cucumber.rs now compiles. V2b's Rust steps had never been compiled: some were duplicates (ambiguous) or hollow (the YAML include steps were empty). Removed them. The five Python-backend include scenarios in errors.feature, which load 'the python database', are now tagged @python-only. 'I attempt to load the schema' caught panics, which from_schema no longer raises; it now matches on the Result. main() now filters @python-only, @bench and the amplify/appsync folders, and exits non-zero on failure. Every scenario this branch added passes in Rust; 15 failures from develop remain → virt-e75e2f. Removed the no-op CUCUMBER_FILTER_TAGS env from the Makefile.",
+      "created_at": "2026-09-24T21:21:28.123420Z",
+      "comment_type": "default"
+    }
+  ],
   "created_at": "2026-09-24T13:05:22.472918Z",
-  "updated_at": "2026-09-24T13:05:39.716468Z",
+  "updated_at": "2026-09-24T21:21:28.123438Z",
   "closed_at": null,
   "agent": {
     "platform": "claude_code",
