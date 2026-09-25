@@ -124,7 +124,7 @@ fn run_query(
     };
 
     let mut db = if let Some(schema_path) = schema {
-        Database::from_schema(&schema_path, Some(dir.as_path()))
+        Database::from_schema(&schema_path, Some(dir.as_path())).map_err(|e| e.to_string())?
     } else {
         let mut db = Database::new();
         let table_dir = dir.join(&table);
@@ -138,7 +138,8 @@ fn run_query(
             None,
             Some(table_dir),
             ValidationMode::Silent,
-        );
+        )
+        .map_err(|e| e.to_string())?;
         if let (Some(index_name), Some((where_key, _))) = (index.as_deref(), where_pair.as_ref()) {
             tbl.add_gsi(index_name, where_key, None);
         }
@@ -167,8 +168,9 @@ fn run_query(
         Value::Object(directive),
     )]));
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query)))
-        .map_err(|err| format!("query failed: {}", panic_message(err)))?;
+    let result = db
+        .execute(&query)
+        .map_err(|err| format!("query failed: {}", err))?;
 
     let output = if let Some(items) = result.get("items") {
         items.clone()
@@ -187,10 +189,8 @@ struct HttpRequest {
 }
 
 fn run_serve(dir: PathBuf, schema: PathBuf, port: u16) -> Result<(), String> {
-    let db = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        Database::from_schema(&schema, Some(dir.as_path()))
-    }))
-    .map_err(|err| format!("failed to load schema: {}", panic_message(err)))?;
+    let db = Database::from_schema(&schema, Some(dir.as_path()))
+        .map_err(|err| format!("failed to load schema: {}", err))?;
     let state = Arc::new(Mutex::new(db));
     let load_count = Arc::new(AtomicUsize::new(1));
     let refresh_count = Arc::new(AtomicUsize::new(0));
@@ -238,15 +238,12 @@ fn handle_connection(
             let text = String::from_utf8_lossy(&request.body);
             match serde_json::from_str::<Value>(&text) {
                 Ok(query) => {
-                    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        let mut db = state.lock().expect("db lock");
-                        db.execute(&query)
-                    }));
-                    match result {
+                    let mut db = state.lock().expect("db lock");
+                    match db.execute(&query) {
                         Ok(value) => value,
                         Err(err) => {
                             status = 400;
-                            json!({ "error": panic_message(err) })
+                            json!({ "error": { "kind": format!("{:?}", err).split('(').next().unwrap_or("Error"), "message": err.to_string() } })
                         }
                     }
                 }
@@ -379,14 +376,4 @@ fn parse_where(input: &str) -> Result<(String, String), String> {
         .filter(|s| !s.is_empty())
         .ok_or_else(|| "invalid --where; expected key=value".to_string())?;
     Ok((key.to_string(), value.to_string()))
-}
-
-fn panic_message(err: Box<dyn std::any::Any + Send>) -> String {
-    if let Some(msg) = err.downcast_ref::<&str>() {
-        msg.to_string()
-    } else if let Some(msg) = err.downcast_ref::<String>() {
-        msg.clone()
-    } else {
-        "unknown error".to_string()
-    }
 }

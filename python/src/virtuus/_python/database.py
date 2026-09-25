@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, Optional
 import yaml
 
 from virtuus._python.table import Table
+from virtuus.errors import UnknownIndexError, UnknownTableError, ValidationError
 
 
 class Database:
@@ -62,9 +63,18 @@ class Database:
         :type data_root: str | None
         :return: Initialized database.
         :rtype: Database
+        :raises IoError: If the file cannot be read.
+        :raises ParseError: If the YAML is invalid.
         """
-        with open(path, "r", encoding="utf-8") as handle:
-            schema = yaml.safe_load(handle) or {}
+        from virtuus.errors import IoError, ParseError
+
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                schema = yaml.safe_load(handle) or {}
+        except OSError as e:
+            raise IoError(path, str(e)) from e
+        except yaml.YAMLError as e:
+            raise ParseError(path, str(e)) from e
         tables_conf = schema.get("tables", {})
         db = cls()
         for name, conf in tables_conf.items():
@@ -234,12 +244,15 @@ class Database:
         :type query: dict[str, Any]
         :return: Result payload.
         :rtype: Any
+        :raises UnknownTableError: If table does not exist.
+        :raises UnknownIndexError: If index does not exist.
+        :raises ValidationError: If query is malformed.
         """
         if len(query) != 1:  # pragma: no cover
-            raise ValueError("query must target exactly one table")
+            raise ValidationError("query must target exactly one table")
         table_name, directive = next(iter(query.items()))
         if table_name not in self.tables:  # pragma: no cover
-            raise KeyError(f'table "{table_name}" does not exist')
+            raise UnknownTableError(f"UnknownTable: {table_name}")
         table = self.tables[table_name]
         directive = directive or {}
         if "pk" in directive:
@@ -259,10 +272,12 @@ class Database:
         elif "index" in directive:
             gsi_name = directive["index"]
             if gsi_name not in table.gsis:
-                raise KeyError(f'GSI "{gsi_name}" does not exist')
+                raise UnknownIndexError(f"UnknownIndex: {gsi_name} on {table_name}")
             where = directive.get("where", {})
             partition_field = table.gsis[gsi_name].partition_key
             partition_value = where.get(partition_field)
+            if partition_value is None:
+                raise ValidationError("missing partition key in where")
             sort_condition = self._build_sort_condition(directive.get("sort"))
             descending = directive.get("sort_direction", "asc") == "desc"
             records = table.query_gsi(

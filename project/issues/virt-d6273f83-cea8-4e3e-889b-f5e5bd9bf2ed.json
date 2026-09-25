@@ -1,0 +1,25 @@
+{
+  "id": "virt-d6273f83-cea8-4e3e-889b-f5e5bd9bf2ed",
+  "title": "Storage is pluggable",
+  "description": "As an app embedding Virtuus (Swift, wasm, tests), I want tables on any storage backend, so that the engine doesn't assume a filesystem.\n\n```gherkin\nFeature: Pluggable storage\n  Scenario: A table on memory storage works without touching the disk\n    Given a table \"notes\" with primary key \"id\" on memory storage\n    When I put {\"id\": \"n1\", \"text\": \"hi\"} into \"notes\"\n    Then getting \"n1\" from \"notes\" returns {\"id\": \"n1\", \"text\": \"hi\"}\n    And no files were written to disk\n\n  Scenario: Writes to file storage are atomic\n    Given a table \"notes\" with primary key \"id\" on file storage in a temporary directory\n    When I put 100 records into \"notes\"\n    Then the table directory holds exactly 100 \".json\" files and no temporary files\n```",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:01.790498Z",
+  "updated_at": "2026-09-24T04:45:46.396677Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

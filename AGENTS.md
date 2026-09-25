@@ -12,11 +12,11 @@ Git / PR policy: Rules for product-code commits, branch names, pull requests, an
 
 ## Git workflow and pull requests
 
-This repository uses Git Flow with **`dev` as the integration branch** (not `develop`). Do day-to-day development on `dev` and open pull requests targeting `dev`. Merge to **`main` only for releases**.
+This repository uses Git Flow with **`develop` as the integration branch**. Do day-to-day development on feature branches off `develop` and open pull requests targeting `develop`. Merge to **`main` only for releases**.
 
-- Branch feature work from `dev` (for example `cursor/<description>-<suffix>` or team conventions).
+- Branch feature work from `develop` (for example `cursor/<description>-<suffix>` or team conventions).
 - Keep `make check` green before you push product-code changes.
-- After Kanbus board updates, run `kbs commit` and push `project/issues/` to the branch your team uses for shared board state (typically `dev`).
+- After Kanbus board updates, run `kbs commit` and push `project/issues/` to the branch your team uses for shared board state (typically `develop`).
 - Do not commit secrets or bypass review requirements defined by repository settings.
 
 ## Code quality standards

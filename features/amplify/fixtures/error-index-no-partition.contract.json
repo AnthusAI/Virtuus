@@ -1,0 +1,25 @@
+{
+  "version": "error_test_v1",
+  "models": {
+    "Test": {
+      "name": "Test",
+      "fields": {
+        "id": {"name": "id", "type": "ID", "isRequired": true, "isArray": false, "kind": "scalar"}
+      },
+      "primaryKey": ["id"],
+      "indexes": [
+        {
+          "name": "testIndex",
+          "sortFields": []
+        }
+      ],
+      "relationships": [],
+      "authRules": [],
+      "ownerFields": []
+    }
+  },
+  "enums": {},
+  "customTypes": {},
+  "authRules": {},
+  "storage": {"paths": []}
+}

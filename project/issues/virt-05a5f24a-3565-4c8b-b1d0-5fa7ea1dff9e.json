@@ -1,0 +1,30 @@
+{
+  "id": "virt-05a5f24a-3565-4c8b-b1d0-5fa7ea1dff9e",
+  "title": "File I/O errors: load, export, persist",
+  "description": "Replace the panics in `table.rs` file I/O: `directory is required` (~690), `read_dir` / dir entry (~696), reading and parsing record files during load (~752–770, both the parallel and sequential branches; fold them into one helper function while you're there), creating the export dir (~799), composite-key `expect`s (~832–867), write/rename/remove during persistence (~1193–1243), and the `directory.unwrap()` in stale detection (~1300–1310).\n- `load_from_dir`, `export`, `refresh`, `check` and `warm` return `Result`.\n- Errors: a missing directory or I/O failure → `Io{path, message}`; a corrupt JSON record file → `Parse{path, message}` naming the file.\n- Scenarios: loading a folder that doesn't exist; loading a folder with one corrupt `.json` file (the error names it); exporting into an unwritable location. Both languages.\n\n**Keep `make check` green after this sub-task.** That means 100% coverage in both languages and parity. Changing a public signature means updating every caller, test and spec step that used it.\n**Errors:** use `crate::error::{Error, Result}` (`rust/src/error.rs`) and `virtuus.errors` (`python/src/virtuus/errors.py`). The Python backend raises the matching exception class; the message names the thing (table, index, file path, field).\n**Specs:** `features/errors/errors.feature`. Each scenario drives the *real* public API in both languages; no simulated errors. After an error, assert the database still answers a normal query.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 1,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2ee9d543-1fa9-436a-872c-7517ff47a9b7",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-d08ae33f-ba37-49e4-b771-30c8408002f5",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T05:08:44.636258Z",
+  "updated_at": "2026-09-24T05:08:44.849817Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

@@ -15,20 +15,22 @@ def _exercise_table_coverage() -> None:
     if getattr(_exercise_table_coverage, "_exercised", False):
         return
     _exercise_table_coverage._exercised = True
-    with suppress(ValueError):
+    from virtuus.errors import ValidationError
+
+    with suppress(ValidationError):
         Table("bad")
-    with suppress(ValueError):
+    with suppress(ValidationError):
         Table("bad", primary_key="id", partition_key="pk")
-    with suppress(ValueError):
+    with suppress(ValidationError):
         Table("bad", partition_key="pk")
-    with suppress(ValueError):
+    with suppress(ValidationError):
         Table("bad", primary_key="id", validation="nope")
     composite = Table(
         "composite", partition_key="pk", sort_key="sk", validation="error"
     )
-    with suppress(ValueError):
+    with suppress(ValidationError):
         composite.get("only-partition")
-    with suppress(ValueError):
+    with suppress(ValidationError):
         composite.put({"pk": "a"})
     composite_warnings = Table(
         "composite-warn", partition_key="pk", sort_key="sk", validation="warn"
@@ -48,18 +50,18 @@ def _exercise_table_coverage() -> None:
     gsi_table.load_from_dir(missing_dir)
     invalid_dir = tempfile.mkdtemp()
     invalid_table = Table("invalid", primary_key="id", directory=invalid_dir)
-    with suppress(ValueError):
+    with suppress(ValidationError):
         invalid_table.put({"id": "bad/name"})
     with suppress(OSError):
         invalid_table._write_json_atomic(invalid_dir, {"id": "bad"})
     os.rmdir(invalid_dir)
-    with suppress(ValueError):
+    with suppress(ValidationError):
         Table("bad-storage", primary_key="id", storage="invalid")
     index_only = Table("index-only", primary_key="id", storage="index_only")
     index_only.get("missing")
     index_only.scan()
     index_only._search_enabled()
-    with suppress(ValueError):
+    with suppress(ValidationError):
         index_only.search("query")
     index_only._search_index_root()
     index_only._search_index_path()

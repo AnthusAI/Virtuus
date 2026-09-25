@@ -20,20 +20,26 @@ build-rust:
 check-python: build-rust
 	cd python && $(PYTHON) -m black --check .
 	cd python && $(PYTHON) -m ruff check .
-	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks
+	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks --tags=-rust-only
 	cd python && $(PYTHON) -m coverage report --include "src/virtuus/*" --fail-under=100
 
 coverage-python: build-rust
-	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks
+	cd python && VIRTUUS_BACKEND=python $(PYTHON) -m coverage run -m behave --exclude benchmarks --tags=-rust-only
 	cd python && $(PYTHON) -m coverage report --include "src/virtuus/*" --fail-under=100
 
 # ── Rust ────────────────────────────────────────────────────────────────────
 
 check-rust:
 	cd rust && cargo fmt --check
-	cd rust && cargo clippy -- -D warnings
-	cd rust && cargo test --lib
-	cd rust && CUCUMBER_FILTER_TAGS='not @python-only and not @bench' cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"
+	cd rust && cargo clippy -p virtuus --all-targets -- -D warnings
+	cd rust && cargo clippy -p virtuus-amplify --all-targets -- -D warnings
+	cd rust && cargo clippy -p virtuus-appsync --all-targets -- -D warnings
+	cd rust && cargo test -p virtuus --lib
+	cd rust && cargo test -p virtuus-amplify
+	cd rust && cargo test -p virtuus-appsync
+	cd rust && cargo tarpaulin --skip-clean -p virtuus --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs" --exclude-files "crates/*"
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files '*/tests/*' --fail-under 100
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-appsync --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files '*/tests/*' --fail-under 100
 
 coverage-rust:
 	cd rust && cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"

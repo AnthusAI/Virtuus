@@ -1,0 +1,278 @@
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ModelSortDirection {
+  ASC
+  DESC
+}
+
+input ModelBlogFilterInput {
+  id: ModelIDInput
+  title: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelBlogFilterInput]
+  or: [ModelBlogFilterInput]
+  not: ModelBlogFilterInput
+}
+
+input ModelIDInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
+}
+
+input ModelStringInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
+}
+
+input ModelStringKeyConditionInput {
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  between: [String]
+  beginsWith: String
+}
+
+input ModelPostPostsByBlogStatusCompositeKeyConditionInput {
+  eq: ModelPostPostsByBlogStatusCompositeKeyInput
+  le: ModelPostPostsByBlogStatusCompositeKeyInput
+  lt: ModelPostPostsByBlogStatusCompositeKeyInput
+  ge: ModelPostPostsByBlogStatusCompositeKeyInput
+  gt: ModelPostPostsByBlogStatusCompositeKeyInput
+  between: [ModelPostPostsByBlogStatusCompositeKeyInput]
+  beginsWith: ModelPostPostsByBlogStatusCompositeKeyInput
+}
+
+input ModelPostPostsByBlogStatusCompositeKeyInput {
+  status: String
+  createdAt: String
+}
+
+input ModelSizeInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+}
+
+enum ModelAttributeTypes {
+  binary
+  binarySet
+  bool
+  list
+  map
+  number
+  numberSet
+  string
+  stringSet
+  _null
+}
+
+input ModelIntInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  contains: Int
+  notContains: Int
+  between: [Int]
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+}
+
+input ModelPostFilterInput {
+  id: ModelIDInput
+  title: ModelStringInput
+  status: ModelStringInput
+  content: ModelStringInput
+  blogId: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelPostFilterInput]
+  or: [ModelPostFilterInput]
+  not: ModelPostFilterInput
+}
+
+input CreatePostInput {
+  id: ID
+  title: String!
+  content: String!
+  blogId: ID!
+  status: PostStatus
+}
+
+input ModelPostConditionInput {
+  title: ModelStringInput
+}
+
+input UpdatePostInput {
+  id: ID!
+  title: String
+  content: String
+  blogId: ID
+}
+
+input DeletePostInput {
+  id: ID!
+}
+
+input CreateBlogInput {
+  id: ID
+  title: String!
+}
+
+input UpdateBlogInput {
+  id: ID!
+  title: String
+}
+
+input DeleteBlogInput {
+  id: ID!
+}
+
+input CreateCommentInput {
+  id: ID
+  postId: ID
+  content: String!
+}
+
+input UpdateCommentInput {
+  id: ID!
+  postId: ID
+  content: String
+}
+
+input DeleteCommentInput {
+  id: ID!
+}
+
+type ModelPostConnection {
+  items: [Post!]!
+  nextToken: String
+}
+
+type Blog {
+  id: ID!
+  title: String!
+  posts(filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  blogId: ID!
+  status: PostStatus
+  blog: Blog
+  comments(filter: ModelCommentFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelCommentConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Query {
+  getBlog(id: ID!): Blog
+  listBlogs(filter: ModelBlogFilterInput, limit: Int, nextToken: String): ModelBlogConnection
+  getPost(id: ID!): Post
+  listPosts(filter: ModelPostFilterInput, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlog(blogId: ID!, createdAt: ModelStringKeyConditionInput, filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  postsByBlogStatus(blogId: ID!, statusCreatedAt: ModelPostPostsByBlogStatusCompositeKeyConditionInput, filter: ModelPostFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelPostConnection
+  getComment(id: ID!): Comment
+  listComments(filter: ModelCommentFilterInput, limit: Int, nextToken: String): ModelCommentConnection
+  commentsByPost(postId: ID!, filter: ModelCommentFilterInput, limit: Int, nextToken: String): ModelCommentConnection
+}
+
+type ModelBlogConnection {
+  items: [Blog!]!
+  nextToken: String
+}
+
+type Mutation {
+  createBlog(input: CreateBlogInput!): Blog
+  updateBlog(input: UpdateBlogInput!): Blog
+  deleteBlog(input: DeleteBlogInput!): Blog
+  createPost(input: CreatePostInput!, condition: ModelPostConditionInput): Post
+  updatePost(input: UpdatePostInput!): Post
+  deletePost(input: DeletePostInput!): Post
+  createComment(input: CreateCommentInput!): Comment
+  updateComment(input: UpdateCommentInput!): Comment
+  deleteComment(input: DeleteCommentInput!): Comment
+}
+
+type Comment {
+  id: ID!
+  postId: ID!
+  post: Post
+  content: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type ModelCommentConnection {
+  items: [Comment!]!
+  nextToken: String
+}
+
+input ModelCommentFilterInput {
+  id: ModelIDInput
+  postId: ModelIDInput
+  content: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelCommentFilterInput]
+  or: [ModelCommentFilterInput]
+  not: ModelCommentFilterInput
+}
+
+type Subscription {
+  onCreateBlog: Blog @aws_subscribe(mutations: ["createBlog"])
+  onUpdateBlog: Blog @aws_subscribe(mutations: ["updateBlog"])
+  onDeleteBlog: Blog @aws_subscribe(mutations: ["deleteBlog"])
+  onCreatePost: Post @aws_subscribe(mutations: ["createPost"])
+  onUpdatePost: Post @aws_subscribe(mutations: ["updatePost"])
+  onDeletePost: Post @aws_subscribe(mutations: ["deletePost"])
+}
+
+scalar AWSDateTime
+scalar AWSDate
+scalar AWSTime
+scalar AWSTimestamp
+scalar AWSJSON
+scalar AWSEmail
+scalar AWSURL
+scalar AWSPhone
+scalar AWSIPAddress

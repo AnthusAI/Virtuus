@@ -1,0 +1,30 @@
+{
+  "id": "virt-0b87e4f3-3313-4405-8c05-3982b2856bf3",
+  "title": "Key-based pagination tokens in both languages",
+  "description": "Design §3.1 and §2.2 (`nextToken`). Replace the offset tokens.\n\n## Steps\n1. Specs first: `features/pagination/key_tokens.feature` (story \"Pages continue after the last key\"). Update the existing pagination specs that assume offsets.\n2. A token is opaque: base64url of `{\"v\":1, \"table\", \"index\", \"partition\", \"last\": {\"pk\", \"sort\"}, \"args\": <sha256 of the query minus the token>}`. The next page starts strictly after `last`, using the ordered buckets from V4.\n3. A token whose table, index, partition or args don't match the query gives `InvalidToken`.\n\n## Acceptance\n- `make check` green.\n- The \"insert before the cursor\" scenario passes in both languages.\n\n## Verify\n`make check PYTHON=$PWD/.venv/bin/python`\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-0f318438-ec95-46b9-84cd-b92989599716",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.232860Z",
+  "updated_at": "2026-09-24T04:45:47.632221Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}
