@@ -399,6 +399,7 @@ pub struct Field {
     field_type: String,
     kind: String,
     is_required: bool,
+    is_array: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -659,10 +660,16 @@ impl Contract {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
+        let is_array = value
+            .get("isArray")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
         Ok(Field {
             field_type,
             kind,
             is_required,
+            is_array,
         })
     }
 
@@ -2613,160 +2620,19 @@ impl Engine {
                 }
             }
 
-            // Validate enum values
-            if field.kind == "enum" {
-                if let Some(value) = record.get(field_name) {
-                    if !value.is_null() {
-                        if let Some(value_str) = value.as_str() {
-                            // Get the enum values from the contract
-                            if let Some(enum_values) = self.get_enum_values(&field.field_type) {
-                                if !enum_values.contains(&value_str.to_string()) {
-                                    errors.push(json!({
-                                        "message": format!(
-                                            "Field '{}' must be one of enum values {:?}",
-                                            field_name, enum_values
-                                        ),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            }
-                        } else {
-                            errors.push(json!({
-                                "message": format!("Field '{}' must be a string for enum type", field_name),
-                                "errorType": "ValidationException"
-                            }));
-                        }
-                    }
-                }
-            }
-
-            // Validate AWS scalar types
             if let Some(value) = record.get(field_name) {
-                if !value.is_null() {
-                    #[allow(clippy::collapsible_match)]
-                    match field.field_type.as_str() {
-                        "AWSDateTime" => {
-                            if let Some(dt_str) = value.as_str() {
-                                if chrono::DateTime::parse_from_rfc3339(dt_str).is_err() {
-                                    errors.push(json!({
-                                        "message": format!(
-                                            "Field '{}' must be a valid AWSDateTime (RFC 3339 datetime)",
-                                            field_name
-                                        ),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            } else {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a string", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "AWSDate" => {
-                            if let Some(date_str) = value.as_str() {
-                                if date_str.chars().count() != 10
-                                    || date_str.chars().nth(4) != Some('-')
-                                    || date_str.chars().nth(7) != Some('-')
-                                {
-                                    errors.push(json!({
-                                        "message": format!(
-                                            "Field '{}' must be a valid AWSDate (YYYY-MM-DD)",
-                                            field_name
-                                        ),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            } else {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a string", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "AWSJSON" => {
-                            if let Some(json_str) = value.as_str() {
-                                if serde_json::from_str::<Value>(json_str).is_err() {
-                                    errors.push(json!({
-                                        "message": format!(
-                                            "Field '{}' must be a valid AWSJSON string",
-                                            field_name
-                                        ),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            } else {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a string", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "AWSEmail" => {
-                            if let Some(email_str) = value.as_str() {
-                                let at_count = email_str.chars().filter(|c| *c == '@').count();
-                                let parts: Vec<&str> = email_str.split('@').collect();
-                                if at_count != 1 || parts[0].is_empty() || parts[1].is_empty() {
-                                    errors.push(json!({
-                                        "message": format!("Field '{}' must be a valid AWSEmail", field_name),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            } else {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a string", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "AWSURL" => {
-                            if let Some(url_str) = value.as_str() {
-                                if url::Url::parse(url_str).is_err() {
-                                    errors.push(json!({
-                                        "message": format!("Field '{}' must be a valid AWSURL", field_name),
-                                        "errorType": "ValidationException"
-                                    }));
-                                }
-                            } else {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a string", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "Int" => {
-                            if !value.is_i64() && !value.is_u64() {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be an integer", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "Float" => {
-                            if !value.is_f64() && !value.is_i64() && !value.is_u64() {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a number", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "Boolean" => {
-                            if !value.is_boolean() {
-                                errors.push(json!({
-                                    "message": format!("Field '{}' must be a boolean", field_name),
-                                    "errorType": "ValidationException"
-                                }));
-                            }
-                        }
-                        "String" if !value.is_string() => {
-                            errors.push(json!({
-                                "message": format!("Field '{}' must be a string", field_name),
-                                "errorType": "ValidationException"
-                            }));
-                        }
-                        "String" => {}
-                        _ => {}
+                if !field.is_array {
+                    self.check_value(field_name, field, value, &mut errors);
+                } else if let Some(items) = value.as_array() {
+                    for (i, item) in items.iter().enumerate() {
+                        let label = format!("{}[{}]", field_name, i);
+                        self.check_value(&label, field, item, &mut errors);
                     }
+                } else if !value.is_null() {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a list", field_name),
+                        "errorType": "ValidationException"
+                    }));
                 }
             }
         }
@@ -2775,6 +2641,159 @@ impl Engine {
             None
         } else {
             Some(errors)
+        }
+    }
+
+    /// Check one value (a whole field, or one element of a list field) against the field's type;
+    /// `label` names it in errors (`tags` or `tags[2]`). Nulls pass.
+    fn check_value(&self, label: &str, field: &Field, value: &Value, errors: &mut Vec<Value>) {
+        if value.is_null() {
+            return;
+        }
+        if field.kind == "enum" {
+            if let Some(value_str) = value.as_str() {
+                // Get the enum values from the contract
+                if let Some(enum_values) = self.get_enum_values(&field.field_type) {
+                    if !enum_values.contains(&value_str.to_string()) {
+                        errors.push(json!({
+                            "message": format!(
+                                "Field '{}' must be one of enum values {:?}",
+                                label, enum_values
+                            ),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                }
+            } else {
+                errors.push(json!({
+                    "message": format!("Field '{}' must be a string for enum type", label),
+                    "errorType": "ValidationException"
+                }));
+            }
+        }
+        #[allow(clippy::collapsible_match)]
+        match field.field_type.as_str() {
+            "AWSDateTime" => {
+                if let Some(dt_str) = value.as_str() {
+                    if chrono::DateTime::parse_from_rfc3339(dt_str).is_err() {
+                        errors.push(json!({
+                            "message": format!(
+                                "Field '{}' must be a valid AWSDateTime (RFC 3339 datetime)",
+                                label
+                            ),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                } else {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a string", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "AWSDate" => {
+                if let Some(date_str) = value.as_str() {
+                    if date_str.chars().count() != 10
+                        || date_str.chars().nth(4) != Some('-')
+                        || date_str.chars().nth(7) != Some('-')
+                    {
+                        errors.push(json!({
+                            "message": format!(
+                                "Field '{}' must be a valid AWSDate (YYYY-MM-DD)",
+                                label
+                            ),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                } else {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a string", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "AWSJSON" => {
+                if let Some(json_str) = value.as_str() {
+                    if serde_json::from_str::<Value>(json_str).is_err() {
+                        errors.push(json!({
+                            "message": format!(
+                                "Field '{}' must be a valid AWSJSON string",
+                                label
+                            ),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                } else {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a string", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "AWSEmail" => {
+                if let Some(email_str) = value.as_str() {
+                    let at_count = email_str.chars().filter(|c| *c == '@').count();
+                    let parts: Vec<&str> = email_str.split('@').collect();
+                    if at_count != 1 || parts[0].is_empty() || parts[1].is_empty() {
+                        errors.push(json!({
+                            "message": format!("Field '{}' must be a valid AWSEmail", label),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                } else {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a string", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "AWSURL" => {
+                if let Some(url_str) = value.as_str() {
+                    if url::Url::parse(url_str).is_err() {
+                        errors.push(json!({
+                            "message": format!("Field '{}' must be a valid AWSURL", label),
+                            "errorType": "ValidationException"
+                        }));
+                    }
+                } else {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a string", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "Int" => {
+                if !value.is_i64() && !value.is_u64() {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be an integer", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "Float" => {
+                if !value.is_f64() && !value.is_i64() && !value.is_u64() {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a number", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "Boolean" => {
+                if !value.is_boolean() {
+                    errors.push(json!({
+                        "message": format!("Field '{}' must be a boolean", label),
+                        "errorType": "ValidationException"
+                    }));
+                }
+            }
+            "String" if !value.is_string() => {
+                errors.push(json!({
+                    "message": format!("Field '{}' must be a string", label),
+                    "errorType": "ValidationException"
+                }));
+            }
+            "String" => {}
+            _ => {}
         }
     }
 

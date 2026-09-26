@@ -964,6 +964,16 @@ fn check_result_field(world: &mut AppWorld, field: String, expected: String) {
     }
 }
 
+#[then(regex = "^the result data field \"([^\"]+)\" is the JSON (.+)$")]
+fn check_result_field_json(world: &mut AppWorld, field: String, expected: String) {
+    let expected: Value = serde_json::from_str(&expected).expect("expected value is JSON");
+    let data = world
+        .last_operation_data
+        .as_ref()
+        .expect("No operation result data");
+    assert_eq!(data.get(&field), Some(&expected), "{} mismatch", field);
+}
+
 #[then("the result data is null")]
 fn check_result_data_null(world: &mut AppWorld) {
     if let Some(ref data) = world.last_operation_data {
