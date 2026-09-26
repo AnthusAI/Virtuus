@@ -39,6 +39,9 @@
         "views": {"name": "views", "type": "Int", "isRequired": false, "isArray": false, "kind": "scalar"},
         "rating": {"name": "rating", "type": "Float", "isRequired": false, "isArray": false, "kind": "scalar"},
         "published": {"name": "published", "type": "Boolean", "isRequired": false, "isArray": false, "kind": "scalar"},
+        "keywords": {"name": "keywords", "type": "String", "isRequired": false, "isArray": true, "kind": "scalar"},
+        "labels": {"name": "labels", "type": "PostStatus", "isRequired": false, "isArray": true, "kind": "enum"},
+        "scores": {"name": "scores", "type": "Int", "isRequired": false, "isArray": true, "kind": "scalar"},
         "owner": {"name": "owner", "type": "String", "isRequired": false, "isArray": false, "kind": "scalar"},
         "updatedAt": {"name": "updatedAt", "type": "AWSDateTime", "isRequired": false, "isArray": false, "kind": "scalar"},
         "comments": {"name": "comments", "type": "Comment", "isRequired": false, "isArray": true, "kind": "model"}

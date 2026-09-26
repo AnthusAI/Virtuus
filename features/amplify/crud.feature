@@ -409,6 +409,73 @@ Feature: Engine CRUD operations
     When I get the Post with id "p15"
     Then the result data status is "DRAFT"
 
+  Scenario: List fields accept lists of their element type
+    Given a blog contract
+    Given a Blog exists with:
+      """
+      {"id": "b20", "title": "Blog"}
+      """
+    When I create a Post with:
+      """
+      {"id": "p20", "blogId": "b20", "title": "Post", "keywords": ["a", "b"], "labels": ["DRAFT", "PUBLISHED"], "scores": [1, null, 3]}
+      """
+    Then the operation succeeds
+    Then the result data field "keywords" is the JSON ["a", "b"]
+    When I update the Post with:
+      """
+      {"id": "p20", "keywords": [], "labels": []}
+      """
+    Then the operation succeeds
+    Then the result data field "keywords" is the JSON []
+
+  Scenario: A list field element of the wrong type is rejected
+    Given a blog contract
+    Given a Blog exists with:
+      """
+      {"id": "b21", "title": "Blog"}
+      """
+    When I create a Post with:
+      """
+      {"id": "p21", "blogId": "b21", "title": "Post", "keywords": ["a", 5]}
+      """
+    Then the operation fails with error containing "Field 'keywords[1]' must be a string"
+
+  Scenario: A list field element outside its enum is rejected
+    Given a blog contract
+    Given a Blog exists with:
+      """
+      {"id": "b22", "title": "Blog"}
+      """
+    When I create a Post with:
+      """
+      {"id": "p22", "blogId": "b22", "title": "Post", "labels": ["DRAFT", "BOGUS"]}
+      """
+    Then the operation fails with error containing "Field 'labels[1]' must be one of enum values"
+
+  Scenario: A single value where a list is required is rejected
+    Given a blog contract
+    Given a Blog exists with:
+      """
+      {"id": "b23", "title": "Blog"}
+      """
+    When I create a Post with:
+      """
+      {"id": "p23", "blogId": "b23", "title": "Post", "keywords": "a"}
+      """
+    Then the operation fails with error containing "Field 'keywords' must be a list"
+
+  Scenario: A list where a single value is required is rejected
+    Given a blog contract
+    Given a Blog exists with:
+      """
+      {"id": "b24", "title": "Blog"}
+      """
+    When I create a Post with:
+      """
+      {"id": "p24", "blogId": "b24", "title": ["Post"]}
+      """
+    Then the operation fails with error containing "Field 'title' must be a string"
+
   Scenario: Unknown operation
     Given a blog contract
     When I open the engine
