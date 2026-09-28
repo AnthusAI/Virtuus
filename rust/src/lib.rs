@@ -6,6 +6,7 @@ pub mod database;
 pub mod error;
 pub mod gsi;
 pub mod search;
+pub mod service;
 pub mod sort;
 pub mod table;
 pub use database::Database;

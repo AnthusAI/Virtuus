@@ -64,6 +64,7 @@ pub struct Table {
     on_delete: Vec<Hook>,
     on_refresh: Vec<Hook>,
     last_write_used_atomic: bool,
+    pretty_json: bool,
     associations: Vec<String>,
     check_interval: Duration,
     auto_refresh: bool,
@@ -176,6 +177,7 @@ impl Table {
             on_delete: Vec::new(),
             on_refresh: Vec::new(),
             last_write_used_atomic: false,
+            pretty_json: false,
             associations: Vec::new(),
             check_interval: Duration::from_secs(0),
             auto_refresh: true,
@@ -438,6 +440,16 @@ impl Table {
         self.last_write_used_atomic
     }
 
+    /// Configure whether persisted JSON uses human-readable indentation.
+    pub fn set_pretty_json(&mut self, enabled: bool) {
+        self.pretty_json = enabled;
+    }
+
+    /// Return whether persisted JSON uses human-readable indentation.
+    pub fn pretty_json(&self) -> bool {
+        self.pretty_json
+    }
+
     /// Register an association name for describe output only.
     pub fn add_association(&mut self, name: &str) {
         if !self.associations.contains(&name.to_string()) {
@@ -603,10 +615,19 @@ impl Table {
                 }
             }
         }
+        let dir_mtime = self.dir_mtime();
+        // Directory metadata catches additions and removals without walking every
+        // record. A caller can still request force_scan for periodic reconciliation
+        // of in-place edits, which do not change directory mtime on every platform.
+        if !force_scan && dir_mtime == self.last_dir_mtime {
+            self.last_check_time = Some(now);
+            self.last_is_stale = false;
+            return false;
+        }
         let (summary, _, _, _) = self.compute_changes();
         self.last_check_time = Some(now);
         self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
-        self.last_dir_mtime = self.dir_mtime();
+        self.last_dir_mtime = dir_mtime;
         self.last_is_stale
     }
 
@@ -627,20 +648,15 @@ impl Table {
         let mut reread = 0;
         for path in added.iter().chain(modified.iter()) {
             if let Some(record) = self.read_record(path) {
-                self.put(record);
+                // A refresh observes external files. It must never route through put(),
+                // which persists and would rewrite a user's formatting.
+                self.insert_record_from_load(record, true);
                 reread += 1;
             }
         }
         for path in deleted {
             if let Some(key) = self.key_from_filename(path) {
-                match key {
-                    TableKey::Simple(pk) => {
-                        self.delete(&pk, None);
-                    }
-                    TableKey::Composite(partition, sort) => {
-                        self.delete(&partition, Some(&sort));
-                    }
-                }
+                self.remove_record_from_load(&key);
             }
         }
         self.manifest = self
@@ -1235,6 +1251,17 @@ impl Table {
         }
     }
 
+    fn remove_record_from_load(&mut self, key: &TableKey) {
+        let record = match self.storage_mode {
+            StorageMode::Memory => self.records.remove(key),
+            StorageMode::IndexOnly => self.read_record_by_key(key),
+        };
+        if let Some(record) = record {
+            self.remove_from_gsis(key, &record);
+            self.remove_from_search(key, &record);
+        }
+    }
+
     fn write_json_atomic(&mut self, path: &Path, record: &Value) {
         let directory = path.parent().expect("parent dir");
         fs::create_dir_all(directory).expect("create dir");
@@ -1246,7 +1273,13 @@ impl Table {
                 .as_nanos()
         );
         let temp_path = directory.join(temp_name);
-        fs::write(&temp_path, serde_json::to_vec(record).unwrap()).expect("write temp");
+        let payload = if self.pretty_json {
+            serde_json::to_vec_pretty(record)
+        } else {
+            serde_json::to_vec(record)
+        }
+        .expect("serialize json");
+        fs::write(&temp_path, payload).expect("write temp");
         fs::rename(&temp_path, path).expect("rename");
         self.last_write_used_atomic = true;
     }

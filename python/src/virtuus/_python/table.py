@@ -71,6 +71,7 @@ class Table:
         auto_refresh: bool = True,
         storage: Optional[str] = None,
         search_fields: Optional[list[str]] = None,
+        pretty_json: bool = False,
     ) -> None:
         if primary_key is None and partition_key is None:
             raise ValidationError("primary_key or partition_key is required")
@@ -95,6 +96,7 @@ class Table:
             raise ValidationError("storage must be memory or index_only")
         self.storage_mode = storage_mode
         self.search_fields = list(search_fields or [])
+        self.pretty_json = pretty_json
         # token -> set of PK strings (faster membership on build; persisted as lists)
         self.search_index: dict[str, set[str]] | None = (
             {} if self.search_fields else None
@@ -121,6 +123,10 @@ class Table:
             "deleted": 0,
             "reread": 0,
         }
+
+    def set_pretty_json(self, enabled: bool) -> None:
+        """Configure human-readable JSON persistence."""
+        self.pretty_json = enabled
 
     def add_gsi(
         self, name: str, partition_key: str, sort_key: Optional[str] = None
@@ -493,6 +499,12 @@ class Table:
             if now - self._last_check_time < self.check_interval:
                 return self._last_is_stale
         dir_mtime = self._dir_mtime()
+        # Directory mtime avoids a full walk for unchanged directories. Callers use
+        # force_scan for periodic reconciliation of in-place file edits.
+        if not force_scan and dir_mtime == self._last_dir_mtime:
+            self._last_check_time = now
+            self._last_is_stale = False
+            return False
         summary, _, _, _ = self._compute_changes()
         self._last_check_time = now
         self._last_is_stale = any(summary.values())
@@ -521,15 +533,13 @@ class Table:
             record = self._read_record_file(path)
             if record is None:
                 continue  # pragma: no cover
-            self.put(record)
+            # Refresh must not persist externally edited JSON back to disk.
+            self._insert_record_from_load(record, index_search=True)
             reread += 1
         for path in deleted:
             pk = self._pk_from_filename(os.path.basename(path))
             if pk is not None:
-                if isinstance(pk, TableKey):
-                    self.delete(pk.partition, pk.sort)  # pragma: no cover
-                else:
-                    self.delete(pk)
+                self._remove_record_from_load(pk)
         self._manifest = {
             os.path.basename(p): self._file_signature(p)
             for p in self._iter_json_files()
@@ -829,6 +839,16 @@ class Table:
         self._record_keys[filename] = self._key_to_string(pk)
         self._last_dir_mtime = self._dir_mtime()
 
+    def _remove_record_from_load(self, pk: Any) -> None:
+        record = (
+            self.records.pop(pk, None)
+            if self.storage_mode == "memory"
+            else self._read_record_by_key(pk)
+        )
+        if record is not None:
+            self._remove_from_gsis(pk, record)
+            self._remove_from_search(pk, record)
+
     def _delete_record_from_disk(self, pk: Any) -> None:
         self._validate_pk_for_path(pk)
         filename = self._filename_for_pk(pk)
@@ -853,7 +873,7 @@ class Table:
         fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump(record, handle)
+                json.dump(record, handle, indent=2 if self.pretty_json else None)
             os.replace(temp_path, path)
             self.last_write_used_atomic = True
         finally:
