@@ -785,14 +785,41 @@ impl Table {
         }
         let mut parsed = Vec::with_capacity(paths.len());
         for path in &paths {
-            let data = fs::read_to_string(path).map_err(|error| Error::Io {
-                path: path.display().to_string(),
-                message: error.to_string(),
-            })?;
-            let record: Value = serde_json::from_str(&data).map_err(|error| Error::Parse {
-                path: path.display().to_string(),
-                message: error.to_string(),
-            })?;
+            let path_text = path.display().to_string();
+            let data = match fs::read_to_string(path) {
+                Ok(data) => data,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Io {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to read {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
+            let record: Value = match serde_json::from_str(&data) {
+                Ok(record) => record,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Parse {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to parse {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
             let mtime = fs::metadata(path)
                 .ok()
                 .and_then(|meta| meta.modified().ok());

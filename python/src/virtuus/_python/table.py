@@ -600,9 +600,17 @@ class Table:
                 with open(path, "r", encoding="utf-8") as handle:
                     record = json.load(handle)
             except OSError as error:
-                raise IoError(path, str(error)) from error
+                if self.validation == "error":
+                    raise IoError(path, str(error)) from error
+                if self.validation == "warn":
+                    self.warnings.append(f"failed to read {path}: {error}")
+                continue
             except json.JSONDecodeError as error:
-                raise ParseError(path, str(error)) from error
+                if self.validation == "error":
+                    raise ParseError(path, str(error)) from error
+                if self.validation == "warn":
+                    self.warnings.append(f"failed to parse {path}: {error}")
+                continue
             self._insert_record_from_load(record, not search_loaded)
             pk = self._extract_pk_quiet(record)
             if pk is not None:
