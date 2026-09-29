@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import argparse
+import json
 import socketserver
 import time
 from dataclasses import dataclass
@@ -27,6 +27,7 @@ class Service:
     """Own memory-resident, file-backed tables for local clients."""
 
     def __init__(self) -> None:
+        """Create an empty registry of resident tables."""
         self._tables: dict[str, _ResidentTable] = {}
 
     @staticmethod
@@ -123,6 +124,7 @@ class UnixService(socketserver.ThreadingUnixStreamServer):
     """Unix-domain-socket host for :class:`Service`."""
 
     def __init__(self, socket_path: Path) -> None:
+        """Bind the service to ``socket_path``."""
         socket_path.parent.mkdir(parents=True, exist_ok=True)
         if socket_path.exists():
             socket_path.unlink()
