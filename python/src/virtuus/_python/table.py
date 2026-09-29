@@ -825,9 +825,18 @@ class Table:
 
     def _validate_gsi_fields(self, record: dict[str, Any]) -> None:
         for gsi in self.gsis.values():
-            if gsi.partition_key not in record:
+            if (
+                "[" not in gsi.partition_key
+                and "." not in gsi.partition_key
+                and gsi.partition_key not in record
+            ):
                 self._handle_validation(f"missing GSI field {gsi.partition_key}")
-            if gsi.sort_key is not None and gsi.sort_key not in record:
+            if (
+                gsi.sort_key is not None
+                and "[" not in gsi.sort_key
+                and "." not in gsi.sort_key
+                and gsi.sort_key not in record
+            ):
                 self._handle_validation(f"missing GSI field {gsi.sort_key}")
 
     def _filename_for_pk(self, pk: Any) -> str:

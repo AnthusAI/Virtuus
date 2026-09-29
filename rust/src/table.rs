@@ -1183,11 +1183,17 @@ impl Table {
             })
             .collect();
         for (partition_key, sort_key) in fields {
-            if record.get(&partition_key).is_none() {
+            if !partition_key.contains('[')
+                && !partition_key.contains('.')
+                && record.get(&partition_key).is_none()
+            {
                 let _ = self.handle_validation(&format!("missing GSI field {partition_key}"));
             }
             if let Some(sort_key) = sort_key {
-                if record.get(&sort_key).is_none() {
+                if !sort_key.contains('[')
+                    && !sort_key.contains('.')
+                    && record.get(&sort_key).is_none()
+                {
                     let _ = self.handle_validation(&format!("missing GSI field {sort_key}"));
                 }
             }
