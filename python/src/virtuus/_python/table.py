@@ -536,9 +536,13 @@ class Table:
                 self._record_keys[os.path.basename(path)] = self._key_to_string(pk)
             reread += 1
         for path in deleted:
-            pk = self._pk_from_filename(os.path.basename(path))
+            filename = os.path.basename(path)
+            pk = self._pk_from_filename(filename)
             if pk is not None:
                 self._remove_record_from_load(pk)
+            # Index-only tables retain filename-to-key metadata. Remove it even
+            # though the deleted record can no longer be read from disk.
+            self._record_keys.pop(filename, None)
         self._manifest = {
             os.path.basename(p): self._file_signature(p)
             for p in self._iter_json_files()
