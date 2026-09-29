@@ -72,7 +72,10 @@ class Service:
             if action == "ping":
                 result: Any = {"protocol_version": PROTOCOL_VERSION}
             elif action == "status":
-                result = {"protocol_version": PROTOCOL_VERSION, "tables": len(self._tables)}
+                result = {
+                    "protocol_version": PROTOCOL_VERSION,
+                    "tables": len(self._tables),
+                }
             elif action == "shutdown":
                 result = {"shutdown": True}
             elif action == "open_table":

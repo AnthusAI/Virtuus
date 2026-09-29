@@ -92,7 +92,11 @@ class GSI:
             bucket = self._buckets.get(key)
             if not bucket:
                 continue
-            self._buckets[key] = [entry for entry in bucket if not (entry.pk == pk and entry.sort_value == sort_value)]
+            self._buckets[key] = [
+                entry
+                for entry in bucket
+                if not (entry.pk == pk and entry.sort_value == sort_value)
+            ]
             if not self._buckets[key]:
                 self._buckets.pop(key, None)
 
@@ -156,7 +160,9 @@ class GSI:
 
 
 def _freeze(value: Any) -> Any:
-    return json.dumps(value, sort_keys=True) if isinstance(value, (list, dict)) else value
+    return (
+        json.dumps(value, sort_keys=True) if isinstance(value, (list, dict)) else value
+    )
 
 
 def _select_values(record: dict[str, Any], selector: str) -> list[Any]:
@@ -175,7 +181,11 @@ def _select_values(record: dict[str, Any], selector: str) -> list[Any]:
                 next_values.extend(field_value)
             elif isinstance(field_value, list) and "=" in filter_value:
                 key, expected = filter_value.split("=", 1)
-                next_values.extend(item for item in field_value if isinstance(item, dict) and item.get(key) == expected)
+                next_values.extend(
+                    item
+                    for item in field_value
+                    if isinstance(item, dict) and item.get(key) == expected
+                )
         current = next_values
     return current
 

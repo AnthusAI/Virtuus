@@ -37,4 +37,14 @@ def cli_version() -> str:
     return _py_cli_version()
 
 
-__all__ = ["__version__", "Database", "GSI", "Sort", "Table", "Service", "UnixService", "PROTOCOL_VERSION", "cli_version"]
+__all__ = [
+    "__version__",
+    "Database",
+    "GSI",
+    "Sort",
+    "Table",
+    "Service",
+    "UnixService",
+    "PROTOCOL_VERSION",
+    "cli_version",
+]
