@@ -262,4 +262,28 @@ mod tests {
         assert!(root.join("one.json").exists());
         std::fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    fn periodic_reconciliation_observes_external_edits_without_rewriting_them() {
+        let root = std::env::temp_dir().join(format!(
+            "virtuus-service-refresh-test-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let mut service = Service::new();
+        let open = service.dispatch(json!({
+            "action":"open_table",
+            "spec":{"name":"issues","directory":root,"primary_key":"id","reconcile_seconds":2}
+        }));
+        let handle = open["result"]["handle"].as_str().unwrap().to_string();
+        let path = root.join("external.json");
+        let external = "{\n  \"id\": \"external\",\n  \"status\": \"open\"\n}\n";
+        std::fs::write(&path, external).unwrap();
+        service.tables.get_mut(&handle).unwrap().last_reconcile =
+            Instant::now() - Duration::from_secs(3);
+        let scan = service.dispatch(json!({"action":"scan","handle":handle}));
+        assert_eq!(scan["result"].as_array().unwrap()[0]["id"], "external");
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), external);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }
