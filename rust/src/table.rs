@@ -629,11 +629,6 @@ impl Table {
         // Directory metadata catches additions and removals without walking every
         // record. A caller can still request force_scan for periodic reconciliation
         // of in-place edits, which do not change directory mtime on every platform.
-        if !force_scan && dir_mtime == self.last_dir_mtime {
-            self.last_check_time = Some(now);
-            self.last_is_stale = false;
-            return false;
-        }
         let (summary, _, _, _) = self.compute_changes();
         self.last_check_time = Some(now);
         self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
@@ -660,6 +655,13 @@ impl Table {
             if let Some(record) = self.read_record(path) {
                 // A refresh observes external files. It must never route through put(),
                 // which persists and would rewrite a user's formatting.
+                if let (Some(name), Some(key)) = (
+                    path.file_name()
+                        .map(|name| name.to_string_lossy().to_string()),
+                    self.extract_key_silent(&record),
+                ) {
+                    self.record_keys.insert(name, key_to_string(&key));
+                }
                 self.insert_record_from_load(record, true);
                 reread += 1;
             }
@@ -974,11 +976,18 @@ impl Table {
 
     fn read_record_by_key(&self, key: &TableKey) -> Option<Value> {
         let dir = self.directory.as_ref()?;
-        let filename = self.filename_for_key(key);
-        if self.storage_mode == StorageMode::IndexOnly && !self.record_keys.contains_key(&filename)
-        {
-            return None;
-        }
+        let expected_filename = self.filename_for_key(key);
+        let filename = if self.storage_mode == StorageMode::IndexOnly {
+            if self.record_keys.contains_key(&expected_filename) {
+                expected_filename
+            } else {
+                self.record_keys.iter().find_map(|(name, record_key)| {
+                    (record_key == &key_to_string(key)).then(|| name.clone())
+                })?
+            }
+        } else {
+            expected_filename
+        };
         let path = dir.join(filename);
         fs::read_to_string(&path)
             .ok()

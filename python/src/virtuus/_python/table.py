@@ -501,10 +501,6 @@ class Table:
         dir_mtime = self._dir_mtime()
         # Directory mtime avoids a full walk for unchanged directories. Callers use
         # force_scan for periodic reconciliation of in-place file edits.
-        if not force_scan and dir_mtime == self._last_dir_mtime:
-            self._last_check_time = now
-            self._last_is_stale = False
-            return False
         summary, _, _, _ = self._compute_changes()
         self._last_check_time = now
         self._last_is_stale = any(summary.values())
@@ -535,6 +531,9 @@ class Table:
                 continue  # pragma: no cover
             # Refresh must not persist externally edited JSON back to disk.
             self._insert_record_from_load(record, index_search=True)
+            pk = self._extract_pk_quiet(record)
+            if pk is not None:
+                self._record_keys[os.path.basename(path)] = self._key_to_string(pk)
             reread += 1
         for path in deleted:
             pk = self._pk_from_filename(os.path.basename(path))

@@ -45,6 +45,7 @@ class Service:
             validation=str(spec.get("validation", "error")),
             storage="memory",
             check_interval=int(spec.get("reconcile_seconds", 2)),
+            auto_refresh=False,
             pretty_json=bool(spec.get("pretty_json", False)),
         )
         for index in spec.get("indexes", []):

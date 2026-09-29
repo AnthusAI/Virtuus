@@ -98,6 +98,7 @@ impl Service {
         .map_err(|error| error.to_string())?;
         table.set_storage_mode(StorageMode::Memory);
         table.set_pretty_json(spec.pretty_json);
+        table.set_auto_refresh(false);
         // Avoid directory walks on ordinary requests. The service performs a
         // forced reconciliation at the configured interval.
         table.set_check_interval(spec.reconcile_seconds);
