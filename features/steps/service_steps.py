@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from behave import given, then
 
+from virtuus import Table
+from virtuus.errors import IoError, ParseError
 from virtuus.service import Service
 
 
@@ -16,15 +19,29 @@ def given_local_service(context: object) -> None:
     directory = Path(tempfile.mkdtemp())
     context.service_directory = directory
     context.local_service = Service()
-    context.local_handle = context.local_service.open_table(
+    response = context.local_service.dispatch(
         {
-            "name": "records",
-            "directory": str(directory),
-            "primary_key": "id",
-            "validation": "warn",
-            "indexes": [{"name": "by_status", "partition_key": "status"}],
+            "action": "open_table",
+            "spec": {
+                "name": "records",
+                "directory": str(directory),
+                "primary_key": "id",
+                "validation": "warn",
+                "indexes": [
+                    {"name": "by_status", "partition_key": "status"},
+                    {"name": "by_label", "partition_key": "labels[*]"},
+                    {
+                        "name": "blocked_by",
+                        "partition_key": (
+                            "dependencies[dependency_type=blocked-by].target"
+                        ),
+                    },
+                ],
+            },
         }
     )
+    assert response["ok"]
+    context.local_handle = response["result"]["handle"]
 
 
 @then("the local service supports retained table operations")
@@ -33,12 +50,33 @@ def then_service_operations(context: object) -> None:
     service = context.local_service
     handle = context.local_handle
     assert service._table(handle) is service._table(handle)
+    assert (
+        service.open_table(
+            {
+                "name": "records",
+                "directory": str(context.service_directory),
+                "primary_key": "id",
+            }
+        )
+        == handle
+    )
+    service._tables[handle].last_reconcile = 0
+    service._table(handle)
     assert service.dispatch({"action": "ping"})["result"]["protocol_version"] == "1.0"
     assert service.dispatch({"action": "status"})["result"]["tables"] == 1
     assert service.dispatch({"action": "get"})["ok"] is False
     assert service.dispatch({"action": "unknown", "handle": handle})["ok"] is False
     assert service.dispatch(
-        {"action": "put", "handle": handle, "record": {"id": "one", "status": "open"}}
+        {
+            "action": "put",
+            "handle": handle,
+            "record": {
+                "id": "one",
+                "status": "open",
+                "labels": ["core"],
+                "dependencies": [{"dependency_type": "blocked-by", "target": "two"}],
+            },
+        }
     )["ok"]
     assert service.dispatch(
         {
@@ -57,6 +95,95 @@ def then_service_operations(context: object) -> None:
     assert service.dispatch(
         {"action": "query", "handle": handle, "index": "by_status", "value": "open"}
     )["ok"]
+    assert (
+        service.dispatch(
+            {"action": "query", "handle": handle, "index": "by_label", "value": "core"}
+        )["result"][0]["id"]
+        == "one"
+    )
+    assert (
+        service.dispatch(
+            {"action": "query", "handle": handle, "index": "blocked_by", "value": "two"}
+        )["result"][0]["id"]
+        == "one"
+    )
     assert service.dispatch({"action": "refresh", "handle": handle})["ok"]
     assert service.dispatch({"action": "delete", "handle": handle, "pk": "two"})["ok"]
     assert service.dispatch({"action": "shutdown"})["result"]["shutdown"] is True
+    _exercise_table_io_errors(context.service_directory)
+
+
+def _exercise_table_io_errors(directory: Path) -> None:
+    """Cover persistence failures and refresh removal behavior."""
+    table = Table(
+        "direct",
+        primary_key="id",
+        directory=str(directory),
+        storage="memory",
+        validation="error",
+    )
+    table.set_pretty_json(True)
+    table.put({"id": "present"})
+    table._remove_record_from_load("present")
+
+    with patch("virtuus._python.table.os.listdir", side_effect=OSError("blocked")):
+        try:
+            table.load_from_dir()
+        except IoError:
+            pass
+        else:
+            raise AssertionError("expected an IoError from listdir")
+
+    unreadable = directory / "unreadable.json"
+    unreadable.write_text('{"id": "unreadable"}')
+    with patch("builtins.open", side_effect=OSError("blocked")):
+        try:
+            table.load_from_dir()
+        except IoError:
+            pass
+        else:
+            raise AssertionError("expected an IoError from open")
+    table.validation = "warn"
+    with patch("builtins.open", side_effect=OSError("blocked")):
+        table.load_from_dir()
+    assert table.warnings
+
+    unreadable.write_text("not json")
+    table.validation = "error"
+    try:
+        table.load_from_dir()
+    except ParseError:
+        pass
+    else:
+        raise AssertionError("expected a ParseError from invalid JSON")
+    table.validation = "warn"
+    table.load_from_dir()
+    assert len(table.warnings) > 1
+
+    with patch("virtuus._python.table.os.makedirs", side_effect=OSError("blocked")):
+        try:
+            table._write_record_to_disk("write-error", {"id": "write-error"})
+        except IoError:
+            pass
+        else:
+            raise AssertionError("expected an IoError from makedirs")
+
+    deleted = directory / "delete-error.json"
+    deleted.write_text('{"id": "delete-error"}')
+    with patch("virtuus._python.table.os.remove", side_effect=OSError("blocked")):
+        try:
+            table._delete_record_from_disk("delete-error")
+        except IoError:
+            pass
+        else:
+            raise AssertionError("expected an IoError from remove")
+
+    with patch(
+        "virtuus._python.table.tempfile.mkstemp", side_effect=OSError("blocked")
+    ):
+        try:
+            table._write_json_atomic(str(directory / "atomic-error.json"), {"id": "x"})
+        except IoError:
+            pass
+        else:
+            raise AssertionError("expected an IoError from mkstemp")
