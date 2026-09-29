@@ -184,10 +184,6 @@ fn select_values(record: &Value, selector: &str) -> Vec<Value> {
     current
 }
 
-fn get_field(record: &Value, key: &str) -> Option<Value> {
-    select_values(record, key).into_iter().next()
-}
-
 fn partition_key(value: &Value) -> String {
     serde_json::to_string(value).unwrap_or_else(|_| format!("\"{}\"", value))
 }
@@ -443,7 +439,7 @@ mod tests {
     }
 
     #[test]
-    fn get_field_non_object_returns_none() {
-        assert!(get_field(&json!(["array"]), "foo").is_none());
+    fn selecting_missing_field_from_non_object_returns_empty() {
+        assert!(select_values(&json!(["array"]), "foo").is_empty());
     }
 }
