@@ -40,6 +40,8 @@ pub struct TableSpec {
     pub indexes: Vec<IndexSpec>,
     #[serde(default)]
     pub pretty_json: bool,
+    #[serde(default)]
+    pub validation: Option<String>,
     #[serde(default = "default_reconcile_seconds")]
     pub reconcile_seconds: u64,
 }
@@ -79,13 +81,19 @@ impl Service {
         if self.tables.contains_key(&handle) {
             return Ok(handle);
         }
+        let validation = match spec.validation.as_deref() {
+            Some("silent") => ValidationMode::Silent,
+            Some("warn") => ValidationMode::Warn,
+            Some("error") | None => ValidationMode::Error,
+            Some(value) => return Err(format!("invalid validation mode: {value}")),
+        };
         let mut table = Table::new(
             &spec.name,
             Some(&spec.primary_key),
             None,
             None,
             Some(spec.directory.clone()),
-            ValidationMode::Error,
+            validation,
         )
         .map_err(|error| error.to_string())?;
         table.set_storage_mode(StorageMode::Memory);

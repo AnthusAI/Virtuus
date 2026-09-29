@@ -42,7 +42,7 @@ class Service:
             spec["name"],
             primary_key=spec["primary_key"],
             directory=str(spec["directory"]),
-            validation="error",
+            validation=str(spec.get("validation", "error")),
             storage="memory",
             check_interval=int(spec.get("reconcile_seconds", 2)),
             pretty_json=bool(spec.get("pretty_json", False)),
