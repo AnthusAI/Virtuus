@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, TypedDict
 
 from virtuus._python.gsi import GSI
-from virtuus.errors import UnknownIndexError, ValidationError
+from virtuus.errors import IoError, ParseError, UnknownIndexError, ValidationError
 
 
 @dataclass(frozen=True)
@@ -575,7 +575,10 @@ class Table:
             raise ValidationError("directory is required")
         if not os.path.exists(target):
             return
-        names = [name for name in os.listdir(target) if name.endswith(".json")]
+        try:
+            names = [name for name in os.listdir(target) if name.endswith(".json")]
+        except OSError as error:
+            raise IoError(target, str(error)) from error
         verbose_load = os.getenv("VIRTUUS_BENCH_VERBOSE_LOAD") == "1"
         if verbose_load:
             print(
@@ -593,8 +596,13 @@ class Table:
             search_loaded = self._load_search_index_if_fresh(current_manifest)
         for idx, name in enumerate(names, 1):
             path = os.path.join(target, name)
-            with open(path, "r", encoding="utf-8") as handle:
-                record = json.load(handle)
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    record = json.load(handle)
+            except OSError as error:
+                raise IoError(path, str(error)) from error
+            except json.JSONDecodeError as error:
+                raise ParseError(path, str(error)) from error
             self._insert_record_from_load(record, not search_loaded)
             pk = self._extract_pk_quiet(record)
             if pk is not None:
@@ -831,7 +839,10 @@ class Table:
 
     def _write_record_to_disk(self, pk: Any, record: dict[str, Any]) -> None:
         self._validate_pk_for_path(pk)
-        os.makedirs(self.directory, exist_ok=True)
+        try:
+            os.makedirs(self.directory, exist_ok=True)
+        except OSError as error:
+            raise IoError(str(self.directory), str(error)) from error
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         self._write_json_atomic(path, record)
@@ -854,7 +865,10 @@ class Table:
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         if os.path.exists(path):
-            os.remove(path)
+            try:
+                os.remove(path)
+            except OSError as error:
+                raise IoError(path, str(error)) from error
         self._manifest.pop(filename, None)
         self._record_keys.pop(filename, None)
         self._last_dir_mtime = self._dir_mtime()
@@ -870,11 +884,17 @@ class Table:
 
     def _write_json_atomic(self, path: str, record: dict[str, Any]) -> None:
         directory = os.path.dirname(path)
-        fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".tmp")
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump(record, handle, indent=2 if self.pretty_json else None)
-            os.replace(temp_path, path)
+            fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".tmp")
+        except OSError as error:
+            raise IoError(directory, str(error)) from error
+        try:
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    json.dump(record, handle, indent=2 if self.pretty_json else None)
+                os.replace(temp_path, path)
+            except OSError as error:
+                raise IoError(path, str(error)) from error
             self.last_write_used_atomic = True
         finally:
             if os.path.exists(temp_path):

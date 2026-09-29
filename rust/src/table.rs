@@ -5,8 +5,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[cfg(feature = "parallel")]
-use rayon::prelude::*;
 use serde_json::Value;
 
 use crate::error::{Error, Result};
@@ -204,9 +202,14 @@ impl Table {
 
     /// Insert or update a record.
     pub fn put(&mut self, record: Value) {
+        self.try_put(record).expect("persist record");
+    }
+
+    /// Insert or update a record, returning persistence failures to the caller.
+    pub fn try_put(&mut self, record: Value) -> Result<()> {
         let key = match self.extract_key(&record) {
             Some(key) => key,
-            None => return,
+            None => return Ok(()),
         };
         self.validate_gsi_fields(&record);
         if let Some(existing) = self.lookup_existing_record(&key) {
@@ -219,11 +222,12 @@ impl Table {
         self.index_in_gsis(&key, &record);
         self.index_in_search(&key, &record);
         if let Some(dir) = self.directory.clone() {
-            self.write_record(&dir, &key, &record);
+            self.write_record(&dir, &key, &record)?;
         }
         let hooks = self.on_put.as_slice();
         let hook_errors = &mut self.hook_errors;
         Self::fire_hooks(hooks, hook_errors, &record);
+        Ok(())
     }
 
     fn insert_record_from_load(&mut self, record: Value, index_search: bool) {
@@ -259,6 +263,11 @@ impl Table {
 
     /// Delete a record by primary key.
     pub fn delete(&mut self, pk: &str, sort: Option<&str>) {
+        self.try_delete(pk, sort).expect("delete persisted record");
+    }
+
+    /// Delete a record, returning persistence failures to the caller.
+    pub fn try_delete(&mut self, pk: &str, sort: Option<&str>) -> Result<()> {
         let key = self.compose_key(pk, sort);
         let record = match self.storage_mode {
             StorageMode::Memory => self.records.remove(&key),
@@ -272,8 +281,9 @@ impl Table {
             Self::fire_hooks(hooks, hook_errors, &record);
         }
         if let Some(dir) = self.directory.clone() {
-            self.delete_record(&dir, &key);
+            self.delete_record(&dir, &key)?;
         }
+        Ok(())
     }
 
     /// Return all records.
@@ -706,18 +716,26 @@ impl Table {
 
     /// Load records from directory.
     pub fn load_from_dir(&mut self, directory: Option<PathBuf>) {
+        self.try_load_from_dir(directory)
+            .expect("load records from directory");
+    }
+
+    /// Load records from disk and return I/O and JSON parsing failures.
+    pub fn try_load_from_dir(&mut self, directory: Option<PathBuf>) -> Result<()> {
         let dir = directory.or_else(|| self.directory.clone());
-        let dir = match dir {
-            Some(d) => d,
-            None => panic!("directory is required"),
-        };
+        let dir = dir.ok_or_else(|| Error::Validation {
+            message: "directory is required".to_string(),
+        })?;
         if !dir.exists() {
-            return;
+            return Ok(());
         }
         let paths: Vec<PathBuf> = fs::read_dir(&dir)
-            .expect("read_dir failed")
+            .map_err(|error| Error::Io {
+                path: dir.display().to_string(),
+                message: error.to_string(),
+            })?
             .filter_map(|entry| {
-                let entry = entry.expect("dir entry");
+                let entry = entry.ok()?;
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) != Some("json") {
                     return None;
@@ -765,42 +783,24 @@ impl Table {
             }
             search_loaded = self.load_search_index_if_fresh(&dir, &current_manifest);
         }
-        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = {
-            #[cfg(feature = "parallel")]
-            {
-                paths
-                    .par_iter()
-                    .map(|path| {
-                        let data = fs::read_to_string(path).expect("read file");
-                        let record: Value = serde_json::from_str(&data).expect("parse json");
-                        let mtime = fs::metadata(path)
-                            .ok()
-                            .and_then(|meta| meta.modified().ok());
-                        let name = path
-                            .file_name()
-                            .map(|value| value.to_string_lossy().to_string());
-                        (record, name, mtime)
-                    })
-                    .collect()
-            }
-            #[cfg(not(feature = "parallel"))]
-            {
-                paths
-                    .iter()
-                    .map(|path| {
-                        let data = fs::read_to_string(path).expect("read file");
-                        let record: Value = serde_json::from_str(&data).expect("parse json");
-                        let mtime = fs::metadata(path)
-                            .ok()
-                            .and_then(|meta| meta.modified().ok());
-                        let name = path
-                            .file_name()
-                            .map(|value| value.to_string_lossy().to_string());
-                        (record, name, mtime)
-                    })
-                    .collect()
-            }
-        };
+        let mut parsed = Vec::with_capacity(paths.len());
+        for path in &paths {
+            let data = fs::read_to_string(path).map_err(|error| Error::Io {
+                path: path.display().to_string(),
+                message: error.to_string(),
+            })?;
+            let record: Value = serde_json::from_str(&data).map_err(|error| Error::Parse {
+                path: path.display().to_string(),
+                message: error.to_string(),
+            })?;
+            let mtime = fs::metadata(path)
+                .ok()
+                .and_then(|meta| meta.modified().ok());
+            let name = path
+                .file_name()
+                .map(|value| value.to_string_lossy().to_string());
+            parsed.push((record, name, mtime));
+        }
         for (record, name, _) in parsed {
             self.insert_record_from_load(record.clone(), !search_loaded);
             if let (Some(name), Some(key)) = (name, self.extract_key_silent(&record)) {
@@ -814,6 +814,7 @@ impl Table {
         if self.search_enabled() && !search_loaded {
             let _ = self.persist_search_index(&dir, &self.manifest);
         }
+        Ok(())
     }
 
     /// Export records to directory.
@@ -1211,12 +1212,15 @@ impl Table {
         }
     }
 
-    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) {
-        self.validate_pk_for_path(key);
-        fs::create_dir_all(directory).expect("create directory");
+    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let filename = self.filename_for_key(key);
         let path = directory.join(filename);
-        self.write_json_atomic(&path, record);
+        self.try_write_json_atomic(&path, record)?;
         let filename = path.file_name().unwrap().to_string_lossy().to_string();
         if let Ok(meta) = fs::metadata(&path) {
             if let Ok(mtime) = meta.modified() {
@@ -1225,30 +1229,43 @@ impl Table {
                 self.last_dir_mtime = self.dir_mtime();
             }
         }
+        Ok(())
     }
 
-    fn delete_record(&mut self, directory: &Path, key: &TableKey) {
-        self.validate_pk_for_path(key);
+    fn delete_record(&mut self, directory: &Path, key: &TableKey) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
         let filename = self.filename_for_key(key);
         let path = directory.join(&filename);
         if path.exists() {
-            fs::remove_file(path).expect("remove file");
+            fs::remove_file(&path).map_err(|error| Error::Io {
+                path: path.display().to_string(),
+                message: error.to_string(),
+            })?;
         }
         self.manifest.remove(&filename);
         self.record_keys.remove(&filename);
         self.last_dir_mtime = self.dir_mtime();
+        Ok(())
     }
 
     fn validate_pk_for_path(&self, key: &TableKey) {
+        self.try_validate_pk_for_path(key)
+            .expect("valid PK characters");
+    }
+
+    fn try_validate_pk_for_path(&self, key: &TableKey) -> Result<()> {
         let parts = match key {
             TableKey::Simple(pk) => vec![pk.as_str()],
             TableKey::Composite(partition, sort) => vec![partition.as_str(), sort.as_str()],
         };
         for part in parts {
             if part.contains('/') || part.contains('\\') {
-                panic!("invalid PK characters");
+                return Err(Error::Validation {
+                    message: "invalid PK characters".to_string(),
+                });
             }
         }
+        Ok(())
     }
 
     fn remove_record_from_load(&mut self, key: &TableKey) {
@@ -1263,8 +1280,16 @@ impl Table {
     }
 
     fn write_json_atomic(&mut self, path: &Path, record: &Value) {
+        self.try_write_json_atomic(path, record)
+            .expect("write JSON atomically");
+    }
+
+    fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
         let directory = path.parent().expect("parent dir");
-        fs::create_dir_all(directory).expect("create dir");
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let temp_name = format!(
             ".tmp_{}",
             std::time::SystemTime::now()
@@ -1278,10 +1303,20 @@ impl Table {
         } else {
             serde_json::to_vec(record)
         }
-        .expect("serialize json");
-        fs::write(&temp_path, payload).expect("write temp");
-        fs::rename(&temp_path, path).expect("rename");
+        .map_err(|error| Error::Parse {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        fs::write(&temp_path, payload).map_err(|error| Error::Io {
+            path: temp_path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        fs::rename(&temp_path, path).map_err(|error| Error::Io {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        })?;
         self.last_write_used_atomic = true;
+        Ok(())
     }
 
     fn register_association(&mut self, name: &str, association: Association) {

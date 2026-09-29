@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from virtuus import Table
+from virtuus.errors import VirtuusError
 
 PROTOCOL_VERSION = "1.0"
 
@@ -98,7 +99,7 @@ class Service:
                 else:
                     raise ValueError(f"unknown action: {action}")
             return {"ok": True, "result": result}
-        except (KeyError, ValueError, TypeError) as error:
+        except (KeyError, ValueError, TypeError, VirtuusError) as error:
             return {"ok": False, "error": str(error)}
 
 

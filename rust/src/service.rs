@@ -96,7 +96,9 @@ impl Service {
         for index in spec.indexes {
             table.add_gsi(&index.name, &index.partition_key, index.sort_key.as_deref());
         }
-        table.load_from_dir(None);
+        table
+            .try_load_from_dir(None)
+            .map_err(|error| error.to_string())?;
         self.tables.insert(
             handle.clone(),
             ResidentTable {
@@ -141,16 +143,20 @@ impl Service {
             }),
             "put" => self.with_table(&request, |table| {
                 let record = request.get("record").cloned().ok_or("missing record")?;
-                table.put(record); Ok(Value::Null)
+                table.try_put(record).map_err(|error| error.to_string())?;
+                Ok(Value::Null)
             }),
             "put_many" => self.with_table(&request, |table| {
                 let records = request.get("records").and_then(Value::as_array).ok_or("missing records")?;
-                for record in records { table.put(record.clone()); }
+                for record in records {
+                    table.try_put(record.clone()).map_err(|error| error.to_string())?;
+                }
                 Ok(json!({"count": records.len()}))
             }),
             "delete" => self.with_table(&request, |table| {
                 let pk = request.get("pk").and_then(Value::as_str).ok_or("missing pk")?;
-                table.delete(pk, None); Ok(Value::Null)
+                table.try_delete(pk, None).map_err(|error| error.to_string())?;
+                Ok(Value::Null)
             }),
             "refresh" => self.with_table(&request, |table| {
                 let summary = table.refresh();
@@ -166,7 +172,7 @@ impl Service {
 
     fn with_table<F>(&mut self, request: &Value, operation: F) -> Result<Value, String>
     where
-        F: FnOnce(&mut Table) -> Result<Value, &'static str>,
+        F: FnOnce(&mut Table) -> Result<Value, String>,
     {
         let handle = request
             .get("handle")
@@ -174,7 +180,7 @@ impl Service {
             .ok_or("missing handle")?
             .to_string();
         let resident = self.table(&handle)?;
-        operation(&mut resident.table).map_err(str::to_string)
+        operation(&mut resident.table)
     }
 }
 
