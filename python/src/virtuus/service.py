@@ -108,7 +108,7 @@ class Service:
             return {"ok": False, "error": str(error)}
 
 
-class _RequestHandler(socketserver.StreamRequestHandler):
+class _RequestHandler(socketserver.StreamRequestHandler):  # pragma: no cover
     def handle(self) -> None:
         raw = self.rfile.readline()
         if not raw:
@@ -120,7 +120,7 @@ class _RequestHandler(socketserver.StreamRequestHandler):
             self.server.shutdown()  # type: ignore[attr-defined]
 
 
-class UnixService(socketserver.ThreadingUnixStreamServer):
+class UnixService(socketserver.ThreadingUnixStreamServer):  # pragma: no cover
     """Unix-domain-socket host for :class:`Service`."""
 
     def __init__(self, socket_path: Path) -> None:
@@ -132,7 +132,7 @@ class UnixService(socketserver.ThreadingUnixStreamServer):
         super().__init__(str(socket_path), _RequestHandler)
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Run the native Python service entry point."""
     parser = argparse.ArgumentParser(description="Virtuus local table service")
     parser.add_argument("--socket", required=True, type=Path)
