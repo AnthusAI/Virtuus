@@ -1326,8 +1326,6 @@ impl Table {
             .expect("write JSON atomically");
     }
 
-    #[allow(unexpected_cfgs)]
-    #[cfg_attr(tarpaulin, skip)]
     fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
         let directory = path.parent().expect("parent dir");
         fs::create_dir_all(directory).map_err(|error| Error::Io {
@@ -1347,19 +1345,21 @@ impl Table {
         } else {
             serde_json::to_vec(record)
         }
-        .map_err(|error| Error::Parse {
-            path: path.display().to_string(),
-            message: error.to_string(),
-        })?;
-        fs::write(&temp_path, payload).map_err(|error| Error::Io {
+        .expect("serialize JSON value");
+        Self::write_atomic_payload(path, &temp_path, &payload)?;
+        self.last_write_used_atomic = true;
+        Ok(())
+    }
+
+    fn write_atomic_payload(path: &Path, temp_path: &Path, payload: &[u8]) -> Result<()> {
+        fs::write(temp_path, payload).map_err(|error| Error::Io {
             path: temp_path.display().to_string(),
             message: error.to_string(),
         })?;
-        fs::rename(&temp_path, path).map_err(|error| Error::Io {
+        fs::rename(temp_path, path).map_err(|error| Error::Io {
             path: path.display().to_string(),
             message: error.to_string(),
         })?;
-        self.last_write_used_atomic = true;
         Ok(())
     }
 
@@ -3211,6 +3211,20 @@ mod tests {
         ));
         assert!(matches!(
             table.try_write_json_atomic(&blocked.join("x.json"), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let write_error = root.join("write-error");
+        fs::create_dir_all(&write_error).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&root.join("target.json"), &write_error, b"x"),
+            Err(Error::Io { .. })
+        ));
+        let rename_source = root.join("rename-source");
+        fs::write(&rename_source, b"x").unwrap();
+        let rename_target = root.join("rename-target");
+        fs::create_dir_all(&rename_target).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&rename_target, &rename_source, b"x"),
             Err(Error::Io { .. })
         ));
         fs::remove_dir_all(root).unwrap();
