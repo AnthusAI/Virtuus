@@ -353,6 +353,18 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    fn unix_socket_service_reports_existing_directory_error() {
+        let path = std::env::temp_dir().join(format!(
+            "virtuus-service-existing-dir-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&path).unwrap();
+        assert!(serve(&path).is_err());
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn unix_socket_service_answers_and_stops() {
         use std::io::{BufRead, BufReader, Write};
         use std::os::unix::net::UnixStream;

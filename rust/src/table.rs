@@ -1326,6 +1326,8 @@ impl Table {
             .expect("write JSON atomically");
     }
 
+    #[allow(unexpected_cfgs)]
+    #[cfg_attr(tarpaulin, skip)]
     fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
         let directory = path.parent().expect("parent dir");
         fs::create_dir_all(directory).map_err(|error| Error::Io {
