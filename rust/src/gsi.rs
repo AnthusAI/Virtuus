@@ -53,40 +53,37 @@ impl Gsi {
 
     /// Insert a record into the index.
     pub fn put(&mut self, pk: &str, record: &Value) {
-        let partition_value = match get_field(record, &self.partition_key) {
-            Some(value) => value,
-            None => return,
-        };
         let sort_value = self.extract_sort_value(record);
         if self.sort_key.is_some() && sort_value.is_none() {
             return;
         }
-        let key = partition_key(&partition_value);
-        let bucket = self.buckets.entry(key).or_default();
-        bucket.push(GsiEntry {
-            pk: pk.to_string(),
-            sort_value,
-        });
+        for partition_value in select_values(record, &self.partition_key) {
+            let key = partition_key(&partition_value);
+            let bucket = self.buckets.entry(key).or_default();
+            bucket.push(GsiEntry {
+                pk: pk.to_string(),
+                sort_value: sort_value.clone(),
+            });
+        }
     }
 
     /// Remove a record from the index.
     pub fn remove(&mut self, pk: &str, record: &Value) {
-        let partition_value = match get_field(record, &self.partition_key) {
-            Some(value) => value,
-            None => return,
-        };
         let sort_value = self.extract_sort_value(record);
         if self.sort_key.is_some() && sort_value.is_none() {
             return;
         }
-        let key = partition_key(&partition_value);
-        let bucket = match self.buckets.get_mut(&key) {
-            Some(bucket) => bucket,
-            None => return,
-        };
-        bucket.retain(|entry| !(entry.pk == pk && entry.sort_value == sort_value));
-        if bucket.is_empty() {
-            self.buckets.remove(&key);
+        for partition_value in select_values(record, &self.partition_key) {
+            let key = partition_key(&partition_value);
+            let remove_bucket = if let Some(bucket) = self.buckets.get_mut(&key) {
+                bucket.retain(|entry| !(entry.pk == pk && entry.sort_value == sort_value));
+                bucket.is_empty()
+            } else {
+                false
+            };
+            if remove_bucket {
+                self.buckets.remove(&key);
+            }
         }
     }
 
@@ -140,15 +137,51 @@ impl Gsi {
 
     fn extract_sort_value(&self, record: &Value) -> Option<Value> {
         let sort_key = self.sort_key.as_ref()?;
-        get_field(record, sort_key)
+        select_values(record, sort_key).into_iter().next()
     }
 }
 
-fn get_field(record: &Value, key: &str) -> Option<Value> {
-    match record {
-        Value::Object(map) => map.get(key).cloned(),
-        _ => None,
+/// Select scalar values with dot paths, array wildcards, and array filters.
+/// Examples: `labels[*]` and `dependencies[dependency_type=blocked-by].target`.
+fn select_values(record: &Value, selector: &str) -> Vec<Value> {
+    let mut current = vec![record.clone()];
+    for segment in selector.split('.') {
+        let (field, filter) = match segment.split_once('[') {
+            Some((field, rest)) => (field, Some(rest.trim_end_matches(']'))),
+            None => (segment, None),
+        };
+        let mut next = Vec::new();
+        for value in current {
+            let Some(field_value) = value.get(field) else {
+                continue;
+            };
+            match filter {
+                None => next.push(field_value.clone()),
+                Some("*") => {
+                    if let Value::Array(items) = field_value {
+                        next.extend(items.clone());
+                    }
+                }
+                Some(condition) => {
+                    let Some((key, expected)) = condition.split_once('=') else {
+                        continue;
+                    };
+                    if let Value::Array(items) = field_value {
+                        next.extend(
+                            items
+                                .iter()
+                                .filter(|item| {
+                                    item.get(key).and_then(Value::as_str) == Some(expected)
+                                })
+                                .cloned(),
+                        );
+                    }
+                }
+            }
+        }
+        current = next;
     }
+    current
 }
 
 fn partition_key(value: &Value) -> String {
@@ -180,6 +213,22 @@ mod tests {
         gsi.put("user-1", &json!({"status": "active"}));
         let result = gsi.query(&json!("active"), None, false);
         assert_eq!(result, vec!["user-1".to_string()]);
+    }
+
+    #[test]
+    fn indexes_array_and_filtered_nested_values() {
+        let record = json!({"labels":["a","b"],"dependencies":[{"dependency_type":"blocked-by","target":"one"},{"dependency_type":"blocks","target":"two"}]});
+        let mut labels = Gsi::new("labels", "labels[*]", None);
+        labels.put("issue", &record);
+        assert_eq!(labels.query(&json!("b"), None, false), vec!["issue"]);
+        let mut blocked = Gsi::new(
+            "blocked",
+            "dependencies[dependency_type=blocked-by].target",
+            None,
+        );
+        blocked.put("issue", &record);
+        assert_eq!(blocked.query(&json!("one"), None, false), vec!["issue"]);
+        assert!(blocked.query(&json!("two"), None, false).is_empty());
     }
 
     #[test]
@@ -390,7 +439,7 @@ mod tests {
     }
 
     #[test]
-    fn get_field_non_object_returns_none() {
-        assert!(get_field(&json!(["array"]), "foo").is_none());
+    fn selecting_missing_field_from_non_object_returns_empty() {
+        assert!(select_values(&json!(["array"]), "foo").is_empty());
     }
 }

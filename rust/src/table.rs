@@ -5,8 +5,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[cfg(feature = "parallel")]
-use rayon::prelude::*;
 use serde_json::Value;
 
 use crate::error::{Error, Result};
@@ -64,6 +62,7 @@ pub struct Table {
     on_delete: Vec<Hook>,
     on_refresh: Vec<Hook>,
     last_write_used_atomic: bool,
+    pretty_json: bool,
     associations: Vec<String>,
     check_interval: Duration,
     auto_refresh: bool,
@@ -176,6 +175,7 @@ impl Table {
             on_delete: Vec::new(),
             on_refresh: Vec::new(),
             last_write_used_atomic: false,
+            pretty_json: false,
             associations: Vec::new(),
             check_interval: Duration::from_secs(0),
             auto_refresh: true,
@@ -202,9 +202,14 @@ impl Table {
 
     /// Insert or update a record.
     pub fn put(&mut self, record: Value) {
+        self.try_put(record).expect("persist record");
+    }
+
+    /// Insert or update a record, returning persistence failures to the caller.
+    pub fn try_put(&mut self, record: Value) -> Result<()> {
         let key = match self.extract_key(&record) {
             Some(key) => key,
-            None => return,
+            None => return Ok(()),
         };
         self.validate_gsi_fields(&record);
         if let Some(existing) = self.lookup_existing_record(&key) {
@@ -217,11 +222,12 @@ impl Table {
         self.index_in_gsis(&key, &record);
         self.index_in_search(&key, &record);
         if let Some(dir) = self.directory.clone() {
-            self.write_record(&dir, &key, &record);
+            self.write_record(&dir, &key, &record)?;
         }
         let hooks = self.on_put.as_slice();
         let hook_errors = &mut self.hook_errors;
         Self::fire_hooks(hooks, hook_errors, &record);
+        Ok(())
     }
 
     fn insert_record_from_load(&mut self, record: Value, index_search: bool) {
@@ -257,6 +263,11 @@ impl Table {
 
     /// Delete a record by primary key.
     pub fn delete(&mut self, pk: &str, sort: Option<&str>) {
+        self.try_delete(pk, sort).expect("delete persisted record");
+    }
+
+    /// Delete a record, returning persistence failures to the caller.
+    pub fn try_delete(&mut self, pk: &str, sort: Option<&str>) -> Result<()> {
         let key = self.compose_key(pk, sort);
         let record = match self.storage_mode {
             StorageMode::Memory => self.records.remove(&key),
@@ -270,8 +281,9 @@ impl Table {
             Self::fire_hooks(hooks, hook_errors, &record);
         }
         if let Some(dir) = self.directory.clone() {
-            self.delete_record(&dir, &key);
+            self.delete_record(&dir, &key)?;
         }
+        Ok(())
     }
 
     /// Return all records.
@@ -436,6 +448,16 @@ impl Table {
     /// Return whether the last write used atomic rename.
     pub fn last_write_used_atomic(&self) -> bool {
         self.last_write_used_atomic
+    }
+
+    /// Configure whether persisted JSON uses human-readable indentation.
+    pub fn set_pretty_json(&mut self, enabled: bool) {
+        self.pretty_json = enabled;
+    }
+
+    /// Return whether persisted JSON uses human-readable indentation.
+    pub fn pretty_json(&self) -> bool {
+        self.pretty_json
     }
 
     /// Register an association name for describe output only.
@@ -603,10 +625,14 @@ impl Table {
                 }
             }
         }
+        let dir_mtime = self.dir_mtime();
+        // Directory metadata catches additions and removals without walking every
+        // record. A caller can still request force_scan for periodic reconciliation
+        // of in-place edits, which do not change directory mtime on every platform.
         let (summary, _, _, _) = self.compute_changes();
         self.last_check_time = Some(now);
         self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
-        self.last_dir_mtime = self.dir_mtime();
+        self.last_dir_mtime = dir_mtime;
         self.last_is_stale
     }
 
@@ -627,20 +653,22 @@ impl Table {
         let mut reread = 0;
         for path in added.iter().chain(modified.iter()) {
             if let Some(record) = self.read_record(path) {
-                self.put(record);
+                // A refresh observes external files. It must never route through put(),
+                // which persists and would rewrite a user's formatting.
+                if let (Some(name), Some(key)) = (
+                    path.file_name()
+                        .map(|name| name.to_string_lossy().to_string()),
+                    self.extract_key_silent(&record),
+                ) {
+                    self.record_keys.insert(name, key_to_string(&key));
+                }
+                self.insert_record_from_load(record, true);
                 reread += 1;
             }
         }
         for path in deleted {
             if let Some(key) = self.key_from_filename(path) {
-                match key {
-                    TableKey::Simple(pk) => {
-                        self.delete(&pk, None);
-                    }
-                    TableKey::Composite(partition, sort) => {
-                        self.delete(&partition, Some(&sort));
-                    }
-                }
+                self.remove_record_from_load(&key);
             }
         }
         self.manifest = self
@@ -690,18 +718,26 @@ impl Table {
 
     /// Load records from directory.
     pub fn load_from_dir(&mut self, directory: Option<PathBuf>) {
+        self.try_load_from_dir(directory)
+            .expect("load records from directory");
+    }
+
+    /// Load records from disk and return I/O and JSON parsing failures.
+    pub fn try_load_from_dir(&mut self, directory: Option<PathBuf>) -> Result<()> {
         let dir = directory.or_else(|| self.directory.clone());
-        let dir = match dir {
-            Some(d) => d,
-            None => panic!("directory is required"),
-        };
+        let dir = dir.ok_or_else(|| Error::Validation {
+            message: "directory is required".to_string(),
+        })?;
         if !dir.exists() {
-            return;
+            return Ok(());
         }
         let paths: Vec<PathBuf> = fs::read_dir(&dir)
-            .expect("read_dir failed")
+            .map_err(|error| Error::Io {
+                path: dir.display().to_string(),
+                message: error.to_string(),
+            })?
             .filter_map(|entry| {
-                let entry = entry.expect("dir entry");
+                let entry = entry.ok()?;
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) != Some("json") {
                     return None;
@@ -749,42 +785,51 @@ impl Table {
             }
             search_loaded = self.load_search_index_if_fresh(&dir, &current_manifest);
         }
-        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = {
-            #[cfg(feature = "parallel")]
-            {
-                paths
-                    .par_iter()
-                    .map(|path| {
-                        let data = fs::read_to_string(path).expect("read file");
-                        let record: Value = serde_json::from_str(&data).expect("parse json");
-                        let mtime = fs::metadata(path)
-                            .ok()
-                            .and_then(|meta| meta.modified().ok());
-                        let name = path
-                            .file_name()
-                            .map(|value| value.to_string_lossy().to_string());
-                        (record, name, mtime)
-                    })
-                    .collect()
-            }
-            #[cfg(not(feature = "parallel"))]
-            {
-                paths
-                    .iter()
-                    .map(|path| {
-                        let data = fs::read_to_string(path).expect("read file");
-                        let record: Value = serde_json::from_str(&data).expect("parse json");
-                        let mtime = fs::metadata(path)
-                            .ok()
-                            .and_then(|meta| meta.modified().ok());
-                        let name = path
-                            .file_name()
-                            .map(|value| value.to_string_lossy().to_string());
-                        (record, name, mtime)
-                    })
-                    .collect()
-            }
-        };
+        let mut parsed = Vec::with_capacity(paths.len());
+        for path in &paths {
+            let path_text = path.display().to_string();
+            let data = match fs::read_to_string(path) {
+                Ok(data) => data,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Io {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to read {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
+            let record: Value = match serde_json::from_str(&data) {
+                Ok(record) => record,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Parse {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to parse {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
+            let mtime = fs::metadata(path)
+                .ok()
+                .and_then(|meta| meta.modified().ok());
+            let name = path
+                .file_name()
+                .map(|value| value.to_string_lossy().to_string());
+            parsed.push((record, name, mtime));
+        }
         for (record, name, _) in parsed {
             self.insert_record_from_load(record.clone(), !search_loaded);
             if let (Some(name), Some(key)) = (name, self.extract_key_silent(&record)) {
@@ -798,6 +843,7 @@ impl Table {
         if self.search_enabled() && !search_loaded {
             let _ = self.persist_search_index(&dir, &self.manifest);
         }
+        Ok(())
     }
 
     /// Export records to directory.
@@ -930,11 +976,18 @@ impl Table {
 
     fn read_record_by_key(&self, key: &TableKey) -> Option<Value> {
         let dir = self.directory.as_ref()?;
-        let filename = self.filename_for_key(key);
-        if self.storage_mode == StorageMode::IndexOnly && !self.record_keys.contains_key(&filename)
-        {
-            return None;
-        }
+        let expected_filename = self.filename_for_key(key);
+        let filename = if self.storage_mode == StorageMode::IndexOnly {
+            if self.record_keys.contains_key(&expected_filename) {
+                expected_filename
+            } else {
+                self.record_keys.iter().find_map(|(name, record_key)| {
+                    (record_key == &key_to_string(key)).then(|| name.clone())
+                })?
+            }
+        } else {
+            expected_filename
+        };
         let path = dir.join(filename);
         fs::read_to_string(&path)
             .ok()
@@ -1166,11 +1219,17 @@ impl Table {
             })
             .collect();
         for (partition_key, sort_key) in fields {
-            if record.get(&partition_key).is_none() {
+            if !partition_key.contains('[')
+                && !partition_key.contains('.')
+                && record.get(&partition_key).is_none()
+            {
                 let _ = self.handle_validation(&format!("missing GSI field {partition_key}"));
             }
             if let Some(sort_key) = sort_key {
-                if record.get(&sort_key).is_none() {
+                if !sort_key.contains('[')
+                    && !sort_key.contains('.')
+                    && record.get(&sort_key).is_none()
+                {
                     let _ = self.handle_validation(&format!("missing GSI field {sort_key}"));
                 }
             }
@@ -1195,12 +1254,15 @@ impl Table {
         }
     }
 
-    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) {
-        self.validate_pk_for_path(key);
-        fs::create_dir_all(directory).expect("create directory");
+    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let filename = self.filename_for_key(key);
         let path = directory.join(filename);
-        self.write_json_atomic(&path, record);
+        self.try_write_json_atomic(&path, record)?;
         let filename = path.file_name().unwrap().to_string_lossy().to_string();
         if let Ok(meta) = fs::metadata(&path) {
             if let Ok(mtime) = meta.modified() {
@@ -1209,35 +1271,67 @@ impl Table {
                 self.last_dir_mtime = self.dir_mtime();
             }
         }
+        Ok(())
     }
 
-    fn delete_record(&mut self, directory: &Path, key: &TableKey) {
-        self.validate_pk_for_path(key);
+    fn delete_record(&mut self, directory: &Path, key: &TableKey) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
         let filename = self.filename_for_key(key);
         let path = directory.join(&filename);
         if path.exists() {
-            fs::remove_file(path).expect("remove file");
+            fs::remove_file(&path).map_err(|error| Error::Io {
+                path: path.display().to_string(),
+                message: error.to_string(),
+            })?;
         }
         self.manifest.remove(&filename);
         self.record_keys.remove(&filename);
         self.last_dir_mtime = self.dir_mtime();
+        Ok(())
     }
 
     fn validate_pk_for_path(&self, key: &TableKey) {
+        self.try_validate_pk_for_path(key)
+            .expect("valid PK characters");
+    }
+
+    fn try_validate_pk_for_path(&self, key: &TableKey) -> Result<()> {
         let parts = match key {
             TableKey::Simple(pk) => vec![pk.as_str()],
             TableKey::Composite(partition, sort) => vec![partition.as_str(), sort.as_str()],
         };
         for part in parts {
             if part.contains('/') || part.contains('\\') {
-                panic!("invalid PK characters");
+                return Err(Error::Validation {
+                    message: "invalid PK characters".to_string(),
+                });
             }
+        }
+        Ok(())
+    }
+
+    fn remove_record_from_load(&mut self, key: &TableKey) {
+        let record = match self.storage_mode {
+            StorageMode::Memory => self.records.remove(key),
+            StorageMode::IndexOnly => self.read_record_by_key(key),
+        };
+        if let Some(record) = record {
+            self.remove_from_gsis(key, &record);
+            self.remove_from_search(key, &record);
         }
     }
 
     fn write_json_atomic(&mut self, path: &Path, record: &Value) {
+        self.try_write_json_atomic(path, record)
+            .expect("write JSON atomically");
+    }
+
+    fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
         let directory = path.parent().expect("parent dir");
-        fs::create_dir_all(directory).expect("create dir");
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let temp_name = format!(
             ".tmp_{}",
             std::time::SystemTime::now()
@@ -1246,9 +1340,27 @@ impl Table {
                 .as_nanos()
         );
         let temp_path = directory.join(temp_name);
-        fs::write(&temp_path, serde_json::to_vec(record).unwrap()).expect("write temp");
-        fs::rename(&temp_path, path).expect("rename");
+        let payload = if self.pretty_json {
+            serde_json::to_vec_pretty(record)
+        } else {
+            serde_json::to_vec(record)
+        }
+        .expect("serialize JSON value");
+        Self::write_atomic_payload(path, &temp_path, &payload)?;
         self.last_write_used_atomic = true;
+        Ok(())
+    }
+
+    fn write_atomic_payload(path: &Path, temp_path: &Path, payload: &[u8]) -> Result<()> {
+        fs::write(temp_path, payload).map_err(|error| Error::Io {
+            path: temp_path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        fs::rename(temp_path, path).map_err(|error| Error::Io {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        Ok(())
     }
 
     fn register_association(&mut self, name: &str, association: Association) {
@@ -3028,5 +3140,117 @@ mod tests {
         assert!(table.iter_json_files().is_empty());
         assert_eq!(table.dir_mtime(), None);
         table.maybe_refresh_before_query();
+    }
+
+    #[test]
+    fn persistence_error_paths_and_pretty_json_are_fallible() {
+        let root = temp_dir("persistence_errors");
+        fs::create_dir_all(&root).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        table.set_pretty_json(true);
+        assert!(table.pretty_json());
+        table.try_put(json!({"id":"one","status":"open"})).unwrap();
+        table.remove_record_from_load(&TableKey::Simple("one".into()));
+
+        let not_a_directory = root.join("not-a-directory");
+        fs::write(&not_a_directory, "x").unwrap();
+        let mut unreadable_dir = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(not_a_directory),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        assert!(matches!(
+            unreadable_dir.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+
+        let directory_json = root.join("directory.json");
+        fs::create_dir_all(&directory_json).unwrap();
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+        assert!(!table.warnings().is_empty());
+
+        fs::remove_dir_all(&directory_json).unwrap();
+        fs::write(root.join("invalid.json"), "not json").unwrap();
+        table.validation = ValidationMode::Error;
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Parse { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+
+        let blocked = root.join("blocked");
+        fs::write(&blocked, "x").unwrap();
+        assert!(matches!(
+            table.write_record(&blocked, &TableKey::Simple("x".into()), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let delete_dir = root.join("delete.json");
+        fs::create_dir_all(&delete_dir).unwrap();
+        assert!(matches!(
+            table.delete_record(&root, &TableKey::Simple("delete".into())),
+            Err(Error::Io { .. })
+        ));
+        assert!(matches!(
+            table.try_write_json_atomic(&blocked.join("x.json"), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let write_error = root.join("write-error");
+        fs::create_dir_all(&write_error).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&root.join("target.json"), &write_error, b"x"),
+            Err(Error::Io { .. })
+        ));
+        let rename_source = root.join("rename-source");
+        fs::write(&rename_source, b"x").unwrap();
+        let rename_target = root.join("rename-target");
+        fs::create_dir_all(&rename_target).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&rename_target, &rename_source, b"x"),
+            Err(Error::Io { .. })
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn memory_lookup_uses_expected_filename() {
+        let root = temp_dir("memory_lookup");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("one.json"), json!({"id":"one"}).to_string()).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        assert_eq!(
+            table
+                .read_record_by_key(&TableKey::Simple("one".into()))
+                .unwrap()["id"],
+            "one"
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 }

@@ -84,6 +84,12 @@ enum Commands {
         #[arg(long, default_value = "8080")]
         port: u16,
     },
+    /// Start the local Unix-socket service for retained file-backed tables.
+    Daemon {
+        /// Unix socket path to bind.
+        #[arg(long)]
+        socket: PathBuf,
+    },
 }
 
 fn main() {
@@ -106,6 +112,7 @@ fn run(cli: Cli) -> Result<(), String> {
         } => run_query(dir, schema, table, index, pk, r#where),
         Commands::Serve { dir, schema, port } => run_serve(dir, schema, port),
         Commands::Memory { port } => run_memory(port),
+        Commands::Daemon { socket } => virtuus::service::serve(&socket),
     }
 }
 

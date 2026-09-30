@@ -14,6 +14,7 @@ from virtuus._python import (
     cli_version as _py_cli_version,
 )
 from virtuus._python.sort import Sort
+from virtuus.service import PROTOCOL_VERSION, Service, UnixService
 
 _backend = os.getenv("VIRTUUS_BACKEND", "auto").lower()
 
@@ -36,4 +37,14 @@ def cli_version() -> str:
     return _py_cli_version()
 
 
-__all__ = ["__version__", "Database", "GSI", "Sort", "Table", "cli_version"]
+__all__ = [
+    "__version__",
+    "Database",
+    "GSI",
+    "Sort",
+    "Table",
+    "Service",
+    "UnixService",
+    "PROTOCOL_VERSION",
+    "cli_version",
+]

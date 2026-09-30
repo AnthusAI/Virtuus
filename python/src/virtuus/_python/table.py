@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, TypedDict
 
 from virtuus._python.gsi import GSI
-from virtuus.errors import UnknownIndexError, ValidationError
+from virtuus.errors import IoError, ParseError, UnknownIndexError, ValidationError
 
 
 @dataclass(frozen=True)
@@ -71,6 +71,7 @@ class Table:
         auto_refresh: bool = True,
         storage: Optional[str] = None,
         search_fields: Optional[list[str]] = None,
+        pretty_json: bool = False,
     ) -> None:
         if primary_key is None and partition_key is None:
             raise ValidationError("primary_key or partition_key is required")
@@ -95,6 +96,7 @@ class Table:
             raise ValidationError("storage must be memory or index_only")
         self.storage_mode = storage_mode
         self.search_fields = list(search_fields or [])
+        self.pretty_json = pretty_json
         # token -> set of PK strings (faster membership on build; persisted as lists)
         self.search_index: dict[str, set[str]] | None = (
             {} if self.search_fields else None
@@ -121,6 +123,10 @@ class Table:
             "deleted": 0,
             "reread": 0,
         }
+
+    def set_pretty_json(self, enabled: bool) -> None:
+        """Configure human-readable JSON persistence."""
+        self.pretty_json = enabled
 
     def add_gsi(
         self, name: str, partition_key: str, sort_key: Optional[str] = None
@@ -493,6 +499,8 @@ class Table:
             if now - self._last_check_time < self.check_interval:
                 return self._last_is_stale
         dir_mtime = self._dir_mtime()
+        # Directory mtime avoids a full walk for unchanged directories. Callers use
+        # force_scan for periodic reconciliation of in-place file edits.
         summary, _, _, _ = self._compute_changes()
         self._last_check_time = now
         self._last_is_stale = any(summary.values())
@@ -521,15 +529,20 @@ class Table:
             record = self._read_record_file(path)
             if record is None:
                 continue  # pragma: no cover
-            self.put(record)
+            # Refresh must not persist externally edited JSON back to disk.
+            self._insert_record_from_load(record, index_search=True)
+            pk = self._extract_pk_quiet(record)
+            if pk is not None:
+                self._record_keys[os.path.basename(path)] = self._key_to_string(pk)
             reread += 1
         for path in deleted:
-            pk = self._pk_from_filename(os.path.basename(path))
+            filename = os.path.basename(path)
+            pk = self._pk_from_filename(filename)
             if pk is not None:
-                if isinstance(pk, TableKey):
-                    self.delete(pk.partition, pk.sort)  # pragma: no cover
-                else:
-                    self.delete(pk)
+                self._remove_record_from_load(pk)
+            # Index-only tables retain filename-to-key metadata. Remove it even
+            # though the deleted record can no longer be read from disk.
+            self._record_keys.pop(filename, None)
         self._manifest = {
             os.path.basename(p): self._file_signature(p)
             for p in self._iter_json_files()
@@ -565,7 +578,10 @@ class Table:
             raise ValidationError("directory is required")
         if not os.path.exists(target):
             return
-        names = [name for name in os.listdir(target) if name.endswith(".json")]
+        try:
+            names = [name for name in os.listdir(target) if name.endswith(".json")]
+        except OSError as error:
+            raise IoError(target, str(error)) from error
         verbose_load = os.getenv("VIRTUUS_BENCH_VERBOSE_LOAD") == "1"
         if verbose_load:
             print(
@@ -583,8 +599,21 @@ class Table:
             search_loaded = self._load_search_index_if_fresh(current_manifest)
         for idx, name in enumerate(names, 1):
             path = os.path.join(target, name)
-            with open(path, "r", encoding="utf-8") as handle:
-                record = json.load(handle)
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    record = json.load(handle)
+            except OSError as error:
+                if self.validation == "error":
+                    raise IoError(path, str(error)) from error
+                if self.validation == "warn":
+                    self.warnings.append(f"failed to read {path}: {error}")
+                continue
+            except json.JSONDecodeError as error:
+                if self.validation == "error":
+                    raise ParseError(path, str(error)) from error
+                if self.validation == "warn":
+                    self.warnings.append(f"failed to parse {path}: {error}")
+                continue
             self._insert_record_from_load(record, not search_loaded)
             pk = self._extract_pk_quiet(record)
             if pk is not None:
@@ -807,9 +836,18 @@ class Table:
 
     def _validate_gsi_fields(self, record: dict[str, Any]) -> None:
         for gsi in self.gsis.values():
-            if gsi.partition_key not in record:
+            if (
+                "[" not in gsi.partition_key
+                and "." not in gsi.partition_key
+                and gsi.partition_key not in record
+            ):
                 self._handle_validation(f"missing GSI field {gsi.partition_key}")
-            if gsi.sort_key is not None and gsi.sort_key not in record:
+            if (
+                gsi.sort_key is not None
+                and "[" not in gsi.sort_key
+                and "." not in gsi.sort_key
+                and gsi.sort_key not in record
+            ):
                 self._handle_validation(f"missing GSI field {gsi.sort_key}")
 
     def _filename_for_pk(self, pk: Any) -> str:
@@ -821,7 +859,10 @@ class Table:
 
     def _write_record_to_disk(self, pk: Any, record: dict[str, Any]) -> None:
         self._validate_pk_for_path(pk)
-        os.makedirs(self.directory, exist_ok=True)
+        try:
+            os.makedirs(self.directory, exist_ok=True)
+        except OSError as error:
+            raise IoError(str(self.directory), str(error)) from error
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         self._write_json_atomic(path, record)
@@ -829,12 +870,25 @@ class Table:
         self._record_keys[filename] = self._key_to_string(pk)
         self._last_dir_mtime = self._dir_mtime()
 
+    def _remove_record_from_load(self, pk: Any) -> None:
+        record = (
+            self.records.pop(pk, None)
+            if self.storage_mode == "memory"
+            else self._read_record_by_key(pk)
+        )
+        if record is not None:
+            self._remove_from_gsis(pk, record)
+            self._remove_from_search(pk, record)
+
     def _delete_record_from_disk(self, pk: Any) -> None:
         self._validate_pk_for_path(pk)
         filename = self._filename_for_pk(pk)
         path = os.path.join(self.directory, filename)
         if os.path.exists(path):
-            os.remove(path)
+            try:
+                os.remove(path)
+            except OSError as error:
+                raise IoError(path, str(error)) from error
         self._manifest.pop(filename, None)
         self._record_keys.pop(filename, None)
         self._last_dir_mtime = self._dir_mtime()
@@ -850,11 +904,17 @@ class Table:
 
     def _write_json_atomic(self, path: str, record: dict[str, Any]) -> None:
         directory = os.path.dirname(path)
-        fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".tmp")
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                json.dump(record, handle)
-            os.replace(temp_path, path)
+            fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".tmp")
+        except OSError as error:
+            raise IoError(directory, str(error)) from error
+        try:
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    json.dump(record, handle, indent=2 if self.pretty_json else None)
+                os.replace(temp_path, path)
+            except OSError as error:
+                raise IoError(path, str(error)) from error
             self.last_write_used_atomic = True
         finally:
             if os.path.exists(temp_path):
