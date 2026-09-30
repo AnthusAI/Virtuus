@@ -286,4 +286,97 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).unwrap(), external);
         std::fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    fn dispatch_covers_protocol_operations_and_errors() {
+        let root =
+            std::env::temp_dir().join(format!("virtuus-service-protocol-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let mut service = Service::default();
+        let spec = json!({"name":"issues","directory":root,"primary_key":"id","indexes":[{"name":"by_label","partition_key":"labels[*]"},{"name":"blocked_by","partition_key":"dependencies[dependency_type=blocked-by].target"}]});
+        let handle = service.dispatch(json!({"action":"open_table","spec":spec.clone()}))["result"]
+            ["handle"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        assert_eq!(
+            service.dispatch(json!({"action":"open_table","spec":spec}))["result"]["handle"],
+            handle
+        );
+        assert!(service.dispatch(json!({"action":"open_table","spec":{"name":"bad","directory":"/tmp","primary_key":"id","validation":"bad"}}))["ok"] == false);
+        assert_eq!(
+            service.dispatch(json!({"action":"ping"}))["result"]["protocol_version"],
+            PROTOCOL_VERSION
+        );
+        assert_eq!(
+            service.dispatch(json!({"action":"status"}))["result"]["tables"],
+            1
+        );
+        assert!(service.dispatch(json!({"action":"get"}))["ok"] == false);
+        assert!(service.dispatch(json!({"action":"put","handle":handle,"record":{"id":"one","labels":["core"],"dependencies":[{"dependency_type":"blocked-by","target":"two"}]}}))["ok"] == true);
+        assert!(
+            service.dispatch(json!({"action":"put_many","handle":handle,"records":[{"id":"two"}]}))
+                ["ok"]
+                == true
+        );
+        assert_eq!(
+            service.dispatch(json!({"action":"get","handle":handle,"pk":"one"}))["result"]["id"],
+            "one"
+        );
+        assert_eq!(
+            service.dispatch(
+                json!({"action":"query","handle":handle,"index":"by_label","value":"core"})
+            )["result"][0]["id"],
+            "one"
+        );
+        assert_eq!(
+            service.dispatch(
+                json!({"action":"query","handle":handle,"index":"blocked_by","value":"two"})
+            )["result"][0]["id"],
+            "one"
+        );
+        assert!(
+            service.dispatch(json!({"action":"query","handle":handle,"index":"by_label"}))["ok"]
+                == false
+        );
+        assert!(service.dispatch(json!({"action":"refresh","handle":handle}))["ok"] == true);
+        assert!(
+            service.dispatch(json!({"action":"delete","handle":handle,"pk":"two"}))["ok"] == true
+        );
+        assert!(service.dispatch(json!({"action":"unknown","handle":handle}))["ok"] == false);
+        assert_eq!(
+            service.dispatch(json!({"action":"shutdown"}))["result"]["shutdown"],
+            true
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_socket_service_answers_and_stops() {
+        use std::io::{BufRead, BufReader, Write};
+        use std::os::unix::net::UnixStream;
+        let socket =
+            std::env::temp_dir().join(format!("virtuus-service-socket-{}", std::process::id()));
+        let server_socket = socket.clone();
+        let thread = std::thread::spawn(move || serve(&server_socket).unwrap());
+        for action in ["ping", "shutdown"] {
+            let mut stream;
+            loop {
+                match UnixStream::connect(&socket) {
+                    Ok(value) => {
+                        stream = value;
+                        break;
+                    }
+                    Err(_) => std::thread::sleep(Duration::from_millis(5)),
+                }
+            }
+            writeln!(stream, "{}", json!({"action":action})).unwrap();
+            let mut reply = String::new();
+            BufReader::new(stream).read_line(&mut reply).unwrap();
+            assert!(serde_json::from_str::<Value>(&reply).unwrap()["ok"] == true);
+        }
+        thread.join().unwrap();
+        fs::remove_file(socket).unwrap();
+    }
 }

@@ -3139,4 +3139,102 @@ mod tests {
         assert_eq!(table.dir_mtime(), None);
         table.maybe_refresh_before_query();
     }
+
+    #[test]
+    fn persistence_error_paths_and_pretty_json_are_fallible() {
+        let root = temp_dir("persistence_errors");
+        fs::create_dir_all(&root).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        table.set_pretty_json(true);
+        assert!(table.pretty_json());
+        table.try_put(json!({"id":"one","status":"open"})).unwrap();
+        table.remove_record_from_load(&TableKey::Simple("one".into()));
+
+        let not_a_directory = root.join("not-a-directory");
+        fs::write(&not_a_directory, "x").unwrap();
+        let mut unreadable_dir = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(not_a_directory),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        assert!(matches!(
+            unreadable_dir.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+
+        let directory_json = root.join("directory.json");
+        fs::create_dir_all(&directory_json).unwrap();
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+        assert!(!table.warnings().is_empty());
+
+        fs::remove_dir_all(&directory_json).unwrap();
+        fs::write(root.join("invalid.json"), "not json").unwrap();
+        table.validation = ValidationMode::Error;
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Parse { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+
+        let blocked = root.join("blocked");
+        fs::write(&blocked, "x").unwrap();
+        assert!(matches!(
+            table.write_record(&blocked, &TableKey::Simple("x".into()), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let delete_dir = root.join("delete.json");
+        fs::create_dir_all(&delete_dir).unwrap();
+        assert!(matches!(
+            table.delete_record(&root, &TableKey::Simple("delete".into())),
+            Err(Error::Io { .. })
+        ));
+        assert!(matches!(
+            table.try_write_json_atomic(&blocked.join("x.json"), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn memory_lookup_uses_expected_filename() {
+        let root = temp_dir("memory_lookup");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("one.json"), json!({"id":"one"}).to_string()).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        assert_eq!(
+            table
+                .read_record_by_key(&TableKey::Simple("one".into()))
+                .unwrap()["id"],
+            "one"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 }
