@@ -1,0 +1,34 @@
+{
+  "id": "virt-2eb8280c-561d-46bf-9a98-a177cae666f9",
+  "title": "Realtime: AppSync WebSocket protocol",
+  "description": "Serve AppSync's realtime protocol at `GET /graphql/realtime` (WebSocket).\n\n## Protocol\n- Subprotocol `graphql-ws`. Messages: `connection_init`; `connection_ack` with `connectionTimeoutMs`; `ka` keep-alives.\n- `start`: the payload `data` is a JSON *string* `{query, variables}`, and auth is in `payload.extensions.authorization`. Answer with `start_ack`, then `data` messages; `error`; `stop`; `complete`.\n- AppSync-style auth in the connection query params (`header` = base64 JSON with the API key and host; `payload` = e30=).\n\n## Behaviour\nMap `on<Create|Update|Delete><Model>` subscriptions to `Engine` change events from V6c, applying the subscription's `filter` argument and owner rules.\n\n## Specs\nThe story \"Live changes over AppSync's realtime protocol\", tested with a tokio-tungstenite client, plus a filter that suppresses non-matching events.\n\nPart of the `virtuus-appsync` crate (`rust/crates/virtuus-appsync`; `@rust-only` specs in `features/appsync/`; 100% coverage). Design: `~/Projects/Ripple/design/storage.md` **§3.1** (`virtuus-appsync`) and **§4**.\n- **Stack:** axum and async-graphql's **dynamic** schema (`async_graphql::dynamic`), built at startup from an AppSync SDL string and the contract, resolving onto `virtuus_amplify::Engine::call`.\n- **API:** `pub fn router(engine: Arc<Engine>, sdl: &str, contract: &Contract, auth: ApiKeyAuth) -> axum::Router`, serving `POST /graphql`.\n- **Fixture:** `features/appsync/fixtures/blog.graphql`, hand-written in AppSync's generated style for the `blog` contract: `getPost`, `listPosts(filter, limit, nextToken)`, `postsByBlog(blogId, createdAt, sortDirection, filter, limit, nextToken)`, `createPost(input, condition)`, `updatePost`, `deletePost`, `ModelPostFilterInput`, `ModelPostConnection`, `onCreatePost`, …\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-8f8638bc-900f-470a-b722-8e511a588777",
+      "type": "blocked-by"
+    },
+    {
+      "target": "virt-3cfeb3e8-bf69-4e06-a519-09a2eef93c80",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:38.267707Z",
+  "updated_at": "2026-09-24T04:45:49.680893Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

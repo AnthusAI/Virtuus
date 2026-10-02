@@ -1,0 +1,25 @@
+{
+  "id": "virt-ebdb99c1-0658-49aa-a7b6-0337a5956636",
+  "title": "A GraphQL server with AppSync's schema",
+  "description": "As a web app using the real `aws-amplify` client, I want a local server that answers the same GraphQL schema as AppSync, so that the app runs without AWS.\n\n```gherkin\nFeature: AppSync-compatible GraphQL\n  Scenario: The server's schema is the AppSync schema\n    Given a server started with the SDL fixture \"blog.graphql\" and its contract\n    When I fetch the introspection schema\n    Then it equals the SDL after normalization\n\n  Scenario: A mutation then a query\n    When I send mutation createPost with input {\"title\": \"Hi\"} selecting id and title\n    And I send query getPost with that id selecting title\n    Then data.getPost.title is \"Hi\"\n\n  Scenario: Errors use AppSync's envelope\n    When I send createPost twice with the same id\n    Then data.createPost is null and errors[0].errorType is \"DynamoDB:ConditionalCheckFailedException\"\n```",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:01.985519Z",
+  "updated_at": "2026-09-24T04:45:46.874189Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

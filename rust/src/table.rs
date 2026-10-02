@@ -5,9 +5,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use rayon::prelude::*;
 use serde_json::Value;
 
+use crate::error::{Error, Result};
 use crate::gsi::Gsi;
 use crate::search::SearchIndex;
 use crate::sort::SortCondition;
@@ -62,6 +62,7 @@ pub struct Table {
     on_delete: Vec<Hook>,
     on_refresh: Vec<Hook>,
     last_write_used_atomic: bool,
+    pretty_json: bool,
     associations: Vec<String>,
     check_interval: Duration,
     auto_refresh: bool,
@@ -134,22 +135,28 @@ impl Table {
         sort_key: Option<&str>,
         directory: Option<PathBuf>,
         validation: ValidationMode,
-    ) -> Self {
+    ) -> Result<Self> {
         if primary_key.is_none() && partition_key.is_none() {
-            panic!("primary_key or partition_key is required");
+            return Err(Error::Validation {
+                message: "primary_key or partition_key is required".to_string(),
+            });
         }
         if primary_key.is_some() && partition_key.is_some() {
-            panic!("use either primary_key or partition_key");
+            return Err(Error::Validation {
+                message: "use either primary_key or partition_key".to_string(),
+            });
         }
         if partition_key.is_some() && sort_key.is_none() {
-            panic!("sort_key is required for composite primary keys");
+            return Err(Error::Validation {
+                message: "sort_key is required for composite primary keys".to_string(),
+            });
         }
         let storage_mode = if directory.is_some() {
             StorageMode::IndexOnly
         } else {
             StorageMode::Memory
         };
-        Self {
+        Ok(Self {
             name: name.to_string(),
             primary_key: primary_key.map(|s| s.to_string()),
             partition_key: partition_key.map(|s| s.to_string()),
@@ -168,6 +175,7 @@ impl Table {
             on_delete: Vec::new(),
             on_refresh: Vec::new(),
             last_write_used_atomic: false,
+            pretty_json: false,
             associations: Vec::new(),
             check_interval: Duration::from_secs(0),
             auto_refresh: true,
@@ -178,7 +186,7 @@ impl Table {
             last_is_stale: false,
             last_change_summary: ChangeSummary::default(),
             refresh_errors: Vec::new(),
-        }
+        })
     }
 
     /// Register a GSI.
@@ -194,9 +202,14 @@ impl Table {
 
     /// Insert or update a record.
     pub fn put(&mut self, record: Value) {
+        self.try_put(record).expect("persist record");
+    }
+
+    /// Insert or update a record, returning persistence failures to the caller.
+    pub fn try_put(&mut self, record: Value) -> Result<()> {
         let key = match self.extract_key(&record) {
             Some(key) => key,
-            None => return,
+            None => return Ok(()),
         };
         self.validate_gsi_fields(&record);
         if let Some(existing) = self.lookup_existing_record(&key) {
@@ -209,11 +222,12 @@ impl Table {
         self.index_in_gsis(&key, &record);
         self.index_in_search(&key, &record);
         if let Some(dir) = self.directory.clone() {
-            self.write_record(&dir, &key, &record);
+            self.write_record(&dir, &key, &record)?;
         }
         let hooks = self.on_put.as_slice();
         let hook_errors = &mut self.hook_errors;
         Self::fire_hooks(hooks, hook_errors, &record);
+        Ok(())
     }
 
     fn insert_record_from_load(&mut self, record: Value, index_search: bool) {
@@ -249,6 +263,11 @@ impl Table {
 
     /// Delete a record by primary key.
     pub fn delete(&mut self, pk: &str, sort: Option<&str>) {
+        self.try_delete(pk, sort).expect("delete persisted record");
+    }
+
+    /// Delete a record, returning persistence failures to the caller.
+    pub fn try_delete(&mut self, pk: &str, sort: Option<&str>) -> Result<()> {
         let key = self.compose_key(pk, sort);
         let record = match self.storage_mode {
             StorageMode::Memory => self.records.remove(&key),
@@ -262,8 +281,9 @@ impl Table {
             Self::fire_hooks(hooks, hook_errors, &record);
         }
         if let Some(dir) = self.directory.clone() {
-            self.delete_record(&dir, &key);
+            self.delete_record(&dir, &key)?;
         }
+        Ok(())
     }
 
     /// Return all records.
@@ -428,6 +448,16 @@ impl Table {
     /// Return whether the last write used atomic rename.
     pub fn last_write_used_atomic(&self) -> bool {
         self.last_write_used_atomic
+    }
+
+    /// Configure whether persisted JSON uses human-readable indentation.
+    pub fn set_pretty_json(&mut self, enabled: bool) {
+        self.pretty_json = enabled;
+    }
+
+    /// Return whether persisted JSON uses human-readable indentation.
+    pub fn pretty_json(&self) -> bool {
+        self.pretty_json
     }
 
     /// Register an association name for describe output only.
@@ -595,10 +625,14 @@ impl Table {
                 }
             }
         }
+        let dir_mtime = self.dir_mtime();
+        // Directory metadata catches additions and removals without walking every
+        // record. A caller can still request force_scan for periodic reconciliation
+        // of in-place edits, which do not change directory mtime on every platform.
         let (summary, _, _, _) = self.compute_changes();
         self.last_check_time = Some(now);
         self.last_is_stale = summary.added + summary.modified + summary.deleted > 0;
-        self.last_dir_mtime = self.dir_mtime();
+        self.last_dir_mtime = dir_mtime;
         self.last_is_stale
     }
 
@@ -619,20 +653,22 @@ impl Table {
         let mut reread = 0;
         for path in added.iter().chain(modified.iter()) {
             if let Some(record) = self.read_record(path) {
-                self.put(record);
+                // A refresh observes external files. It must never route through put(),
+                // which persists and would rewrite a user's formatting.
+                if let (Some(name), Some(key)) = (
+                    path.file_name()
+                        .map(|name| name.to_string_lossy().to_string()),
+                    self.extract_key_silent(&record),
+                ) {
+                    self.record_keys.insert(name, key_to_string(&key));
+                }
+                self.insert_record_from_load(record, true);
                 reread += 1;
             }
         }
         for path in deleted {
             if let Some(key) = self.key_from_filename(path) {
-                match key {
-                    TableKey::Simple(pk) => {
-                        self.delete(&pk, None);
-                    }
-                    TableKey::Composite(partition, sort) => {
-                        self.delete(&partition, Some(&sort));
-                    }
-                }
+                self.remove_record_from_load(&key);
             }
         }
         self.manifest = self
@@ -682,18 +718,26 @@ impl Table {
 
     /// Load records from directory.
     pub fn load_from_dir(&mut self, directory: Option<PathBuf>) {
+        self.try_load_from_dir(directory)
+            .expect("load records from directory");
+    }
+
+    /// Load records from disk and return I/O and JSON parsing failures.
+    pub fn try_load_from_dir(&mut self, directory: Option<PathBuf>) -> Result<()> {
         let dir = directory.or_else(|| self.directory.clone());
-        let dir = match dir {
-            Some(d) => d,
-            None => panic!("directory is required"),
-        };
+        let dir = dir.ok_or_else(|| Error::Validation {
+            message: "directory is required".to_string(),
+        })?;
         if !dir.exists() {
-            return;
+            return Ok(());
         }
         let paths: Vec<PathBuf> = fs::read_dir(&dir)
-            .expect("read_dir failed")
+            .map_err(|error| Error::Io {
+                path: dir.display().to_string(),
+                message: error.to_string(),
+            })?
             .filter_map(|entry| {
-                let entry = entry.expect("dir entry");
+                let entry = entry.ok()?;
                 let path = entry.path();
                 if path.extension().and_then(|s| s.to_str()) != Some("json") {
                     return None;
@@ -741,20 +785,51 @@ impl Table {
             }
             search_loaded = self.load_search_index_if_fresh(&dir, &current_manifest);
         }
-        let parsed: Vec<(Value, Option<String>, Option<SystemTime>)> = paths
-            .par_iter()
-            .map(|path| {
-                let data = fs::read_to_string(path).expect("read file");
-                let record: Value = serde_json::from_str(&data).expect("parse json");
-                let mtime = fs::metadata(path)
-                    .ok()
-                    .and_then(|meta| meta.modified().ok());
-                let name = path
-                    .file_name()
-                    .map(|value| value.to_string_lossy().to_string());
-                (record, name, mtime)
-            })
-            .collect();
+        let mut parsed = Vec::with_capacity(paths.len());
+        for path in &paths {
+            let path_text = path.display().to_string();
+            let data = match fs::read_to_string(path) {
+                Ok(data) => data,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Io {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to read {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
+            let record: Value = match serde_json::from_str(&data) {
+                Ok(record) => record,
+                Err(error) => match self.validation {
+                    ValidationMode::Error => {
+                        return Err(Error::Parse {
+                            path: path_text,
+                            message: error.to_string(),
+                        })
+                    }
+                    ValidationMode::Warn => {
+                        self.warnings
+                            .push(format!("failed to parse {path_text}: {error}"));
+                        continue;
+                    }
+                    ValidationMode::Silent => continue,
+                },
+            };
+            let mtime = fs::metadata(path)
+                .ok()
+                .and_then(|meta| meta.modified().ok());
+            let name = path
+                .file_name()
+                .map(|value| value.to_string_lossy().to_string());
+            parsed.push((record, name, mtime));
+        }
         for (record, name, _) in parsed {
             self.insert_record_from_load(record.clone(), !search_loaded);
             if let (Some(name), Some(key)) = (name, self.extract_key_silent(&record)) {
@@ -768,6 +843,7 @@ impl Table {
         if self.search_enabled() && !search_loaded {
             let _ = self.persist_search_index(&dir, &self.manifest);
         }
+        Ok(())
     }
 
     /// Export records to directory.
@@ -900,11 +976,18 @@ impl Table {
 
     fn read_record_by_key(&self, key: &TableKey) -> Option<Value> {
         let dir = self.directory.as_ref()?;
-        let filename = self.filename_for_key(key);
-        if self.storage_mode == StorageMode::IndexOnly && !self.record_keys.contains_key(&filename)
-        {
-            return None;
-        }
+        let expected_filename = self.filename_for_key(key);
+        let filename = if self.storage_mode == StorageMode::IndexOnly {
+            if self.record_keys.contains_key(&expected_filename) {
+                expected_filename
+            } else {
+                self.record_keys.iter().find_map(|(name, record_key)| {
+                    (record_key == &key_to_string(key)).then(|| name.clone())
+                })?
+            }
+        } else {
+            expected_filename
+        };
         let path = dir.join(filename);
         fs::read_to_string(&path)
             .ok()
@@ -988,11 +1071,11 @@ impl Table {
         &self,
         dir: &Path,
         manifest: &HashMap<String, SystemTime>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let index_path = self.search_index_path(dir);
         let manifest_path = self.search_manifest_path(dir);
         let index_dir = self.search_index_dir(dir);
-        fs::create_dir_all(&index_dir).map_err(|err| err.to_string())?;
+        fs::create_dir_all(&index_dir).map_err(|err| Error::from(err.to_string()))?;
         let Some(index) = &self.search_index else {
             return Ok(());
         };
@@ -1006,11 +1089,12 @@ impl Table {
         manifest_path: &Path,
         index: &SearchIndex,
         manifest: &HashMap<String, SystemTime>,
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         index.persist(index_path)?;
         let current_manifest = manifest_to_epoch_millis(manifest);
-        let data = serde_json::to_string(&current_manifest).map_err(|err| err.to_string())?;
-        fs::write(manifest_path, data).map_err(|err| err.to_string())?;
+        let data =
+            serde_json::to_string(&current_manifest).map_err(|err| Error::from(err.to_string()))?;
+        fs::write(manifest_path, data).map_err(|err| Error::from(err.to_string()))?;
         Ok(())
     }
 
@@ -1135,11 +1219,17 @@ impl Table {
             })
             .collect();
         for (partition_key, sort_key) in fields {
-            if record.get(&partition_key).is_none() {
+            if !partition_key.contains('[')
+                && !partition_key.contains('.')
+                && record.get(&partition_key).is_none()
+            {
                 let _ = self.handle_validation(&format!("missing GSI field {partition_key}"));
             }
             if let Some(sort_key) = sort_key {
-                if record.get(&sort_key).is_none() {
+                if !sort_key.contains('[')
+                    && !sort_key.contains('.')
+                    && record.get(&sort_key).is_none()
+                {
                     let _ = self.handle_validation(&format!("missing GSI field {sort_key}"));
                 }
             }
@@ -1164,12 +1254,15 @@ impl Table {
         }
     }
 
-    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) {
-        self.validate_pk_for_path(key);
-        fs::create_dir_all(directory).expect("create directory");
+    fn write_record(&mut self, directory: &Path, key: &TableKey, record: &Value) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let filename = self.filename_for_key(key);
         let path = directory.join(filename);
-        self.write_json_atomic(&path, record);
+        self.try_write_json_atomic(&path, record)?;
         let filename = path.file_name().unwrap().to_string_lossy().to_string();
         if let Ok(meta) = fs::metadata(&path) {
             if let Ok(mtime) = meta.modified() {
@@ -1178,35 +1271,67 @@ impl Table {
                 self.last_dir_mtime = self.dir_mtime();
             }
         }
+        Ok(())
     }
 
-    fn delete_record(&mut self, directory: &Path, key: &TableKey) {
-        self.validate_pk_for_path(key);
+    fn delete_record(&mut self, directory: &Path, key: &TableKey) -> Result<()> {
+        self.try_validate_pk_for_path(key)?;
         let filename = self.filename_for_key(key);
         let path = directory.join(&filename);
         if path.exists() {
-            fs::remove_file(path).expect("remove file");
+            fs::remove_file(&path).map_err(|error| Error::Io {
+                path: path.display().to_string(),
+                message: error.to_string(),
+            })?;
         }
         self.manifest.remove(&filename);
         self.record_keys.remove(&filename);
         self.last_dir_mtime = self.dir_mtime();
+        Ok(())
     }
 
     fn validate_pk_for_path(&self, key: &TableKey) {
+        self.try_validate_pk_for_path(key)
+            .expect("valid PK characters");
+    }
+
+    fn try_validate_pk_for_path(&self, key: &TableKey) -> Result<()> {
         let parts = match key {
             TableKey::Simple(pk) => vec![pk.as_str()],
             TableKey::Composite(partition, sort) => vec![partition.as_str(), sort.as_str()],
         };
         for part in parts {
             if part.contains('/') || part.contains('\\') {
-                panic!("invalid PK characters");
+                return Err(Error::Validation {
+                    message: "invalid PK characters".to_string(),
+                });
             }
+        }
+        Ok(())
+    }
+
+    fn remove_record_from_load(&mut self, key: &TableKey) {
+        let record = match self.storage_mode {
+            StorageMode::Memory => self.records.remove(key),
+            StorageMode::IndexOnly => self.read_record_by_key(key),
+        };
+        if let Some(record) = record {
+            self.remove_from_gsis(key, &record);
+            self.remove_from_search(key, &record);
         }
     }
 
     fn write_json_atomic(&mut self, path: &Path, record: &Value) {
+        self.try_write_json_atomic(path, record)
+            .expect("write JSON atomically");
+    }
+
+    fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
         let directory = path.parent().expect("parent dir");
-        fs::create_dir_all(directory).expect("create dir");
+        fs::create_dir_all(directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let temp_name = format!(
             ".tmp_{}",
             std::time::SystemTime::now()
@@ -1215,9 +1340,27 @@ impl Table {
                 .as_nanos()
         );
         let temp_path = directory.join(temp_name);
-        fs::write(&temp_path, serde_json::to_vec(record).unwrap()).expect("write temp");
-        fs::rename(&temp_path, path).expect("rename");
+        let payload = if self.pretty_json {
+            serde_json::to_vec_pretty(record)
+        } else {
+            serde_json::to_vec(record)
+        }
+        .expect("serialize JSON value");
+        Self::write_atomic_payload(path, &temp_path, &payload)?;
         self.last_write_used_atomic = true;
+        Ok(())
+    }
+
+    fn write_atomic_payload(path: &Path, temp_path: &Path, payload: &[u8]) -> Result<()> {
+        fs::write(temp_path, payload).map_err(|error| Error::Io {
+            path: temp_path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        fs::rename(temp_path, path).map_err(|error| Error::Io {
+            path: path.display().to_string(),
+            message: error.to_string(),
+        })?;
+        Ok(())
     }
 
     fn register_association(&mut self, name: &str, association: Association) {
@@ -1366,7 +1509,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert_eq!(table.primary_key, Some("id".to_string()));
     }
 
@@ -1379,7 +1523,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert_eq!(table.partition_key, Some("user_id".to_string()));
         assert_eq!(table.sort_key, Some("game_id".to_string()));
     }
@@ -1393,7 +1538,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let output = format!("{table:?}");
         assert!(output.contains("users"));
     }
@@ -1401,7 +1547,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn new_requires_primary_or_partition_key() {
-        let _table = Table::new("users", None, None, None, None, ValidationMode::Silent);
+        let _table = Table::new("users", None, None, None, None, ValidationMode::Silent).unwrap();
     }
 
     #[test]
@@ -1414,7 +1560,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1427,7 +1574,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1439,7 +1587,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1", "name": "Alice"}));
         assert_eq!(table.get("user-1", None).unwrap()["name"], "Alice");
         table.delete("user-1", None);
@@ -1455,7 +1604,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.delete("missing", None);
         assert_eq!(table.count(None, None), 0);
     }
@@ -1469,7 +1619,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"user_id": "user-1", "game_id": "game-A", "score": 100}));
         assert!(table.get("user-1", Some("game-A")).is_some());
         table.delete("user-1", Some("game-A"));
@@ -1485,7 +1636,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let desc = table.describe();
         assert_eq!(desc["partition_key"], "user_id");
         assert_eq!(desc["sort_key"], "game_id");
@@ -1500,7 +1652,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1", "name": "Alice"}));
         table.put(json!({"id": "user-1", "name": "Alice Updated"}));
         assert_eq!(table.get("user-1", None).unwrap()["name"], "Alice Updated");
@@ -1508,7 +1661,8 @@ mod tests {
 
     #[test]
     fn accessors_return_state() {
-        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        let mut table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Warn).unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"name": "Missing"}));
         table.register_on_put(Box::new(|_| panic!("hook failure")));
@@ -1527,7 +1681,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1"}));
         table.put(json!({"id": "user-2"}));
         assert_eq!(table.scan().len(), 2);
@@ -1542,7 +1697,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"name": "Alice"}));
         assert!(table.warnings.is_empty());
         assert_eq!(table.count(None, None), 0);
@@ -1557,7 +1713,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let records = vec![json!({"id": "user-1"}), json!({"id": "user-2"})];
         table.bulk_load(records);
         assert_eq!(table.count(None, None), 2);
@@ -1572,7 +1729,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Warn,
-        );
+        )
+        .unwrap();
         table.put(json!({"game_id": "game-A"}));
         table.put(json!({"user_id": "user-1"}));
         assert!(table.warnings.len() >= 2);
@@ -1580,7 +1738,8 @@ mod tests {
 
     #[test]
     fn gsi_missing_fields_warn() {
-        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        let mut table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Warn).unwrap();
         table.add_gsi("by_email", "email", Some("created_at"));
         table.put(json!({"id": "user-1"}));
         assert!(table.warnings.len() >= 2);
@@ -1595,7 +1754,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"id": "user-1", "status": "active"}));
         table.put(json!({"id": "user-2", "status": "active"}));
@@ -1612,7 +1772,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let desc = table.describe();
         assert_eq!(desc["name"], "users");
         assert_eq!(desc["primary_key"], "id");
@@ -1628,7 +1789,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(None);
     }
 
@@ -1646,7 +1808,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(Some(path));
         assert_eq!(table.count(None, None), 0);
     }
@@ -1666,7 +1829,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(Some(dir.clone()));
         assert_eq!(table.count(None, None), 1);
         assert!(txt_path.exists());
@@ -1685,14 +1849,16 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(Some(dir));
         assert_eq!(table.count(None, None), 0);
     }
 
     #[test]
     fn validation_warns() {
-        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Warn);
+        let mut table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Warn).unwrap();
         table.put(json!({"name": "Alice"}));
         assert!(!table.warnings.is_empty());
     }
@@ -1700,7 +1866,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn validation_errors() {
-        let mut table = Table::new("users", Some("id"), None, None, None, ValidationMode::Error);
+        let mut table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Error).unwrap();
         table.put(json!({"name": "Alice"}));
     }
 
@@ -1713,7 +1880,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"id": "user-1", "status": "active"}));
         assert_eq!(
@@ -1741,7 +1909,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1", "name": "Alice"}));
         let mut loaded = Table::new(
             "users",
@@ -1750,7 +1919,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         loaded.load_from_dir(None);
         assert_eq!(loaded.count(None, None), 1);
     }
@@ -1766,7 +1936,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"id": "user-1", "status": "active"}));
         fs::write(
@@ -1794,7 +1965,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1"}));
         table.delete("user-1", None);
         let path = dir.join("user-1.json");
@@ -1811,7 +1983,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1", "name": "Alice"}));
         table.export(export_dir.clone());
         let files = fs::read_dir(export_dir).unwrap().count();
@@ -1828,7 +2001,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"user_id": "user-1", "game_id": "game-A"}));
         table.export(export_dir.clone());
         let path = export_dir.join("user-1__game-A.json");
@@ -1844,7 +2018,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let summary = table.refresh();
         assert_eq!(summary.added + summary.deleted + summary.modified, 0);
     }
@@ -1861,7 +2036,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(None);
         assert!(table.get("u1", None).is_some());
         fs::remove_file(dir.join("u1.json")).unwrap();
@@ -1882,7 +2058,8 @@ mod tests {
             Some("sort"),
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(None);
         assert_eq!(table.scan().len(), 1);
         fs::remove_file(dir.join("p__s.json")).unwrap();
@@ -1900,7 +2077,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.warm();
         assert_eq!(table.scan().len(), 0);
     }
@@ -1917,7 +2095,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let records = table.scan();
         assert_eq!(records.len(), 1);
     }
@@ -1932,7 +2111,8 @@ mod tests {
             Some("sk"),
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let composite = table
             .key_from_filename(PathBuf::from("pk__sk.json"))
             .unwrap();
@@ -1950,7 +2130,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let simple = simple_table
             .key_from_filename(PathBuf::from("u1.json"))
             .unwrap();
@@ -1970,7 +2151,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user-1", "name": "Alice"}));
         table.export(export_dir);
         assert!(table.last_write_used_atomic());
@@ -1985,7 +2167,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert!(table.iter_json_files().is_empty());
     }
 
@@ -1998,7 +2181,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert!(table.dir_mtime().is_none());
     }
 
@@ -2011,7 +2195,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let (summary, added, modified, deleted) = table.compute_changes();
         assert_eq!(summary.added, 0);
         assert_eq!(summary.modified, 0);
@@ -2030,7 +2215,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let path = dir.join("bad.json");
         fs::write(&path, b"not-json").unwrap();
         let result = table.read_record(&path);
@@ -2051,7 +2237,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let path = dir.join("missing.json");
         let result = table.read_record(&path);
         assert!(result.is_none());
@@ -2072,7 +2259,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.set_check_interval(5);
         table.set_auto_refresh(false);
         table.mark_checked_now(true);
@@ -2092,7 +2280,8 @@ mod tests {
 
     #[test]
     fn search_storage_and_refresh_cover_branches() {
-        let mut mem = Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent);
+        let mut mem =
+            Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent).unwrap();
         mem.set_search_fields(Vec::new());
         assert!(mem.search_index.is_none());
         mem.set_search_fields(vec!["title".to_string()]);
@@ -2111,7 +2300,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert_eq!(table.storage_mode(), StorageMode::IndexOnly);
         table.set_storage_mode(StorageMode::Memory);
         assert_eq!(table.storage_mode(), StorageMode::Memory);
@@ -2133,7 +2323,8 @@ mod tests {
 
     #[test]
     fn delete_removes_from_search_index() {
-        let mut table = Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent);
+        let mut table =
+            Table::new("mem", Some("id"), None, None, None, ValidationMode::Silent).unwrap();
         table.set_search_fields(vec!["title".to_string()]);
         table.put(json!({"id": "1", "title": "Alpha"}));
         assert_eq!(table.search("alpha").len(), 1);
@@ -2154,7 +2345,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.set_search_fields(vec!["title".to_string()]);
         table.load_from_dir(None);
         assert_eq!(table.search("alpha").len(), 1);
@@ -2175,7 +2367,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.set_search_fields(vec!["title".to_string()]);
         table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
         if let Some(index) = table.search_index.as_mut() {
@@ -2222,7 +2415,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.search_fields = vec!["title".to_string()];
         table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
         if let Some(index) = table.search_index.as_mut() {
@@ -2249,7 +2443,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let manifest: HashMap<String, SystemTime> = HashMap::new();
         assert!(table.persist_search_index(&dir, &manifest).is_ok());
     }
@@ -2266,7 +2461,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.search_fields = vec!["title".to_string()];
         table.search_index = Some(SearchIndex::new(vec!["title".to_string()]));
         let manifest_path = table.search_manifest_path(&dir);
@@ -2289,7 +2485,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(None);
         assert_eq!(table.record_count(), 1);
 
@@ -2304,7 +2501,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert!(no_dir_table.read_all_records().is_empty());
 
         fs::write(dir.join("bad.json"), "not-json").unwrap();
@@ -2326,7 +2524,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         no_dir.rebuild_search_index();
 
         let dir = temp_dir("rebuild_search");
@@ -2338,7 +2537,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         no_search.rebuild_search_index();
 
         fs::write(dir.join("bad.json"), "not-json").unwrap();
@@ -2352,7 +2552,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.set_search_fields(vec!["title".to_string()]);
         table.rebuild_search_index();
 
@@ -2363,7 +2564,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         nogsi.rebuild_gsis();
 
         let mut mem = Table::new(
@@ -2373,7 +2575,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         mem.add_gsi("by_status", "status", None);
         mem.put(json!({"id":"u1","status":"active"}));
         mem.rebuild_gsis();
@@ -2391,7 +2594,8 @@ mod tests {
             None,
             Some(gsi_dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         idx.add_gsi("by_status", "status", None);
         idx.rebuild_gsis();
     }
@@ -2405,7 +2609,8 @@ mod tests {
             Some("created_at"),
             None,
             ValidationMode::Warn,
-        );
+        )
+        .unwrap();
         table.add_has_many("comments", "by_post", "comments");
         assert_eq!(table.name(), "posts");
         assert_eq!(table.primary_key(), None);
@@ -2428,7 +2633,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": 123, "name": "Alice"}));
         let record = table.get("123", None).unwrap();
         assert_eq!(record["name"], "Alice");
@@ -2443,7 +2649,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"id": "user-1", "status": "active"}));
         let results = table.query_gsi("by_status", &json!("active"), None, false);
@@ -2460,7 +2667,8 @@ mod tests {
             Some("game_id"),
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.put(json!({"user_id": "user-1", "game_id": "game-A", "status": "active"}));
         let results = table.query_gsi("by_status", &json!("active"), None, false);
@@ -2477,7 +2685,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.register_on_put(Box::new(|_| panic!("boom")));
         table.put(json!({"id": "user-1"}));
         assert!(!table.hook_errors.is_empty());
@@ -2492,7 +2701,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let count = table.count(Some("missing"), Some(&json!("active")));
         assert_eq!(count, 0);
     }
@@ -2506,7 +2716,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_association("posts");
         let desc = table.describe();
         let associations = desc["associations"].as_array().cloned().unwrap_or_default();
@@ -2525,7 +2736,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         posts.add_belongs_to("author", "users", "user_id");
         posts.put(json!({"id": "post-1", "user_id": "user-1"}));
         let mut users = Table::new(
@@ -2535,11 +2747,12 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         users.put(json!({"id": "user-1", "name": "Alice"}));
         db.add_table("posts", posts);
         db.add_table("users", users);
-        let result = db.resolve_association("posts", "author", "post-1");
+        let result = db.resolve_association("posts", "author", "post-1").unwrap();
         assert_eq!(result["id"], "user-1");
     }
 
@@ -2553,7 +2766,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         users.add_has_many("posts", "posts", "by_user");
         let mut posts = Table::new(
             "posts",
@@ -2562,7 +2776,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         posts.add_gsi("by_user", "user_id", None);
         posts.put(json!({"id": "post-1", "user_id": "user-1"}));
         posts.put(json!({"id": "post-2", "user_id": "user-1"}));
@@ -2570,7 +2785,7 @@ mod tests {
         users.put(json!({"id": "user-1"}));
         db.add_table("users", users);
         db.add_table("posts", posts);
-        let result = db.resolve_association("users", "posts", "user-1");
+        let result = db.resolve_association("users", "posts", "user-1").unwrap();
         let array = result.as_array().unwrap();
         assert_eq!(array.len(), 2);
         let ids: Vec<String> = array
@@ -2586,7 +2801,8 @@ mod tests {
     #[test]
     fn resolves_has_many_through_association() {
         let mut db = Database::new();
-        let mut jobs = Table::new("jobs", Some("id"), None, None, None, ValidationMode::Silent);
+        let mut jobs =
+            Table::new("jobs", Some("id"), None, None, None, ValidationMode::Silent).unwrap();
         jobs.add_has_many_through(
             "workers",
             "job_assignments",
@@ -2603,7 +2819,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assignments.add_gsi("by_job", "job_id", None);
         assignments.put(json!({"id": "ja-1", "job_id": "job-1", "worker_id": "worker-1"}));
         assignments.put(json!({"id": "ja-2", "job_id": "job-1", "worker_id": "worker-2"}));
@@ -2615,7 +2832,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         workers.put(json!({"id": "worker-1"}));
         workers.put(json!({"id": "worker-2"}));
         workers.put(json!({"id": "worker-3"}));
@@ -2624,7 +2842,7 @@ mod tests {
         db.add_table("job_assignments", assignments);
         db.add_table("workers", workers);
 
-        let result = db.resolve_association("jobs", "workers", "job-1");
+        let result = db.resolve_association("jobs", "workers", "job-1").unwrap();
         let array = result.as_array().unwrap();
         let ids: Vec<String> = array
             .iter()
@@ -2646,7 +2864,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let put_called = Arc::new(Mutex::new(false));
         let delete_called = Arc::new(Mutex::new(false));
         let put_clone = put_called.clone();
@@ -2673,7 +2892,8 @@ mod tests {
             None,
             Some(temp_dir("invalid_pk")),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.put(json!({"id": "user/1"}));
     }
 
@@ -2686,7 +2906,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let called = std::sync::Arc::new(std::sync::Mutex::new(false));
         let called_clone = called.clone();
         table.on_put.push(Box::new(move |_| {
@@ -2714,7 +2935,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.load_from_dir(None);
         assert!(!table.is_stale(false));
         // bump mtime
@@ -2731,16 +2953,8 @@ mod tests {
     fn cache_check_reports_without_refreshing() {
         let dir = temp_dir("cache_check");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -2748,14 +2962,11 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
-        table.load_from_dir(None);
-        let before = table.count(None, None);
-        fs::write(
-            &dir.join("user-2.json"),
-            json!({"id": "user-2"}).to_string(),
         )
         .unwrap();
+        table.load_from_dir(None);
+        let before = table.count(None, None);
+        fs::write(dir.join("user-2.json"), json!({"id": "user-2"}).to_string()).unwrap();
         let summary = table.check();
         assert_eq!(summary.added, 1);
         assert_eq!(table.count(None, None), before);
@@ -2778,7 +2989,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.load_from_dir(None);
         fs::write(
@@ -2817,7 +3029,8 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.set_check_interval(60);
         table.load_from_dir(None);
         table.mark_checked_now(false);
@@ -2833,11 +3046,7 @@ mod tests {
     fn cache_auto_refresh_can_be_disabled() {
         let dir = temp_dir("cache_auto");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -2845,14 +3054,11 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
-        table.set_auto_refresh(false);
-        table.load_from_dir(None);
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
         )
         .unwrap();
+        table.set_auto_refresh(false);
+        table.load_from_dir(None);
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         let initial_ids: Vec<String> = table
             .scan()
             .iter()
@@ -2876,11 +3082,7 @@ mod tests {
     fn cache_on_refresh_hook_receives_summary() {
         let dir = temp_dir("cache_hook");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(
-            &dir.join("user-0.json"),
-            json!({"id": "user-0"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-0.json"), json!({"id": "user-0"}).to_string()).unwrap();
         let mut table = Table::new(
             "users",
             Some("id"),
@@ -2888,18 +3090,15 @@ mod tests {
             None,
             Some(dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         let calls = Arc::new(Mutex::new(Vec::<Value>::new()));
         let calls_clone = calls.clone();
         table.register_on_refresh(Box::new(move |summary| {
             calls_clone.lock().unwrap().push(summary.clone());
         }));
         table.load_from_dir(None);
-        fs::write(
-            &dir.join("user-1.json"),
-            json!({"id": "user-1"}).to_string(),
-        )
-        .unwrap();
+        fs::write(dir.join("user-1.json"), json!({"id": "user-1"}).to_string()).unwrap();
         table.refresh();
         assert!(!calls.lock().unwrap().is_empty());
         let last = calls.lock().unwrap().last().cloned().unwrap();
@@ -2917,7 +3116,8 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         table.add_gsi("by_status", "status", None);
         table.add_has_many("posts", "posts", "by_status");
         table.directory = Some(PathBuf::from("/tmp"));
@@ -2935,9 +3135,122 @@ mod tests {
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .unwrap();
         assert!(table.iter_json_files().is_empty());
         assert_eq!(table.dir_mtime(), None);
         table.maybe_refresh_before_query();
+    }
+
+    #[test]
+    fn persistence_error_paths_and_pretty_json_are_fallible() {
+        let root = temp_dir("persistence_errors");
+        fs::create_dir_all(&root).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        table.set_pretty_json(true);
+        assert!(table.pretty_json());
+        table.try_put(json!({"id":"one","status":"open"})).unwrap();
+        table.remove_record_from_load(&TableKey::Simple("one".into()));
+
+        let not_a_directory = root.join("not-a-directory");
+        fs::write(&not_a_directory, "x").unwrap();
+        let mut unreadable_dir = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(not_a_directory),
+            ValidationMode::Error,
+        )
+        .unwrap();
+        assert!(matches!(
+            unreadable_dir.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+
+        let directory_json = root.join("directory.json");
+        fs::create_dir_all(&directory_json).unwrap();
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Io { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+        assert!(!table.warnings().is_empty());
+
+        fs::remove_dir_all(&directory_json).unwrap();
+        fs::write(root.join("invalid.json"), "not json").unwrap();
+        table.validation = ValidationMode::Error;
+        assert!(matches!(
+            table.try_load_from_dir(None),
+            Err(Error::Parse { .. })
+        ));
+        table.validation = ValidationMode::Warn;
+        table.try_load_from_dir(None).unwrap();
+
+        let blocked = root.join("blocked");
+        fs::write(&blocked, "x").unwrap();
+        assert!(matches!(
+            table.write_record(&blocked, &TableKey::Simple("x".into()), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let delete_dir = root.join("delete.json");
+        fs::create_dir_all(&delete_dir).unwrap();
+        assert!(matches!(
+            table.delete_record(&root, &TableKey::Simple("delete".into())),
+            Err(Error::Io { .. })
+        ));
+        assert!(matches!(
+            table.try_write_json_atomic(&blocked.join("x.json"), &json!({"id":"x"})),
+            Err(Error::Io { .. })
+        ));
+        let write_error = root.join("write-error");
+        fs::create_dir_all(&write_error).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&root.join("target.json"), &write_error, b"x"),
+            Err(Error::Io { .. })
+        ));
+        let rename_source = root.join("rename-source");
+        fs::write(&rename_source, b"x").unwrap();
+        let rename_target = root.join("rename-target");
+        fs::create_dir_all(&rename_target).unwrap();
+        assert!(matches!(
+            Table::write_atomic_payload(&rename_target, &rename_source, b"x"),
+            Err(Error::Io { .. })
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn memory_lookup_uses_expected_filename() {
+        let root = temp_dir("memory_lookup");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("one.json"), json!({"id":"one"}).to_string()).unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            Some(root.clone()),
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.set_storage_mode(StorageMode::Memory);
+        assert_eq!(
+            table
+                .read_record_by_key(&TableKey::Simple("one".into()))
+                .unwrap()["id"],
+            "one"
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 }

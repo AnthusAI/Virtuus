@@ -138,7 +138,7 @@ fn ensure_db(world: &mut VirtuusWorld) -> &mut DbDatabase {
 
 fn ensure_ri_db(world: &mut VirtuusWorld) -> Arc<Mutex<Database>> {
     if world.ri_db.is_none() {
-        let db = world.database.take().unwrap_or_else(Database::new);
+        let db = world.database.take().unwrap_or_default();
         world.ri_db = Some(Arc::new(Mutex::new(db)));
     }
     Arc::clone(world.ri_db.as_ref().unwrap())
@@ -150,7 +150,8 @@ fn ensure_db_table<'a>(world: &'a mut VirtuusWorld, name: &str, pk: &str) -> &'a
     unsafe {
         let db = &mut *db_ptr;
         if db.table_mut(name).is_none() {
-            let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent);
+            let table = DbTable::new(name, Some(pk), None, None, None, ValidationMode::Silent)
+                .expect("Failed to create table");
             db.add_table(name, table);
         }
         db.table_mut(name).unwrap()
@@ -437,7 +438,8 @@ fn table_from_dir(
         None,
         Some(directory),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     table.set_check_interval(check_interval);
     table.set_auto_refresh(auto_refresh);
     table.load_from_dir(None);
@@ -461,7 +463,8 @@ fn create_table(
         sort_key,
         directory,
         validation,
-    );
+    )
+    .expect("Failed to create table");
     ensure_tables(world).insert(name.to_string(), table);
     set_current_table(world, name);
 }
@@ -1963,9 +1966,9 @@ async fn given_no_assignments(world: &mut VirtuusWorld, job_id: String) {
 async fn given_categories(world: &mut VirtuusWorld, step: &cucumber::gherkin::Step) {
     let table = ensure_table(world, "categories", "id");
     for mut record in parse_step_table(step) {
-        record
-            .as_object_mut()
-            .map(|obj| obj.retain(|_, v| !v.is_null() && v != ""));
+        if let Some(obj) = record.as_object_mut() {
+            obj.retain(|_, v| !v.is_null() && v != "")
+        }
         table.put(record);
     }
 }
@@ -3192,14 +3195,13 @@ fn write_json(path: &PathBuf, value: &Value) {
 fn date_from_day(day: usize) -> String {
     let month_lengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     let mut remaining = day;
-    let mut month = 1;
-    for days in month_lengths.iter() {
+    for (index, days) in month_lengths.iter().enumerate() {
         if remaining < *days {
+            let month = index + 1;
             let day_of_month = remaining + 1;
             return format!("2025-{month:02}-{day_of_month:02}");
         }
         remaining -= *days;
-        month += 1;
     }
     "2025-12-31".to_string()
 }
@@ -3307,7 +3309,8 @@ fn ensure_bench_db(world: &mut VirtuusWorld) -> &mut Database {
             None,
             Some(root.join("users")),
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         users.load_from_dir(None);
         let mut posts = Table::new(
             "posts",
@@ -3316,7 +3319,8 @@ fn ensure_bench_db(world: &mut VirtuusWorld) -> &mut Database {
             None,
             Some(root.join("posts")),
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         posts.load_from_dir(None);
         posts.add_gsi("by_user", "user_id", None);
         for record in posts.scan() {
@@ -3329,7 +3333,8 @@ fn ensure_bench_db(world: &mut VirtuusWorld) -> &mut Database {
             None,
             Some(root.join("comments")),
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         comments.load_from_dir(None);
         db.add_table("users", users);
         db.add_table("posts", posts);
@@ -3521,7 +3526,8 @@ async fn when_run_benchmark(world: &mut VirtuusWorld, name: String) {
             None,
             Some(root.join("users")),
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         table.load_from_dir(None);
     } else if name == "full_database_cold_load" {
         let mut db = Database::new();
@@ -3533,7 +3539,8 @@ async fn when_run_benchmark(world: &mut VirtuusWorld, name: String) {
                 None,
                 Some(root.join(table_name)),
                 ValidationMode::Silent,
-            );
+            )
+            .expect("Failed to create table");
             table.load_from_dir(None);
             db.add_table(table_name, table);
         }
@@ -3891,10 +3898,10 @@ async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
             for i in 0..50 {
                 let idx = (worker + i) % user_ids.len();
                 let user_id = &user_ids[idx];
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let result = {
                     let mut db = db.lock().expect("lock db");
                     db.resolve_association("users", "posts", user_id)
-                }));
+                };
                 match result {
                     Ok(Value::Null) => {}
                     Ok(Value::Array(items)) => {
@@ -3922,11 +3929,8 @@ async fn when_resolve_user_posts(world: &mut VirtuusWorld) {
                             .expect("lock invalid")
                             .push("non-array".to_string());
                     }
-                    Err(_) => {
-                        errors
-                            .lock()
-                            .expect("lock errors")
-                            .push("resolve panic".to_string());
+                    Err(err) => {
+                        errors.lock().expect("lock errors").push(err.to_string());
                     }
                 }
             }
@@ -4004,10 +4008,10 @@ async fn when_resolve_post_authors(world: &mut VirtuusWorld) {
             for i in 0..50 {
                 let idx = (worker + i) % post_ids.len();
                 let post_id = &post_ids[idx];
-                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let result = {
                     let mut db = db.lock().expect("lock db");
                     db.resolve_association("posts", "author", post_id)
-                }));
+                };
                 match result {
                     Ok(Value::Null) => {}
                     Ok(Value::Object(obj)) => {
@@ -4024,11 +4028,8 @@ async fn when_resolve_post_authors(world: &mut VirtuusWorld) {
                             .expect("lock invalid")
                             .push("non-object".to_string());
                     }
-                    Err(_) => {
-                        errors
-                            .lock()
-                            .expect("lock errors")
-                            .push("resolve panic".to_string());
+                    Err(err) => {
+                        errors.lock().expect("lock errors").push(err.to_string());
                     }
                 }
             }
@@ -4298,7 +4299,8 @@ async fn given_database_two_tables(world: &mut VirtuusWorld, name1: String, name
         None,
         Some(dir1.clone()),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     let mut table2 = Table::new(
         &name2,
         Some("id"),
@@ -4306,7 +4308,8 @@ async fn given_database_two_tables(world: &mut VirtuusWorld, name1: String, name
         None,
         Some(dir2.clone()),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     table1.load_from_dir(None);
     table2.load_from_dir(None);
     db.add_table(&name1, table1);
@@ -4377,7 +4380,8 @@ async fn given_database_loaded(world: &mut VirtuusWorld) {
         None,
         Some(dir.clone()),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     table.load_from_dir(None);
     db.add_table("users", table);
     world.database = Some(db);
@@ -4525,7 +4529,8 @@ async fn given_db_table(world: &mut VirtuusWorld, name: String) {
             None,
             Some(users_dir.clone()),
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         world.write_dir = Some(users_dir);
         world.write_table = Some(Arc::new(Mutex::new(table)));
         world.write_errors.clear();
@@ -4549,7 +4554,7 @@ async fn given_db_table_rows(
     let table = ensure_db_table(world, &name, "id");
     let records = table_to_records(step.table().unwrap());
     for record in records {
-        table.put(Value::Object(JsonMap::from_iter(record.into_iter())));
+        table.put(Value::Object(JsonMap::from_iter(record)));
     }
 }
 
@@ -4709,7 +4714,7 @@ async fn given_empty_db(world: &mut VirtuusWorld) {
 async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
     let query: Value = serde_json::from_str(&query_text).expect("invalid query json");
     let db = ensure_db(world);
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| db.execute(&query))) {
+    match db.execute(&query) {
         Ok(result) => {
             world.db_result = Some(result.clone());
             world.last_records = items_from_result(&result);
@@ -4722,8 +4727,8 @@ async fn when_execute_query(world: &mut VirtuusWorld, query_text: String) {
                 .map(|s| s.to_string());
             world.error = None;
         }
-        Err(_) => {
-            world.error = Some("error".to_string());
+        Err(err) => {
+            world.error = Some(err.to_string());
         }
     }
 }
@@ -4820,14 +4825,13 @@ async fn then_result_count_db(world: &mut VirtuusWorld, count: usize) {
     assert_eq!(items.len(), count);
 }
 
-#[then(regex = r#"^an error should be raised indicating table "([^"]*)" does not exist$"#)]
-async fn then_error_table(_world: &mut VirtuusWorld, _table: String) {
-    assert!(_world.error.is_some());
-}
-
-#[then(regex = r#"^an error should be raised indicating GSI "([^"]*)" does not exist$"#)]
-async fn then_error_gsi(_world: &mut VirtuusWorld, _gsi: String) {
-    assert!(_world.error.is_some());
+#[then("the database should still answer subsequent queries")]
+async fn then_database_still_works(world: &mut VirtuusWorld) {
+    let db = world.database.as_mut().expect("missing database");
+    let table_name = db.tables().keys().next().expect("no tables").clone();
+    let query = json!({ table_name: { "scan": true } });
+    db.execute(&query)
+        .expect("database should still answer after an error");
 }
 
 #[then(regex = r#"^the result should contain 2 posts with created_at >= "([^"]*)"$"#)]
@@ -5139,7 +5143,7 @@ fn http_request(
     let body_text = body.unwrap_or("");
     let request = format!(
         "{method} {path} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body_text}",
-        body_text.as_bytes().len()
+        body_text.len()
     );
     stream.write_all(request.as_bytes()).expect("write failed");
     let mut response = String::new();
@@ -5313,7 +5317,8 @@ async fn when_create_db_from_schema_dict(world: &mut VirtuusWorld) {
     let db = match data_root {
         Some(root) => Database::from_schema(schema_path.as_path(), Some(root.as_path())),
         None => Database::from_schema(schema_path.as_path(), None),
-    };
+    }
+    .expect("schema should load");
     world.schema_path = Some(schema_path);
     world.database = Some(db);
 }
@@ -5386,11 +5391,8 @@ tables:
 #[when("I attempt to load the schema")]
 async fn when_attempt_load_schema(world: &mut VirtuusWorld) {
     let schema = world.schema_path.as_ref().expect("schema missing");
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        DbDatabase::from_schema(schema.as_path(), world.data_root.as_deref())
-    }));
-    if let Err(err) = result {
-        world.error = Some(panic_message(err));
+    if let Err(err) = DbDatabase::from_schema(schema.as_path(), world.data_root.as_deref()) {
+        world.error = Some(err.to_string());
     }
 }
 
@@ -5398,7 +5400,8 @@ async fn when_attempt_load_schema(world: &mut VirtuusWorld) {
 async fn when_from_schema_with_data(world: &mut VirtuusWorld) {
     let schema = world.schema_path.as_ref().expect("schema missing");
     let data_root = world.data_root.as_deref();
-    world.database = Some(DbDatabase::from_schema(schema.as_path(), data_root));
+    world.database =
+        Some(DbDatabase::from_schema(schema.as_path(), data_root).expect("schema should load"));
 }
 
 #[when("I call Database.from_schema with the schema and data root")]
@@ -5478,7 +5481,8 @@ async fn given_db_users_gsi(world: &mut VirtuusWorld, gsi: String, field: String
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         write_table.add_gsi(&gsi, &field, None);
         world.write_table = Some(Arc::new(Mutex::new(write_table)));
         world.write_errors.clear();
@@ -5492,7 +5496,8 @@ async fn given_db_users_gsi(world: &mut VirtuusWorld, gsi: String, field: String
             None,
             None,
             ValidationMode::Silent,
-        );
+        )
+        .expect("Failed to create table");
         concurrent_table.add_gsi(&gsi, &field, None);
         world.concurrent_table = Some(Arc::new(Mutex::new(concurrent_table)));
         world.concurrent_writer_status = Some("active".to_string());
@@ -5614,7 +5619,7 @@ async fn when_page_through_limit(world: &mut VirtuusWorld) {
         if let Some(tok) = token.clone() {
             query["users"]["next_token"] = Value::String(tok);
         }
-        let result = db.execute(&query);
+        let result = db.execute(&query).unwrap_or(Value::Null);
         let items = items_from_result(&result);
         if items.is_empty() {
             break;
@@ -5658,7 +5663,7 @@ async fn when_page_through_query(world: &mut VirtuusWorld, query_text: String) {
             let inner = map.values_mut().next().unwrap().as_object_mut().unwrap();
             inner.insert("next_token".to_string(), Value::String(tok));
         }
-        let result = db.execute(&query);
+        let result = db.execute(&query).unwrap_or(Value::Null);
         let items = items_from_result(&result);
         if items.is_empty() {
             break;
@@ -6184,7 +6189,8 @@ async fn given_concurrent_users(world: &mut VirtuusWorld, count: usize) {
         None,
         None,
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     for i in 0..count {
         let status = if i % 2 == 0 { "active" } else { "inactive" };
         table.put(json!({
@@ -6527,7 +6533,8 @@ async fn given_users_loaded_files(world: &mut VirtuusWorld, count: usize) {
         None,
         Some(users_dir.clone()),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     table.load_from_dir(None);
     world.refresh_dir = Some(users_dir);
     world.refresh_table = Some(Arc::new(Mutex::new(table)));
@@ -6616,7 +6623,7 @@ async fn when_warm_concurrently(world: &mut VirtuusWorld) {
         handles.push(thread::spawn(move || {
             let mut table = table.lock().expect("lock table");
             table.warm();
-            table.last_change_summary.reread as usize
+            table.last_change_summary.reread
         }));
     }
     let mut max_reread = 0;
@@ -6660,7 +6667,8 @@ async fn given_empty_users_table(world: &mut VirtuusWorld) {
         None,
         Some(users_dir.clone()),
         ValidationMode::Silent,
-    );
+    )
+    .expect("Failed to create table");
     world.write_dir = Some(users_dir);
     world.write_table = Some(Arc::new(Mutex::new(table)));
     world.write_errors.clear();
@@ -6854,10 +6862,436 @@ async fn then_no_error_writes(world: &mut VirtuusWorld) {
 }
 
 // ---------------------------------------------------------------------------
+// Error scenarios (shared with Python)
+// ---------------------------------------------------------------------------
+
+#[given("a database with no tables")]
+async fn given_empty_database(world: &mut VirtuusWorld) {
+    world.database = Some(virtuus::Database::new());
+    world.error = None;
+}
+
+#[when(regex = r#"^I execute a query for table "([^"]*)"$"#)]
+async fn when_execute_query_for_table(world: &mut VirtuusWorld, table_name: String) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({table_name: {"scan": true}});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a malformed query that is not an object")]
+async fn when_execute_malformed_query(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::Value::String("not an object".to_string());
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a query with zero tables specified")]
+async fn when_execute_query_zero_tables(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I execute a query targeting two tables")]
+async fn when_execute_query_two_tables(world: &mut VirtuusWorld) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({"users": {"scan": true}, "products": {"scan": true}});
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when(regex = r#"^I execute a query for unknown index "([^"]*)" on "([^"]*)"$"#)]
+async fn when_execute_query_unknown_index(
+    world: &mut VirtuusWorld,
+    index_name: String,
+    table_name: String,
+) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({
+        table_name: {
+            "index": index_name,
+            "where": {"email": "test@example.com"}
+        }
+    });
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when(
+    regex = r#"^I execute a query for index "([^"]*)" on "([^"]*)" without partition key in where$"#
+)]
+async fn when_execute_query_missing_partition_key(
+    world: &mut VirtuusWorld,
+    index_name: String,
+    table_name: String,
+) {
+    let db = ensure_db(world);
+    let query = serde_json::json!({
+        table_name: {
+            "index": index_name,
+            "where": {}
+        }
+    });
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)" naming "([^"]*)"$"#)]
+async fn then_error_kind_with_name(world: &mut VirtuusWorld, error_kind: String, name: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+    assert!(
+        error.contains(&name),
+        "Expected name {} in error: {}",
+        name,
+        error
+    );
+}
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)"$"#)]
+async fn then_error_kind(world: &mut VirtuusWorld, error_kind: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+}
+
+// ---------------------------------------------------------------------------
+
+#[then(regex = r#"^the result is an error of kind "([^"]*)" containing "([^"]*)"$"#)]
+async fn then_error_kind_containing(world: &mut VirtuusWorld, error_kind: String, message: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&error_kind),
+        "Expected error kind {} in {}",
+        error_kind,
+        error
+    );
+    assert!(
+        error.contains(&message),
+        "Expected message containing '{}' in error: {}",
+        message,
+        error
+    );
+}
+
+// More Given steps for error scenarios
+#[given(regex = r#"^a database with a "([^"]*)" table and a "([^"]*)" table$"#)]
+async fn given_database_with_two_tables(world: &mut VirtuusWorld, table1: String, table2: String) {
+    if world.database.is_none() {
+        world.database = Some(Database::new());
+    }
+    for table_name in &[table1, table2] {
+        let table = Table::new(
+            table_name,
+            Some("id"),
+            None,
+            None,
+            None,
+            virtuus::table::ValidationMode::Silent,
+        )
+        .unwrap();
+        let db = world.database.as_mut().expect("database");
+        db.add_table(table_name, table);
+    }
+    world.error = None;
+}
+
+#[given(regex = r#"^a posts table with belongs_to "([^"]*)" pointing to missing "([^"]*)" table$"#)]
+async fn given_posts_with_missing_belongs_to(
+    world: &mut VirtuusWorld,
+    assoc_name: String,
+    missing_table: String,
+) {
+    if world.database.is_none() {
+        world.database = Some(Database::new());
+    }
+    let mut table = Table::new(
+        "posts",
+        Some("id"),
+        None,
+        None,
+        None,
+        virtuus::table::ValidationMode::Silent,
+    )
+    .unwrap();
+    table.add_belongs_to(&assoc_name, &missing_table, "user_id");
+    table.put(serde_json::json!({"id": "p1", "user_id": "u1"}));
+    let db = world.database.as_mut().expect("database");
+    db.add_table("posts", table);
+    world.error = None;
+}
+
+#[given(regex = r#"^a users table with has_many "([^"]*)" pointing to missing "([^"]*)" table$"#)]
+async fn given_users_with_missing_has_many(
+    world: &mut VirtuusWorld,
+    assoc_name: String,
+    missing_table: String,
+) {
+    if world.database.is_none() {
+        world.database = Some(Database::new());
+    }
+    let mut table = Table::new(
+        "users",
+        Some("id"),
+        None,
+        None,
+        None,
+        virtuus::table::ValidationMode::Silent,
+    )
+    .unwrap();
+    table.add_has_many(&assoc_name, &missing_table, "by_user");
+    table.put(serde_json::json!({"id": "u1"}));
+    let db = world.database.as_mut().expect("database");
+    db.add_table("users", table);
+    world.error = None;
+}
+
+// Schema loading When steps
+#[when(regex = r#"^I try to load schema from "([^"]*)"$"#)]
+async fn when_load_schema_from_file(world: &mut VirtuusWorld, file_path: String) {
+    match Database::from_schema(std::path::Path::new(&file_path), None) {
+        Ok(db) => {
+            world.database = Some(db);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+#[when("I try to load an invalid YAML schema")]
+async fn when_load_invalid_yaml(world: &mut VirtuusWorld) {
+    let tmp_dir = std::env::temp_dir().join("virtuus_invalid_yaml.yml");
+    let _ = std::fs::write(&tmp_dir, "invalid: yaml: content:\n  - broken");
+    match Database::from_schema(&tmp_dir, None) {
+        Ok(db) => {
+            world.database = Some(db);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+    let _ = std::fs::remove_file(&tmp_dir);
+}
+
+#[when(regex = r#"^I try to load a schema with missing "([^"]*)" and "([^"]*)"$"#)]
+async fn when_load_schema_missing_fields(
+    world: &mut VirtuusWorld,
+    _field1: String,
+    _field2: String,
+) {
+    let tmp_dir = std::env::temp_dir().join("virtuus_missing_fields.yml");
+    let yaml = "tables:\n  test_table:\n    storage: memory";
+    let _ = std::fs::write(&tmp_dir, yaml);
+    match Database::from_schema(&tmp_dir, None) {
+        Ok(db) => {
+            world.database = Some(db);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+    let _ = std::fs::remove_file(&tmp_dir);
+}
+
+#[when(regex = r#"^I try to execute "([^"]*)"$"#)]
+async fn when_try_execute_string(world: &mut VirtuusWorld, query_str: String) {
+    let db = ensure_db(world);
+    let query = serde_json::Value::String(query_str);
+    match db.execute(&query) {
+        Ok(result) => {
+            world.db_result = Some(result);
+            world.error = None;
+        }
+        Err(err) => {
+            world.error = Some(err.to_string());
+        }
+    }
+}
+
+// Error checking steps matching Python patterns
+#[then(regex = r#"^an error should be raised about malformed query$"#)]
+async fn then_error_malformed_query(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("Validation"),
+        "Expected Validation error, got: {}",
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised about targeting exactly one table$"#)]
+async fn then_error_one_table(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("Validation"),
+        "Expected Validation error, got: {}",
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised indicating table "([^"]*)" does not exist$"#)]
+async fn then_error_unknown_table(world: &mut VirtuusWorld, table_name: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("UnknownTable"),
+        "Expected UnknownTable error, got: {}",
+        error
+    );
+    assert!(
+        error.contains(&table_name),
+        "Expected table name {} in error: {}",
+        table_name,
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised indicating GSI "([^"]*)" does not exist$"#)]
+async fn then_error_unknown_index(world: &mut VirtuusWorld, gsi_name: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("UnknownIndex"),
+        "Expected UnknownIndex error, got: {}",
+        error
+    );
+    assert!(
+        error.contains(&gsi_name),
+        "Expected GSI name {} in error: {}",
+        gsi_name,
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised about the missing partition key in query$"#)]
+async fn then_error_missing_partition(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("Validation"),
+        "Expected Validation error, got: {}",
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised indicating Io error$"#)]
+async fn then_error_io(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(error.contains("Io"), "Expected Io error, got: {}", error);
+}
+
+#[then(regex = r#"^an error should be raised indicating Parse error$"#)]
+async fn then_error_parse(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("Parse"),
+        "Expected Parse error, got: {}",
+        error
+    );
+}
+
+#[then(regex = r#"^an error should be raised indicating Validation error$"#)]
+async fn then_error_validation(world: &mut VirtuusWorld) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains("Validation"),
+        "Expected Validation error, got: {}",
+        error
+    );
+}
+
+// Rust-only scenarios
+// ---------------------------------------------------------------------------
+
+#[given("the rust library can be compiled")]
+async fn given_rust_library_compilable(_world: &mut VirtuusWorld) {
+    // The fact that this test compiled means the Rust library is buildable.
+}
+
+#[then("it should build without default features")]
+async fn then_build_without_defaults(_world: &mut VirtuusWorld) {
+    // Cargo configuration allows building with --no-default-features.
+    // Verification is done in the Verify step: cargo build --lib --no-default-features
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
 async fn main() {
-    VirtuusWorld::run("../features").await;
+    // Python-only scenarios run under behave; benchmarks run on demand.
+    VirtuusWorld::cucumber()
+        .fail_on_skipped()
+        .filter_run_and_exit("../features", |feature, rule, scenario| {
+            let excluded = |tags: &[String]| {
+                tags.iter()
+                    .any(|tag| tag == "python-only" || tag == "bench")
+            };
+            // The amplify and appsync crates run their own feature folders.
+            let crate_owned = feature.path.as_ref().is_some_and(|path| {
+                path.components()
+                    .any(|part| part.as_os_str() == "amplify" || part.as_os_str() == "appsync")
+            });
+            !crate_owned
+                && !excluded(&feature.tags)
+                && !rule.is_some_and(|rule| excluded(&rule.tags))
+                && !excluded(&scenario.tags)
+        })
+        .await;
 }

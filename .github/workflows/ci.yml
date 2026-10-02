@@ -49,3 +49,25 @@ jobs:
 
       - name: make check
         run: cd python && poetry run make -C .. check
+
+  import:
+    name: import (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-14]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install virtuus
+        run: python -m pip install ./python
+
+      - name: Import virtuus and dispatch through the local service
+        run: python -c "import virtuus; assert virtuus.Service().dispatch({'action':'ping'})['ok']"

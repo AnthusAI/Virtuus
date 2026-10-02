@@ -1,0 +1,1578 @@
+enum SliceSource {
+  user
+  ml
+  curated
+}
+
+enum Kind {
+  loop
+  break
+  hit
+  phrase
+  section
+  chop
+  other
+}
+
+enum VerdictValue {
+  keep
+  skip
+  later
+}
+
+type Recording {
+  id: ID!
+  title: String!
+  collection: String!
+  performer: String
+  composed: Int
+  recorded: String
+  credit: String
+  rights: String
+  sourcePage: AWSURL
+  url: AWSURL
+  documents: [FileRef]
+  clips(filter: ModelClipFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelClipConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Clip {
+  id: ID!
+  recordingId: ID!
+  recording: Recording
+  path: String!
+  aliases: [String]
+  collection: String!
+  title: String!
+  role: ClipRole
+  stem: String
+  stemModel: String
+  parentClipId: ID
+  excerptStart: Float
+  audio: FileRef!
+  analysis: FileRef
+  analysisVersion: Int
+  analyzedAt: AWSDateTime
+  status: ClipStatus
+  duration: Float
+  sampleRate: Int
+  channels: Int
+  bpm: Float
+  bpmStability: Float
+  meter: Int
+  key: String
+  camelot: String
+  keysOverTime: [String]
+  tuningCents: Float
+  noteCount: Int
+  tags: [String]
+  nameCounters: AWSJSON
+  slices(filter: ModelSliceFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelSliceConnection
+  markers(filter: ModelMarkerFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelMarkerConnection
+  candidates(filter: ModelCandidateFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelCandidateConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Slice {
+  id: ID!
+  clipId: ID!
+  clip: Clip
+  name: String!
+  start: Float!
+  end: Float!
+  source: SliceSource!
+  kind: Kind
+  tags: [String]
+  evidence: AWSJSON
+  rank: Int
+  candidateId: ID
+  retired: Boolean
+  owner: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Marker {
+  id: ID!
+  clipId: ID!
+  clip: Clip
+  name: String!
+  seconds: Float!
+  source: SliceSource
+  note: String
+  owner: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Candidate {
+  id: ID!
+  clipId: ID!
+  clip: Clip
+  recordingId: ID!
+  start: Float!
+  end: Float!
+  kind: Kind!
+  name: String
+  context: CandidateContext
+  proposers: [Proposer]!
+  baseScore: Float!
+  legacyId: String
+  verdicts(filter: ModelVerdictFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelVerdictConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Verdict {
+  candidateId: ID!
+  judge: String!
+  candidate: Candidate
+  verdict: VerdictValue!
+  stars: Int
+  tags: [String]
+  name: String
+  judgedAt: AWSDateTime!
+  by: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Crate {
+  id: ID!
+  name: String!
+  note: String
+  owner: String
+  items(filter: ModelCrateItemFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelCrateItemConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CrateItem {
+  id: ID!
+  crateId: ID!
+  crate: Crate
+  position: String!
+  candidateId: ID
+  sliceId: ID
+  clipId: ID
+  note: String
+  owner: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Score {
+  id: ID!
+  title: String!
+  folder: String!
+  format: ScoreFormat
+  text: String!
+  lastErrors: [String]
+  legacyPath: String
+  owner: String
+  refs(filter: ModelScoreRefFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelScoreRefConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type ScoreRef {
+  id: ID!
+  scoreId: ID!
+  score: Score
+  clipAlias: String!
+  clipId: ID
+  clipPath: String
+  sliceName: String
+  sliceId: ID
+  start: Float
+  end: Float
+  owner: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Job {
+  id: ID!
+  kind: String!
+  clipId: ID
+  state: JobState
+  error: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type FileRef {
+  key: String!
+  sha256: String!
+  size: Int
+  contentType: String
+}
+
+type Proposer {
+  by: String!
+  score: Float!
+  why: String!
+  evidence: AWSJSON
+  at: AWSDateTime!
+}
+
+type CandidateContext {
+  seconds: Float
+  bpm: Float
+  beats: Float
+  key: String
+  stem: String
+}
+
+enum ClipRole {
+  source
+  stem
+  excerpt
+  upload
+}
+
+enum ClipStatus {
+  pending
+  analyzing
+  ready
+  failed
+}
+
+enum ScoreFormat {
+  apr
+  yaml
+}
+
+enum JobState {
+  queued
+  running
+  done
+  failed
+}
+
+input AmplifyAIConversationTurnErrorInput {
+  errorType: String!
+  message: String!
+}
+
+input ModelStringInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
+}
+
+input ModelIntInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+}
+
+input ModelFloatInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  between: [Float]
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+}
+
+input ModelBooleanInput {
+  ne: Boolean
+  eq: Boolean
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+}
+
+input ModelIDInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
+}
+
+input ModelSubscriptionStringInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+  in: [String]
+  notIn: [String]
+}
+
+input ModelSubscriptionIntInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+  in: [Int]
+  notIn: [Int]
+}
+
+input ModelSubscriptionFloatInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  between: [Float]
+  in: [Float]
+  notIn: [Float]
+}
+
+input ModelSubscriptionBooleanInput {
+  ne: Boolean
+  eq: Boolean
+}
+
+input ModelSubscriptionIDInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+  in: [ID]
+  notIn: [ID]
+}
+
+enum ModelAttributeTypes {
+  binary
+  binarySet
+  bool
+  list
+  map
+  number
+  numberSet
+  string
+  stringSet
+  _null
+}
+
+input ModelSizeInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+}
+
+enum ModelSortDirection {
+  ASC
+  DESC
+}
+
+input FileRefInput {
+  key: String!
+  sha256: String!
+  size: Int
+  contentType: String
+}
+
+type ModelRecordingConnection {
+  items: [Recording]!
+  nextToken: String
+}
+
+input ModelRecordingFilterInput {
+  id: ModelIDInput
+  title: ModelStringInput
+  collection: ModelStringInput
+  performer: ModelStringInput
+  composed: ModelIntInput
+  recorded: ModelStringInput
+  credit: ModelStringInput
+  rights: ModelStringInput
+  sourcePage: ModelStringInput
+  url: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelRecordingFilterInput]
+  or: [ModelRecordingFilterInput]
+  not: ModelRecordingFilterInput
+}
+
+type Query {
+  getRecording(id: ID!): Recording
+  listRecordings(id: ID, filter: ModelRecordingFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelRecordingConnection
+  getClip(id: ID!): Clip
+  listClips(id: ID, filter: ModelClipFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelClipConnection
+  getSlice(id: ID!): Slice
+  listSlices(id: ID, filter: ModelSliceFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelSliceConnection
+  getMarker(id: ID!): Marker
+  listMarkers(id: ID, filter: ModelMarkerFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelMarkerConnection
+  getCandidate(id: ID!): Candidate
+  listCandidates(id: ID, filter: ModelCandidateFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelCandidateConnection
+  getVerdict(candidateId: ID!, judge: String!): Verdict
+  listVerdicts(candidateId: ID, judge: ModelStringKeyConditionInput, filter: ModelVerdictFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelVerdictConnection
+  getCrate(id: ID!): Crate
+  listCrates(id: ID, filter: ModelCrateFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelCrateConnection
+  getCrateItem(id: ID!): CrateItem
+  listCrateItems(id: ID, filter: ModelCrateItemFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelCrateItemConnection
+  getScore(id: ID!): Score
+  listScores(id: ID, filter: ModelScoreFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelScoreConnection
+  getScoreRef(id: ID!): ScoreRef
+  listScoreRefs(id: ID, filter: ModelScoreRefFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelScoreRefConnection
+  getJob(id: ID!): Job
+  listJobs(id: ID, filter: ModelJobFilterInput, limit: Int, nextToken: String, sortDirection: ModelSortDirection): ModelJobConnection
+  recordingsByCollection(collection: String!, title: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelRecordingFilterInput, limit: Int, nextToken: String): ModelRecordingConnection
+  clipsByRecording(recordingId: ID!, path: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelClipFilterInput, limit: Int, nextToken: String): ModelClipConnection
+  clipsByPath(path: String!, sortDirection: ModelSortDirection, filter: ModelClipFilterInput, limit: Int, nextToken: String): ModelClipConnection
+  clipsByCollection(collection: String!, path: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelClipFilterInput, limit: Int, nextToken: String): ModelClipConnection
+  clipsByParent(parentClipId: ID!, sortDirection: ModelSortDirection, filter: ModelClipFilterInput, limit: Int, nextToken: String): ModelClipConnection
+  slicesByClip(clipId: ID!, start: ModelFloatKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelSliceFilterInput, limit: Int, nextToken: String): ModelSliceConnection
+  slicesByClipAndName(clipId: ID!, name: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelSliceFilterInput, limit: Int, nextToken: String): ModelSliceConnection
+  slicesByCandidate(candidateId: ID!, sortDirection: ModelSortDirection, filter: ModelSliceFilterInput, limit: Int, nextToken: String): ModelSliceConnection
+  markersByClip(clipId: ID!, seconds: ModelFloatKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelMarkerFilterInput, limit: Int, nextToken: String): ModelMarkerConnection
+  candidatesByClip(clipId: ID!, start: ModelFloatKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelCandidateFilterInput, limit: Int, nextToken: String): ModelCandidateConnection
+  candidatesByRecording(recordingId: ID!, baseScore: ModelFloatKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelCandidateFilterInput, limit: Int, nextToken: String): ModelCandidateConnection
+  candidatesByKind(kind: Kind!, baseScore: ModelFloatKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelCandidateFilterInput, limit: Int, nextToken: String): ModelCandidateConnection
+  verdictsByJudge(judge: String!, judgedAt: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelVerdictFilterInput, limit: Int, nextToken: String): ModelVerdictConnection
+  cratesByOwner(owner: String!, name: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelCrateFilterInput, limit: Int, nextToken: String): ModelCrateConnection
+  crateItemsByCrate(crateId: ID!, position: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelCrateItemFilterInput, limit: Int, nextToken: String): ModelCrateItemConnection
+  crateItemsByCandidate(candidateId: ID!, sortDirection: ModelSortDirection, filter: ModelCrateItemFilterInput, limit: Int, nextToken: String): ModelCrateItemConnection
+  scoresByFolder(folder: String!, title: ModelStringKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelScoreFilterInput, limit: Int, nextToken: String): ModelScoreConnection
+  refsByScore(scoreId: ID!, sortDirection: ModelSortDirection, filter: ModelScoreRefFilterInput, limit: Int, nextToken: String): ModelScoreRefConnection
+  refsByClip(clipId: ID!, scoreId: ModelIDKeyConditionInput, sortDirection: ModelSortDirection, filter: ModelScoreRefFilterInput, limit: Int, nextToken: String): ModelScoreRefConnection
+  refsBySlice(sliceId: ID!, sortDirection: ModelSortDirection, filter: ModelScoreRefFilterInput, limit: Int, nextToken: String): ModelScoreRefConnection
+  jobsByState(state: JobState!, sortDirection: ModelSortDirection, filter: ModelJobFilterInput, limit: Int, nextToken: String): ModelJobConnection
+}
+
+input ModelRecordingConditionInput {
+  title: ModelStringInput
+  collection: ModelStringInput
+  performer: ModelStringInput
+  composed: ModelIntInput
+  recorded: ModelStringInput
+  credit: ModelStringInput
+  rights: ModelStringInput
+  sourcePage: ModelStringInput
+  url: ModelStringInput
+  and: [ModelRecordingConditionInput]
+  or: [ModelRecordingConditionInput]
+  not: ModelRecordingConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateRecordingInput {
+  id: ID
+  title: String!
+  collection: String!
+  performer: String
+  composed: Int
+  recorded: String
+  credit: String
+  rights: String
+  sourcePage: AWSURL
+  url: AWSURL
+  documents: [FileRefInput]
+}
+
+input UpdateRecordingInput {
+  id: ID!
+  title: String
+  collection: String
+  performer: String
+  composed: Int
+  recorded: String
+  credit: String
+  rights: String
+  sourcePage: AWSURL
+  url: AWSURL
+  documents: [FileRefInput]
+}
+
+input DeleteRecordingInput {
+  id: ID!
+}
+
+type Mutation {
+  createRecording(input: CreateRecordingInput!, condition: ModelRecordingConditionInput): Recording
+  updateRecording(input: UpdateRecordingInput!, condition: ModelRecordingConditionInput): Recording
+  deleteRecording(input: DeleteRecordingInput!, condition: ModelRecordingConditionInput): Recording
+  createClip(input: CreateClipInput!, condition: ModelClipConditionInput): Clip
+  updateClip(input: UpdateClipInput!, condition: ModelClipConditionInput): Clip
+  deleteClip(input: DeleteClipInput!, condition: ModelClipConditionInput): Clip
+  createSlice(input: CreateSliceInput!, condition: ModelSliceConditionInput): Slice
+  updateSlice(input: UpdateSliceInput!, condition: ModelSliceConditionInput): Slice
+  deleteSlice(input: DeleteSliceInput!, condition: ModelSliceConditionInput): Slice
+  createMarker(input: CreateMarkerInput!, condition: ModelMarkerConditionInput): Marker
+  updateMarker(input: UpdateMarkerInput!, condition: ModelMarkerConditionInput): Marker
+  deleteMarker(input: DeleteMarkerInput!, condition: ModelMarkerConditionInput): Marker
+  createCandidate(input: CreateCandidateInput!, condition: ModelCandidateConditionInput): Candidate
+  updateCandidate(input: UpdateCandidateInput!, condition: ModelCandidateConditionInput): Candidate
+  deleteCandidate(input: DeleteCandidateInput!, condition: ModelCandidateConditionInput): Candidate
+  createVerdict(input: CreateVerdictInput!, condition: ModelVerdictConditionInput): Verdict
+  updateVerdict(input: UpdateVerdictInput!, condition: ModelVerdictConditionInput): Verdict
+  deleteVerdict(input: DeleteVerdictInput!, condition: ModelVerdictConditionInput): Verdict
+  createCrate(input: CreateCrateInput!, condition: ModelCrateConditionInput): Crate
+  updateCrate(input: UpdateCrateInput!, condition: ModelCrateConditionInput): Crate
+  deleteCrate(input: DeleteCrateInput!, condition: ModelCrateConditionInput): Crate
+  createCrateItem(input: CreateCrateItemInput!, condition: ModelCrateItemConditionInput): CrateItem
+  updateCrateItem(input: UpdateCrateItemInput!, condition: ModelCrateItemConditionInput): CrateItem
+  deleteCrateItem(input: DeleteCrateItemInput!, condition: ModelCrateItemConditionInput): CrateItem
+  createScore(input: CreateScoreInput!, condition: ModelScoreConditionInput): Score
+  updateScore(input: UpdateScoreInput!, condition: ModelScoreConditionInput): Score
+  deleteScore(input: DeleteScoreInput!, condition: ModelScoreConditionInput): Score
+  createScoreRef(input: CreateScoreRefInput!, condition: ModelScoreRefConditionInput): ScoreRef
+  updateScoreRef(input: UpdateScoreRefInput!, condition: ModelScoreRefConditionInput): ScoreRef
+  deleteScoreRef(input: DeleteScoreRefInput!, condition: ModelScoreRefConditionInput): ScoreRef
+  createJob(input: CreateJobInput!, condition: ModelJobConditionInput): Job
+  updateJob(input: UpdateJobInput!, condition: ModelJobConditionInput): Job
+  deleteJob(input: DeleteJobInput!, condition: ModelJobConditionInput): Job
+}
+
+input ModelSubscriptionRecordingFilterInput {
+  id: ModelSubscriptionIDInput
+  title: ModelSubscriptionStringInput
+  collection: ModelSubscriptionStringInput
+  performer: ModelSubscriptionStringInput
+  composed: ModelSubscriptionIntInput
+  recorded: ModelSubscriptionStringInput
+  credit: ModelSubscriptionStringInput
+  rights: ModelSubscriptionStringInput
+  sourcePage: ModelSubscriptionStringInput
+  url: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionRecordingFilterInput]
+  or: [ModelSubscriptionRecordingFilterInput]
+}
+
+type Subscription {
+  onCreateRecording(filter: ModelSubscriptionRecordingFilterInput): Recording @aws_subscribe(mutations: ["createRecording"])
+  onUpdateRecording(filter: ModelSubscriptionRecordingFilterInput): Recording @aws_subscribe(mutations: ["updateRecording"])
+  onDeleteRecording(filter: ModelSubscriptionRecordingFilterInput): Recording @aws_subscribe(mutations: ["deleteRecording"])
+  onCreateClip(filter: ModelSubscriptionClipFilterInput): Clip @aws_subscribe(mutations: ["createClip"])
+  onUpdateClip(filter: ModelSubscriptionClipFilterInput): Clip @aws_subscribe(mutations: ["updateClip"])
+  onDeleteClip(filter: ModelSubscriptionClipFilterInput): Clip @aws_subscribe(mutations: ["deleteClip"])
+  onCreateSlice(filter: ModelSubscriptionSliceFilterInput, owner: String): Slice @aws_subscribe(mutations: ["createSlice"])
+  onUpdateSlice(filter: ModelSubscriptionSliceFilterInput, owner: String): Slice @aws_subscribe(mutations: ["updateSlice"])
+  onDeleteSlice(filter: ModelSubscriptionSliceFilterInput, owner: String): Slice @aws_subscribe(mutations: ["deleteSlice"])
+  onCreateMarker(filter: ModelSubscriptionMarkerFilterInput, owner: String): Marker @aws_subscribe(mutations: ["createMarker"])
+  onUpdateMarker(filter: ModelSubscriptionMarkerFilterInput, owner: String): Marker @aws_subscribe(mutations: ["updateMarker"])
+  onDeleteMarker(filter: ModelSubscriptionMarkerFilterInput, owner: String): Marker @aws_subscribe(mutations: ["deleteMarker"])
+  onCreateCandidate(filter: ModelSubscriptionCandidateFilterInput): Candidate @aws_subscribe(mutations: ["createCandidate"])
+  onUpdateCandidate(filter: ModelSubscriptionCandidateFilterInput): Candidate @aws_subscribe(mutations: ["updateCandidate"])
+  onDeleteCandidate(filter: ModelSubscriptionCandidateFilterInput): Candidate @aws_subscribe(mutations: ["deleteCandidate"])
+  onCreateVerdict(filter: ModelSubscriptionVerdictFilterInput, judge: String): Verdict @aws_subscribe(mutations: ["createVerdict"])
+  onUpdateVerdict(filter: ModelSubscriptionVerdictFilterInput, judge: String): Verdict @aws_subscribe(mutations: ["updateVerdict"])
+  onDeleteVerdict(filter: ModelSubscriptionVerdictFilterInput, judge: String): Verdict @aws_subscribe(mutations: ["deleteVerdict"])
+  onCreateCrate(filter: ModelSubscriptionCrateFilterInput, owner: String): Crate @aws_subscribe(mutations: ["createCrate"])
+  onUpdateCrate(filter: ModelSubscriptionCrateFilterInput, owner: String): Crate @aws_subscribe(mutations: ["updateCrate"])
+  onDeleteCrate(filter: ModelSubscriptionCrateFilterInput, owner: String): Crate @aws_subscribe(mutations: ["deleteCrate"])
+  onCreateCrateItem(filter: ModelSubscriptionCrateItemFilterInput, owner: String): CrateItem @aws_subscribe(mutations: ["createCrateItem"])
+  onUpdateCrateItem(filter: ModelSubscriptionCrateItemFilterInput, owner: String): CrateItem @aws_subscribe(mutations: ["updateCrateItem"])
+  onDeleteCrateItem(filter: ModelSubscriptionCrateItemFilterInput, owner: String): CrateItem @aws_subscribe(mutations: ["deleteCrateItem"])
+  onCreateScore(filter: ModelSubscriptionScoreFilterInput, owner: String): Score @aws_subscribe(mutations: ["createScore"])
+  onUpdateScore(filter: ModelSubscriptionScoreFilterInput, owner: String): Score @aws_subscribe(mutations: ["updateScore"])
+  onDeleteScore(filter: ModelSubscriptionScoreFilterInput, owner: String): Score @aws_subscribe(mutations: ["deleteScore"])
+  onCreateScoreRef(filter: ModelSubscriptionScoreRefFilterInput, owner: String): ScoreRef @aws_subscribe(mutations: ["createScoreRef"])
+  onUpdateScoreRef(filter: ModelSubscriptionScoreRefFilterInput, owner: String): ScoreRef @aws_subscribe(mutations: ["updateScoreRef"])
+  onDeleteScoreRef(filter: ModelSubscriptionScoreRefFilterInput, owner: String): ScoreRef @aws_subscribe(mutations: ["deleteScoreRef"])
+  onCreateJob(filter: ModelSubscriptionJobFilterInput): Job @aws_subscribe(mutations: ["createJob"])
+  onUpdateJob(filter: ModelSubscriptionJobFilterInput): Job @aws_subscribe(mutations: ["updateJob"])
+  onDeleteJob(filter: ModelSubscriptionJobFilterInput): Job @aws_subscribe(mutations: ["deleteJob"])
+}
+
+type ModelClipConnection {
+  items: [Clip]!
+  nextToken: String
+}
+
+input ModelClipRoleInput {
+  eq: ClipRole
+  ne: ClipRole
+}
+
+input ModelClipStatusInput {
+  eq: ClipStatus
+  ne: ClipStatus
+}
+
+input ModelClipFilterInput {
+  id: ModelIDInput
+  recordingId: ModelIDInput
+  path: ModelStringInput
+  aliases: ModelStringInput
+  collection: ModelStringInput
+  title: ModelStringInput
+  role: ModelClipRoleInput
+  stem: ModelStringInput
+  stemModel: ModelStringInput
+  parentClipId: ModelIDInput
+  excerptStart: ModelFloatInput
+  analysisVersion: ModelIntInput
+  analyzedAt: ModelStringInput
+  status: ModelClipStatusInput
+  duration: ModelFloatInput
+  sampleRate: ModelIntInput
+  channels: ModelIntInput
+  bpm: ModelFloatInput
+  bpmStability: ModelFloatInput
+  meter: ModelIntInput
+  key: ModelStringInput
+  camelot: ModelStringInput
+  keysOverTime: ModelStringInput
+  tuningCents: ModelFloatInput
+  noteCount: ModelIntInput
+  tags: ModelStringInput
+  nameCounters: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelClipFilterInput]
+  or: [ModelClipFilterInput]
+  not: ModelClipFilterInput
+}
+
+input ModelClipConditionInput {
+  recordingId: ModelIDInput
+  path: ModelStringInput
+  aliases: ModelStringInput
+  collection: ModelStringInput
+  title: ModelStringInput
+  role: ModelClipRoleInput
+  stem: ModelStringInput
+  stemModel: ModelStringInput
+  parentClipId: ModelIDInput
+  excerptStart: ModelFloatInput
+  analysisVersion: ModelIntInput
+  analyzedAt: ModelStringInput
+  status: ModelClipStatusInput
+  duration: ModelFloatInput
+  sampleRate: ModelIntInput
+  channels: ModelIntInput
+  bpm: ModelFloatInput
+  bpmStability: ModelFloatInput
+  meter: ModelIntInput
+  key: ModelStringInput
+  camelot: ModelStringInput
+  keysOverTime: ModelStringInput
+  tuningCents: ModelFloatInput
+  noteCount: ModelIntInput
+  tags: ModelStringInput
+  nameCounters: ModelStringInput
+  and: [ModelClipConditionInput]
+  or: [ModelClipConditionInput]
+  not: ModelClipConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateClipInput {
+  id: ID
+  recordingId: ID!
+  path: String!
+  aliases: [String]
+  collection: String!
+  title: String!
+  role: ClipRole
+  stem: String
+  stemModel: String
+  parentClipId: ID
+  excerptStart: Float
+  audio: FileRefInput!
+  analysis: FileRefInput
+  analysisVersion: Int
+  analyzedAt: AWSDateTime
+  status: ClipStatus
+  duration: Float
+  sampleRate: Int
+  channels: Int
+  bpm: Float
+  bpmStability: Float
+  meter: Int
+  key: String
+  camelot: String
+  keysOverTime: [String]
+  tuningCents: Float
+  noteCount: Int
+  tags: [String]
+  nameCounters: AWSJSON
+}
+
+input UpdateClipInput {
+  id: ID!
+  recordingId: ID
+  path: String
+  aliases: [String]
+  collection: String
+  title: String
+  role: ClipRole
+  stem: String
+  stemModel: String
+  parentClipId: ID
+  excerptStart: Float
+  audio: FileRefInput
+  analysis: FileRefInput
+  analysisVersion: Int
+  analyzedAt: AWSDateTime
+  status: ClipStatus
+  duration: Float
+  sampleRate: Int
+  channels: Int
+  bpm: Float
+  bpmStability: Float
+  meter: Int
+  key: String
+  camelot: String
+  keysOverTime: [String]
+  tuningCents: Float
+  noteCount: Int
+  tags: [String]
+  nameCounters: AWSJSON
+}
+
+input DeleteClipInput {
+  id: ID!
+}
+
+input ModelSubscriptionClipFilterInput {
+  id: ModelSubscriptionIDInput
+  recordingId: ModelSubscriptionIDInput
+  path: ModelSubscriptionStringInput
+  aliases: ModelSubscriptionStringInput
+  collection: ModelSubscriptionStringInput
+  title: ModelSubscriptionStringInput
+  role: ModelSubscriptionStringInput
+  stem: ModelSubscriptionStringInput
+  stemModel: ModelSubscriptionStringInput
+  parentClipId: ModelSubscriptionIDInput
+  excerptStart: ModelSubscriptionFloatInput
+  analysisVersion: ModelSubscriptionIntInput
+  analyzedAt: ModelSubscriptionStringInput
+  status: ModelSubscriptionStringInput
+  duration: ModelSubscriptionFloatInput
+  sampleRate: ModelSubscriptionIntInput
+  channels: ModelSubscriptionIntInput
+  bpm: ModelSubscriptionFloatInput
+  bpmStability: ModelSubscriptionFloatInput
+  meter: ModelSubscriptionIntInput
+  key: ModelSubscriptionStringInput
+  camelot: ModelSubscriptionStringInput
+  keysOverTime: ModelSubscriptionStringInput
+  tuningCents: ModelSubscriptionFloatInput
+  noteCount: ModelSubscriptionIntInput
+  tags: ModelSubscriptionStringInput
+  nameCounters: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionClipFilterInput]
+  or: [ModelSubscriptionClipFilterInput]
+}
+
+type ModelSliceConnection {
+  items: [Slice]!
+  nextToken: String
+}
+
+input ModelSliceSourceInput {
+  eq: SliceSource
+  ne: SliceSource
+}
+
+input ModelKindInput {
+  eq: Kind
+  ne: Kind
+}
+
+input ModelSliceFilterInput {
+  id: ModelIDInput
+  clipId: ModelIDInput
+  name: ModelStringInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  source: ModelSliceSourceInput
+  kind: ModelKindInput
+  tags: ModelStringInput
+  evidence: ModelStringInput
+  rank: ModelIntInput
+  candidateId: ModelIDInput
+  retired: ModelBooleanInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelSliceFilterInput]
+  or: [ModelSliceFilterInput]
+  not: ModelSliceFilterInput
+}
+
+input ModelSliceConditionInput {
+  clipId: ModelIDInput
+  name: ModelStringInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  source: ModelSliceSourceInput
+  kind: ModelKindInput
+  tags: ModelStringInput
+  evidence: ModelStringInput
+  rank: ModelIntInput
+  candidateId: ModelIDInput
+  retired: ModelBooleanInput
+  owner: ModelStringInput
+  and: [ModelSliceConditionInput]
+  or: [ModelSliceConditionInput]
+  not: ModelSliceConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateSliceInput {
+  id: ID
+  clipId: ID!
+  name: String!
+  start: Float!
+  end: Float!
+  source: SliceSource!
+  kind: Kind
+  tags: [String]
+  evidence: AWSJSON
+  rank: Int
+  candidateId: ID
+  retired: Boolean
+  owner: String
+}
+
+input UpdateSliceInput {
+  id: ID!
+  clipId: ID
+  name: String
+  start: Float
+  end: Float
+  source: SliceSource
+  kind: Kind
+  tags: [String]
+  evidence: AWSJSON
+  rank: Int
+  candidateId: ID
+  retired: Boolean
+  owner: String
+}
+
+input DeleteSliceInput {
+  id: ID!
+}
+
+input ModelSubscriptionSliceFilterInput {
+  id: ModelSubscriptionIDInput
+  clipId: ModelSubscriptionIDInput
+  name: ModelSubscriptionStringInput
+  start: ModelSubscriptionFloatInput
+  end: ModelSubscriptionFloatInput
+  source: ModelSubscriptionStringInput
+  kind: ModelSubscriptionStringInput
+  tags: ModelSubscriptionStringInput
+  evidence: ModelSubscriptionStringInput
+  rank: ModelSubscriptionIntInput
+  candidateId: ModelSubscriptionIDInput
+  retired: ModelSubscriptionBooleanInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionSliceFilterInput]
+  or: [ModelSubscriptionSliceFilterInput]
+  owner: ModelStringInput
+}
+
+type ModelMarkerConnection {
+  items: [Marker]!
+  nextToken: String
+}
+
+input ModelMarkerFilterInput {
+  id: ModelIDInput
+  clipId: ModelIDInput
+  name: ModelStringInput
+  seconds: ModelFloatInput
+  source: ModelSliceSourceInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelMarkerFilterInput]
+  or: [ModelMarkerFilterInput]
+  not: ModelMarkerFilterInput
+}
+
+input ModelMarkerConditionInput {
+  clipId: ModelIDInput
+  name: ModelStringInput
+  seconds: ModelFloatInput
+  source: ModelSliceSourceInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  and: [ModelMarkerConditionInput]
+  or: [ModelMarkerConditionInput]
+  not: ModelMarkerConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateMarkerInput {
+  id: ID
+  clipId: ID!
+  name: String!
+  seconds: Float!
+  source: SliceSource
+  note: String
+  owner: String
+}
+
+input UpdateMarkerInput {
+  id: ID!
+  clipId: ID
+  name: String
+  seconds: Float
+  source: SliceSource
+  note: String
+  owner: String
+}
+
+input DeleteMarkerInput {
+  id: ID!
+}
+
+input ModelSubscriptionMarkerFilterInput {
+  id: ModelSubscriptionIDInput
+  clipId: ModelSubscriptionIDInput
+  name: ModelSubscriptionStringInput
+  seconds: ModelSubscriptionFloatInput
+  source: ModelSubscriptionStringInput
+  note: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionMarkerFilterInput]
+  or: [ModelSubscriptionMarkerFilterInput]
+  owner: ModelStringInput
+}
+
+input CandidateContextInput {
+  seconds: Float
+  bpm: Float
+  beats: Float
+  key: String
+  stem: String
+}
+
+input ProposerInput {
+  by: String!
+  score: Float!
+  why: String!
+  evidence: AWSJSON
+  at: AWSDateTime!
+}
+
+type ModelCandidateConnection {
+  items: [Candidate]!
+  nextToken: String
+}
+
+input ModelCandidateFilterInput {
+  id: ModelIDInput
+  clipId: ModelIDInput
+  recordingId: ModelIDInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  kind: ModelKindInput
+  name: ModelStringInput
+  baseScore: ModelFloatInput
+  legacyId: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelCandidateFilterInput]
+  or: [ModelCandidateFilterInput]
+  not: ModelCandidateFilterInput
+}
+
+input ModelCandidateConditionInput {
+  clipId: ModelIDInput
+  recordingId: ModelIDInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  kind: ModelKindInput
+  name: ModelStringInput
+  baseScore: ModelFloatInput
+  legacyId: ModelStringInput
+  and: [ModelCandidateConditionInput]
+  or: [ModelCandidateConditionInput]
+  not: ModelCandidateConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateCandidateInput {
+  id: ID
+  clipId: ID!
+  recordingId: ID!
+  start: Float!
+  end: Float!
+  kind: Kind!
+  name: String
+  context: CandidateContextInput
+  proposers: [ProposerInput]!
+  baseScore: Float!
+  legacyId: String
+}
+
+input UpdateCandidateInput {
+  id: ID!
+  clipId: ID
+  recordingId: ID
+  start: Float
+  end: Float
+  kind: Kind
+  name: String
+  context: CandidateContextInput
+  proposers: [ProposerInput]
+  baseScore: Float
+  legacyId: String
+}
+
+input DeleteCandidateInput {
+  id: ID!
+}
+
+input ModelSubscriptionCandidateFilterInput {
+  id: ModelSubscriptionIDInput
+  clipId: ModelSubscriptionIDInput
+  recordingId: ModelSubscriptionIDInput
+  start: ModelSubscriptionFloatInput
+  end: ModelSubscriptionFloatInput
+  kind: ModelSubscriptionStringInput
+  name: ModelSubscriptionStringInput
+  baseScore: ModelSubscriptionFloatInput
+  legacyId: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionCandidateFilterInput]
+  or: [ModelSubscriptionCandidateFilterInput]
+}
+
+type ModelVerdictConnection {
+  items: [Verdict]!
+  nextToken: String
+}
+
+input ModelVerdictValueInput {
+  eq: VerdictValue
+  ne: VerdictValue
+}
+
+input ModelVerdictFilterInput {
+  candidateId: ModelIDInput
+  judge: ModelStringInput
+  verdict: ModelVerdictValueInput
+  stars: ModelIntInput
+  tags: ModelStringInput
+  name: ModelStringInput
+  judgedAt: ModelStringInput
+  by: ModelStringInput
+  id: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelVerdictFilterInput]
+  or: [ModelVerdictFilterInput]
+  not: ModelVerdictFilterInput
+}
+
+input ModelVerdictConditionInput {
+  verdict: ModelVerdictValueInput
+  stars: ModelIntInput
+  tags: ModelStringInput
+  name: ModelStringInput
+  judgedAt: ModelStringInput
+  by: ModelStringInput
+  and: [ModelVerdictConditionInput]
+  or: [ModelVerdictConditionInput]
+  not: ModelVerdictConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  judge: ModelStringInput
+}
+
+input CreateVerdictInput {
+  candidateId: ID!
+  judge: String!
+  verdict: VerdictValue!
+  stars: Int
+  tags: [String]
+  name: String
+  judgedAt: AWSDateTime!
+  by: String
+}
+
+input UpdateVerdictInput {
+  candidateId: ID!
+  judge: String!
+  verdict: VerdictValue
+  stars: Int
+  tags: [String]
+  name: String
+  judgedAt: AWSDateTime
+  by: String
+}
+
+input DeleteVerdictInput {
+  candidateId: ID!
+  judge: String!
+}
+
+input ModelSubscriptionVerdictFilterInput {
+  candidateId: ModelSubscriptionIDInput
+  verdict: ModelSubscriptionStringInput
+  stars: ModelSubscriptionIntInput
+  tags: ModelSubscriptionStringInput
+  name: ModelSubscriptionStringInput
+  judgedAt: ModelSubscriptionStringInput
+  by: ModelSubscriptionStringInput
+  id: ModelSubscriptionIDInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionVerdictFilterInput]
+  or: [ModelSubscriptionVerdictFilterInput]
+  judge: ModelStringInput
+}
+
+type ModelCrateConnection {
+  items: [Crate]!
+  nextToken: String
+}
+
+input ModelCrateFilterInput {
+  id: ModelIDInput
+  name: ModelStringInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelCrateFilterInput]
+  or: [ModelCrateFilterInput]
+  not: ModelCrateFilterInput
+}
+
+input ModelCrateConditionInput {
+  name: ModelStringInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  and: [ModelCrateConditionInput]
+  or: [ModelCrateConditionInput]
+  not: ModelCrateConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateCrateInput {
+  id: ID
+  name: String!
+  note: String
+  owner: String
+}
+
+input UpdateCrateInput {
+  id: ID!
+  name: String
+  note: String
+  owner: String
+}
+
+input DeleteCrateInput {
+  id: ID!
+}
+
+input ModelSubscriptionCrateFilterInput {
+  id: ModelSubscriptionIDInput
+  name: ModelSubscriptionStringInput
+  note: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionCrateFilterInput]
+  or: [ModelSubscriptionCrateFilterInput]
+  owner: ModelStringInput
+}
+
+type ModelCrateItemConnection {
+  items: [CrateItem]!
+  nextToken: String
+}
+
+input ModelCrateItemFilterInput {
+  id: ModelIDInput
+  crateId: ModelIDInput
+  position: ModelStringInput
+  candidateId: ModelIDInput
+  sliceId: ModelIDInput
+  clipId: ModelIDInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelCrateItemFilterInput]
+  or: [ModelCrateItemFilterInput]
+  not: ModelCrateItemFilterInput
+}
+
+input ModelCrateItemConditionInput {
+  crateId: ModelIDInput
+  position: ModelStringInput
+  candidateId: ModelIDInput
+  sliceId: ModelIDInput
+  clipId: ModelIDInput
+  note: ModelStringInput
+  owner: ModelStringInput
+  and: [ModelCrateItemConditionInput]
+  or: [ModelCrateItemConditionInput]
+  not: ModelCrateItemConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateCrateItemInput {
+  id: ID
+  crateId: ID!
+  position: String!
+  candidateId: ID
+  sliceId: ID
+  clipId: ID
+  note: String
+  owner: String
+}
+
+input UpdateCrateItemInput {
+  id: ID!
+  crateId: ID
+  position: String
+  candidateId: ID
+  sliceId: ID
+  clipId: ID
+  note: String
+  owner: String
+}
+
+input DeleteCrateItemInput {
+  id: ID!
+}
+
+input ModelSubscriptionCrateItemFilterInput {
+  id: ModelSubscriptionIDInput
+  crateId: ModelSubscriptionIDInput
+  position: ModelSubscriptionStringInput
+  candidateId: ModelSubscriptionIDInput
+  sliceId: ModelSubscriptionIDInput
+  clipId: ModelSubscriptionIDInput
+  note: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionCrateItemFilterInput]
+  or: [ModelSubscriptionCrateItemFilterInput]
+  owner: ModelStringInput
+}
+
+type ModelScoreConnection {
+  items: [Score]!
+  nextToken: String
+}
+
+input ModelScoreFormatInput {
+  eq: ScoreFormat
+  ne: ScoreFormat
+}
+
+input ModelScoreFilterInput {
+  id: ModelIDInput
+  title: ModelStringInput
+  folder: ModelStringInput
+  format: ModelScoreFormatInput
+  text: ModelStringInput
+  lastErrors: ModelStringInput
+  legacyPath: ModelStringInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelScoreFilterInput]
+  or: [ModelScoreFilterInput]
+  not: ModelScoreFilterInput
+}
+
+input ModelScoreConditionInput {
+  title: ModelStringInput
+  folder: ModelStringInput
+  format: ModelScoreFormatInput
+  text: ModelStringInput
+  lastErrors: ModelStringInput
+  legacyPath: ModelStringInput
+  owner: ModelStringInput
+  and: [ModelScoreConditionInput]
+  or: [ModelScoreConditionInput]
+  not: ModelScoreConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateScoreInput {
+  id: ID
+  title: String!
+  folder: String!
+  format: ScoreFormat
+  text: String!
+  lastErrors: [String]
+  legacyPath: String
+  owner: String
+}
+
+input UpdateScoreInput {
+  id: ID!
+  title: String
+  folder: String
+  format: ScoreFormat
+  text: String
+  lastErrors: [String]
+  legacyPath: String
+  owner: String
+}
+
+input DeleteScoreInput {
+  id: ID!
+}
+
+input ModelSubscriptionScoreFilterInput {
+  id: ModelSubscriptionIDInput
+  title: ModelSubscriptionStringInput
+  folder: ModelSubscriptionStringInput
+  format: ModelSubscriptionStringInput
+  text: ModelSubscriptionStringInput
+  lastErrors: ModelSubscriptionStringInput
+  legacyPath: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionScoreFilterInput]
+  or: [ModelSubscriptionScoreFilterInput]
+  owner: ModelStringInput
+}
+
+type ModelScoreRefConnection {
+  items: [ScoreRef]!
+  nextToken: String
+}
+
+input ModelScoreRefFilterInput {
+  id: ModelIDInput
+  scoreId: ModelIDInput
+  clipAlias: ModelStringInput
+  clipId: ModelIDInput
+  clipPath: ModelStringInput
+  sliceName: ModelStringInput
+  sliceId: ModelIDInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  owner: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelScoreRefFilterInput]
+  or: [ModelScoreRefFilterInput]
+  not: ModelScoreRefFilterInput
+}
+
+input ModelScoreRefConditionInput {
+  scoreId: ModelIDInput
+  clipAlias: ModelStringInput
+  clipId: ModelIDInput
+  clipPath: ModelStringInput
+  sliceName: ModelStringInput
+  sliceId: ModelIDInput
+  start: ModelFloatInput
+  end: ModelFloatInput
+  owner: ModelStringInput
+  and: [ModelScoreRefConditionInput]
+  or: [ModelScoreRefConditionInput]
+  not: ModelScoreRefConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateScoreRefInput {
+  id: ID
+  scoreId: ID!
+  clipAlias: String!
+  clipId: ID
+  clipPath: String
+  sliceName: String
+  sliceId: ID
+  start: Float
+  end: Float
+  owner: String
+}
+
+input UpdateScoreRefInput {
+  id: ID!
+  scoreId: ID
+  clipAlias: String
+  clipId: ID
+  clipPath: String
+  sliceName: String
+  sliceId: ID
+  start: Float
+  end: Float
+  owner: String
+}
+
+input DeleteScoreRefInput {
+  id: ID!
+}
+
+input ModelSubscriptionScoreRefFilterInput {
+  id: ModelSubscriptionIDInput
+  scoreId: ModelSubscriptionIDInput
+  clipAlias: ModelSubscriptionStringInput
+  clipId: ModelSubscriptionIDInput
+  clipPath: ModelSubscriptionStringInput
+  sliceName: ModelSubscriptionStringInput
+  sliceId: ModelSubscriptionIDInput
+  start: ModelSubscriptionFloatInput
+  end: ModelSubscriptionFloatInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionScoreRefFilterInput]
+  or: [ModelSubscriptionScoreRefFilterInput]
+  owner: ModelStringInput
+}
+
+type ModelJobConnection {
+  items: [Job]!
+  nextToken: String
+}
+
+input ModelJobStateInput {
+  eq: JobState
+  ne: JobState
+}
+
+input ModelJobFilterInput {
+  id: ModelIDInput
+  kind: ModelStringInput
+  clipId: ModelIDInput
+  state: ModelJobStateInput
+  error: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelJobFilterInput]
+  or: [ModelJobFilterInput]
+  not: ModelJobFilterInput
+}
+
+input ModelJobConditionInput {
+  kind: ModelStringInput
+  clipId: ModelIDInput
+  state: ModelJobStateInput
+  error: ModelStringInput
+  and: [ModelJobConditionInput]
+  or: [ModelJobConditionInput]
+  not: ModelJobConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+}
+
+input CreateJobInput {
+  id: ID
+  kind: String!
+  clipId: ID
+  state: JobState
+  error: String
+}
+
+input UpdateJobInput {
+  id: ID!
+  kind: String
+  clipId: ID
+  state: JobState
+  error: String
+}
+
+input DeleteJobInput {
+  id: ID!
+}
+
+input ModelSubscriptionJobFilterInput {
+  id: ModelSubscriptionIDInput
+  kind: ModelSubscriptionStringInput
+  clipId: ModelSubscriptionIDInput
+  state: ModelSubscriptionStringInput
+  error: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
+  and: [ModelSubscriptionJobFilterInput]
+  or: [ModelSubscriptionJobFilterInput]
+}
+
+input ModelStringKeyConditionInput {
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  between: [String]
+  beginsWith: String
+}
+
+input ModelFloatKeyConditionInput {
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  between: [Float]
+}
+
+input ModelIDKeyConditionInput {
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  between: [ID]
+  beginsWith: ID
+}

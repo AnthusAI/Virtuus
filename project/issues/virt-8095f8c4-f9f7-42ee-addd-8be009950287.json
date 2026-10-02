@@ -1,0 +1,28 @@
+{
+  "id": "virt-8095f8c4-f9f7-42ee-addd-8be009950287",
+  "title": "Validate list fields (isArray) element by element in the Amplify engine",
+  "description": "The Amplify engine's Field ignores the contract's isArray, so validate_record rejects list values (e.g. [] or [\"a\"]) with 'must be a string'. Parse isArray and check each element (scalar and enum) in Rust and Python, with specs.",
+  "type": "task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": null,
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "5b7d40b2-691b-4f0a-97da-08c18e4797c4",
+      "author": "home",
+      "text": "Merged in PR #25 (make check and CI green).",
+      "created_at": "2026-09-26T09:17:29.370487Z",
+      "comment_type": "default"
+    }
+  ],
+  "created_at": "2026-09-26T09:02:46.885138Z",
+  "updated_at": "2026-09-26T09:17:29.404372Z",
+  "closed_at": "2026-09-26T09:17:29.404338Z",
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

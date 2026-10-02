@@ -202,6 +202,14 @@ Virtuus tracks file modification times and detects when data on disk has changed
 - Event hooks: `on_put`, `on_delete`, `on_refresh` callback lists for logging, metrics, or reactive patterns
 - Opt-in put validation: warn or error when records are missing PK or GSI-indexed fields
 
+### Errors Are Values
+
+Invalid input returns a typed error instead of panicking or raising a bare exception:
+
+- **Rust:** `Table::new`, `Database::from_schema`, `Database::execute`, `query_gsi` and `search` return `Result<_, virtuus::Error>`. The variants are `Validation`, `UnknownTable`, `UnknownIndex`, `InvalidToken`, `Io`, `Parse`, `NotFound`, `ConditionalCheckFailed` and `Locked`.
+- **Python:** the same failures raise classes from `virtuus.errors`: `ValidationError`, `UnknownTableError`, `UnknownIndexError`, `IoError`, `ParseError` and the rest, all subclasses of `VirtuusError`. They also subclass the matching built-in (`ValueError`, `KeyError` or `OSError`), so existing `except` clauses keep working.
+- A failed query leaves the database usable. The specs in `features/errors/` check that every error scenario is followed by a successful query.
+
 ### Dual Implementation
 
 Virtuus is implemented identically in both Rust and Python, driven by shared Gherkin behavior specifications:
@@ -214,6 +222,32 @@ Virtuus is implemented identically in both Rust and Python, driven by shared Ghe
 Philosophy: start fast in Python, flip to Rust when ready. Development can begin immediately with the pure-Python backend (no toolchain needed). In production, install a Rust toolchain and the same import automatically loads the Rust backend for a drop-in speed bump—no API changes, just a faster engine.
 
 Both implementations maintain 100% test coverage at all times.
+
+### Amplify Gen2 / AppSync Compatibility (Rust)
+
+Two workspace crates run an AWS Amplify Gen2 data model locally on Virtuus tables, with AppSync semantics. The same app code can work against local JSON files in development and against DynamoDB/AppSync in the cloud.
+
+- **`virtuus-amplify`** is the engine.
+  - `Contract::from_json` loads a model contract. The contract is validated against a vendored JSON Schema, then checked semantically (indexes, relationships, auth rules).
+  - `Engine::open(dir, contract, EngineOptions { enforce_auth })` gives each model its own table folder.
+  - `Engine::call(model, op, args, &identity)` covers:
+    - `get`, `create`, `update`, `delete` and `list`, plus index queries by `queryField`;
+    - key conditions, including composite sort keys;
+    - DynamoDB-style filters;
+    - `limit`/`nextToken` pagination, where the limit applies before the filter, as in DynamoDB;
+    - `selectionSet`;
+    - `belongsTo`/`hasMany` connections;
+    - AppSync `createdAt`/`updatedAt` defaults;
+    - Amplify authorization rules (`owner`, `groups`, `private`, `public`) for users and API keys.
+- **`virtuus-appsync`** is an axum router that serves `POST /graphql` from the app's AppSync SDL, with resolvers bound to the engine through the contract. It supports:
+  - AWS scalars;
+  - AppSync-shaped error envelopes (`errorType`);
+  - per-field relationship resolvers;
+  - API-key auth.
+
+  `RouterOptions { test_identities: true }` also accepts an `x-apricity-identity` header, so tests can act as a signed-in user. Leave it off in anything reachable from outside.
+
+The crates are Rust-only: they target local development servers, not the Python package. Their behavior specs live in `features/amplify/` and `features/appsync/`, and each crate runs its own cucumber suite at 100% line coverage.
 
 ## Installation
 

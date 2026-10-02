@@ -1,0 +1,30 @@
+{
+  "id": "virt-0f318438-ec95-46b9-84cd-b92989599716",
+  "title": "Performance: fix the O(n^2) load; ordered index buckets",
+  "description": "Design §3.1. No behaviour change.\n\n## Steps\n1. `lookup_existing_record_from_load` (`table.rs`, around line 880) scans `record_keys` linearly for every file. Add a reverse `HashMap<key, filename>` so loading is linear. Check `_python/table.py` for the same pattern and fix it too.\n2. Index buckets become ordered: `BTreeMap<(OrderedValue, pk), ()>` (reuse `sort.rs` ordering), so a query no longer clones and sorts the whole partition. Base tables get an ordered map over the primary key.\n3. Add a benchmark example `rust/examples/load_bench.rs` (`cargo run --release --example load_bench -- 10000 50000`) that prints load and index-query times in `index_only` and `memory` modes.\n\n## Acceptance\n- `make check` green.\n- 50k-record load time is at most 6× the 10k load time (roughly linear). Paste the numbers in a comment.\n\n## Verify\n`make check PYTHON=$PWD/.venv/bin/python`, then `cd rust && cargo run --release --example load_bench -- 10000 50000`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-afe10c29-74b1-47da-98ec-bd411419d9a4",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.182138Z",
+  "updated_at": "2026-09-24T04:45:47.437428Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

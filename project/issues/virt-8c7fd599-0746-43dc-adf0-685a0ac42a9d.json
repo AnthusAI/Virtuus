@@ -1,0 +1,30 @@
+{
+  "id": "virt-8c7fd599-0746-43dc-adf0-685a0ac42a9d",
+  "title": "virtuus-blobs crate: files beside the tables",
+  "description": "Design §3.1 (`virtuus-blobs`). A new workspace crate `rust/crates/virtuus-blobs`: add it to `members`; its specs are `@rust-only`.\n\n## API\nOver an `Arc<dyn Storage>`, rooted at `files/`:\n- `put(key, bytes, content_type) -> FileRef { key, sha256, size, content_type }`\n- `put_path(key, src: &Path, content_type, link: bool)`, which copies (or hard-links when `link`) while hashing\n- `get(key) -> Option<Vec<u8>>`, `head(key) -> Option<FileRef>`, `delete(key) -> bool`\n- `list(prefix) -> Vec<FileRef>`, `local_path(key) -> Option<PathBuf>`\n\n`sha256` comes from the `sha2` crate. Keys are S3-style (`audio/<id>/<name>`); reject `..` and absolute keys.\n\n## Specs\n`features/blobs/*.feature` (`@rust-only`): put/get round trip, `head` sha256, `list` by prefix, rejected keys, `put_path` with `link`. Run them with a cucumber runner in the crate (`rust/crates/virtuus-blobs/tests/cucumber.rs`), and add the crate's tests and coverage to `make check-rust`.\n\n## Verify\n`make check PYTHON=$PWD/.venv/bin/python`, and `cargo tarpaulin -p virtuus-blobs` shows 100%.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-f64188a9-4fba-4a1a-816d-196503aba9f5",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-afe10c29-74b1-47da-98ec-bd411419d9a4",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.569076Z",
+  "updated_at": "2026-09-24T04:45:48.253682Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

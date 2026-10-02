@@ -1,0 +1,30 @@
+{
+  "id": "virt-7498a382-73a2-43d9-9da7-2a8c1302e029",
+  "title": "subscribe(): change callbacks from the log",
+  "description": "1. `Database::subscribe(table: Option<&str>, callback) -> Subscription` (dropping the `Subscription` unsubscribes), with the Python equivalent.\n2. Callbacks receive `{table, key, op, record?}` for every change applied, whether written by this process or picked up from the log.\n3. Specs: the subscriber sees its own put, and sees another process's put after its next operation or `poll()`.\n\n**Verify:** `make check PYTHON=$PWD/.venv/bin/python`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-3cfeb3e8-bf69-4e06-a519-09a2eef93c80",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-4f530608-85e4-401e-b6d4-5d998ca967f9",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [],
+  "created_at": "2026-09-24T04:45:37.509117Z",
+  "updated_at": "2026-09-24T04:45:48.149245Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

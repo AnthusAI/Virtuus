@@ -1,0 +1,43 @@
+{
+  "id": "virt-762f99c5-b073-416a-8064-18948882428b",
+  "title": "selectionSet and relationships",
+  "description": "1. `options.selectionSet`: a list of paths (`\"id\"`, `\"title\"`, `\"comments.*\"`, `\"blog.name\"`). Return only the selected fields; `rel.*` means every scalar field of the related model.\n2. hasMany returns a connection `{items, nextToken}`, which takes `filter`, `sortDirection`, `limit` and `nextToken`, through the index on the foreign key.\n3. belongsTo returns an object or `null`.\n4. Specs: a Post with its comments, a Comment with its post, a paged connection.\n\nPart of the `virtuus-amplify` crate (`rust/crates/virtuus-amplify`; workspace member; `@rust-only` specs in `features/amplify/`; cucumber runner in the crate; 100% coverage). Semantics: `~/Projects/Ripple/design/storage.md` **§2.2**, matching Amplify/AppSync behaviour exactly.\n- **Contract format:** `~/Projects/Ripple/contract/contract.schema.json` (vendor a copy into the crate).\n- **Fixture:** `features/amplify/fixtures/blog.contract.json`, hand-written in that format and shared by V8 and V9. It has `Blog`; `Post` with owner auth, an enum `status`, a customType `meta`, a hasMany `comments` and an index `postsByBlog` (partition `blogId`, sort `createdAt`); `Comment` with belongsTo `post`; and `Tag` with a composite identifier `[\"postId\", \"name\"]`.\n\n---\n**Repo:** `~/Projects/Virtuus`, branch `feature/amplify-engine` (don't switch branches).\n**Rules (Virtuus `AGENTS.md`):** specs before code (Gherkin in `features/`; register new folders in `python/behave.ini` `paths`); 100% coverage in both languages; Python/Rust parity for core behaviour (`make check-parity`); `black`, `ruff`, `cargo fmt`, `clippy -D warnings`; Sphinx docstrings / `///` docs on public items; no line comments.\n**Toolchain:** `export PATH=$HOME/.cargo/bin:$PATH` first (a Homebrew cargo 1.81 shadows rustup). Python: `.venv/bin/python` at the repo root.\n**Gate:** `make check PYTHON=$PWD/.venv/bin/python` green. Baseline on 2026-09-24: 824 behave steps, 100% coverage, parity OK.\n**Protocol:** as in Apricitus initiative `apricitus-e70662` (run `kbs show apricitus-e70662` in `~/Projects/Ripple`). Log with `kbs comment` from `~/Projects/Virtuus`; label `ready-for-review` when done; never commit, push, close, or publish.\n**Design:** `~/Projects/Ripple/design/storage.md` §3.1.",
+  "type": "sub-task",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-2e1ef887-2b5e-4837-9626-2a795c9b762a",
+  "labels": [],
+  "dependencies": [
+    {
+      "target": "virt-be9ffb67-9eb7-46fa-94fe-c74565e060f3",
+      "type": "blocked-by"
+    }
+  ],
+  "comments": [
+    {
+      "id": "5287ad1b-1ddd-4a88-8f96-adc4eb4c5922",
+      "author": "home",
+      "text": "Review (storage-lead): **accepted.** Re-run by me under safe-run: fmt ✓, clippy --all-targets ✓, 218 scenarios / 1398 steps ✓, crate tarpaulin 1203/1203 = 100% (I collapsed the timestamp defaults to single expressions, which removed 5 impossible branches). No core changes (a table.rs edit was reverted in review; the engine uses ValidationMode::Silent instead). Also fixed here: create honours supplied createdAt/updatedAt, per AppSync. Committed on feature/amplify-crates.",
+      "created_at": "2026-09-24T18:58:38.184745Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "Claude Opus 5.5",
+        "name": "storage-lead"
+      }
+    }
+  ],
+  "created_at": "2026-09-24T04:45:37.879558Z",
+  "updated_at": "2026-09-24T18:58:38.239441Z",
+  "closed_at": "2026-09-24T18:58:38.239401Z",
+  "agent": {
+    "platform": "claude_code",
+    "model": "Claude Opus 5.5",
+    "name": "storage-lead"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}

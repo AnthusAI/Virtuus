@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
@@ -66,14 +67,12 @@ class GSI:
         :return: None
         :rtype: None
         """
-        partition_value = record.get(self._partition_key)
-        if partition_value is None:
-            return
         sort_value = self._extract_sort_value(record)
         if self._sort_key is not None and sort_value is None:
             return
-        bucket = self._buckets.setdefault(partition_value, [])
-        bucket.append(_GsiEntry(pk=pk, sort_value=sort_value))
+        for partition_value in _select_values(record, self._partition_key):
+            bucket = self._buckets.setdefault(_freeze(partition_value), [])
+            bucket.append(_GsiEntry(pk=pk, sort_value=sort_value))
 
     def remove(self, pk: Any, record: dict[str, Any]) -> None:
         """Remove a record from the index.
@@ -85,22 +84,21 @@ class GSI:
         :return: None
         :rtype: None
         """
-        partition_value = record.get(self._partition_key)
-        if partition_value is None:
-            return
         sort_value = self._extract_sort_value(record)
         if self._sort_key is not None and sort_value is None:
             return
-        bucket = self._buckets.get(partition_value)
-        if not bucket:
-            return
-        self._buckets[partition_value] = [
-            entry
-            for entry in bucket
-            if not (entry.pk == pk and entry.sort_value == sort_value)
-        ]
-        if not self._buckets[partition_value]:
-            self._buckets.pop(partition_value, None)
+        for partition_value in _select_values(record, self._partition_key):
+            key = _freeze(partition_value)
+            bucket = self._buckets.get(key)
+            if not bucket:
+                continue
+            self._buckets[key] = [
+                entry
+                for entry in bucket
+                if not (entry.pk == pk and entry.sort_value == sort_value)
+            ]
+            if not self._buckets[key]:
+                self._buckets.pop(key, None)
 
     def update(
         self, pk: Any, old_record: dict[str, Any], new_record: dict[str, Any]
@@ -135,11 +133,13 @@ class GSI:
         :type sort_direction: str
         :return: List of primary keys.
         :rtype: list[Any]
-        :raises ValueError: If sort_direction is not "asc" or "desc".
+        :raises ValidationError: If sort_direction is not "asc" or "desc".
         """
+        from virtuus.errors import ValidationError
+
         if sort_direction not in {"asc", "desc"}:
-            raise ValueError("sort_direction must be 'asc' or 'desc'")
-        bucket = list(self._buckets.get(partition_value, []))
+            raise ValidationError("sort_direction must be 'asc' or 'desc'")
+        bucket = list(self._buckets.get(_freeze(partition_value), []))
         if sort_condition is not None:
             bucket = [
                 entry
@@ -155,7 +155,39 @@ class GSI:
     def _extract_sort_value(self, record: dict[str, Any]) -> Optional[Any]:
         if self._sort_key is None:
             return None
-        return record.get(self._sort_key)
+        values = _select_values(record, self._sort_key)
+        return values[0] if values else None
+
+
+def _freeze(value: Any) -> Any:
+    return (
+        json.dumps(value, sort_keys=True) if isinstance(value, (list, dict)) else value
+    )
+
+
+def _select_values(record: dict[str, Any], selector: str) -> list[Any]:
+    current: list[Any] = [record]
+    for segment in selector.split("."):
+        field, separator, suffix = segment.partition("[")
+        filter_value = suffix.rstrip("]") if separator else None
+        next_values: list[Any] = []
+        for value in current:
+            if not isinstance(value, dict) or field not in value:
+                continue
+            field_value = value[field]
+            if filter_value is None:
+                next_values.append(field_value)
+            elif filter_value == "*" and isinstance(field_value, list):
+                next_values.extend(field_value)
+            elif isinstance(field_value, list) and "=" in filter_value:
+                key, expected = filter_value.split("=", 1)
+                next_values.extend(
+                    item
+                    for item in field_value
+                    if isinstance(item, dict) and item.get(key) == expected
+                )
+        current = next_values
+    return current
 
 
 def _value_rank(value: Any) -> int:
