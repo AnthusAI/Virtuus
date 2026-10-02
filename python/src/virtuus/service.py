@@ -120,16 +120,40 @@ class _RequestHandler(socketserver.StreamRequestHandler):  # pragma: no cover
             self.server.shutdown()  # type: ignore[attr-defined]
 
 
-class UnixService(socketserver.ThreadingUnixStreamServer):  # pragma: no cover
-    """Unix-domain-socket host for :class:`Service`."""
+UNIX_SOCKETS_UNAVAILABLE_MESSAGE = (
+    "Unix domain sockets are not available on this platform"
+)
 
-    def __init__(self, socket_path: Path) -> None:
-        """Bind the service to ``socket_path``."""
-        socket_path.parent.mkdir(parents=True, exist_ok=True)
-        if socket_path.exists():
-            socket_path.unlink()
-        self.service = Service()
-        super().__init__(str(socket_path), _RequestHandler)
+# The Unix-socket host can only subclass ThreadingUnixStreamServer where the
+# platform provides it (not on Windows). Elsewhere the name stays importable
+# so ``import virtuus`` works, and starting the host fails with a clear error.
+if hasattr(socketserver, "ThreadingUnixStreamServer"):
+
+    class UnixService(socketserver.ThreadingUnixStreamServer):  # pragma: no cover
+        """Unix-domain-socket host for :class:`Service`."""
+
+        def __init__(self, socket_path: Path) -> None:
+            """Bind the service to ``socket_path``."""
+            socket_path.parent.mkdir(parents=True, exist_ok=True)
+            if socket_path.exists():
+                socket_path.unlink()
+            self.service = Service()
+            super().__init__(str(socket_path), _RequestHandler)
+
+else:
+
+    class UnixService:  # type: ignore[no-redef]
+        """Placeholder host for platforms without Unix domain sockets."""
+
+        def __init__(self, socket_path: Path) -> None:
+            """
+            Refuse to start because the platform has no Unix domain sockets.
+
+            :param socket_path: Requested socket path.
+            :type socket_path: Path
+            :raises OSError: Always, because Unix domain sockets are unavailable.
+            """
+            raise OSError(UNIX_SOCKETS_UNAVAILABLE_MESSAGE)
 
 
 def main() -> None:  # pragma: no cover
