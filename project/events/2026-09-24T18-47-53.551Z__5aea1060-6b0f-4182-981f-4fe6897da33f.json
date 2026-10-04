@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "5aea1060-6b0f-4182-981f-4fe6897da33f",
+  "issue_id": "virt-762f99c5-b073-416a-8064-18948882428b",
+  "event_type": "field_updated",
+  "occurred_at": "2026-09-24T18:47:53.551Z",
+  "actor_id": "home",
+  "payload": {
+    "changes": {
+      "labels": {
+        "from": [],
+        "to": [
+          "ready-for-review"
+        ]
+      }
+    }
+  }
+}
