@@ -43,9 +43,14 @@ impl FaultStore {
 }
 
 fn consume(counter: &AtomicUsize) -> bool {
-    counter
-        .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
-        .is_ok()
+    let mut remaining = counter.load(Ordering::SeqCst);
+    while let Some(next) = remaining.checked_sub(1) {
+        match counter.compare_exchange(remaining, next, Ordering::SeqCst, Ordering::SeqCst) {
+            Ok(_) => return true,
+            Err(actual) => remaining = actual,
+        }
+    }
+    false
 }
 
 #[async_trait]
