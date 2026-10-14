@@ -34,12 +34,14 @@ check-rust:
 	cd rust && cargo clippy -p virtuus --all-targets -- -D warnings
 	cd rust && cargo clippy -p virtuus-amplify --all-targets -- -D warnings
 	cd rust && cargo clippy -p virtuus-appsync --all-targets -- -D warnings
+	cd rust && cargo clippy -p virtuus-store --all-targets --features aws -- -D warnings
 	cd rust && cargo test -p virtuus --lib
 	cd rust && cargo test -p virtuus-amplify
 	cd rust && cargo test -p virtuus-appsync
+	cd rust && cargo test -p virtuus-store --features aws
 	cd rust && cargo tarpaulin --skip-clean -p virtuus --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs" --exclude-files "crates/*"
-	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files '*/tests/*' --fail-under 100
-	cd rust && cargo tarpaulin --skip-clean -p virtuus-appsync --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files '*/tests/*' --fail-under 100
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-amplify --exclude-files 'src/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files 'crates/virtuus-store/*' --exclude-files '*/tests/*' --fail-under 100
+	cd rust && cargo tarpaulin --skip-clean -p virtuus-appsync --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files 'crates/virtuus-store/*' --exclude-files '*/tests/*' --fail-under 100
 
 coverage-rust:
 	cd rust && cargo tarpaulin --lib --fail-under 100 --exclude-files "src/bin/virtuus.rs"

@@ -7285,8 +7285,11 @@ async fn main() {
             };
             // The amplify and appsync crates run their own feature folders.
             let crate_owned = feature.path.as_ref().is_some_and(|path| {
-                path.components()
-                    .any(|part| part.as_os_str() == "amplify" || part.as_os_str() == "appsync")
+                path.components().any(|part| {
+                    part.as_os_str() == "amplify"
+                        || part.as_os_str() == "appsync"
+                        || part.as_os_str() == "store"
+                })
             });
             !crate_owned
                 && !excluded(&feature.tags)
