@@ -3,7 +3,7 @@
   "title": "Provision isolated real AWS store proof fixture",
   "description": "Create unique private encrypted versioned S3 and on-demand DynamoDB fixtures in authorized account 682849160744; execute raw-byte, conditional-write, scoped catalog and recovery proof with resource inventory. No IAM grants, preexisting resource changes or deletion.",
   "type": "task",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -44,11 +44,26 @@
         "model": "gpt-6.1-sol",
         "name": "AWS proof tracking"
       }
+    },
+    {
+      "id": "ddd843fa-3ec3-4435-aed2-fdeb61110610",
+      "author": "home",
+      "text": "2026-10-16 reconciliation: Shared portable store delivered through PR33; release0.6.1 completed. Earlier “until merge” hold is superseded by released source and retained existing live fixture evidence. Canonical S3 bytes/paths and DynamoDB catalog contract remain; this is not authorization for any new fixture or application rollout. Downstream app activation is separate.",
+      "created_at": "2026-10-16T20:46:54.725066Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "unfinished-work-reconciliation",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
     }
   ],
   "created_at": "2026-10-14T00:35:40.424445Z",
-  "updated_at": "2026-10-14T02:32:01.211487Z",
-  "closed_at": null,
+  "updated_at": "2026-10-16T20:46:54.725101Z",
+  "closed_at": "2026-10-16T20:46:54.690297Z",
   "agent": {
     "platform": "codex",
     "model": "gpt-6.1-sol"

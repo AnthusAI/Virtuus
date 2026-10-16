@@ -3,17 +3,33 @@
   "title": "Provide pluggable API-first portable S3 storage and DynamoDB card catalog",
   "description": "As an application author, I want a pluggable API-first Virtuus persistence boundary, so Kanbus and embedded apps can share portable canonical files with efficient scoped board queries.\n\nFirst actionable dependency of Kanbus initiative kbs-3df9cc93-530f-4614-98a0-aa175012c1b5. S3 is the cloud source of truth at the same bytes and relative paths as a normal local/EFS Kanbus folder. DynamoDB is a rebuildable card catalog only. Normal reads/writes use the API; the older Git/EFS mirror remains a separate integration. REST is a provisional transport, not a storage contract constraint.\n\nFeature: Portable pluggable persistence\nScenario: Generic CRUD and board retrieval\n  Given an authorized tenant/project scope and ordinary issue files\n  When an application creates, conditionally updates, deletes, or lists issues through the API\n  Then it uses generic issue types, statuses, and scalar custom fields\n  And every lookup is restricted to authorized tenant/project scopes\nScenario: Canonical cloud portability\n  Given project/issues, project/events, .kanbus.yml, and attachment files\n  When a project is copied to or from its S3 namespace\n  Then the same relative paths and raw bytes remain readable as a normal Kanbus folder\n  And DynamoDB contains only derived cards, pointers, revisions, and hashes\nScenario: Concurrent publication and repair\n  Given two writers with the same expected opaque revision\n  When one conditional issue write succeeds\n  Then the other cannot overwrite it\n  And durable supplemental intent allows event/catalog repair after partial failure without claiming cross-object atomicity\nScenario: Rebuild after import\n  Given a normal project folder copied into the canonical S3 namespace\n  When the catalog is rebuilt from those files\n  Then project/type/status board queries return the imported issues without changing canonical files\n\nDefinition of done: filesystem and S3 adapters expose the same typed contract; conditional generic CRUD and idempotent retry; scoped bounded board query and deterministic paging; meaningful local emulator evidence; import/export is direct folder copy; isolated changes pass applicable checks before publication. No production deployment or persistent AWS access grants.",
   "type": "epic",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 1,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "3099cad4-8fde-4f6f-9c3d-5ab1cbbef26b",
+      "author": "home",
+      "text": "2026-10-16 reconciliation: Shared portable store delivered through PR33; release0.6.1 completed. Earlier “until merge” hold is superseded by released source and retained existing live fixture evidence. Canonical S3 bytes/paths and DynamoDB catalog contract remain; this is not authorization for any new fixture or application rollout. Downstream app activation is separate.",
+      "created_at": "2026-10-16T20:46:54.796327Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "unfinished-work-reconciliation",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
+    }
+  ],
   "created_at": "2026-10-14T00:31:51.664996Z",
-  "updated_at": "2026-10-14T00:31:58.810385Z",
-  "closed_at": null,
+  "updated_at": "2026-10-16T20:46:54.796345Z",
+  "closed_at": "2026-10-16T20:46:54.770431Z",
   "agent": {
     "platform": "codex",
     "model": "gpt-6",
