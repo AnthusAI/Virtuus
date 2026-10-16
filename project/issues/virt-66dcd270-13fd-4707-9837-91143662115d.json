@@ -10,9 +10,24 @@
   "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "370b0950-cfd7-4692-a71e-c8ac6e0d80bd",
+      "author": "home",
+      "text": "Added offline official AWS SDK protocol tests, authorization/query boundary tests, poisoned-catalog and interrupted journal recovery tests, plus unreadable/corrupt filesystem metadata cases. All focused tests pass. Latest complete measurement before final filesystem additions: 96.35 percent lines with AWS enabled; adapter 99.19 percent. New mandatory check-store-coverage target requires 100 percent with all features and currently fails. No existing threshold lowered or production source excluded. Product changes remain local pending required gates; PR33 is not merged.",
+      "created_at": "2026-10-16T07:31:43.689209Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
+    }
+  ],
   "created_at": "2026-10-16T06:58:54.130909Z",
-  "updated_at": "2026-10-16T06:58:54.130952Z",
+  "updated_at": "2026-10-16T07:31:43.689243Z",
   "closed_at": null,
   "agent": {
     "platform": "codex",
@@ -24,5 +39,8 @@
   },
   "right_now_summary": null,
   "right_now_updated_at": null,
-  "custom": {}
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
 }
