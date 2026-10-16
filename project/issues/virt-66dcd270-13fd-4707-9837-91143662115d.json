@@ -24,10 +24,25 @@
           "reasoning_effort": "medium"
         }
       }
+    },
+    {
+      "id": "cae606e9-2b56-4e3e-a4ee-3fb1cf473c04",
+      "author": "home",
+      "text": "Coverage completion: the standard repository Tarpaulin gate now passes with all storage features: 100.00 percent, 1163/1163 production source lines, all seven store modules including AWS. 50 native tests and 4 behavior scenarios/14 steps pass; explicit real AWS fixtures remain ignored in routine checks. Added deterministic lock failure, read-growth, catalog race and cross-kind replay regressions. The full make check is actively running after cycling only this task compiler cache to bound disk usage. No threshold lowered or production store file excluded; PR33 remains unmerged until full checks and hosted CI pass.",
+      "created_at": "2026-10-16T08:00:09.204285Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "Kanbus cloud owner",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
     }
   ],
   "created_at": "2026-10-16T06:58:54.130909Z",
-  "updated_at": "2026-10-16T07:31:43.689243Z",
+  "updated_at": "2026-10-16T08:00:09.204583Z",
   "closed_at": null,
   "agent": {
     "platform": "codex",
