@@ -17,5 +17,6 @@ build_command = "cargo update --manifest-path rust/Cargo.toml -p virtuus --preci
 assets = ["rust/Cargo.lock"]
 
 [tool.semantic_release.commit_parser_options]
-patch_types = ["fix", "perf", "docs", "chore"]
-minor_types = ["feat"]
+ignore_merge_commits = false
+patch_tags = ["fix", "perf", "docs", "chore"]
+minor_tags = ["feat"]

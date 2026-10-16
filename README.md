@@ -463,7 +463,7 @@ The EC2 CDK stack runs these cold‑start benchmarks automatically alongside the
 
 ## Release Automation
 
-Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases. Releases are gated on CI success to avoid partial publishes. Conventional commits are the single switch for automated releases.
+Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases. Releases are gated on CI success to avoid partial publishes. Conventional commits are the single switch for automated releases. The parser includes conventional merge messages so Git Flow release merges retain their declared version bump; `patch_tags` and `minor_tags` use the Semantic Release 10 option names.
 
 ## License
 
