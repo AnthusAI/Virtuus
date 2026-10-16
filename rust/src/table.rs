@@ -1482,6 +1482,48 @@ fn manifest_to_epoch_millis(manifest: &HashMap<String, SystemTime>) -> HashMap<S
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn silent_load_skips_unreadable_json_paths_and_keeps_valid_records() {
+        let dir = temp_dir("silent_unreadable_json");
+        fs::create_dir_all(dir.join("unreadable.json")).unwrap();
+        fs::write(dir.join("valid.json"), "{\"id\":\"valid\"}").unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.try_load_from_dir(Some(dir.clone())).unwrap();
+        assert_eq!(table.count(None, None), 1);
+        assert!(table.warnings.is_empty());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn silent_load_skips_invalid_json_and_keeps_valid_records() {
+        let dir = temp_dir("silent_invalid_json");
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("invalid.json"), "not JSON").unwrap();
+        fs::write(dir.join("valid.json"), "{\"id\":\"valid\"}").unwrap();
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.try_load_from_dir(Some(dir.clone())).unwrap();
+        assert_eq!(table.count(None, None), 1);
+        assert!(table.warnings.is_empty());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     use crate::database::Database;
     use serde_json::json;
     use std::collections::HashMap;

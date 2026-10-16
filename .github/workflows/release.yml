@@ -70,3 +70,36 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           cargo publish --manifest-path rust/Cargo.toml --allow-dirty
+
+      - name: Check portable store registry version
+        id: store-version
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import tomllib
+          import urllib.error
+          import urllib.request
+
+          with open("rust/crates/virtuus-store/Cargo.toml", "rb") as manifest:
+              version = tomllib.load(manifest)["package"]["version"]
+          request = urllib.request.Request(
+              f"https://crates.io/api/v1/crates/virtuus-store/{version}",
+              headers={"User-Agent": "Virtuus-release (github.com/AnthusAI/Virtuus)"},
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  published = json.load(response)["version"]["num"] == version
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise
+              published = False
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"publish={str(not published).lower()}\n")
+          PY
+
+      - name: Publish portable store to crates.io
+        if: ${{ steps.store-version.outputs.publish == 'true' }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --manifest-path rust/crates/virtuus-store/Cargo.toml --locked --allow-dirty
