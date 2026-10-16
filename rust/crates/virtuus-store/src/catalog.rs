@@ -117,3 +117,48 @@ impl Catalog for MemoryCatalog {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod failure_tests {
+    use super::*;
+    use std::sync::Arc;
+
+    #[tokio::test]
+    async fn poisoned_catalog_never_returns_or_mutates_untrusted_state() {
+        let catalog = Arc::new(MemoryCatalog::default());
+        let other = catalog.clone();
+        assert!(std::thread::spawn(move || {
+            let _guard = other.cards.lock().unwrap();
+            panic!("synthetic interrupted catalog writer");
+        })
+        .join()
+        .is_err());
+        let scope = Scope::new("brand", "board").unwrap();
+        let card = Card {
+            path: "project/issues/a.json".into(),
+            revision: "r".into(),
+            hash: "h".into(),
+            byte_length: 1,
+            fields: BTreeMap::new(),
+            omitted_fields: vec![],
+        };
+        assert!(matches!(
+            catalog.get(&scope, &card.path).await,
+            Err(StoreError::Unavailable(_))
+        ));
+        assert!(matches!(
+            catalog.put(&scope, &card, WriteCondition::Absent).await,
+            Err(StoreError::Unavailable(_))
+        ));
+        assert!(matches!(
+            catalog
+                .query(&scope, &CatalogQuery::default(), None, 1)
+                .await,
+            Err(StoreError::Unavailable(_))
+        ));
+        assert!(matches!(
+            catalog.delete(&scope, &card.path, "r").await,
+            Err(StoreError::Unavailable(_))
+        ));
+    }
+}

@@ -195,7 +195,7 @@ impl JournaledStore {
             return Err(StoreError::OperationMismatch);
         }
         match intent {
-            Intent::Write(mutation) => self.resume(scope, &mutation).await.map(Some),
+            Intent::Write(_) => self.resume(scope, &intent).await.map(Some),
             Intent::Delete(_) => Err(StoreError::OperationMismatch),
         }
     }
@@ -233,10 +233,7 @@ impl JournaledStore {
         let intent = self
             .save_intent(scope, Intent::Write(mutation.clone()))
             .await?;
-        match intent {
-            Intent::Write(mutation) => self.resume(scope, &mutation).await,
-            Intent::Delete(_) => Err(StoreError::OperationMismatch),
-        }
+        self.resume(scope, &intent).await
     }
 
     /// Delete with a durable preflight witness and repairable history/catalog follow-up.
@@ -251,9 +248,6 @@ impl JournaledStore {
         let intent = self
             .save_intent(scope, Intent::Delete(mutation.clone()))
             .await?;
-        let Intent::Delete(_) = &intent else {
-            return Err(StoreError::OperationMismatch);
-        };
         match self.ensure_receipt(scope, &intent).await? {
             Receipt::Deleted => {}
             Receipt::Conflict => return Err(StoreError::Conflict),
@@ -294,16 +288,15 @@ impl JournaledStore {
         }
     }
 
-    async fn resume(&self, scope: &Scope, mutation: &Mutation) -> Result<CommitResult> {
-        let intent = Intent::Write(mutation.clone());
-        let stored = match self.ensure_receipt(scope, &intent).await? {
+    async fn resume(&self, scope: &Scope, intent: &Intent) -> Result<CommitResult> {
+        let stored = match self.ensure_receipt(scope, intent).await? {
             Receipt::Published(stored) => stored,
             Receipt::Conflict => return Err(StoreError::Conflict),
             Receipt::Deleted => return Err(StoreError::OperationMismatch),
         };
         Ok(CommitResult {
             stored,
-            repair_pending: self.repair(scope, &intent).await,
+            repair_pending: self.repair(scope, intent).await,
         })
     }
 
@@ -814,3 +807,7 @@ fn derive_projection(
     }
     Ok((fields, omitted_fields))
 }
+
+#[cfg(test)]
+#[path = "../tests/internal/journal.rs"]
+mod failure_tests;

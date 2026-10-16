@@ -24,6 +24,9 @@ aws-sdk-s3 = { version = "1", optional = true, default-features = false, feature
 aws-sdk-dynamodb = { version = "1", optional = true }
 
 [dev-dependencies]
+aws-smithy-http-client = { version = "=1.5.0", features = ["test-util"] }
+aws-smithy-types = "=1.8.1"
+http = "1"
 cucumber = "0.21"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
 

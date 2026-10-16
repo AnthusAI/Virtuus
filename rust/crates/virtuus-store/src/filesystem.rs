@@ -10,6 +10,10 @@ use std::os::fd::AsRawFd;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
+#[cfg(test)]
+#[path = "../tests/internal/filesystem.rs"]
+mod failure_tests;
+
 /// A portable filesystem backend; cooperating writers serialize with advisory flock.
 #[derive(Clone, Debug)]
 pub struct FileStore {
@@ -114,10 +118,15 @@ impl FileStore {
             .create(true)
             .truncate(false)
             .open(control.join("writer.lock"))?;
-        if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) } != 0 {
+        Self::lock_descriptor(file.as_raw_fd())?;
+        Ok(Lock(file))
+    }
+
+    fn lock_descriptor(descriptor: libc::c_int) -> Result<()> {
+        if unsafe { libc::flock(descriptor, libc::LOCK_EX) } != 0 {
             return Err(std::io::Error::last_os_error().into());
         }
-        Ok(Lock(file))
+        Ok(())
     }
 
     fn metadata_path(control: &Path, path: &str, metadata: &fs::Metadata, hash: &str) -> PathBuf {
@@ -135,7 +144,7 @@ impl FileStore {
         max_bytes: Option<usize>,
     ) -> Result<Option<StoredObject>> {
         let full = Self::safe_join(root, path)?;
-        let mut file = match File::open(&full) {
+        let file = match File::open(&full) {
             Ok(file) => file,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(error) => return Err(error.into()),
@@ -146,19 +155,7 @@ impl FileStore {
                 "object path is not a regular file".into(),
             ));
         }
-        let mut bytes = Vec::new();
-        if let Some(limit) = max_bytes {
-            if metadata.len() > limit as u64 {
-                return Err(StoreError::TooLarge { limit });
-            }
-            file.take(limit.saturating_add(1) as u64)
-                .read_to_end(&mut bytes)?;
-            if bytes.len() > limit {
-                return Err(StoreError::TooLarge { limit });
-            }
-        } else {
-            file.read_to_end(&mut bytes)?;
-        }
+        let bytes = Self::read_bytes(file, metadata.len(), max_bytes)?;
         let revision = content_hash(&bytes);
         let sidecar = if canonical {
             match fs::read(Self::metadata_path(control, path, &metadata, &revision)) {
@@ -177,6 +174,24 @@ impl FileStore {
                 .map(|m| m.content_type)
                 .unwrap_or_else(|| "application/octet-stream".into()),
         }))
+    }
+
+    fn read_bytes(mut reader: impl Read, size: u64, max_bytes: Option<usize>) -> Result<Vec<u8>> {
+        let mut bytes = Vec::new();
+        if let Some(limit) = max_bytes {
+            if size > limit as u64 {
+                return Err(StoreError::TooLarge { limit });
+            }
+            reader
+                .take(limit.saturating_add(1) as u64)
+                .read_to_end(&mut bytes)?;
+            if bytes.len() > limit {
+                return Err(StoreError::TooLarge { limit });
+            }
+        } else {
+            reader.read_to_end(&mut bytes)?;
+        }
+        Ok(bytes)
     }
 
     fn publish(
