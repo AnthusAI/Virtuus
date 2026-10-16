@@ -1,0 +1,28 @@
+{
+  "id": "virt-66dcd270-13fd-4707-9837-91143662115d",
+  "title": "Enforce portable storage coverage before shared backend merge",
+  "description": "Given the shared portable storage adapter and its 100 percent repository coverage requirement, when local and CI quality checks run, then storage source is measured explicitly and meaningful behavioral cases cover missing branches without lowering thresholds or silently excluding production code. Given the reviewed S3/DynamoDB canonical storage contract, when the adapter is consumed from a merged revision, then documented backend composition preserves ordinary files, scopes, conflicts and repair semantics.",
+  "type": "task",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-10-16T06:58:54.130909Z",
+  "updated_at": "2026-10-16T06:58:54.130952Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "codex",
+    "model": "gpt-6.1-sol",
+    "name": "Codex",
+    "settings": {
+      "reasoning_effort": "medium"
+    }
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}
