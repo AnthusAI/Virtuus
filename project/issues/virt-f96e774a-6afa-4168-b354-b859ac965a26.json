@@ -3,7 +3,7 @@
   "title": "Release portable storage from main for downstream consumers",
   "description": "Given the portable store passes required gates on develop, when the reviewed release is promoted to main and normal publishing completes, then a versioned store artifact can be installed and built by Kanbus without sibling checkouts. Verify the release tag, registry/package artifacts and consumer build; preserve existing publication gates and report credential blockers explicitly.",
   "type": "story",
-  "status": "in_progress",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -40,11 +40,26 @@
           "reasoning_effort": "medium"
         }
       }
+    },
+    {
+      "id": "1b21787f-1448-4d8d-8012-e67cfffe0fc3",
+      "author": "home",
+      "text": "Completed actual main release: PR34+PR35 merged; full mainCI38899911643 PASS; normal release38901553179 SUCCESS. Public v0.6.1 https://github.com/AnthusAI/Virtuus/releases/tag/v0.6.1; PyPI/corecrate0.6.1 and storecrate0.1.0 verified via registry APIs and downloaded checksums. Isolated wheel import/service ping PASS. Kanbus now builds actual registry core/store,29 API tests and full local Prospectus funnel/handoff/restart/conflict proof PASS with no sibling Virtuus checkout. No gates weakened; hosted fullchecks resolved local disk exhaustion. Release evidence retained outside source repository.",
+      "created_at": "2026-10-16T12:47:35.199897Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "Kanbus cloud owner",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
     }
   ],
   "created_at": "2026-10-16T10:38:38.670662Z",
-  "updated_at": "2026-10-16T12:03:22.675251Z",
-  "closed_at": null,
+  "updated_at": "2026-10-16T12:47:43.224644Z",
+  "closed_at": "2026-10-16T12:47:43.224596Z",
   "agent": {
     "platform": "codex",
     "model": "gpt-6.1-sol",
