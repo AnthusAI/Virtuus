@@ -49,7 +49,7 @@ coverage-rust:
 
 # Measure the complete store, including AWS adapters, independently of peer crates.
 check-store-coverage:
-	cd rust && cargo tarpaulin --skip-clean -p virtuus-store --all-features --locked --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files '*/tests/*' --fail-under 100
+	cd rust && cargo tarpaulin --engine llvm --skip-clean -p virtuus-store --all-features --locked --exclude-files 'src/*' --exclude-files 'crates/virtuus-amplify/*' --exclude-files 'crates/virtuus-appsync/*' --exclude-files '*/tests/*' --fail-under 100
 
 # ── Parity ──────────────────────────────────────────────────────────────────
 
