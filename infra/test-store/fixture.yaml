@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Isolated Virtuus canonical storage integration proof; no IAM grants.
+Resources:
+  CanonicalBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - {Key: purpose, Value: virtuus-disposable-store-proof}
+  CatalogTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification: {SSEEnabled: true}
+      AttributeDefinitions:
+        - {AttributeName: scope, AttributeType: S}
+        - {AttributeName: path, AttributeType: S}
+        - {AttributeName: type_scope, AttributeType: S}
+        - {AttributeName: status_scope, AttributeType: S}
+        - {AttributeName: type_status_scope, AttributeType: S}
+      KeySchema:
+        - {AttributeName: scope, KeyType: HASH}
+        - {AttributeName: path, KeyType: RANGE}
+      GlobalSecondaryIndexes:
+        - IndexName: by_type
+          KeySchema:
+            - {AttributeName: type_scope, KeyType: HASH}
+            - {AttributeName: path, KeyType: RANGE}
+          Projection: {ProjectionType: ALL}
+        - IndexName: by_status
+          KeySchema:
+            - {AttributeName: status_scope, KeyType: HASH}
+            - {AttributeName: path, KeyType: RANGE}
+          Projection: {ProjectionType: ALL}
+        - IndexName: by_type_status
+          KeySchema:
+            - {AttributeName: type_status_scope, KeyType: HASH}
+            - {AttributeName: path, KeyType: RANGE}
+          Projection: {ProjectionType: ALL}
+      Tags:
+        - {Key: purpose, Value: virtuus-disposable-store-proof}
+Outputs:
+  Bucket: {Value: !Ref CanonicalBucket}
+  Table: {Value: !Ref CatalogTable}

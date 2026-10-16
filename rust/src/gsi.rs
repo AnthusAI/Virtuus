@@ -191,6 +191,13 @@ fn partition_key(value: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn malformed_array_filter_yields_no_index_candidates() {
+        let record = serde_json::json!({"dependencies":[{"target":"x"}]});
+        assert!(select_values(&record, "dependencies[missing-equals].target").is_empty());
+    }
+
     use serde_json::json;
 
     #[test]
