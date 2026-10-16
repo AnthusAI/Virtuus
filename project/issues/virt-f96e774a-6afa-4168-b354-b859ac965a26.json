@@ -10,9 +10,25 @@
   "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "ff0baaf9-db0d-4bdf-bdc6-5278029ef251",
+      "author": "home",
+      "text": "MAIN promotion PR34 merged at 87891d6; full CI passed. Normal release run38893764454 published nothing: PSR10 conventional parser defaults ignore_merge_commits=true, so the conventional release merge messages were ignored and source squash messages have no conventional prefix. Given a Git Flow conventional release merge, when semantic-release computes the next version, then the merge must contribute its declared bump and release artifacts must publish. Reproduced read-only with installed production PSR10. Correct parser configuration and repeat normal pipeline; no manual tag bypass.",
+      "created_at": "2026-10-16T11:36:25.161043Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "Kanbus cloud owner",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
+    }
+  ],
   "created_at": "2026-10-16T10:38:38.670662Z",
-  "updated_at": "2026-10-16T10:38:38.670723Z",
+  "updated_at": "2026-10-16T11:36:25.161331Z",
   "closed_at": null,
   "agent": {
     "platform": "codex",
@@ -24,5 +40,8 @@
   },
   "right_now_summary": null,
   "right_now_updated_at": null,
-  "custom": {}
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
 }
