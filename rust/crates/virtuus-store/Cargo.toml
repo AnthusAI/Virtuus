@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Scoped conditional object storage and repairable catalog projections"
+repository = "https://github.com/AnthusAI/Virtuus"
+readme = "README.md"
 
 [features]
 default = []
@@ -18,7 +20,7 @@ hex = "0.4"
 thiserror = "1"
 libc = "0.2"
 tempfile = "3"
-virtuus = { path = "../..", default-features = false }
+virtuus = { version = "0.6.0", path = "../..", default-features = false }
 
 aws-sdk-s3 = { version = "1", optional = true, default-features = false, features = ["rt-tokio", "rustls", "default-https-client"] }
 aws-sdk-dynamodb = { version = "1", optional = true }

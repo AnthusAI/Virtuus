@@ -15,7 +15,7 @@ Data lives on disk as one JSON file per record. In many use cases, you can **eli
 
 ## Motivation / Operating Context
 
-Virtuus was built to take [Plexus](https://github.com/AnthusAI/Plexus) — one of our mission-critical production systems — into more regulated, isolated environments. Plexus uses a GraphQL control plane and serves high-availability, high-throughput, high-volume workloads under strict regulatory and information-security constraints. Our motivation is to support scenarios where workers must run in tightly regulated environments and cannot directly reach the central control plane. Shipping the data and query engine with the worker removes that dependency while keeping the API shape consistent.
+Virtuus was built to take [Primus](https://github.com/AnthusAI/Primus) — one of our mission-critical production systems — into more regulated, isolated environments. Primus uses a GraphQL control plane and serves high-availability, high-throughput, high-volume workloads under strict regulatory and information-security constraints. Our motivation is to support scenarios where workers must run in tightly regulated environments and cannot directly reach the central control plane. Shipping the data and query engine with the worker removes that dependency while keeping the API shape consistent.
 
 ## Guiding Values
 
