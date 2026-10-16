@@ -1,0 +1,28 @@
+{
+  "id": "virt-f96e774a-6afa-4168-b354-b859ac965a26",
+  "title": "Release portable storage from main for downstream consumers",
+  "description": "Given the portable store passes required gates on develop, when the reviewed release is promoted to main and normal publishing completes, then a versioned store artifact can be installed and built by Kanbus without sibling checkouts. Verify the release tag, registry/package artifacts and consumer build; preserve existing publication gates and report credential blockers explicitly.",
+  "type": "story",
+  "status": "open",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [],
+  "created_at": "2026-10-16T10:38:38.670662Z",
+  "updated_at": "2026-10-16T10:38:38.670723Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "codex",
+    "model": "gpt-6.1-sol",
+    "name": "Kanbus cloud owner",
+    "settings": {
+      "reasoning_effort": "medium"
+    }
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {}
+}
