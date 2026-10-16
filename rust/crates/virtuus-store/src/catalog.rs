@@ -124,6 +124,60 @@ mod failure_tests {
     use std::sync::Arc;
 
     #[tokio::test]
+    async fn conditional_catalog_conflicts_preserve_the_winning_card() {
+        let catalog = MemoryCatalog::default();
+        let scope = Scope::new("brand", "board").unwrap();
+        let card = Card {
+            path: "project/issues/a.json".into(),
+            revision: "winner".into(),
+            hash: "hash".into(),
+            byte_length: 2,
+            fields: BTreeMap::new(),
+            omitted_fields: vec![],
+        };
+        catalog
+            .put(&scope, &card, WriteCondition::Absent)
+            .await
+            .unwrap();
+        for condition in [
+            WriteCondition::Absent,
+            WriteCondition::Revision("stale".into()),
+        ] {
+            assert!(matches!(
+                catalog.put(&scope, &card, condition).await,
+                Err(StoreError::Conflict)
+            ));
+            assert_eq!(
+                catalog
+                    .get(&scope, &card.path)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .revision,
+                "winner"
+            );
+        }
+        assert!(matches!(
+            catalog.delete(&scope, &card.path, "stale").await,
+            Err(StoreError::Conflict)
+        ));
+        assert_eq!(
+            catalog
+                .get(&scope, &card.path)
+                .await
+                .unwrap()
+                .unwrap()
+                .revision,
+            "winner"
+        );
+        catalog.delete(&scope, &card.path, "winner").await.unwrap();
+        assert!(matches!(
+            catalog.delete(&scope, &card.path, "winner").await,
+            Err(StoreError::Conflict)
+        ));
+    }
+
+    #[tokio::test]
     async fn poisoned_catalog_never_returns_or_mutates_untrusted_state() {
         let catalog = Arc::new(MemoryCatalog::default());
         let other = catalog.clone();

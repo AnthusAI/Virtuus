@@ -1,6 +1,50 @@
 use super::*;
 use std::os::unix::fs::PermissionsExt;
 
+#[tokio::test]
+async fn bound_projects_keep_control_files_outside_canonical_paths_and_reject_stale_deletes() {
+    let root = tempfile::tempdir().unwrap();
+    let board = root.path().join("board");
+    let scope = Scope::new("brand", "board").unwrap();
+    let store = FileStore::for_project(&board, scope.clone()).unwrap();
+    let path = "project/issues/alpha.json";
+    let object = store
+        .put(
+            &scope,
+            path,
+            b"{}",
+            "application/json",
+            WriteCondition::Absent,
+            Some("create"),
+        )
+        .await
+        .unwrap();
+    assert_eq!(fs::read(board.join(path)).unwrap(), b"{}");
+    assert!(root.path().join(".board.virtuus").is_dir());
+    assert!(!board.join("_virtuus").exists());
+    assert_eq!(
+        store
+            .list(&scope, "project/issues/al", None, 10)
+            .await
+            .unwrap()
+            .paths,
+        vec![path]
+    );
+    assert!(matches!(
+        store.delete(&scope, path, "stale").await,
+        Err(StoreError::Conflict)
+    ));
+    assert_eq!(
+        store.get(&scope, path).await.unwrap().unwrap().revision,
+        object.revision
+    );
+    store.delete(&scope, path, &object.revision).await.unwrap();
+    assert!(matches!(
+        store.delete(&scope, path, &object.revision).await,
+        Err(StoreError::Conflict)
+    ));
+}
+
 #[test]
 fn invalid_lock_descriptor_is_an_io_error_and_never_acquires_ownership() {
     let error = FileStore::lock_descriptor(-1).unwrap_err();
