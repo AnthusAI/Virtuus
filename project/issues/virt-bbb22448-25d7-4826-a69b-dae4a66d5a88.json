@@ -1,0 +1,62 @@
+{
+  "id": "virt-bbb22448-25d7-4826-a69b-dae4a66d5a88",
+  "title": "Provision isolated real AWS store proof fixture",
+  "description": "Create unique private encrypted versioned S3 and on-demand DynamoDB fixtures in authorized account 682849160744; execute raw-byte, conditional-write, scoped catalog and recovery proof with resource inventory. No IAM grants, preexisting resource changes or deletion.",
+  "type": "task",
+  "status": "in_progress",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "35b1aacf-8dea-4bc6-a61a-58b7fef6fb53",
+      "author": "home",
+      "text": "Provisioned unique live fixture in account 682849160744: stack virtuus-store-proof-20261014-aws01 CREATE_COMPLETE; private AES256/versioned S3 and SSE-enabled PAY_PER_REQUEST DynamoDB with all three GSIs verified. First live test exposed stale catalog row after delete+rebuild; lead fixed it. Expanded second live proof running; resources retained, no IAM changes. Inventory and runner in infra/test-store/.",
+      "created_at": "2026-10-14T00:41:13.446013Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    },
+    {
+      "id": "0e7c66b3-0da5-44eb-a641-ad6d817a67a6",
+      "author": "home",
+      "text": "Live AWS storage proof passed in isolated account 682849160744: baseline and final full run, long-scalar delta, bounded summary/read and exact large-integer delta. Raw canonical bytes, 450 KB event, conditional competing writers, write/delete retry recovery, catalog removal/rebuild, tenant/project isolation, ordinary prefix copy/folder import and authorized multi-project queries passed. Final board-load counts: 50 candidates/2 requests across two projects versus indexed 4/2; selected project 2/1. Real S3 API CRUD proof 01 also passed. Exact stack/resources/output inventory in infra/test-store/EVIDENCE.md; fixtures retained, no cleanup or IAM changes. Product source review gates/draft publication remain pending; keep task in progress until changes land.",
+      "created_at": "2026-10-14T01:34:51.691386Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    },
+    {
+      "id": "637c962c-44d0-427d-a0a5-54c43a4ae9fa",
+      "author": "home",
+      "text": "CI follow-up: the portable Atomic test-helper correction changes tests only; production code is unchanged. Full make check passed again. Virtuus source draft PR #33 head f94d7e2 is rerunning remote CI: Python 3.10 is green and other jobs remain pending. Earlier live AWS baseline and delta proofs remain recorded; no new live or production deployment claim. Keep this validation task in progress until changes land.",
+      "created_at": "2026-10-14T02:32:01.211460Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "AWS proof tracking"
+      }
+    }
+  ],
+  "created_at": "2026-10-14T00:35:40.424445Z",
+  "updated_at": "2026-10-14T02:32:01.211487Z",
+  "closed_at": null,
+  "agent": {
+    "platform": "codex",
+    "model": "gpt-6.1-sol"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
+}
