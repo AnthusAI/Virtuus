@@ -25,10 +25,25 @@
           "reasoning_effort": "medium"
         }
       }
+    },
+    {
+      "id": "e705d330-ad62-496d-975f-731ec3189482",
+      "author": "home",
+      "text": "Release follow-up is resource-blocked, not permission-denied. Parser fix in release/portable-store-parser-fix selects0.6.1 vs old0.6.0 in actual PSR10 no-op. Mandatory fresh make check passed Python100%, all lint/core/Amplify/AppSync/storage tests, but storage LLVM coverage linker failed OS28 No space even with2.3GiB fresh scratch and phase-specific compiler-cache cycling. Logs+patch preserved outside product Git; config remains uncommitted pending full gate. MAIN PR34 merged; normal release38893764454 created no new artifact. Kanbus publication waits actual Virtuus release. No gate bypass or publication attempt.",
+      "created_at": "2026-10-16T12:03:22.675225Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "Kanbus cloud owner",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
     }
   ],
   "created_at": "2026-10-16T10:38:38.670662Z",
-  "updated_at": "2026-10-16T12:01:15.389664Z",
+  "updated_at": "2026-10-16T12:03:22.675251Z",
   "closed_at": null,
   "agent": {
     "platform": "codex",
