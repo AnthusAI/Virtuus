@@ -17,10 +17,22 @@
       "text": "Closed the four historical done cards (virt-3134b694, virt-384faa72, virt-6f5b5e4b, virt-ccf3d867) with --no-validate, since the workflow has no done->closed transition. kbs validate now passes. 0.6.1 untouched.",
       "created_at": "2026-10-17T16:02:10.616839078Z",
       "comment_type": "default"
+    },
+    {
+      "id": "c6d5b89b-bf9c-49c5-adc5-0f81c578309b",
+      "author": "unknown",
+      "text": "Closed the four historical done cards (virt-3134b694, virt-384faa72, virt-6f5b5e4b, virt-ccf3d867) with --no-validate, since the workflow has no done->closed transition. kbs validate now passes. 0.6.1 untouched.",
+      "created_at": "2026-10-17T16:02:17.962715232Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "claude_code",
+        "model": "claude-sonnet-5-5",
+        "name": "thread-claude"
+      }
     }
   ],
   "created_at": "2026-10-16T20:48:13.630159Z",
-  "updated_at": "2026-10-17T16:02:10.657892765Z",
+  "updated_at": "2026-10-17T16:02:17.962800579Z",
   "closed_at": "2026-10-17T16:02:10.657856496Z",
   "agent": {
     "platform": "codex",
