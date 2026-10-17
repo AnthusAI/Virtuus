@@ -7255,6 +7255,77 @@ async fn then_error_validation(world: &mut VirtuusWorld) {
     );
 }
 
+#[given(regex = r#"^a folder containing a corrupt record file "([^"]*)"$"#)]
+async fn given_folder_with_corrupt_record(world: &mut VirtuusWorld, file_name: String) {
+    let folder = unique_temp_dir("corrupt_record");
+    fs::write(folder.join(file_name), "{not valid json").unwrap();
+    world.directory = Some(folder);
+    world.error = None;
+}
+
+#[when(regex = r#"^I try to load that folder into a strict "([^"]*)" table$"#)]
+async fn when_load_folder_into_strict_table(world: &mut VirtuusWorld, table_name: String) {
+    let mut table = Table::new(
+        &table_name,
+        Some("id"),
+        None,
+        None,
+        None,
+        ValidationMode::Error,
+    )
+    .unwrap();
+    world.error = table
+        .try_load_from_dir(world.directory.clone())
+        .err()
+        .map(|error| error.to_string());
+}
+
+#[then(regex = r#"^the error should name "([^"]*)"$"#)]
+async fn then_error_names_file(world: &mut VirtuusWorld, file_name: String) {
+    let error = world.error.as_ref().expect("expected an error");
+    assert!(
+        error.contains(&file_name),
+        "error {error} lacks {file_name}"
+    );
+}
+
+#[given(regex = r#"^a strict "([^"]*)" table holding one record$"#)]
+async fn given_strict_table_with_one_record(world: &mut VirtuusWorld, table_name: String) {
+    let mut table = Table::new(
+        &table_name,
+        Some("id"),
+        None,
+        None,
+        None,
+        ValidationMode::Error,
+    )
+    .unwrap();
+    table.put(json!({"id": "user-1", "name": "Alice"}));
+    world.tables.insert(table_name.clone(), table);
+    world.current_table = Some(table_name);
+    world.error = None;
+}
+
+#[when("I try to export the table into an unwritable location")]
+async fn when_export_into_unwritable_location(world: &mut VirtuusWorld) {
+    let folder = unique_temp_dir("unwritable_export");
+    let blocking_file = folder.join("blocking-file");
+    fs::write(&blocking_file, "occupied").unwrap();
+    let table_name = world.current_table.clone().unwrap();
+    let table = world.tables.get_mut(&table_name).unwrap();
+    world.error = table
+        .try_export(blocking_file.join("export"))
+        .err()
+        .map(|error| error.to_string());
+}
+
+#[then("the table should still answer a normal lookup")]
+async fn then_table_still_answers_lookup(world: &mut VirtuusWorld) {
+    let table_name = world.current_table.clone().unwrap();
+    let table = world.tables.get_mut(&table_name).unwrap();
+    assert_eq!(table.get("user-1", None).unwrap()["name"], "Alice");
+}
+
 // Rust-only scenarios
 // ---------------------------------------------------------------------------
 

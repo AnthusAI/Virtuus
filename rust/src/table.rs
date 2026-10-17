@@ -846,9 +846,18 @@ impl Table {
         Ok(())
     }
 
-    /// Export records to directory.
+    /// Export records to directory, panicking if the export fails.
     pub fn export(&mut self, directory: PathBuf) {
-        fs::create_dir_all(&directory).expect("create export dir");
+        self.try_export(directory)
+            .expect("export records to directory");
+    }
+
+    /// Export records to directory and report I/O failures as errors.
+    pub fn try_export(&mut self, directory: PathBuf) -> Result<()> {
+        fs::create_dir_all(&directory).map_err(|error| Error::Io {
+            path: directory.display().to_string(),
+            message: error.to_string(),
+        })?;
         let records: Vec<(TableKey, Value)> = match self.storage_mode {
             StorageMode::Memory => self
                 .records
@@ -867,11 +876,12 @@ impl Table {
                 .collect(),
         };
         for (key, record) in records {
-            self.validate_pk_for_path(&key);
+            self.try_validate_pk_for_path(&key)?;
             let filename = self.filename_for_key(&key);
             let path = directory.join(filename);
-            self.write_json_atomic(&path, &record);
+            self.try_write_json_atomic(&path, &record)?;
         }
+        Ok(())
     }
 
     fn extract_key(&mut self, record: &Value) -> Option<TableKey> {
@@ -1290,11 +1300,6 @@ impl Table {
         Ok(())
     }
 
-    fn validate_pk_for_path(&self, key: &TableKey) {
-        self.try_validate_pk_for_path(key)
-            .expect("valid PK characters");
-    }
-
     fn try_validate_pk_for_path(&self, key: &TableKey) -> Result<()> {
         let parts = match key {
             TableKey::Simple(pk) => vec![pk.as_str()],
@@ -1319,11 +1324,6 @@ impl Table {
             self.remove_from_gsis(key, &record);
             self.remove_from_search(key, &record);
         }
-    }
-
-    fn write_json_atomic(&mut self, path: &Path, record: &Value) {
-        self.try_write_json_atomic(path, record)
-            .expect("write JSON atomically");
     }
 
     fn try_write_json_atomic(&mut self, path: &Path, record: &Value) -> Result<()> {
@@ -2013,6 +2013,37 @@ mod tests {
         table.delete("user-1", None);
         let path = dir.join("user-1.json");
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn try_export_reports_io_error_for_unwritable_location() {
+        let root = temp_dir("try_export_unwritable");
+        fs::create_dir_all(&root).unwrap();
+        let blocking_file = root.join("blocking-file");
+        fs::write(&blocking_file, "occupied").unwrap();
+        let mut table =
+            Table::new("users", Some("id"), None, None, None, ValidationMode::Error).unwrap();
+        table.put(json!({"id": "user-1"}));
+        let error = table.try_export(blocking_file.join("export")).unwrap_err();
+        assert!(matches!(error, Error::Io { .. }));
+        assert!(table.get("user-1", None).is_some());
+    }
+
+    #[test]
+    fn try_export_rejects_path_unsafe_keys() {
+        let root = temp_dir("try_export_unsafe_key");
+        let mut table = Table::new(
+            "users",
+            Some("id"),
+            None,
+            None,
+            None,
+            ValidationMode::Silent,
+        )
+        .unwrap();
+        table.put(json!({"id": "a/b"}));
+        let error = table.try_export(root.join("export")).unwrap_err();
+        assert!(matches!(error, Error::Validation { .. }));
     }
 
     #[test]
