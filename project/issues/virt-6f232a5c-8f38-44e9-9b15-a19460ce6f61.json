@@ -3,17 +3,25 @@
   "title": "Reconcile historical done statuses with the configured closed workflow",
   "description": "Baseline origin/develop and reconciled board fail identically on four historical done statuses: virt-3134b694, virt-384faa72, virt-6f5b5e4b, virt-ccf3d867. Correct through Kanbus in separate scoped board maintenance; do not reopen the completed 0.6.1 cloud release. Current reconciliation adds no new validation errors.",
   "type": "chore",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
   "parent": null,
   "labels": [],
   "dependencies": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "a85607c0-054b-4695-b3f4-61ad36c8678a",
+      "author": "unknown",
+      "text": "Closed the four historical done cards (virt-3134b694, virt-384faa72, virt-6f5b5e4b, virt-ccf3d867) with --no-validate, since the workflow has no done->closed transition. kbs validate now passes. 0.6.1 untouched.",
+      "created_at": "2026-10-17T16:02:10.616839078Z",
+      "comment_type": "default"
+    }
+  ],
   "created_at": "2026-10-16T20:48:13.630159Z",
-  "updated_at": "2026-10-16T20:48:13.630180Z",
-  "closed_at": null,
+  "updated_at": "2026-10-17T16:02:10.657892765Z",
+  "closed_at": "2026-10-17T16:02:10.657856496Z",
   "agent": {
     "platform": "codex",
     "model": "gpt-6.1-sol",
