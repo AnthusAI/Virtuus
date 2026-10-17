@@ -3,7 +3,7 @@
   "title": "Update ruleset bypass and release workflow for semantic-release",
   "description": "Add an approved automation bypass path in the repository ruleset and align .github/workflows/release.yml so release commits can succeed with main protected by PR-only rules.",
   "type": "task",
-  "status": "in_progress",
+  "status": "open",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -15,17 +15,29 @@
       "id": "4bf0cc1c-0f5c-42b4-bc2f-15ddae92183e",
       "author": "derek.norrbom",
       "text": "Attempted ruleset bypass updates via GitHub API. Integration actor id 15368 (GitHub Actions app) was rejected by GitHub for this repository ruleset; User actor github-actions[bot] was also rejected as invalid actor type. Proceeding to workflow alignment changes and documenting required bypass alternatives.",
-      "created_at": "2026-03-03T19:05:37.200266Z"
+      "created_at": "2026-03-03T19:05:37.200266Z",
+      "comment_type": "default"
     },
     {
       "id": "1fe6dc6c-e33a-485e-bcc1-2c764b365a98",
       "author": "derek.norrbom",
       "text": "Updated .github/workflows/release.yml to explicitly use github.token in checkout for release push credentials. Ruleset bypass remains unconfigured: GitHub API rejected both Integration actor 15368 (GitHub Actions) and User actor github-actions[bot] for this repository ruleset. Next step is selecting a valid bypass actor (typically a repo-installed GitHub App integration) and applying it.",
-      "created_at": "2026-03-03T19:05:59.042429Z"
+      "created_at": "2026-03-03T19:05:59.042429Z",
+      "comment_type": "default"
     }
   ],
   "created_at": "2026-03-03T19:05:33.768161Z",
-  "updated_at": "2026-03-03T19:05:59.042429Z",
+  "updated_at": "2026-10-17T13:24:49.554697Z",
   "closed_at": null,
-  "custom": {}
+  "agent": {
+    "platform": "claude-code",
+    "model": "claude-opus-5-5",
+    "name": "cross-project-wip-reset"
+  },
+  "right_now_summary": "The release workflow now uses github.token, but a valid ruleset bypass actor still needs to be configured.",
+  "right_now_updated_at": "2026-10-17T13:24:50.763534Z",
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
 }
