@@ -8,6 +8,7 @@ changelog_file = "CHANGELOG.md"
 version_toml = [
   "python/pyproject.toml:project.version",
   "rust/Cargo.toml:package.version",
+  "rust/crates/virtuus-store/Cargo.toml:dependencies.virtuus.version",
 ]
 version_variables = ["VERSION:VERSION:nf"]
 version_pattern = "(?P<current_version>\\d+\\.\\d+\\.\\d+)"
