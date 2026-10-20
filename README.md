@@ -15,7 +15,7 @@ Data lives on disk as one JSON file per record. In many use cases, you can **eli
 
 ## Motivation / Operating Context
 
-Virtuus was built to take [Plexus](https://github.com/AnthusAI/Plexus) — one of our mission-critical production systems — into more regulated, isolated environments. Plexus uses a GraphQL control plane and serves high-availability, high-throughput, high-volume workloads under strict regulatory and information-security constraints. Our motivation is to support scenarios where workers must run in tightly regulated environments and cannot directly reach the central control plane. Shipping the data and query engine with the worker removes that dependency while keeping the API shape consistent.
+Virtuus was built to take [Primus](https://github.com/AnthusAI/Primus) — one of our mission-critical production systems — into more regulated, isolated environments. Primus uses a GraphQL control plane and serves high-availability, high-throughput, high-volume workloads under strict regulatory and information-security constraints. Our motivation is to support scenarios where workers must run in tightly regulated environments and cannot directly reach the central control plane. Shipping the data and query engine with the worker removes that dependency while keeping the API shape consistent.
 
 ## Guiding Values
 
@@ -463,7 +463,7 @@ The EC2 CDK stack runs these cold‑start benchmarks automatically alongside the
 
 ## Release Automation
 
-Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases. Releases are gated on CI success to avoid partial publishes. Conventional commits are the single switch for automated releases.
+Semantic Release bumps versions and publishes tags, PyPI, and crates.io automatically from conventional commits. Push a `feat:` commit to cut a new minor (e.g., 0.2.0) across both ecosystems; fixes/docs/chore still ship as patch releases. Releases are gated on CI success to avoid partial publishes. Conventional commits are the single switch for automated releases. The parser includes conventional merge messages so Git Flow release merges retain their declared version bump; `patch_tags` and `minor_tags` use the Semantic Release 10 option names.
 
 ## License
 

@@ -2,6 +2,10 @@
 
 `virtuus-store` adds protocol-independent object and card-catalog interfaces alongside the existing `virtuus::Table`. It does not replace the existing filesystem table or impose a REST/GraphQL contract.
 
+Install the versioned crate with `cargo add virtuus-store@0.1.0`. Enable the
+`aws` feature for S3 and DynamoDB adapters: `cargo add virtuus-store@0.1.0 --features aws`.
+The default feature set provides ordinary folder storage without AWS SDK dependencies.
+
 Canonical files are ordinary objects at `<tenant>/<project>/<relative-path>` with exactly the same relative paths and raw bytes as a local project: `.kanbus.yml`, `project/issues/<id>.json`, immutable `project/events/<timestamp>__<uuid>.json`, and arbitrary attachments. Unknown JSON fields, whitespace, IDs, links, configuration and large history files stay in these objects. DynamoDB holds only small scalar card summaries, revision/hash/length metadata and canonical-path pointers. There are no inline payloads, overflow thresholds, chunks, envelopes or content-addressed canonical filenames.
 
 ## Backends and API

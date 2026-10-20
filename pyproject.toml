@@ -13,9 +13,10 @@ version_variables = ["VERSION:VERSION:nf"]
 version_pattern = "(?P<current_version>\\d+\\.\\d+\\.\\d+)"
 upload_to_repository = false
 upload_to_release = true
-build_command = "cargo generate-lockfile --manifest-path rust/Cargo.toml"
+build_command = "cargo update --manifest-path rust/Cargo.toml -p virtuus --precise $NEW_VERSION"
 assets = ["rust/Cargo.lock"]
 
 [tool.semantic_release.commit_parser_options]
-patch_types = ["fix", "perf", "docs", "chore"]
-minor_types = ["feat"]
+ignore_merge_commits = false
+patch_tags = ["fix", "perf", "docs", "chore"]
+minor_tags = ["feat"]
