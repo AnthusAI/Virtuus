@@ -321,6 +321,18 @@ impl ObjectStore for InterruptedStore {
             _ => self.inner.delete(s, p, r).await,
         }
     }
+    async fn list_control(
+        &self,
+        s: &Scope,
+        p: &str,
+        c: Option<&str>,
+        l: usize,
+    ) -> Result<ObjectPage> {
+        self.inner.list_control(s, p, c, l).await
+    }
+    async fn delete_control(&self, s: &Scope, p: &str, r: &str) -> Result<()> {
+        self.inner.delete_control(s, p, r).await
+    }
     async fn get_control(&self, s: &Scope, p: &str) -> Result<Option<StoredObject>> {
         match self.take("get_control", p) {
             Some(Action::Fail(f)) => Err(f.error()),
