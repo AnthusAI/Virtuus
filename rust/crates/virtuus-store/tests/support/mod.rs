@@ -23,6 +23,9 @@ pub struct FaultStore {
     pub uncertain_uploads: AtomicUsize,
     pub puts: AtomicUsize,
     pub deletes: AtomicUsize,
+    pub fail_delete_at: AtomicUsize,
+    pub control_deletes: AtomicUsize,
+    pub fail_control_delete_at: AtomicUsize,
 }
 
 impl FaultStore {
@@ -38,6 +41,9 @@ impl FaultStore {
             uncertain_uploads: AtomicUsize::new(0),
             puts: AtomicUsize::new(0),
             deletes: AtomicUsize::new(0),
+            fail_delete_at: AtomicUsize::new(usize::MAX),
+            control_deletes: AtomicUsize::new(0),
+            fail_control_delete_at: AtomicUsize::new(usize::MAX),
         }
     }
 }
@@ -107,7 +113,10 @@ impl ObjectStore for FaultStore {
         self.inner.put(s, p, b, t, c, o).await
     }
     async fn delete(&self, s: &Scope, p: &str, r: &str) -> Result<()> {
-        self.deletes.fetch_add(1, Ordering::SeqCst);
+        let ordinal = self.deletes.fetch_add(1, Ordering::SeqCst);
+        if ordinal == self.fail_delete_at.load(Ordering::SeqCst) {
+            return Err(StoreError::Unavailable("injected delete failure".into()));
+        }
         let gate = self.gate_delete.lock().unwrap().take();
         if let Some(gate) = gate {
             gate.entered.notify_one();
@@ -129,5 +138,23 @@ impl ObjectStore for FaultStore {
             return Err(StoreError::Unavailable("injected receipt rejection".into()));
         }
         self.inner.put_control(s, p, b, c).await
+    }
+    async fn list_control(
+        &self,
+        s: &Scope,
+        p: &str,
+        c: Option<&str>,
+        l: usize,
+    ) -> Result<ObjectPage> {
+        self.inner.list_control(s, p, c, l).await
+    }
+    async fn delete_control(&self, s: &Scope, p: &str, r: &str) -> Result<()> {
+        let ordinal = self.control_deletes.fetch_add(1, Ordering::SeqCst);
+        if ordinal == self.fail_control_delete_at.load(Ordering::SeqCst) {
+            return Err(StoreError::Unavailable(
+                "injected control delete failure".into(),
+            ));
+        }
+        self.inner.delete_control(s, p, r).await
     }
 }

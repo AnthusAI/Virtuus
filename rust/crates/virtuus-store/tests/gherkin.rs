@@ -4,9 +4,18 @@ use std::collections::BTreeMap;
 use std::sync::{atomic::Ordering, Arc};
 use support::FaultStore;
 use virtuus_store::{
-    EventObject, FileStore, JournaledStore, MemoryCatalog, Mutation, ObjectStore, Scope,
-    StoreError, StoredObject, WriteCondition,
+    Card, Catalog, CatalogQuery, EventObject, FileStore, JournaledStore, MemoryCatalog, Mutation,
+    ObjectStore, PurgeResult, Scope, StoreError, StoredObject, WriteCondition,
 };
+
+const PURGE_OPERATION_IDENTIFIER: &str = "purge-board";
+
+#[derive(Debug, PartialEq)]
+struct ScopeSnapshot {
+    canonical: BTreeMap<String, StoredObject>,
+    catalog: Vec<Card>,
+    control: BTreeMap<String, StoredObject>,
+}
 
 #[derive(Default, World)]
 struct StorageWorld {
@@ -17,6 +26,10 @@ struct StorageWorld {
     original: Option<Mutation>,
     current: Option<StoredObject>,
     newer: Option<Vec<u8>>,
+    catalog: Option<Arc<MemoryCatalog>>,
+    other_scope: Option<Scope>,
+    other_before: Option<ScopeSnapshot>,
+    purge_result: Option<PurgeResult>,
 }
 impl std::fmt::Debug for StorageWorld {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -29,12 +42,12 @@ impl StorageWorld {
         let objects = Arc::new(FaultStore::new(Arc::new(
             FileStore::new(root.path()).unwrap(),
         )));
-        self.store = Some(JournaledStore::new(
-            objects.clone(),
-            Arc::new(MemoryCatalog::default()),
-        ));
+        let catalog = Arc::new(MemoryCatalog::default());
+        self.store = Some(JournaledStore::new(objects.clone(), catalog.clone()));
+        self.catalog = Some(catalog);
         self.objects = Some(objects);
         self.scope = Some(Scope::new("brand", "app").unwrap());
+        self.other_scope = Some(Scope::new("brand", "other-app").unwrap());
         self.root = Some(root);
     }
     fn scope(&self) -> &Scope {
@@ -42,6 +55,49 @@ impl StorageWorld {
     }
     fn store(&self) -> &JournaledStore {
         self.store.as_ref().unwrap()
+    }
+    async fn snapshot(&self, scope: &Scope) -> ScopeSnapshot {
+        let objects = self.objects.as_ref().unwrap();
+        let mut canonical = BTreeMap::new();
+        for path in objects.list(scope, "", None, 1000).await.unwrap().paths {
+            canonical.insert(
+                path.clone(),
+                objects.get(scope, &path).await.unwrap().unwrap(),
+            );
+        }
+        let mut control = BTreeMap::new();
+        for path in objects
+            .list_control(scope, "", None, 1000)
+            .await
+            .unwrap()
+            .paths
+        {
+            control.insert(
+                path.clone(),
+                objects.get_control(scope, &path).await.unwrap().unwrap(),
+            );
+        }
+        let catalog = self
+            .catalog
+            .as_ref()
+            .unwrap()
+            .query(scope, &CatalogQuery::default(), None, 1000)
+            .await
+            .unwrap()
+            .cards;
+        ScopeSnapshot {
+            canonical,
+            catalog,
+            control,
+        }
+    }
+    fn purge_record_paths(&self) -> Vec<String> {
+        use sha2::{Digest, Sha256};
+        let digest = hex::encode(Sha256::digest(PURGE_OPERATION_IDENTIFIER.as_bytes()));
+        vec![
+            format!("purge/intents/{digest}.json"),
+            format!("purge/receipts/{digest}.json"),
+        ]
     }
     fn mutation(&self, id: &str, condition: WriteCondition, bytes: &[u8]) -> Mutation {
         Mutation {
@@ -209,6 +265,122 @@ async fn mismatch(w: &mut StorageWorld) {
 #[then("the request is rejected")]
 async fn unchanged(w: &mut StorageWorld) {
     identical(w).await;
+}
+#[given("two scopes each holding an issue, its history, a catalog row and journal state")]
+async fn two_populated_scopes(w: &mut StorageWorld) {
+    raw(w).await;
+    let original = w.original.clone().unwrap();
+    for scope in [w.scope().clone(), w.other_scope.clone().unwrap()] {
+        let result = w.store().commit(&scope, &original).await.unwrap();
+        assert!(!result.repair_pending);
+        let snapshot = w.snapshot(&scope).await;
+        assert!(snapshot.canonical.len() == 2 && snapshot.catalog.len() == 1);
+        assert!(snapshot.control.len() >= 3);
+    }
+    w.other_before = Some(w.snapshot(&w.other_scope.clone().unwrap()).await);
+}
+#[given("a purge of the first scope that failed while deleting control objects")]
+async fn purge_failed_in_control(w: &mut StorageWorld) {
+    let objects = w.objects.clone().unwrap();
+    objects.fail_control_delete_at.store(1, Ordering::SeqCst);
+    let failure = w
+        .store()
+        .purge_scope(w.scope(), PURGE_OPERATION_IDENTIFIER)
+        .await;
+    assert!(matches!(failure, Err(StoreError::Unavailable(_))));
+    assert_eq!(objects.control_deletes.load(Ordering::SeqCst), 2);
+    assert!(w.snapshot(w.scope()).await.canonical.is_empty());
+    assert!(!w.snapshot(w.scope()).await.control.is_empty());
+}
+#[given("a purge of the first scope that failed while deleting canonical objects")]
+async fn purge_failed_in_canonical(w: &mut StorageWorld) {
+    let objects = w.objects.clone().unwrap();
+    objects.fail_delete_at.store(1, Ordering::SeqCst);
+    let failure = w
+        .store()
+        .purge_scope(w.scope(), PURGE_OPERATION_IDENTIFIER)
+        .await;
+    assert!(matches!(failure, Err(StoreError::Unavailable(_))));
+    assert_eq!(w.snapshot(w.scope()).await.canonical.len(), 1);
+}
+#[given("the first scope is purged with an operation identifier")]
+#[when("the first scope is purged with an operation identifier")]
+async fn purge(w: &mut StorageWorld) {
+    w.purge_result = Some(
+        w.store()
+            .purge_scope(w.scope(), PURGE_OPERATION_IDENTIFIER)
+            .await
+            .unwrap(),
+    );
+}
+#[when("the first scope is purged again with the same operation identifier")]
+async fn purge_again(w: &mut StorageWorld) {
+    let before = w.purge_result.clone();
+    let after = w
+        .store()
+        .purge_scope(w.scope(), PURGE_OPERATION_IDENTIFIER)
+        .await
+        .unwrap();
+    if let Some(before) = before {
+        assert_eq!(after, before);
+    }
+    w.purge_result = Some(after);
+}
+#[when("the original create operation is submitted again to the first scope")]
+async fn resubmit_create(w: &mut StorageWorld) {
+    w.store()
+        .commit(w.scope(), w.original.as_ref().unwrap())
+        .await
+        .unwrap();
+}
+#[then("the first scope has no canonical objects, catalog rows or control state except the purge record")]
+async fn first_scope_empty(w: &mut StorageWorld) {
+    let snapshot = w.snapshot(w.scope()).await;
+    assert!(snapshot.canonical.is_empty());
+    assert!(snapshot.catalog.is_empty());
+    assert_eq!(
+        snapshot.control.keys().cloned().collect::<Vec<_>>(),
+        w.purge_record_paths()
+    );
+    assert!(w.purge_result.is_some());
+}
+#[then("the second scope is byte-identical to its state before the purge")]
+async fn second_scope_unchanged(w: &mut StorageWorld) {
+    let after = w.snapshot(&w.other_scope.clone().unwrap()).await;
+    assert_eq!(&after, w.other_before.as_ref().unwrap());
+}
+#[then("no object metadata sidecar remains for the first scope")]
+async fn no_sidecars(w: &mut StorageWorld) {
+    let sidecars = w
+        .root
+        .as_ref()
+        .unwrap()
+        .path()
+        .join("_virtuus")
+        .join(w.scope().namespace())
+        .join("object-meta");
+    assert!(!sidecars.exists() || std::fs::read_dir(sidecars).unwrap().next().is_none());
+    let other = w
+        .root
+        .as_ref()
+        .unwrap()
+        .path()
+        .join("_virtuus")
+        .join(w.other_scope.as_ref().unwrap().namespace())
+        .join("object-meta");
+    assert!(std::fs::read_dir(other).unwrap().next().is_some());
+}
+#[then("the recorded purge result is returned unchanged")]
+async fn recorded_result(w: &mut StorageWorld) {
+    let result = w.purge_result.as_ref().unwrap();
+    assert_eq!(result.canonical_objects_deleted, 2);
+    assert_eq!(result.catalog_rows_deleted, 1);
+    assert!(result.control_objects_deleted >= 3);
+}
+#[then("the issue is published afresh in the first scope")]
+async fn published_afresh(w: &mut StorageWorld) {
+    identical(w).await;
+    assert_eq!(w.snapshot(w.scope()).await.catalog.len(), 1);
 }
 #[tokio::main]
 async fn main() {

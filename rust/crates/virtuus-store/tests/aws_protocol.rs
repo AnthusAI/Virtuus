@@ -524,3 +524,56 @@ async fn dynamo_queries_select_each_index_and_bound_pagination_progress() {
         Err(StoreError::Unavailable(_))
     ));
 }
+
+#[tokio::test]
+async fn s3_control_listing_and_deletion_use_the_control_prefix_and_conditions() {
+    let client=replay(vec![response(200,"<ListBucketResult><IsTruncated>true</IsTruncated><Contents><Key>_virtuus/brand/board/receipts/a.json</Key></Contents></ListBucketResult>"),
+        response(200,"<ListBucketResult><Contents><Key>brand/board/project/issues/a.json</Key></Contents></ListBucketResult>"),
+        response(204, ""),
+        s3_error("PreconditionFailed"),
+        s3_error("AccessDenied")]);
+    let store = s3(&client);
+    let scope = scope();
+    let page = store
+        .list_control(&scope, "receipts/", None, 1)
+        .await
+        .unwrap();
+    assert_eq!(page.paths, ["receipts/a.json"]);
+    assert_eq!(page.next_cursor.as_deref(), Some("receipts/a.json"));
+    assert!(matches!(
+        store.list_control(&scope, "", None, 1).await,
+        Err(StoreError::Unavailable(_))
+    ));
+    assert!(matches!(
+        store
+            .list_control(&scope, "receipts/", Some("intents/a"), 1)
+            .await,
+        Err(StoreError::Invalid(_))
+    ));
+    store
+        .delete_control(&scope, "receipts/a.json", "\"native-r\"")
+        .await
+        .unwrap();
+    assert!(matches!(
+        store
+            .delete_control(&scope, "receipts/a.json", "stale")
+            .await,
+        Err(StoreError::Conflict)
+    ));
+    assert!(matches!(
+        store.delete_control(&scope, "../escape", "r").await,
+        Err(StoreError::Invalid(_))
+    ));
+    assert!(matches!(
+        store.delete_control(&scope, "receipts/a.json", "r").await,
+        Err(StoreError::Unavailable(_))
+    ));
+    let requests = client.actual_requests().collect::<Vec<_>>();
+    assert!(requests[0]
+        .uri()
+        .contains("prefix=_virtuus%2Fbrand%2Fboard%2Freceipts%2F"));
+    assert!(requests[2]
+        .uri()
+        .contains("/_virtuus/brand/board/receipts/a.json"));
+    assert_eq!(requests[2].headers().get("if-match"), Some("\"native-r\""));
+}

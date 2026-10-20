@@ -25,6 +25,96 @@ impl S3Store {
         }
     }
 
+    async fn list_keys(
+        &self,
+        root: String,
+        prefix: &str,
+        cursor: Option<&str>,
+        limit: usize,
+    ) -> Result<ObjectPage> {
+        validate_prefix(prefix)?;
+        validate_limit(limit)?;
+        if let Some(cursor) = cursor {
+            validate_path(cursor)?;
+            if !cursor.starts_with(prefix) {
+                return Err(StoreError::Invalid(
+                    "cursor does not belong to prefix".into(),
+                ));
+            }
+        }
+        let output = self
+            .client
+            .list_objects_v2()
+            .bucket(&self.bucket)
+            .prefix(format!("{root}{prefix}"))
+            .set_start_after(cursor.map(|p| format!("{root}{p}")))
+            .max_keys(limit as i32)
+            .send()
+            .await
+            .map_err(|error| StoreError::Unavailable(error.to_string()))?;
+        let paths = output
+            .contents()
+            .iter()
+            .map(|o| {
+                o.key()
+                    .and_then(|k| k.strip_prefix(&root))
+                    .map(str::to_owned)
+                    .ok_or_else(|| {
+                        StoreError::Unavailable(
+                            "S3 returned an object outside the requested scope".into(),
+                        )
+                    })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let next_cursor = if output.is_truncated() == Some(true) {
+            paths.last().cloned()
+        } else {
+            None
+        };
+        Ok(ObjectPage { paths, next_cursor })
+    }
+
+    async fn delete_key(&self, key: String, expected_revision: &str) -> Result<()> {
+        self.client
+            .delete_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .if_match(expected_revision)
+            .customize()
+            .config_override(aws_sdk_s3::config::Builder::new().retry_config(
+                aws_sdk_s3::config::retry::RetryConfig::standard().with_max_attempts(1),
+            ))
+            .send()
+            .await
+            .map_err(|error| {
+                if error.as_service_error().is_some_and(|e| {
+                    matches!(
+                        e.code(),
+                        Some(
+                            "PreconditionFailed"
+                                | "ConditionalRequestConflict"
+                                | "NoSuchKey"
+                                | "NotFound"
+                        )
+                    )
+                }) {
+                    StoreError::Conflict
+                } else if error.as_service_error().is_some_and(|e| {
+                    matches!(
+                        e.code(),
+                        Some(
+                            "AccessDenied" | "InvalidRequest" | "InvalidArgument" | "NoSuchBucket"
+                        )
+                    )
+                }) {
+                    StoreError::Unavailable(error.to_string())
+                } else {
+                    StoreError::Uncertain(error.to_string())
+                }
+            })?;
+        Ok(())
+    }
+
     async fn read(&self, key: String, max_bytes: Option<usize>) -> Result<Option<StoredObject>> {
         let output = match self
             .client
@@ -187,47 +277,8 @@ impl ObjectStore for S3Store {
         cursor: Option<&str>,
         limit: usize,
     ) -> Result<ObjectPage> {
-        validate_prefix(prefix)?;
-        validate_limit(limit)?;
-        if let Some(cursor) = cursor {
-            validate_path(cursor)?;
-            if !cursor.starts_with(prefix) {
-                return Err(StoreError::Invalid(
-                    "cursor does not belong to prefix".into(),
-                ));
-            }
-        }
-        let root = format!("{}/", scope.namespace());
-        let output = self
-            .client
-            .list_objects_v2()
-            .bucket(&self.bucket)
-            .prefix(format!("{root}{prefix}"))
-            .set_start_after(cursor.map(|p| format!("{root}{p}")))
-            .max_keys(limit as i32)
-            .send()
+        self.list_keys(format!("{}/", scope.namespace()), prefix, cursor, limit)
             .await
-            .map_err(|error| StoreError::Unavailable(error.to_string()))?;
-        let paths = output
-            .contents()
-            .iter()
-            .map(|o| {
-                o.key()
-                    .and_then(|k| k.strip_prefix(&root))
-                    .map(str::to_owned)
-                    .ok_or_else(|| {
-                        StoreError::Unavailable(
-                            "S3 returned an object outside the requested scope".into(),
-                        )
-                    })
-            })
-            .collect::<Result<Vec<_>>>()?;
-        let next_cursor = if output.is_truncated() == Some(true) {
-            paths.last().cloned()
-        } else {
-            None
-        };
-        Ok(ObjectPage { paths, next_cursor })
     }
 
     async fn put(
@@ -250,6 +301,36 @@ impl ObjectStore for S3Store {
         .await
     }
 
+    async fn list_control(
+        &self,
+        scope: &Scope,
+        prefix: &str,
+        cursor: Option<&str>,
+        limit: usize,
+    ) -> Result<ObjectPage> {
+        self.list_keys(
+            format!("_virtuus/{}/", scope.namespace()),
+            prefix,
+            cursor,
+            limit,
+        )
+        .await
+    }
+
+    async fn delete_control(
+        &self,
+        scope: &Scope,
+        path: &str,
+        expected_revision: &str,
+    ) -> Result<()> {
+        validate_path(path)?;
+        self.delete_key(
+            format!("_virtuus/{}/{path}", scope.namespace()),
+            expected_revision,
+        )
+        .await
+    }
+
     async fn get_control(&self, scope: &Scope, path: &str) -> Result<Option<StoredObject>> {
         validate_path(path)?;
         self.read(format!("_virtuus/{}/{path}", scope.namespace()), None)
@@ -258,44 +339,8 @@ impl ObjectStore for S3Store {
 
     async fn delete(&self, scope: &Scope, path: &str, expected_revision: &str) -> Result<()> {
         validate_path(path)?;
-        self.client
-            .delete_object()
-            .bucket(&self.bucket)
-            .key(format!("{}/{path}", scope.namespace()))
-            .if_match(expected_revision)
-            .customize()
-            .config_override(aws_sdk_s3::config::Builder::new().retry_config(
-                aws_sdk_s3::config::retry::RetryConfig::standard().with_max_attempts(1),
-            ))
-            .send()
+        self.delete_key(format!("{}/{path}", scope.namespace()), expected_revision)
             .await
-            .map_err(|error| {
-                if error.as_service_error().is_some_and(|e| {
-                    matches!(
-                        e.code(),
-                        Some(
-                            "PreconditionFailed"
-                                | "ConditionalRequestConflict"
-                                | "NoSuchKey"
-                                | "NotFound"
-                        )
-                    )
-                }) {
-                    StoreError::Conflict
-                } else if error.as_service_error().is_some_and(|e| {
-                    matches!(
-                        e.code(),
-                        Some(
-                            "AccessDenied" | "InvalidRequest" | "InvalidArgument" | "NoSuchBucket"
-                        )
-                    )
-                }) {
-                    StoreError::Unavailable(error.to_string())
-                } else {
-                    StoreError::Uncertain(error.to_string())
-                }
-            })?;
-        Ok(())
     }
 
     async fn put_control(

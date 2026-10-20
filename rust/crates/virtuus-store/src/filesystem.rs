@@ -247,6 +247,49 @@ impl FileStore {
         })
     }
 
+    fn remove_object_metadata(control: &Path, path: &str) -> Result<()> {
+        match fs::remove_dir_all(
+            control
+                .join("object-meta")
+                .join(content_hash(path.as_bytes())),
+        ) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.into()),
+        }
+    }
+
+    fn page_paths(
+        root: &Path,
+        prefix: &str,
+        cursor: Option<&str>,
+        limit: usize,
+    ) -> Result<ObjectPage> {
+        let mut paths = Vec::new();
+        let subtree = if prefix.is_empty() {
+            root.to_path_buf()
+        } else {
+            let prefix_path = Self::safe_join(root, prefix.trim_end_matches('/'))?;
+            if prefix.ends_with('/') {
+                prefix_path
+            } else {
+                prefix_path.parent().unwrap_or(root).to_path_buf()
+            }
+        };
+        Self::collect(root, &subtree, &mut paths)?;
+        paths.retain(|path| {
+            path.starts_with(prefix) && cursor.is_none_or(|cursor| path.as_str() > cursor)
+        });
+        paths.sort();
+        let next_cursor = if paths.len() > limit {
+            paths.truncate(limit);
+            paths.last().cloned()
+        } else {
+            None
+        };
+        Ok(ObjectPage { paths, next_cursor })
+    }
+
     fn collect(root: &Path, current: &Path, paths: &mut Vec<String>) -> Result<()> {
         if !current.exists() {
             return Ok(());
@@ -308,29 +351,7 @@ impl ObjectStore for FileStore {
             validate_path(cursor)?;
         }
         let (root, _) = self.roots(scope)?;
-        let mut paths = Vec::new();
-        let subtree = if prefix.is_empty() {
-            root.clone()
-        } else {
-            let prefix_path = Self::safe_join(&root, prefix.trim_end_matches('/'))?;
-            if prefix.ends_with('/') {
-                prefix_path
-            } else {
-                prefix_path.parent().unwrap_or(&root).to_path_buf()
-            }
-        };
-        Self::collect(&root, &subtree, &mut paths)?;
-        paths.retain(|path| {
-            path.starts_with(prefix) && cursor.is_none_or(|cursor| path.as_str() > cursor)
-        });
-        paths.sort();
-        let next_cursor = if paths.len() > limit {
-            paths.truncate(limit);
-            paths.last().cloned()
-        } else {
-            None
-        };
-        Ok(ObjectPage { paths, next_cursor })
+        Self::page_paths(&root, prefix, cursor, limit)
     }
 
     async fn put(
@@ -367,6 +388,42 @@ impl ObjectStore for FileStore {
             return Err(StoreError::Conflict);
         }
         let full = Self::safe_join(&root, path)?;
+        fs::remove_file(&full)?;
+        File::open(full.parent().unwrap())?.sync_all()?;
+        Self::remove_object_metadata(&control, path)?;
+        Ok(())
+    }
+
+    async fn list_control(
+        &self,
+        scope: &Scope,
+        prefix: &str,
+        cursor: Option<&str>,
+        limit: usize,
+    ) -> Result<ObjectPage> {
+        validate_prefix(prefix)?;
+        validate_limit(limit)?;
+        if let Some(cursor) = cursor {
+            validate_path(cursor)?;
+        }
+        let (_, control) = self.roots(scope)?;
+        Self::page_paths(&control.join("journal"), prefix, cursor, limit)
+    }
+
+    async fn delete_control(
+        &self,
+        scope: &Scope,
+        path: &str,
+        expected_revision: &str,
+    ) -> Result<()> {
+        let (_, control) = self.roots(scope)?;
+        let journal = control.join("journal");
+        let _lock = Self::lock(&control)?;
+        let current = Self::read_file(&journal, &control, path, false, None)?;
+        if !current.is_some_and(|object| object.revision == expected_revision) {
+            return Err(StoreError::Conflict);
+        }
+        let full = Self::safe_join(&journal, path)?;
         fs::remove_file(&full)?;
         File::open(full.parent().unwrap())?.sync_all()?;
         Ok(())
