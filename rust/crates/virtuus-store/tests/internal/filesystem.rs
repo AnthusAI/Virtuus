@@ -100,3 +100,14 @@ async fn unreadable_canonical_objects_and_corrupt_sidecars_fail_closed() {
     assert!(result.is_err());
     assert_eq!(store.get(&scope, path).await.unwrap().unwrap().bytes, b"{}");
 }
+
+#[test]
+fn object_metadata_removal_ignores_absent_directories_and_reports_other_failures() {
+    let control = tempfile::tempdir().unwrap();
+    FileStore::remove_object_metadata(control.path(), "project/issues/absent.json").unwrap();
+    fs::write(control.path().join("object-meta"), b"not a directory").unwrap();
+    assert!(matches!(
+        FileStore::remove_object_metadata(control.path(), "project/issues/blocked.json"),
+        Err(StoreError::Io(_))
+    ));
+}

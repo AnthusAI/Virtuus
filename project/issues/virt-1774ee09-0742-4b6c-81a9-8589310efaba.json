@@ -15,11 +15,14 @@
       "id": "6d7fa0bf-4046-4f26-a356-6b173354fec2",
       "author": "derek",
       "text": "Completed via commit e34e55b: Python backend version resolution now uses package metadata with source-tree fallback, fixing installed env import failures.",
-      "created_at": "2026-04-29T21:32:14.761904164Z"
+      "created_at": "2026-04-29T21:32:14.761904164Z",
+      "comment_type": "default"
     }
   ],
   "created_at": "2026-04-29T21:28:41.102467607Z",
   "updated_at": "2026-04-29T21:32:14.761904164Z",
   "closed_at": "2026-04-29T21:32:14.753570863Z",
+  "right_now_summary": "Virtuus now resolves its version from package metadata, with a source-tree fallback, fixing imports in installed",
+  "right_now_updated_at": "2026-10-17T13:24:28.956238Z",
   "custom": {}
 }

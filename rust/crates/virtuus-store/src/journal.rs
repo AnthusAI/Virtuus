@@ -1,7 +1,7 @@
 use crate::{
     content_hash, validate_fields, validate_path, Card, Catalog, CatalogPage, CatalogQuery,
     CommitResult, DeleteMutation, DeleteResult, EventObject, Mutation, ObjectPage, ObjectStore,
-    Result, Scope, StoreError, StoredObject, WriteCondition,
+    PurgeResult, Result, Scope, StoreError, StoredObject, WriteCondition,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -19,6 +19,14 @@ const DEFAULT_FIELDS: &[&str] = &[
     "updated_at",
     "title",
 ];
+
+const PURGE_PAGE_SIZE: usize = 100;
+
+#[derive(Serialize, Deserialize)]
+struct PurgeIntent {
+    action: String,
+    operation_id: String,
+}
 
 #[derive(Serialize, Deserialize)]
 enum Receipt {
@@ -655,6 +663,134 @@ impl JournaledStore {
         }
     }
 
+    /// Remove every canonical object, catalog row and control object of one scope.
+    ///
+    /// The purge intent is recorded first, so a crash resumes when called again with the
+    /// same operation id. Only that intent and the final purge receipt survive; they are
+    /// the sole record of completion. A replay returns the recorded result, whose counts
+    /// cover the call that finished the purge. Other scopes are never read or modified.
+    pub async fn purge_scope(&self, scope: &Scope, operation_id: &str) -> Result<PurgeResult> {
+        let intent_path = purge_intent_path(operation_id)?;
+        let receipt_path = purge_receipt_path(operation_id)?;
+        if let Some(receipt) = self.objects.get_control(scope, &receipt_path).await? {
+            return Ok(serde_json::from_slice(&receipt.bytes)?);
+        }
+        let intent = serde_json::to_vec(&PurgeIntent {
+            action: "purge".into(),
+            operation_id: operation_id.into(),
+        })?;
+        match self
+            .objects
+            .put_control(scope, &intent_path, &intent, WriteCondition::Absent)
+            .await
+        {
+            Ok(_) | Err(StoreError::Conflict) => {}
+            Err(error) => return Err(error),
+        }
+        let result = PurgeResult {
+            canonical_objects_deleted: self.purge_canonical_objects(scope).await?,
+            catalog_rows_deleted: self.purge_catalog_rows(scope).await?,
+            control_objects_deleted: self
+                .purge_control_objects(scope, &[&intent_path, &receipt_path])
+                .await?,
+        };
+        match self
+            .objects
+            .put_control(
+                scope,
+                &receipt_path,
+                &serde_json::to_vec(&result)?,
+                WriteCondition::Absent,
+            )
+            .await
+        {
+            Ok(_) => Ok(result),
+            Err(StoreError::Conflict) => {
+                let recorded = self
+                    .objects
+                    .get_control(scope, &receipt_path)
+                    .await?
+                    .ok_or_else(|| StoreError::Uncertain("purge receipt disappeared".into()))?;
+                Ok(serde_json::from_slice(&recorded.bytes)?)
+            }
+            Err(error) => Err(error),
+        }
+    }
+
+    async fn purge_canonical_objects(&self, scope: &Scope) -> Result<usize> {
+        let mut cursor = None;
+        let mut deleted = 0;
+        loop {
+            let page = self
+                .objects
+                .list(scope, "", cursor.as_deref(), PURGE_PAGE_SIZE)
+                .await?;
+            for path in page.paths {
+                if let Some(object) = self.objects.get(scope, &path).await? {
+                    self.objects.delete(scope, &path, &object.revision).await?;
+                    deleted += 1;
+                }
+            }
+            cursor = page.next_cursor;
+            if cursor.is_none() {
+                return Ok(deleted);
+            }
+        }
+    }
+
+    async fn purge_catalog_rows(&self, scope: &Scope) -> Result<usize> {
+        let mut cursor = None;
+        let mut deleted = 0;
+        loop {
+            let page = self
+                .catalog
+                .query(
+                    scope,
+                    &CatalogQuery::default(),
+                    cursor.as_deref(),
+                    PURGE_PAGE_SIZE,
+                )
+                .await?;
+            for card in page.cards {
+                self.catalog
+                    .delete(scope, &card.path, &card.revision)
+                    .await?;
+                deleted += 1;
+            }
+            cursor = page.next_cursor;
+            if cursor.is_none() {
+                return Ok(deleted);
+            }
+        }
+    }
+
+    async fn purge_control_objects(&self, scope: &Scope, retained: &[&str]) -> Result<usize> {
+        let mut cursor = None;
+        let mut deleted = 0;
+        loop {
+            let page = self
+                .objects
+                .list_control(scope, "", cursor.as_deref(), PURGE_PAGE_SIZE)
+                .await?;
+            for path in page
+                .paths
+                .iter()
+                .filter(|path| !retained.contains(&path.as_str()))
+            {
+                if let Some(object) = self.objects.get_control(scope, path).await? {
+                    self.objects
+                        .delete_control(scope, path, &object.revision)
+                        .await?;
+                    deleted += 1;
+                }
+            }
+            cursor = page.next_cursor;
+            if cursor.is_none() {
+                return Ok(deleted);
+            }
+        }
+    }
+
     async fn project_current(
         &self,
         scope: &Scope,
@@ -752,6 +888,22 @@ fn intent_path(operation_id: &str) -> Result<String> {
     }
     Ok(format!(
         "intents/{}.json",
+        content_hash(operation_id.as_bytes())
+    ))
+}
+
+fn purge_intent_path(operation_id: &str) -> Result<String> {
+    intent_path(operation_id)?;
+    Ok(format!(
+        "purge/intents/{}.json",
+        content_hash(operation_id.as_bytes())
+    ))
+}
+
+fn purge_receipt_path(operation_id: &str) -> Result<String> {
+    intent_path(operation_id)?;
+    Ok(format!(
+        "purge/receipts/{}.json",
         content_hash(operation_id.as_bytes())
     ))
 }

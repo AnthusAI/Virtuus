@@ -1,0 +1,54 @@
+{
+  "id": "virt-d1aa5a17-82df-417c-8353-2d8fcb02e4ef",
+  "title": "Preserve portable raw objects through scoped conditional mutations and catalog repair",
+  "description": "As an application embedding Kanbus, I want a generic scoped store with conditional idempotent mutations so that local and cloud apps preserve raw records and history without cross-tenant access. Cross-project initiative: kbs-3df9cc93-530f-4614-98a0-aa175012c1b5.\n\nFeature: Scoped durable storage\nScenario: Lossless conditional mutation\nGiven a raw JSON record and history in one account and project\nWhen a mutation uses the current revision and a unique command identifier\nThen raw content and history round-trip exactly and the revision advances once\nScenario: Retry and stale mutation\nGiven a committed command\nWhen the identical command is retried or a stale revision is submitted\nThen the retry returns its original result and the stale mutation changes nothing\nScenario: Private oversized payload\nGiven a payload exceeding the inline limit\nWhen it is written through the cloud adapter\nThen immutable private S3 content is staged before conditional publication and a failed upload or mutation leaves the visible record intact\nScenario: Tenant isolation\nGiven the same issue identifier in different projects\nWhen a generic field query or mutation executes within one scope\nThen records in other scopes are inaccessible\n\nImplementation uses a Rust-only workspace crate consistent with the existing Amplify/AppSync crates. No CRM-specific API, persistent AWS provisioning, production deploy, or publication in this task.",
+  "type": "story",
+  "status": "closed",
+  "priority": 2,
+  "assignee": null,
+  "creator": null,
+  "parent": "virt-d762b00f-32f7-4bb1-8c85-5b7ee5fa53b7",
+  "labels": [],
+  "dependencies": [],
+  "comments": [
+    {
+      "id": "d9d03f4b-e55f-4c02-aeed-3c16da009b00",
+      "author": "home",
+      "text": "Acceptance correction from Ryan: Given ordinary Kanbus project files including unknown JSON fields and whitespace, When files are stored locally or under the S3 namespace, Then their bytes and relative paths are identical and export/import is a direct folder copy. Given concurrent mutations, When expected opaque revision differs, Then the issue remains unchanged. Given issue publication succeeds but an event or card projection fails, When the same operation is retried, Then a separate durable journal repairs remaining publication without rewriting a newer issue. S3 contains all canonical issue/history/config/attachment bytes at normal paths; DynamoDB contains only scoped card metadata and pointers. No inline payload, size threshold, content-addressed canonical layout, or multi-object atomicity claim. Parent initiative kbs-3df9cc93-530f-4614-98a0-aa175012c1b5.",
+      "created_at": "2026-10-14T00:25:33.163362Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6"
+      }
+    },
+    {
+      "id": "9af08f87-83c8-40db-96cd-3c4a5edf070a",
+      "author": "home",
+      "text": "2026-10-16 reconciliation: Shared portable store delivered through PR33; release0.6.1 completed. Earlier “until merge” hold is superseded by released source and retained existing live fixture evidence. Canonical S3 bytes/paths and DynamoDB catalog contract remain; this is not authorization for any new fixture or application rollout. Downstream app activation is separate.",
+      "created_at": "2026-10-16T20:46:54.868495Z",
+      "comment_type": "default",
+      "agent": {
+        "platform": "codex",
+        "model": "gpt-6.1-sol",
+        "name": "unfinished-work-reconciliation",
+        "settings": {
+          "reasoning_effort": "medium"
+        }
+      }
+    }
+  ],
+  "created_at": "2026-10-14T00:20:02.358663Z",
+  "updated_at": "2026-10-16T20:46:54.868532Z",
+  "closed_at": "2026-10-16T20:46:54.833527Z",
+  "agent": {
+    "platform": "codex",
+    "model": "gpt-6"
+  },
+  "right_now_summary": null,
+  "right_now_updated_at": null,
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
+}

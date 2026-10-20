@@ -197,6 +197,23 @@ pub trait ObjectStore: Send + Sync {
         bytes: &[u8],
         condition: WriteCondition,
     ) -> Result<StoredObject>;
+    /// List a bounded, lexically ordered page of supplemental control paths.
+    /// Paging follows `list`: the cursor is the exclusive last path of the prior page.
+    async fn list_control(
+        &self,
+        scope: &Scope,
+        prefix: &str,
+        cursor: Option<&str>,
+        limit: usize,
+    ) -> Result<ObjectPage>;
+    /// Delete one supplemental control object only if its current revision matches.
+    /// The same definite-rejection versus ambiguous-outcome contract as `delete` applies.
+    async fn delete_control(
+        &self,
+        scope: &Scope,
+        path: &str,
+        expected_revision: &str,
+    ) -> Result<()>;
 }
 
 /// Rebuildable card metadata. Canonical content never belongs here.
@@ -319,6 +336,17 @@ pub struct DeleteMutation {
 pub struct DeleteResult {
     /// History or catalog convergence still needs a retry.
     pub repair_pending: bool,
+}
+
+/// Counts of what one completed scope purge removed.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PurgeResult {
+    /// Canonical objects deleted from the scope, including history and attachments.
+    pub canonical_objects_deleted: usize,
+    /// Catalog rows deleted from the scope.
+    pub catalog_rows_deleted: usize,
+    /// Control objects deleted, excluding the purge intent and purge receipt.
+    pub control_objects_deleted: usize,
 }
 
 /// Validate a portable relative file path.

@@ -3,7 +3,7 @@
   "title": "Rust performance investigation --status in_progress",
   "description": "## Goal\nMake Rust cold-load meaningfully faster than Python for record loading; target up to ~10x if feasible.\n\n## Context\nRust version currently performs similar to Python, which is unexpected. We need to leverage Rust for speed (e.g., parallel load) and empirically validate improvements.\n\n## Approach\nFor each performance idea: implement, ensure specs pass, benchmark vs Rust baseline and Python, and keep only if gains justify complexity. If not, revert to baseline and record what was tried/learned.\n\n## Tracking\nCreate one story per idea with separate notes; work may use Git worktrees for isolation.",
   "type": "epic",
-  "status": "in_progress",
+  "status": "open",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -15,65 +15,85 @@
       "id": "0240f0ed-4445-45a3-bf37-35ea9c5b9f2b",
       "author": "ryan.porter",
       "text": "Context from user (2026-02-23): Surprised Rust perf matches Python. Expect up to ~10x faster for this task. Explore multiple Rust performance ideas (e.g., parallel loading), implement each, verify specs/tests, benchmark vs Rust baseline and Python. Keep/merge only if empirical gains justify added complexity; otherwise revert to baseline and note failed idea + learnings. Create a new story per idea and track notes separately. Git worktrees ok for isolation.",
-      "created_at": "2026-02-23T02:53:25.210778Z"
+      "created_at": "2026-02-23T02:53:25.210778Z",
+      "comment_type": "default"
     },
     {
       "id": "a57d0fa5-786a-477d-b809-d189c07073d6",
       "author": "ryan.porter",
       "text": "## Conclusion (2026-02-23)\nThe benchmark harness is Python-based. When `VIRTUUS_BENCH_BACKEND=rust`, it tries to import `virtuus._rust`; if that import fails it silently falls back to the Python backend.\n\nOn this machine, the Rust PyO3 extension currently **does not build**, so `virtuus._rust` is not importable. As a result, attempts to run “Rust” benchmarks are actually exercising the Python backend. This explains why historical results show Rust and Python with equivalent performance.\n\nEvidence:\n- `maturin develop --release` fails with compile errors in `rust/src/python.rs` (PyO3 API/borrow issues) → `virtuus._rust` missing.\n- Benchmark JSON does not record backend; Python harness defaults to Python when Rust import fails.",
-      "created_at": "2026-02-23T03:10:07.134586Z"
+      "created_at": "2026-02-23T03:10:07.134586Z",
+      "comment_type": "default"
     },
     {
       "id": "50e26675-4ca5-48a0-90e7-25b62931fc8f",
       "author": "ryan.porter",
       "text": "## Progress (2026-02-23)\n- Fixed PyO3 build issues in `rust/src/python.rs`; `maturin develop --release` now succeeds and `virtuus._rust` imports.\n- Captured 10k yardstick baselines:\n  - Python full_database_cold_load: 3354.440 ms\n  - Rust full_database_cold_load: 2929.900 ms",
-      "created_at": "2026-02-23T03:16:14.202726Z"
+      "created_at": "2026-02-23T03:16:14.202726Z",
+      "comment_type": "default"
     },
     {
       "id": "40e46499-01f8-4359-94fa-799569a920bd",
       "author": "ryan.porter",
       "text": "Done: CI green and semantic-release published 0.2.1; PyO3 build fixed and 10k baselines recorded. Next: close epic. Blockers: none.",
-      "created_at": "2026-02-23T03:19:10.059942Z"
+      "created_at": "2026-02-23T03:19:10.059942Z",
+      "comment_type": "default"
     },
     {
       "id": "47861174-0008-49f4-b9f5-635e8deda113",
       "author": "ryan.porter",
       "text": "Correction: reopened; this epic is still in progress. Next: continue Rust perf investigations. Blockers: none.",
-      "created_at": "2026-02-23T03:20:40.788449Z"
+      "created_at": "2026-02-23T03:20:40.788449Z",
+      "comment_type": "default"
     },
     {
       "id": "a19bf75a-ea88-46bf-bd36-398f2e60765f",
       "author": "ryan.porter",
       "text": "## Rust-native benchmark update (2026-02-23)\nRan Rust directly via CLI (no Python harness). `cargo run --release --bin virtuus -- query` with schema loading all tables, 10k dataset. Mean load+query time: **2807.248 ms** (3 runs). Details logged on task virt-4a074a.",
-      "created_at": "2026-02-23T03:23:48.998399Z"
+      "created_at": "2026-02-23T03:23:48.998399Z",
+      "comment_type": "default"
     },
     {
       "id": "6549dd32-0b60-4a66-837f-8ca73f777e17",
       "author": "ryan.porter",
       "text": "## Experiment result: Parallel IO (Rayon)\nTried parallelizing `Table::load_from_dir` with Rayon (read+parse in parallel, sequential put). Benchmarks at 10k `full_database_cold_load` showed **no meaningful improvement** (mean ~2934 ms vs prior ~2930 ms). Changes were reverted and dependency removed.",
-      "created_at": "2026-02-23T03:36:07.014248Z"
+      "created_at": "2026-02-23T03:36:07.014248Z",
+      "comment_type": "default"
     },
     {
       "id": "298c46c5-9516-4499-a716-ae6c8570d6a8",
       "author": "ryan.porter",
       "text": "## Experiment result: byte reads + preallocation\nTried `fs::read` + `serde_json::from_slice` with pre-allocation in `Table::load_from_dir`. 10k `full_database_cold_load` showed no meaningful improvement (median ~2884 ms, mean worse due outlier). Reverted change.",
-      "created_at": "2026-02-23T03:43:33.035689Z"
+      "created_at": "2026-02-23T03:43:33.035689Z",
+      "comment_type": "default"
     },
     {
       "id": "5cdea39a-7737-491c-b69f-bedd2fab315c",
       "author": "ryan.porter",
       "text": "## Win: Load is now read-only\nChanged `load_from_dir` to skip disk writes during load (Python + Rust), aligning with README (only `put`/`delete` write). 10k `full_database_cold_load` improved from ~2.9–3.3s to ~0.48s (mean Rust 478.758 ms, Python 492.872 ms). Keeping change.",
-      "created_at": "2026-02-23T03:48:13.802742Z"
+      "created_at": "2026-02-23T03:48:13.802742Z",
+      "comment_type": "default"
     },
     {
       "id": "2a0a5381-e08e-443b-9f80-7c0e0b4775c0",
       "author": "ryan.porter",
       "text": "New experiment: parallel JSON parsing in Rust load_from_dir (Rayon). Bench (10k full_database_cold_load): baseline mean 478.758 ms -> new mean 388.146 ms (~19% faster). CI passed; change committed in repo.",
-      "created_at": "2026-02-23T04:09:27.010719Z"
+      "created_at": "2026-02-23T04:09:27.010719Z",
+      "comment_type": "default"
     }
   ],
   "created_at": "2026-02-22T18:16:24.961819Z",
-  "updated_at": "2026-02-23T04:09:27.010719Z",
+  "updated_at": "2026-10-17T13:24:55.898587Z",
   "closed_at": null,
-  "custom": {}
+  "agent": {
+    "platform": "claude-code",
+    "model": "claude-opus-5-5",
+    "name": "cross-project-wip-reset"
+  },
+  "right_now_summary": "Rust JSON parsing now loads 10,000 records about 19% faster, while tests pass.",
+  "right_now_updated_at": "2026-10-17T13:24:57.098133Z",
+  "custom": {
+    "project_label": "virt",
+    "source": "shared"
+  }
 }

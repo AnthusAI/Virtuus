@@ -10,13 +10,13 @@ Canonical files are ordinary objects at `<tenant>/<project>/<relative-path>` wit
 
 ## Backends and API
 
-- `ObjectStore`: exact-path get and explicit byte-budget reads, bounded lexicographic list, create/update with `WriteCondition::Absent` or opaque expected revision, conditional delete, separate supplemental control objects.
+- `ObjectStore`: exact-path get and explicit byte-budget reads, bounded lexicographic list, create/update with `WriteCondition::Absent` or opaque expected revision, conditional delete, separate supplemental control objects with their own bounded lexical listing (`list_control`) and conditional deletion (`delete_control`).
 - `Catalog`: exact-path get, conditional small-card put/delete, scoped type/status candidate query, counters for actual requests and examined candidates.
 - `FileStore`: namespace folders, or `for_project` binding an existing ordinary project folder. Control state lives outside the project. Content hashes provide revisions; cooperating writers use advisory flock and atomic rename.
 - `S3Store`: native ETag conditions and normal S3 object bodies. Mutating calls override SDK retries to one attempt: blindly replaying an ambiguous create/delete can otherwise produce same-byte ABA races.
 - `MemoryCatalog`: rebuildable local metadata, scoped BTreeMap ranges. Local type/status selections examine scoped cards and report that cost; this is not a distributed index.
 - `DynamoCatalog`: `scope` partition key and `path` sort key, plus `by_type(type_scope,path)`, `by_status(status_scope,path)`, and `by_type_status(type_status_scope,path)`, all projected with `ALL`. Queries use bounded, delimiter-safe partition fanout, never a table scan. GSIs are eventually consistent; exact card reads and the base scope query are strongly consistent.
-- `JournaledStore`: raw reads/list, conditional idempotent issue create/update/delete, immutable history publication, catalog repair/rebuild and authorized-project query.
+- `JournaledStore`: raw reads/list, conditional idempotent issue create/update/delete, immutable history publication, catalog repair/rebuild, authorized-project query and full-scope `purge_scope`.
 
 Scope identifiers are explicitly **lowercase ASCII** letters, digits, `-`, `_`, or `.`, up to 128 bytes, excluding empty, `.` and `..`; `_virtuus` is reserved as a tenant. Both constructors and deserialization validate this contract. Lowercase identifiers prevent case-insensitive filesystem aliasing. `Scope` is a namespace, not an authorization credential: the embedding API must verify tenant/project grants before using it. `AuthorizedProjects` validates an explicit caller-authorized project set within one tenant and rejects unauthorized selections; it never discovers grants by scanning storage.
 
@@ -31,6 +31,12 @@ This is **not an S3+DynamoDB transaction**, and readers may observe a published 
 `Conflict` means the expected condition definitively failed. `Unavailable` on a canonical mutation must mean the adapter proves it was not applied; the owning worker may make that attempt retryable after the request has returned. `Uncertain` means it may have applied. A receipt can be reconstructed only from surviving own-operation metadata (put) or witnessed absence under the cooperating-writer protocol (delete). If publication cannot be inferred, its ownership is retained, the intent is kept, and successors remain blocked. **There is no lease timeout that fences a late native S3 request.** Operator recovery requires stopping the owning worker, establishing that no request remains in flight, inspecting canonical bytes/metadata and intent, and deciding whether to repair the receipt or allow a fresh attempt. This foundation deliberately provides no unsafe automatic claim-reset endpoint. Direct writes/imports must be offline: overwriting canonical data during an uncertain operation can destroy the evidence needed to recover it.
 
 Supplemental receipts currently retain the original published bytes in S3 control state so retries can return their original result after later updates. They are not required to rebuild a current catalog from plain files; retention/compaction is future operational policy.
+
+## Purging a scope
+
+`JournaledStore::purge_scope(scope, operation_id)` removes everything a scope owns: every canonical object (issues, history, attachments), every catalog row, and every control object (intents, receipts, active markers, attempts). Control state must go too: intents embed full issue bytes, and a surviving receipt would replay a pre-purge result after the board is re-created.
+
+The purge is resumable and idempotent. It first records a purge intent under `purge/intents/`, so calling again with the same operation id after a crash continues where it stopped. Only that intent and the final receipt under `purge/receipts/` survive; the receipt is written last and a replay returns the recorded `PurgeResult`. The counts in a result cover the call that completed the purge. The filesystem backend also removes the object-metadata sidecars of deleted canonical objects. A purge only lists and deletes inside the supplied scope; other scopes in the same backend are never touched. Run it with writers to the scope stopped: a concurrent writer can recreate objects behind the purge.
 
 ## Board queries
 
@@ -60,7 +66,7 @@ cd ..
 make check-store-coverage
 ```
 
-The Cucumber executable runs `features/store/portable_objects.feature`. Integration tests also cover conditional deletion/recreation, deterministic concurrent duplicate barriers, receipt/history failures, definitely unapplied versus ambiguous upload failure, bounded native reads and replay reads, oversized optional projection fields, exact numeric queries, custom-field preservation, namespace validation/symlinks and authorized multi-project query paging. Real AWS provisioning and evidence are in [`infra/test-store`](../../../infra/test-store/README.md); fixtures use unique disposable resources, not preexisting production data.
+The Cucumber executable runs `features/store/portable_objects.feature` and `features/store/purge_scope.feature`. Integration tests also cover conditional deletion/recreation, deterministic concurrent duplicate barriers, receipt/history failures, definitely unapplied versus ambiguous upload failure, bounded native reads and replay reads, oversized optional projection fields, exact numeric queries, custom-field preservation, namespace validation/symlinks and authorized multi-project query paging. Real AWS provisioning and evidence are in [`infra/test-store`](../../../infra/test-store/README.md); fixtures use unique disposable resources, not preexisting production data.
 
 The original default-backend coverage measurement was 86.29% of lines and 83.31% of regions. That omitted the feature-gated AWS adapter. `check-store-coverage` now uses the repository's standard Tarpaulin runner with its LLVM engine on every platform to measure the complete store with all features and requires 100% of source lines, alongside the unchanged core/Python coverage gates. It excludes peer crates and test files, while retaining every production store module. The selected Rust toolchain needs `llvm-tools-preview`, installed by CI. Passing behavior tests and live proofs do not waive the source coverage gate.
 
