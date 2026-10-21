@@ -640,8 +640,12 @@ class Table:
         :type directory: str
         :return: None
         :rtype: None
+        :raises IoError: If the target directory cannot be created or written.
         """
-        os.makedirs(directory, exist_ok=True)
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except OSError as error:
+            raise IoError(directory, str(error)) from error
         if self.storage_mode == "memory":
             records = self.records.items()
         else:

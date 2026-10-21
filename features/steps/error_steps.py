@@ -426,3 +426,68 @@ def step_schema_with_has_many_through(context):
     path = Path(context.tempdir.name) / "schema.yaml"
     path.write_text(json.dumps(schema), encoding="utf-8")
     context.schema_path = str(path)
+
+
+@given('a folder containing a corrupt record file "{file_name}"')
+def step_folder_with_corrupt_record(context, file_name):
+    """Create a temporary folder holding one unparseable record file."""
+    import os
+    import tempfile
+
+    context.tempdir = tempfile.TemporaryDirectory()
+    context.records_folder = context.tempdir.name
+    with open(os.path.join(context.records_folder, file_name), "w") as handle:
+        handle.write("{not valid json")
+    context.last_error = None
+
+
+@when('I try to load that folder into a strict "{table_name}" table')
+def step_load_folder_into_strict_table(context, table_name):
+    """Load the prepared folder with validation set to error."""
+    context.table_under_test = Table(
+        table_name, primary_key="id", validation="error"
+    )
+    try:
+        context.table_under_test.load_from_dir(context.records_folder)
+        context.last_error = None
+    except VirtuusError as error:
+        context.last_error = error
+
+
+@then('the error should name "{file_name}"')
+def step_error_names_file(context, file_name):
+    """Check that the raised error mentions the offending file."""
+    assert file_name in str(context.last_error), str(context.last_error)
+
+
+@given('a strict "{table_name}" table holding one record')
+def step_strict_table_with_one_record(context, table_name):
+    """Create an in-memory strict table with a single record."""
+    context.table_under_test = Table(
+        table_name, primary_key="id", validation="error"
+    )
+    context.table_under_test.put({"id": "user-1", "name": "Alice"})
+    context.last_error = None
+
+
+@when("I try to export the table into an unwritable location")
+def step_export_into_unwritable_location(context):
+    """Export beneath a regular file so the directory cannot be created."""
+    import os
+    import tempfile
+
+    context.tempdir = tempfile.TemporaryDirectory()
+    blocking_file = os.path.join(context.tempdir.name, "blocking-file")
+    with open(blocking_file, "w") as handle:
+        handle.write("occupied")
+    try:
+        context.table_under_test.export(os.path.join(blocking_file, "export"))
+        context.last_error = None
+    except VirtuusError as error:
+        context.last_error = error
+
+
+@then("the table should still answer a normal lookup")
+def step_table_still_answers_lookup(context):
+    """Check that the table is unaffected by the failed export."""
+    assert context.table_under_test.get("user-1")["name"] == "Alice"

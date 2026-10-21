@@ -49,6 +49,18 @@ Feature: Errors are values
     When I try to load a schema with missing "primary_key" and "partition_key"
     Then an error should be raised indicating Validation error
 
+  Scenario: Loading a folder with a corrupt record raises Parse error naming the file
+    Given a folder containing a corrupt record file "broken.json"
+    When I try to load that folder into a strict "users" table
+    Then an error should be raised indicating Parse error
+    And the error should name "broken.json"
+
+  Scenario: Exporting into an unwritable location raises Io error
+    Given a strict "users" table holding one record
+    When I try to export the table into an unwritable location
+    Then an error should be raised indicating Io error
+    And the table should still answer a normal lookup
+
   Scenario: Query with include to missing belongs_to target raises UnknownTable error
     Given a posts table with belongs_to "author" pointing to missing "users" table
     When I execute {"posts": {"pk": "p1", "include": {"author": {}}}}

@@ -701,8 +701,9 @@ impl PyTable {
 
     fn export(&self, directory: String) -> PyResult<()> {
         let mut table = self.inner.lock().expect("lock table");
-        table.export(PathBuf::from(directory));
-        Ok(())
+        table
+            .try_export(PathBuf::from(directory))
+            .map_err(error_to_py_err)
     }
 
     #[pyo3(signature = (force_scan=false))]

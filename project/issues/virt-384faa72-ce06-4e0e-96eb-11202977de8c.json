@@ -3,7 +3,7 @@
   "title": "Explore performance improvements (thought experiment)",
   "description": "",
   "type": "task",
-  "status": "done",
+  "status": "closed",
   "priority": 2,
   "assignee": null,
   "creator": null,
@@ -15,29 +15,35 @@
       "id": "c831d4c1-6d58-4958-8dab-e3cd3b04ba25",
       "author": "ryan.porter",
       "text": "Did: created task to explore perf improvements. Next: outline candidate optimizations + tradeoffs (GSI query, storage, IO). Blockers: none.",
-      "created_at": "2026-02-22T07:34:14.256855Z"
+      "created_at": "2026-02-22T07:34:14.256855Z",
+      "comment_type": "default"
     },
     {
       "id": "6f98939b-e192-4d1a-9b79-0015a9310004",
       "author": "ryan.porter",
       "text": "Thought experiment still open: captured current perf numbers; next step is outline potential optimizations (index structures, batching) before deciding if worth pursuing.",
-      "created_at": "2026-02-22T08:40:20.559483Z"
+      "created_at": "2026-02-22T08:40:20.559483Z",
+      "comment_type": "default"
     },
     {
       "id": "37534377-fc60-45fb-8fce-77d967ba48fe",
       "author": "ryan.porter",
       "text": "## Perf improvement options\n- **Profile hot paths (Rust):** perf/flamegraph on GSI query + PK lookup; focus on clones/allocs in `table.rs` (Vec sorting, serde_json Value handling).\n- **Index structures:** use `BTreeMap` per GSI partition to keep sorted order without per-query sort; consider `FxHashMap` for PK map to reduce hashing cost.\n- **Serde overhead:** try typed structs or borrowing `Value`/`Cow` to avoid clones on hot paths.\n- **I/O batching:** reuse buffers and `BufWriter` for export/persistence; reduce syscalls.\n- **Parallel load:** rayon-based directory load + GSI build per partition to speed cold load.\n- **Query caching:** optional per-GSI partition cache of last sorted slice for repeated scans.\n- **Instrumentation:** add tracing spans around load/query to split time between sort vs deserialization.\n\nNext: run perf on 100k corpus, prototype BTreeMap GSI, measure vs baseline.\n",
-      "created_at": "2026-02-22T13:23:48.205735Z"
+      "created_at": "2026-02-22T13:23:48.205735Z",
+      "comment_type": "default"
     },
     {
       "id": "1a541a3a-ab28-4f7d-bf56-9c91f8b1d3ab",
       "author": "ryan.porter",
       "text": "Marked done per user confirmation (second time). This was a thought experiment; no further action planned.",
-      "created_at": "2026-02-24T05:23:31.292086Z"
+      "created_at": "2026-02-24T05:23:31.292086Z",
+      "comment_type": "default"
     }
   ],
   "created_at": "2026-02-22T07:34:10.355149Z",
-  "updated_at": "2026-02-24T05:23:31.292086Z",
-  "closed_at": null,
+  "updated_at": "2026-10-17T16:02:06.231049386Z",
+  "closed_at": "2026-10-17T16:02:06.231022525Z",
+  "right_now_summary": null,
+  "right_now_updated_at": null,
   "custom": {}
 }
